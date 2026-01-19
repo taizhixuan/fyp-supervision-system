@@ -1,0 +1,16 @@
+import { RouterProvider } from 'react-router-dom'
+import { Providers } from '@/app/providers'
+import { router } from '@/app/router'
+
+function App() {
+  return (
+    <Providers>
+      <RouterProvider
+        router={router}
+        future={{ v7_startTransition: true }}
+      />
+    </Providers>
+  )
+}
+
+export default App
