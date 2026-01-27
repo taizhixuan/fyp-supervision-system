@@ -22,12 +22,12 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { CommitteeProposalStatus } from '@/types'
 
-const statusConfig: Record<CommitteeProposalStatus, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
-  PENDING_REVIEW: { label: 'Pending Review', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', color: 'text-info-600', bgColor: 'bg-info-50', icon: Clock },
-  APPROVED: { label: 'Approved', color: 'text-success-600', bgColor: 'bg-success-50', icon: CheckCircle },
-  REJECTED: { label: 'Rejected', color: 'text-error-600', bgColor: 'bg-error-50', icon: XCircle },
-  REVISION_REQUESTED: { label: 'Revision Requested', color: 'text-orange-600', bgColor: 'bg-orange-50', icon: RotateCcw },
+const statusConfig: Record<CommitteeProposalStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+  PENDING_REVIEW: { label: 'Pending Review', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500', icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500', icon: Clock },
+  APPROVED: { label: 'Approved', color: 'text-emerald-600', bgColor: 'bg-emerald-100', borderColor: 'border-l-emerald-500', icon: CheckCircle },
+  REJECTED: { label: 'Rejected', color: 'text-rose-600', bgColor: 'bg-rose-100', borderColor: 'border-l-rose-500', icon: XCircle },
+  REVISION_REQUESTED: { label: 'Revision Requested', color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-l-orange-500', icon: RotateCcw },
 }
 
 export function ProposalReviewQueue() {
@@ -52,9 +52,9 @@ export function ProposalReviewQueue() {
   })
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success-600'
-    if (score >= 60) return 'text-warning-600'
-    return 'text-error-600'
+    if (score >= 80) return 'text-emerald-600'
+    if (score >= 60) return 'text-amber-600'
+    return 'text-rose-600'
   }
 
   if (isLoading) {
@@ -69,29 +69,36 @@ export function ProposalReviewQueue() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <FileText className="h-7 w-7 text-primary-600" />
-            Proposal Review Queue
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Review and approve student project proposals
-          </p>
-        </div>
-        {pendingCount > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-warning-50 border border-warning-200 rounded-lg">
-            <Clock className="h-5 w-5 text-warning-600" />
-            <span className="font-medium text-warning-700">
-              {pendingCount} proposal{pendingCount > 1 ? 's' : ''} pending review
-            </span>
+      {/* Header - Gradient Style */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <FileText className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Proposal Review Queue</h1>
+              <p className="text-stone-300 mt-1">
+                Review and approve student project proposals
+              </p>
+            </div>
           </div>
-        )}
+          {pendingCount > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/20 backdrop-blur-sm rounded-xl ring-1 ring-amber-500/30">
+              <Sparkles className="h-5 w-5 text-amber-400" />
+              <span className="text-sm font-medium text-amber-100">
+                {pendingCount} proposal{pendingCount > 1 ? 's' : ''} pending review
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -107,7 +114,7 @@ export function ProposalReviewQueue() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CommitteeProposalStatus | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Status</option>
               <option value="PENDING_REVIEW">Pending Review</option>
@@ -119,7 +126,7 @@ export function ProposalReviewQueue() {
             <select
               value={cycleFilter}
               onChange={(e) => setCycleFilter(e.target.value as 'FYP1' | 'FYP2' | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Cycles</option>
               <option value="FYP1">FYP1</option>
@@ -140,24 +147,24 @@ export function ProposalReviewQueue() {
               key={status}
               onClick={() => setStatusFilter(statusFilter === status ? 'ALL' : status)}
               className={cn(
-                'p-3 rounded-lg border transition-colors text-left',
+                'p-3 rounded-xl border transition-all duration-300 text-left',
                 statusFilter === status
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-neutral-200 hover:bg-neutral-50'
+                  ? 'border-amber-500 bg-amber-50 shadow-sm'
+                  : 'border-stone-200 hover:bg-stone-50 hover:border-stone-300'
               )}
             >
               <div className="flex items-center gap-2 mb-1">
                 <Icon className={cn('h-4 w-4', config.color)} />
-                <span className="text-lg font-bold text-neutral-900">{count}</span>
+                <span className="text-lg font-bold text-stone-800">{count}</span>
               </div>
-              <p className="text-xs text-neutral-500">{config.label}</p>
+              <p className="text-xs text-stone-500 font-medium">{config.label}</p>
             </button>
           )
         })}
       </div>
 
       {/* Proposals List */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {filteredProposals && filteredProposals.length > 0 ? (
           filteredProposals.map((proposal) => {
             const status = statusConfig[proposal.status]
@@ -168,7 +175,10 @@ export function ProposalReviewQueue() {
                 key={proposal.proposalId}
                 to={ROUTES.COMMITTEE.PROPOSAL_DETAIL.replace(':id', String(proposal.proposalId))}
               >
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <Card className={cn(
+                  'group p-4 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4',
+                  status.borderColor
+                )}>
                   <div className="flex items-start gap-4">
                     {/* Status Icon */}
                     <div className={cn('p-2 rounded-lg', status.bgColor)}>
@@ -179,7 +189,7 @@ export function ProposalReviewQueue() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="font-semibold text-neutral-900 line-clamp-1">
+                          <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-amber-700 transition-colors">
                             {proposal.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-neutral-600">
@@ -193,7 +203,7 @@ export function ProposalReviewQueue() {
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-neutral-400 flex-shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-stone-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
 
                       {/* Tags & AI Score */}
@@ -247,9 +257,11 @@ export function ProposalReviewQueue() {
           })
         ) : (
           <Card className="p-12 text-center">
-            <FileText className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No proposals found</h3>
-            <p className="text-neutral-500 mt-1">
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-8 w-8 text-stone-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-stone-800">No proposals found</h3>
+            <p className="text-stone-500 mt-1">
               {searchQuery || statusFilter !== 'ALL' || cycleFilter !== 'ALL'
                 ? 'Try adjusting your filters'
                 : 'No proposals have been submitted yet'}
@@ -260,19 +272,19 @@ export function ProposalReviewQueue() {
 
       {/* Summary */}
       {data && data.proposals.length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-stone-600 font-medium">
               Showing {filteredProposals?.length ?? 0} of {data.total} proposals
             </span>
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-success-600">
+            <div className="flex items-center gap-4 text-sm font-medium">
+              <span className="text-emerald-600">
                 {data.proposals.filter((p) => p.status === 'APPROVED').length} approved
               </span>
-              <span className="text-warning-600">
+              <span className="text-amber-600">
                 {data.proposals.filter((p) => p.status === 'PENDING_REVIEW' || p.status === 'UNDER_REVIEW').length} pending
               </span>
-              <span className="text-error-600">
+              <span className="text-rose-600">
                 {data.proposals.filter((p) => p.status === 'REJECTED').length} rejected
               </span>
             </div>

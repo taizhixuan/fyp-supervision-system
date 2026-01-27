@@ -38,6 +38,12 @@ const MOCK_ANNOUNCEMENTS = [
     content: 'Students can now receive personalized supervisor recommendations.',
     publishAt: '2025-01-10T09:00:00Z',
   },
+  {
+    announcementId: 3,
+    title: 'Supervision Log Submission Reminder',
+    content: 'Students are reminded to submit their supervision logs within 48 hours after each meeting with their supervisor.',
+    publishAt: '2025-01-05T14:00:00Z',
+  },
 ]
 
 export function useResources(category?: string) {

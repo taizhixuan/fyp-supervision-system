@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { LogIn, Mail, Lock } from 'lucide-react'
 import { AuthLayout } from '@/components/layout/AuthLayout'
-import { Button, Input, AlertBanner, Card } from '@/components/ui'
+import { Button, Input, AlertBanner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { loginSchema, type LoginFormData } from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
@@ -42,77 +43,111 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <Card padding="lg">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-neutral-900 mb-2">Welcome Back</h1>
-          <p className="text-neutral-600">Sign in to continue to your dashboard</p>
+      <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-stone-800 to-stone-900 px-8 py-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500 rounded-2xl mb-4 shadow-lg">
+            <LogIn className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-stone-400">Log in to continue to your dashboard</p>
         </div>
 
-        {error && (
-          <AlertBanner
-            variant="error"
-            description={error}
-            dismissible
-            onDismiss={() => setError(null)}
-            className="mb-6"
-          />
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <Input
-            label="MMU ID or Email"
-            placeholder="e.g., 1201234567 or john@mmu.edu.my"
-            error={errors.identifier?.message}
-            required
-            {...register('identifier')}
-          />
-
-          <div>
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              error={errors.password?.message}
-              required
-              {...register('password')}
+        {/* Form */}
+        <div className="px-8 py-8">
+          {error && (
+            <AlertBanner
+              variant="error"
+              description={error}
+              dismissible
+              onDismiss={() => setError(null)}
+              className="mb-6"
             />
-            <div className="mt-2 text-right">
-              <Link
-                to={ROUTES.FORGOT_PASSWORD}
-                className="text-sm text-primary-600 hover:text-primary-700"
-              >
-                Forgot password?
-              </Link>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                MMU ID or Email <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-stone-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g., 1201234567 or john@mmu.edu.my"
+                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  {...register('identifier')}
+                />
+              </div>
+              {errors.identifier && (
+                <p className="mt-1.5 text-sm text-red-500">{errors.identifier.message}</p>
+              )}
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-stone-400" />
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  {...register('password')}
+                />
+              </div>
+              {errors.password && (
+                <p className="mt-1.5 text-sm text-red-500">{errors.password.message}</p>
+              )}
+              <div className="mt-2 text-right">
+                <Link
+                  to={ROUTES.FORGOT_PASSWORD}
+                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                className="h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                {...register('rememberMe')}
+              />
+              <label htmlFor="rememberMe" className="ml-2.5 text-sm text-stone-600">
+                Remember me
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-medium shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 transition-all"
+              isLoading={isSubmitting}
+            >
+              Log In
+            </Button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-stone-200 text-center">
+            <p className="text-sm text-stone-600">
+              Don't have an account?{' '}
+              <Link
+                to={ROUTES.REGISTER}
+                className="font-semibold text-amber-600 hover:text-amber-700"
+              >
+                Register here
+              </Link>
+            </p>
           </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-              {...register('rememberMe')}
-            />
-            <label htmlFor="rememberMe" className="ml-2 text-sm text-neutral-600">
-              Remember me
-            </label>
-          </div>
-
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            Sign In
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-neutral-600">
-          Don't have an account?{' '}
-          <Link
-            to={ROUTES.REGISTER}
-            className="font-medium text-primary-600 hover:text-primary-700"
-          >
-            Create one
-          </Link>
-        </p>
-      </Card>
+        </div>
+      </div>
     </AuthLayout>
   )
 }

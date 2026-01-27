@@ -23,7 +23,7 @@ export function TopBar({
           <button
             type="button"
             onClick={onMenuClick}
-            className="lg:hidden p-2 -ml-2 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
+            className="lg:hidden p-2 -ml-2 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
             aria-label="Toggle menu"
           >
             <Menu className="h-5 w-5" />
@@ -43,21 +43,29 @@ export function TopBar({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Notification Bell */}
         <button
           type="button"
           onClick={onNotificationClick}
           className={cn(
-            'p-2 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors',
-            unreadNotificationCount > 0 && 'text-primary-600'
+            'relative p-2.5 rounded-xl transition-all duration-200',
+            unreadNotificationCount > 0
+              ? 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+              : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100'
           )}
           aria-label={`Notifications${unreadNotificationCount > 0 ? `, ${unreadNotificationCount} unread` : ''}`}
         >
-          <DotBadge count={unreadNotificationCount}>
-            <Bell className="h-5 w-5" />
+          <DotBadge count={unreadNotificationCount} pulse={unreadNotificationCount > 0}>
+            <Bell className={cn(
+              'h-5 w-5 transition-transform',
+              unreadNotificationCount > 0 && 'animate-[wiggle_1s_ease-in-out]'
+            )} />
           </DotBadge>
         </button>
+
+        {/* Divider */}
+        <div className="h-8 w-px bg-neutral-200" />
 
         {/* User Menu */}
         <UserMenu />

@@ -12,6 +12,7 @@ import {
   GraduationCap,
   User,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -23,23 +24,23 @@ import { cn } from '@/lib/utils/cn'
 import type { ProjectStatus, PairingStatus } from '@/types'
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
-  NOT_STARTED: { label: 'Not Started', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
-  IN_PROGRESS: { label: 'In Progress', color: 'text-info-600', bgColor: 'bg-info-50' },
-  COMPLETED: { label: 'Completed', color: 'text-success-600', bgColor: 'bg-success-50' },
-  ON_HOLD: { label: 'On Hold', color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  CANCELLED: { label: 'Cancelled', color: 'text-error-600', bgColor: 'bg-error-50' },
+  NOT_STARTED: { label: 'Not Started', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  IN_PROGRESS: { label: 'In Progress', color: 'text-sky-600', bgColor: 'bg-sky-100' },
+  COMPLETED: { label: 'Completed', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  ON_HOLD: { label: 'On Hold', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  CANCELLED: { label: 'Cancelled', color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
 const pairingStatusConfig: Record<PairingStatus, { label: string; color: string; bgColor: string }> = {
-  UNPAIRED: { label: 'Unpaired', color: 'text-error-600', bgColor: 'bg-error-50' },
-  PENDING_APPROVAL: { label: 'Pending', color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  PAIRED: { label: 'Paired', color: 'text-success-600', bgColor: 'bg-success-50' },
+  UNPAIRED: { label: 'Unpaired', color: 'text-rose-600', bgColor: 'bg-rose-100' },
+  PENDING_APPROVAL: { label: 'Pending', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  PAIRED: { label: 'Paired', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
 }
 
 const riskConfig = {
-  LOW: { label: 'Low Risk', color: 'text-success-600', bgColor: 'bg-success-50' },
-  MEDIUM: { label: 'Medium Risk', color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  HIGH: { label: 'High Risk', color: 'text-error-600', bgColor: 'bg-error-50' },
+  LOW: { label: 'Low Risk', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  MEDIUM: { label: 'Medium Risk', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  HIGH: { label: 'High Risk', color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
 export function ProjectOverview() {
@@ -82,55 +83,62 @@ export function ProjectOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <FolderKanban className="h-7 w-7 text-primary-600" />
-            Project & Pairing Overview
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Monitor all FYP projects and student-supervisor pairings
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link to={ROUTES.COMMITTEE.UNPAIRED_STUDENTS}>
-            <Button variant="outline">
-              <UserX className="h-4 w-4 mr-2" />
-              Unpaired Students ({stats.unpaired})
-            </Button>
-          </Link>
-          <Link to={ROUTES.COMMITTEE.EXPORT_OVERVIEW}>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </Link>
+      {/* Header - Gradient Style */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <FolderKanban className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Project & Pairing Overview</h1>
+              <p className="text-stone-300 mt-1">
+                Monitor all FYP projects and student-supervisor pairings
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Link to={ROUTES.COMMITTEE.UNPAIRED_STUDENTS}>
+              <Button variant="outline" className="border-stone-600 text-stone-200 hover:bg-stone-700">
+                <UserX className="h-4 w-4 mr-2" />
+                Unpaired ({stats.unpaired})
+              </Button>
+            </Link>
+            <Link to={ROUTES.COMMITTEE.EXPORT_OVERVIEW}>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4 text-center">
-          <p className="text-3xl font-bold text-neutral-900">{stats.total}</p>
-          <p className="text-sm text-neutral-500">Total Projects</p>
+        <Card className="p-4 text-center border-l-4 border-l-stone-400">
+          <p className="text-3xl font-bold text-stone-800">{stats.total}</p>
+          <p className="text-sm text-stone-600 font-medium">Total Projects</p>
         </Card>
-        <Card className="p-4 text-center">
-          <p className="text-3xl font-bold text-success-600">{stats.paired}</p>
-          <p className="text-sm text-neutral-500">Paired Students</p>
+        <Card className="p-4 text-center border-l-4 border-l-emerald-500">
+          <p className="text-3xl font-bold text-emerald-600">{stats.paired}</p>
+          <p className="text-sm text-stone-600 font-medium">Paired Students</p>
         </Card>
-        <Card className="p-4 text-center">
-          <p className="text-3xl font-bold text-error-600">{stats.unpaired}</p>
-          <p className="text-sm text-neutral-500">Unpaired Students</p>
+        <Card className="p-4 text-center border-l-4 border-l-rose-500">
+          <p className="text-3xl font-bold text-rose-600">{stats.unpaired}</p>
+          <p className="text-sm text-stone-600 font-medium">Unpaired Students</p>
         </Card>
-        <Card className="p-4 text-center">
-          <p className="text-3xl font-bold text-warning-600">{stats.highRisk}</p>
-          <p className="text-sm text-neutral-500">High Risk</p>
+        <Card className="p-4 text-center border-l-4 border-l-amber-500">
+          <p className="text-3xl font-bold text-amber-600">{stats.highRisk}</p>
+          <p className="text-sm text-stone-600 font-medium">High Risk</p>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -146,7 +154,7 @@ export function ProjectOverview() {
             <select
               value={cycleFilter}
               onChange={(e) => setCycleFilter(e.target.value as 'FYP1' | 'FYP2' | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Cycles</option>
               <option value="FYP1">FYP1</option>
@@ -155,7 +163,7 @@ export function ProjectOverview() {
             <select
               value={pairingFilter}
               onChange={(e) => setPairingFilter(e.target.value as PairingStatus | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Pairing Status</option>
               <option value="PAIRED">Paired</option>
@@ -165,7 +173,7 @@ export function ProjectOverview() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Status</option>
               <option value="NOT_STARTED">Not Started</option>
@@ -180,7 +188,7 @@ export function ProjectOverview() {
       {/* Quick Links */}
       <div className="flex gap-3">
         <Link to={ROUTES.COMMITTEE.SUPERVISOR_LOAD}>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-stone-300 hover:bg-stone-100">
             <Users className="h-4 w-4 mr-2" />
             Supervisor Load Analysis
           </Button>
@@ -188,7 +196,7 @@ export function ProjectOverview() {
       </div>
 
       {/* Projects List */}
-      <div className="space-y-3">
+      <div className="flex flex-col gap-4">
         {filteredProjects && filteredProjects.length > 0 ? (
           filteredProjects.map((project) => {
             const pairingStatus = pairingStatusConfig[project.pairingStatus]
@@ -200,7 +208,7 @@ export function ProjectOverview() {
                 key={project.projectId}
                 to={ROUTES.COMMITTEE.PROJECT_DETAIL.replace(':id', String(project.projectId))}
               >
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="group p-4 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 border-l-stone-300">
                   <div className="flex items-center gap-4">
                     {/* Progress Circle */}
                     <div className="relative w-14 h-14 flex-shrink-0">
@@ -216,8 +224,8 @@ export function ProjectOverview() {
                         />
                         <circle
                           className={cn(
-                            project.progress >= 70 ? 'text-success-500' :
-                            project.progress >= 40 ? 'text-warning-500' : 'text-error-500'
+                            project.progress >= 70 ? 'text-emerald-500' :
+                            project.progress >= 40 ? 'text-amber-500' : 'text-rose-500'
                           )}
                           strokeWidth="4"
                           strokeDasharray={`${project.progress * 1.51} 151`}
@@ -238,7 +246,7 @@ export function ProjectOverview() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="font-semibold text-neutral-900 line-clamp-1">
+                          <h3 className="font-semibold text-stone-800 line-clamp-1 group-hover:text-amber-700 transition-colors">
                             {project.title || 'Untitled Project'}
                           </h3>
                           <div className="flex items-center gap-3 mt-1 text-sm text-neutral-600">
@@ -254,7 +262,7 @@ export function ProjectOverview() {
                             )}
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-neutral-400 flex-shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-stone-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
 
                       {/* Tags */}
@@ -298,8 +306,10 @@ export function ProjectOverview() {
           })
         ) : (
           <Card className="p-12 text-center">
-            <FolderKanban className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No projects found</h3>
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FolderKanban className="h-8 w-8 text-stone-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-stone-800">No projects found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || cycleFilter !== 'ALL' || statusFilter !== 'ALL' || pairingFilter !== 'ALL'
                 ? 'Try adjusting your filters'
@@ -311,16 +321,16 @@ export function ProjectOverview() {
 
       {/* Summary */}
       {data && data.projects.length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-neutral-600">
+            <span className="text-stone-600 font-medium">
               Showing {filteredProjects?.length ?? 0} of {data.total} projects
             </span>
-            <div className="flex items-center gap-4">
-              <span className="text-info-600">
+            <div className="flex items-center gap-4 font-medium">
+              <span className="text-sky-600">
                 {data.projects.filter((p) => p.cycle === 'FYP1').length} FYP1
               </span>
-              <span className="text-accent-600">
+              <span className="text-violet-600">
                 {data.projects.filter((p) => p.cycle === 'FYP2').length} FYP2
               </span>
             </div>

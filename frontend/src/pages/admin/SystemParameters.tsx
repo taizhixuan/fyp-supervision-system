@@ -9,6 +9,7 @@ import {
   User,
   AlertTriangle,
   Info,
+  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -18,13 +19,13 @@ import { useSystemParameters, useUpdateParameter } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
 import type { ParameterCategory, SystemParameter } from '@/types'
 
-const categoryConfig: Record<ParameterCategory, { label: string; color: string; icon: typeof Settings }> = {
-  GENERAL: { label: 'General', color: 'text-primary-600', icon: Settings },
-  QUOTAS: { label: 'Quotas & Limits', color: 'text-info-600', icon: AlertTriangle },
-  MEETINGS: { label: 'Meetings', color: 'text-accent-600', icon: Clock },
-  PROPOSALS: { label: 'Proposals', color: 'text-success-600', icon: Info },
-  NOTIFICATIONS: { label: 'Notifications', color: 'text-warning-600', icon: Info },
-  SECURITY: { label: 'Security', color: 'text-error-600', icon: AlertTriangle },
+const categoryConfig: Record<ParameterCategory, { label: string; color: string; bgColor: string; icon: typeof Settings }> = {
+  GENERAL: { label: 'General', color: 'text-stone-700', bgColor: 'bg-stone-100 border-stone-200', icon: Settings },
+  QUOTAS: { label: 'Quotas & Limits', color: 'text-sky-700', bgColor: 'bg-sky-100 border-sky-200', icon: AlertTriangle },
+  MEETINGS: { label: 'Meetings', color: 'text-violet-700', bgColor: 'bg-violet-100 border-violet-200', icon: Clock },
+  PROPOSALS: { label: 'Proposals', color: 'text-emerald-700', bgColor: 'bg-emerald-100 border-emerald-200', icon: Info },
+  NOTIFICATIONS: { label: 'Notifications', color: 'text-amber-700', bgColor: 'bg-amber-100 border-amber-200', icon: Info },
+  SECURITY: { label: 'Security', color: 'text-rose-700', bgColor: 'bg-rose-100 border-rose-200', icon: AlertTriangle },
 }
 
 export function SystemParameters() {
@@ -76,7 +77,7 @@ export function SystemParameters() {
         <select
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
-          className="px-3 py-1.5 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+          className="px-3 py-1.5 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
         >
           <option value="true">Enabled</option>
           <option value="false">Disabled</option>
@@ -88,7 +89,7 @@ export function SystemParameters() {
         type={param.type === 'NUMBER' ? 'number' : 'text'}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
-        className="w-48"
+        className="w-48 border-stone-300 focus:border-amber-500 focus:ring-amber-500/20"
       />
     )
   }
@@ -97,14 +98,14 @@ export function SystemParameters() {
     if (param.type === 'BOOLEAN') {
       return (
         <span className={cn(
-          'px-2 py-0.5 rounded-full text-xs font-medium',
-          param.value === 'true' ? 'bg-success-50 text-success-700' : 'bg-neutral-100 text-neutral-600'
+          'px-2.5 py-1 rounded-full text-xs font-medium',
+          param.value === 'true' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-stone-100 text-stone-600 border border-stone-200'
         )}>
           {param.value === 'true' ? 'Enabled' : 'Disabled'}
         </span>
       )
     }
-    return <span className="font-mono text-sm">{param.value}</span>
+    return <span className="font-mono text-sm bg-stone-100 px-2 py-1 rounded text-stone-700">{param.value}</span>
   }
 
   if (isLoading) {
@@ -126,72 +127,82 @@ export function SystemParameters() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-          <Settings className="h-7 w-7 text-primary-600" />
-          System Parameters
-        </h1>
-        <p className="text-neutral-600 mt-1">
-          Configure system-wide settings and policies
-        </p>
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-600/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="relative flex items-start gap-4">
+          <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+            <Settings className="h-7 w-7 text-amber-400" />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              System Parameters
+              <Sparkles className="h-5 w-5 text-amber-400" />
+            </h1>
+            <p className="text-stone-300 mt-1">
+              Configure system-wide settings and policies
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Category Tabs */}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setSelectedCategory('ALL')}
           className={cn(
-            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+            'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border',
             selectedCategory === 'ALL'
-              ? 'bg-primary-500 text-white'
-              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+              : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200 hover:border-stone-300 hover:shadow-sm'
           )}
         >
           All
         </button>
-        {Object.entries(categoryConfig).map(([key, config]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setSelectedCategory(key as ParameterCategory)}
-            className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-              selectedCategory === key
-                ? 'bg-primary-500 text-white'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            )}
-          >
-            {config.label}
-          </button>
-        ))}
+        {Object.entries(categoryConfig).map(([key, config]) => {
+          const Icon = config.icon
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedCategory(key as ParameterCategory)}
+              className={cn(
+                'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border flex items-center gap-2',
+                selectedCategory === key
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+                  : cn(config.bgColor, config.color, 'hover:shadow-sm hover:scale-[1.02]')
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {config.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Search */}
-      <Card className="p-4">
+      <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl p-4 border border-stone-200">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <Input
             type="text"
             placeholder="Search parameters..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-white border-stone-200 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
-      </Card>
+      </div>
 
-      {/* Parameters List */}
       {selectedCategory === 'ALL' ? (
-        // Grouped view
         Object.entries(groupedParams || {}).map(([category, params]) => {
           const config = categoryConfig[category as ParameterCategory]
           const Icon = config.icon
           return (
-            <Card key={category} className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                <Icon className={cn('h-5 w-5', config.color)} />
+            <Card key={category} className="p-6 border-stone-200 hover:shadow-lg transition-shadow duration-200">
+              <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                <div className={cn('p-2 rounded-lg border', config.bgColor)}>
+                  <Icon className={cn('h-5 w-5', config.color)} />
+                </div>
                 {config.label}
               </h3>
               <div className="space-y-4">
@@ -215,8 +226,7 @@ export function SystemParameters() {
           )
         })
       ) : (
-        // Single category view
-        <Card className="p-6">
+        <Card className="p-6 border-stone-200 hover:shadow-lg transition-shadow duration-200">
           <div className="space-y-4">
             {filteredParams?.map((param) => (
               <ParameterRow
@@ -237,12 +247,13 @@ export function SystemParameters() {
         </Card>
       )}
 
-      {/* Empty State */}
       {(!filteredParams || filteredParams.length === 0) && (
-        <Card className="p-12 text-center">
-          <Settings className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900">No parameters found</h3>
-          <p className="text-neutral-500 mt-1">
+        <Card className="p-12 text-center border-stone-200">
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Settings className="h-8 w-8 text-stone-400" />
+          </div>
+          <h3 className="text-lg font-medium text-stone-900">No parameters found</h3>
+          <p className="text-stone-500 mt-1">
             {searchQuery ? 'Try adjusting your search' : 'No parameters available'}
           </p>
         </Card>
@@ -277,15 +288,15 @@ function ParameterRow({
   isSaving,
 }: ParameterRowProps) {
   return (
-    <div className="flex items-start justify-between gap-4 p-4 bg-neutral-50 rounded-lg">
+    <div className="flex items-start justify-between gap-4 p-4 bg-gradient-to-r from-stone-50 to-white rounded-xl border border-stone-200 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h4 className="font-medium text-neutral-900">{param.label}</h4>
-          <span className="text-xs text-neutral-400 font-mono">{param.key}</span>
+          <h4 className="font-medium text-stone-900">{param.label}</h4>
+          <span className="text-xs text-stone-400 font-mono bg-stone-100 px-2 py-0.5 rounded">{param.key}</span>
         </div>
-        <p className="text-sm text-neutral-500 mt-0.5">{param.description}</p>
+        <p className="text-sm text-stone-500 mt-0.5">{param.description}</p>
         {param.lastModifiedAt && (
-          <div className="flex items-center gap-2 mt-2 text-xs text-neutral-400">
+          <div className="flex items-center gap-2 mt-2 text-xs text-stone-400">
             <Clock className="h-3.5 w-3.5" />
             <span>
               Modified by {param.lastModifiedBy} on{' '}
@@ -303,10 +314,11 @@ function ParameterRow({
               size="sm"
               onClick={onSave}
               disabled={isSaving}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
             >
               {isSaving ? <Spinner size="sm" /> : <Check className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel}>
+            <Button variant="ghost" size="sm" onClick={onCancel} className="text-stone-600 hover:text-stone-800 hover:bg-stone-100">
               <X className="h-4 w-4" />
             </Button>
           </>
@@ -314,7 +326,7 @@ function ParameterRow({
           <>
             {renderValue(param)}
             {param.isEditable && (
-              <Button variant="ghost" size="sm" onClick={onEdit}>
+              <Button variant="ghost" size="sm" onClick={onEdit} className="text-stone-600 hover:text-amber-600 hover:bg-amber-50">
                 <Edit className="h-4 w-4" />
               </Button>
             )}

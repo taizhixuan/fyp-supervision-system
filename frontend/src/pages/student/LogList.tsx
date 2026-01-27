@@ -10,6 +10,12 @@ import {
   AlertCircle,
   Search,
   ChevronRight,
+  ClipboardList,
+  TrendingUp,
+  Edit3,
+  MessageSquare,
+  AlertTriangle,
+  BookOpen,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, Input } from '@/components/ui'
 import { useLogList } from '@/lib/hooks/useStudent'
@@ -82,11 +88,11 @@ const SAMPLE_LOGS: SupervisionLog[] = [
   },
 ]
 
-const statusConfig: Record<LogStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; icon: typeof Clock }> = {
-  DRAFT: { label: 'Draft', variant: 'default', icon: FileText },
-  PENDING: { label: 'Pending Review', variant: 'warning', icon: Clock },
-  APPROVED: { label: 'Approved', variant: 'success', icon: CheckCircle },
-  REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', icon: AlertCircle },
+const statusConfig: Record<LogStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; icon: typeof Clock; color: string; bgColor: string }> = {
+  DRAFT: { label: 'Draft', variant: 'default', icon: Edit3, color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  PENDING: { label: 'Pending Review', variant: 'warning', icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  APPROVED: { label: 'Approved', variant: 'success', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', icon: AlertCircle, color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
 export function LogList() {
@@ -121,107 +127,176 @@ export function LogList() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Supervision Logs</h1>
-          <p className="text-neutral-600 mt-1">Track your weekly progress and activities</p>
+      {/* Header with Gradient */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+              <ClipboardList className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Supervision Logs</h1>
+              <p className="text-stone-300 mt-0.5">Track your weekly progress and activities</p>
+            </div>
+          </div>
+          <Link to={ROUTES.STUDENT.LOG_NEW}>
+            <Button
+              variant="primary"
+              leftIcon={<Plus className="h-4 w-4" />}
+              className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/25"
+            >
+              New Log Entry
+            </Button>
+          </Link>
         </div>
-        <Link to={ROUTES.STUDENT.LOG_NEW}>
-          <Button variant="primary" leftIcon={<Plus className="h-4 w-4" />}>
-            New Log Entry
-          </Button>
-        </Link>
       </div>
 
       {/* Alert for pending submission */}
       {draftCount > 0 && (
-        <Card className="bg-warning-50 border-warning-200">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-warning-600 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-warning-900">
+        <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/25">
+              <AlertTriangle className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-900">
                 You have {draftCount} draft log{draftCount > 1 ? 's' : ''} pending submission
               </p>
-              <p className="text-sm text-warning-700">
+              <p className="text-sm text-amber-700">
                 Remember to submit your weekly log before the deadline
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-primary-600">{logs.length}</div>
-          <p className="text-sm text-neutral-600">Total Logs</p>
+        <Card className="relative overflow-hidden border-l-4 border-l-primary-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <BookOpen className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-primary-600">{logs.length}</div>
+              <p className="text-sm text-neutral-600">Total Logs</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-success-600">{approvedCount}</div>
-          <p className="text-sm text-neutral-600">Approved</p>
+        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-emerald-600">{approvedCount}</div>
+              <p className="text-sm text-neutral-600">Approved</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-warning-600">{pendingCount}</div>
-          <p className="text-sm text-neutral-600">Pending</p>
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
+              <p className="text-sm text-neutral-600">Pending</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-neutral-600">{draftCount}</div>
-          <p className="text-sm text-neutral-600">Drafts</p>
+        <Card className="relative overflow-hidden border-l-4 border-l-stone-400">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center">
+              <Edit3 className="h-5 w-5 text-stone-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-stone-600">{draftCount}</div>
+              <p className="text-sm text-neutral-600">Drafts</p>
+            </div>
+          </div>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <Input
+      <Card className="bg-gradient-to-r from-stone-50 to-neutral-50 border-stone-200">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-stone-400" />
+            </div>
+            <input
+              type="text"
               placeholder="Search logs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={<Search className="h-4 w-4" />}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-neutral-500" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-stone-200 rounded-lg flex items-center justify-center">
+              <Filter className="h-4 w-4 text-stone-600" />
+            </div>
             <div className="flex flex-wrap gap-2">
-              {['all', 'DRAFT', 'PENDING', 'APPROVED', 'REVISION_REQUIRED'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                    statusFilter === status
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                  )}
-                >
-                  {status === 'all' ? 'All' : statusConfig[status as LogStatus]?.label}
-                </button>
-              ))}
+              {['all', 'DRAFT', 'PENDING', 'APPROVED', 'REVISION_REQUIRED'].map((status) => {
+                const config = status !== 'all' ? statusConfig[status as LogStatus] : null
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={cn(
+                      'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
+                      statusFilter === status
+                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                        : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+                    )}
+                  >
+                    {status === 'all' ? 'All' : config?.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
       </Card>
 
       {/* Logs List */}
-      <div className="space-y-3">
-        {filteredLogs.map((log) => (
-          <LogCard key={log.logId} log={log} />
-        ))}
+      <div className="mt-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
+            <FileText className="h-4 w-4 text-stone-600" />
+          </div>
+          <h2 className="text-lg font-bold text-stone-800">Log Entries</h2>
+          <span className="px-2.5 py-0.5 bg-stone-100 text-stone-600 text-sm font-semibold rounded-full">
+            {filteredLogs.length}
+          </span>
+        </div>
+        <div className="flex flex-col gap-5">
+          {filteredLogs.map((log) => (
+            <LogCard key={log.logId} log={log} />
+          ))}
+        </div>
       </div>
 
       {filteredLogs.length === 0 && (
-        <Card className="text-center py-12">
-          <FileText className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No logs found</h3>
-          <p className="text-neutral-500 mb-4">
+        <Card className="text-center py-16 bg-gradient-to-br from-stone-50 to-neutral-50">
+          <div className="w-16 h-16 bg-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FileText className="h-8 w-8 text-stone-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-stone-800 mb-2">No logs found</h3>
+          <p className="text-stone-500 mb-6">
             {statusFilter === 'all'
               ? 'Start tracking your weekly progress'
               : 'No logs match the selected filter'}
           </p>
           <Link to={ROUTES.STUDENT.LOG_NEW}>
-            <Button variant="primary">Create First Log</Button>
+            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 border-0">
+              Create First Log
+            </Button>
           </Link>
         </Card>
       )}
@@ -235,80 +310,110 @@ function LogCard({ log }: { log: SupervisionLog }) {
 
   return (
     <Link to={ROUTES.STUDENT.LOG_DETAIL.replace(':id', log.logId)}>
-      <Card hover className={cn(
-        'transition-all',
-        log.status === 'REVISION_REQUIRED' && 'border-l-4 border-l-error-500'
+      <Card className={cn(
+        'transition-all duration-200 hover:shadow-lg group p-5',
+        log.status === 'REVISION_REQUIRED' && 'border-l-4 border-l-rose-500 bg-rose-50/30',
+        log.status === 'APPROVED' && 'border-l-4 border-l-emerald-500',
+        log.status === 'PENDING' && 'border-l-4 border-l-amber-500',
+        log.status === 'DRAFT' && 'border-l-4 border-l-stone-300 hover:border-l-amber-400'
       )}>
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-5">
           {/* Week Badge */}
-          <div className="flex-shrink-0 w-16 text-center">
-            <div className="bg-primary-100 rounded-lg p-2">
-              <p className="text-xs text-primary-600 font-medium">WEEK</p>
-              <p className="text-2xl font-bold text-primary-700">{log.weekNumber}</p>
+          <div className="flex-shrink-0">
+            <div className="w-20 bg-gradient-to-br from-stone-800 to-stone-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
+              <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Week</p>
+              <p className="text-3xl font-bold text-white">{log.weekNumber}</p>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-neutral-900">Week {log.weekNumber} Log</h3>
-                <p className="text-sm text-neutral-500">
+                <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">
+                  Week {log.weekNumber} Progress Log
+                </h3>
+                <p className="text-sm text-stone-500 flex items-center gap-1.5 mt-0.5">
+                  <Calendar className="h-3.5 w-3.5" />
                   {log.submittedAt
-                    ? `Submitted ${new Date(log.submittedAt).toLocaleDateString('en-MY')}`
-                    : `Created ${new Date(log.createdAt).toLocaleDateString('en-MY')}`}
+                    ? `Submitted ${new Date(log.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : `Created ${new Date(log.createdAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                 </p>
               </div>
-              <Badge variant={config.variant} size="sm">
-                <StatusIcon className="h-3 w-3 mr-1" />
+              <div className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm',
+                config.bgColor,
+                config.color
+              )}>
+                <StatusIcon className="h-4 w-4" />
                 {config.label}
-              </Badge>
+              </div>
             </div>
 
             {/* Activities Summary */}
             {log.activitiesCompleted && (
-              <p className="mt-2 text-sm text-neutral-600 line-clamp-2">
+              <p className="mt-3 text-sm text-stone-600 line-clamp-2 bg-stone-50 rounded-lg p-3 border border-stone-100">
                 {log.activitiesCompleted}
               </p>
             )}
 
             {/* Progress & Meta */}
-            <div className="mt-3 flex items-center gap-4">
+            <div className="mt-4 flex items-center gap-4">
               {/* Progress Bar */}
-              <div className="flex items-center gap-2 flex-1">
-                <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="flex-1 h-2.5 bg-stone-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-primary-500 rounded-full transition-all"
+                    className={cn(
+                      'h-full rounded-full transition-all',
+                      log.progressPercentage >= 75 ? 'bg-emerald-500' :
+                      log.progressPercentage >= 50 ? 'bg-amber-500' :
+                      log.progressPercentage >= 25 ? 'bg-sky-500' : 'bg-stone-400'
+                    )}
                     style={{ width: `${log.progressPercentage}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-neutral-600">
+                <span className={cn(
+                  'text-sm font-bold px-2 py-0.5 rounded',
+                  log.progressPercentage >= 75 ? 'bg-emerald-100 text-emerald-700' :
+                  log.progressPercentage >= 50 ? 'bg-amber-100 text-amber-700' :
+                  log.progressPercentage >= 25 ? 'bg-sky-100 text-sky-700' : 'bg-stone-100 text-stone-600'
+                )}>
                   {log.progressPercentage}%
                 </span>
               </div>
 
               {log.meetingId && (
-                <span className="text-xs text-neutral-400 flex items-center gap-1">
+                <span className="text-xs text-stone-500 flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-lg">
                   <Calendar className="h-3 w-3" />
                   Meeting linked
                 </span>
               )}
 
-              <ChevronRight className="h-4 w-4 text-neutral-400" />
+              <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
+                <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-amber-600 transition-colors" />
+              </div>
             </div>
 
             {/* Supervisor Feedback Preview */}
             {log.supervisorFeedback && log.status === 'APPROVED' && (
-              <div className="mt-3 p-2 bg-success-50 rounded text-xs text-success-700">
-                <strong>Feedback:</strong> {log.supervisorFeedback.slice(0, 100)}
-                {log.supervisorFeedback.length > 100 && '...'}
+              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2">
+                <MessageSquare className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-emerald-700 mb-1">Supervisor Feedback</p>
+                  <p className="text-sm text-emerald-600">
+                    {log.supervisorFeedback.slice(0, 100)}
+                    {log.supervisorFeedback.length > 100 && '...'}
+                  </p>
+                </div>
               </div>
             )}
 
             {log.status === 'REVISION_REQUIRED' && (
-              <div className="mt-3 p-2 bg-error-50 rounded text-xs text-error-700">
-                <AlertCircle className="h-3 w-3 inline mr-1" />
-                Revision required - Check supervisor feedback
+              <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0" />
+                <p className="text-sm font-medium text-rose-700">
+                  Revision required - Check supervisor feedback
+                </p>
               </div>
             )}
           </div>

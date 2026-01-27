@@ -214,7 +214,7 @@ export function CreateMeeting() {
                 </label>
                 <Input
                   {...register('location')}
-                  placeholder="e.g., FCM Building, Room 502"
+                  placeholder="e.g., FCI Building, Room 502"
                 />
               </div>
             )}

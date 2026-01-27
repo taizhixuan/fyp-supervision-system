@@ -16,6 +16,9 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  GraduationCap,
+  Award,
+  Target,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -142,33 +145,44 @@ export function SupervisorProfile() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">My Profile</h1>
-          <p className="text-neutral-600 mt-1">Manage your supervisor profile and preferences</p>
-        </div>
-        {!isEditing ? (
-          <Button onClick={handleStartEditing}>
-            <Edit2 className="h-4 w-4 mr-2" />
-            Edit Profile
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleCancelEditing}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit(onSubmit)} disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? (
-                <Spinner size="sm" className="mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
+      {/* Header - Gradient Style */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <User className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">My Profile</h1>
+              <p className="text-stone-300 mt-1">Manage your supervisor profile and preferences</p>
+            </div>
           </div>
-        )}
+          {!isEditing ? (
+            <Button onClick={handleStartEditing} className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleCancelEditing} className="border-stone-600 text-white hover:bg-stone-700">
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit(onSubmit)} disabled={updateProfile.isPending} className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">
+                {updateProfile.isPending ? (
+                  <Spinner size="sm" className="mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -176,10 +190,10 @@ export function SupervisorProfile() {
           {/* Left Column - Basic Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* Profile Card */}
-            <Card>
-              <div className="p-6 text-center">
-                <div className="w-24 h-24 mx-auto bg-primary-100 rounded-full flex items-center justify-center mb-4">
-                  <User className="h-12 w-12 text-primary-600" />
+            <Card className="overflow-hidden">
+              <div className="bg-gradient-to-br from-stone-100 to-stone-50 p-6 text-center">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center mb-4 ring-4 ring-white shadow-lg">
+                  <GraduationCap className="h-12 w-12 text-amber-600" />
                 </div>
                 {isEditing ? (
                   <Input
@@ -188,7 +202,7 @@ export function SupervisorProfile() {
                     error={errors.fullName?.message}
                   />
                 ) : (
-                  <h2 className="text-xl font-semibold text-neutral-900">{profile?.fullName}</h2>
+                  <h2 className="text-xl font-bold text-stone-800">{profile?.fullName}</h2>
                 )}
                 {isEditing ? (
                   <Input
@@ -197,96 +211,117 @@ export function SupervisorProfile() {
                     error={errors.position?.message}
                   />
                 ) : (
-                  <p className="text-neutral-600">{profile?.position}</p>
+                  <p className="text-stone-600 font-medium">{profile?.position}</p>
                 )}
-                <p className="text-sm text-neutral-500 mt-1">{profile?.department}</p>
+                <p className="text-sm text-stone-500 mt-1">{profile?.department}</p>
 
                 {/* Availability Status */}
-                <div className="mt-4 pt-4 border-t border-neutral-200">
+                <div className="mt-4 pt-4 border-t border-stone-200">
                   {isEditing ? (
                     <label className="flex items-center justify-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         {...register('isAcceptingStudents')}
-                        className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                        className="w-4 h-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
                       />
-                      <span className="text-sm text-neutral-700">Accepting new students</span>
+                      <span className="text-sm text-stone-700">Accepting new students</span>
                     </label>
                   ) : (
                     <span className={cn(
-                      'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
+                      'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold',
                       profile?.isAcceptingStudents
-                        ? 'bg-success-100 text-success-700'
-                        : 'bg-neutral-100 text-neutral-600'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-stone-200 text-stone-600'
                     )}>
-                      {profile?.isAcceptingStudents ? 'Accepting Students' : 'Not Accepting'}
+                      {profile?.isAcceptingStudents ? (
+                        <>
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                          Accepting Students
+                        </>
+                      ) : 'Not Accepting'}
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Contact Info */}
-              <div className="px-6 pb-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-neutral-400" />
-                  {isEditing ? (
-                    <Input
-                      {...register('email')}
-                      type="email"
-                      className="flex-1"
-                      error={errors.email?.message}
-                    />
-                  ) : (
-                    <span className="text-sm text-neutral-600">{profile?.email}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-neutral-400" />
-                  {isEditing ? (
-                    <Input
-                      {...register('phoneNumber')}
-                      className="flex-1"
-                      placeholder="Phone number"
-                    />
-                  ) : (
-                    <span className="text-sm text-neutral-600">{profile?.phoneNumber || 'Not provided'}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-neutral-400" />
-                  {isEditing ? (
-                    <Input
-                      {...register('officeLocation')}
-                      className="flex-1"
-                      placeholder="Office location"
-                    />
-                  ) : (
-                    <span className="text-sm text-neutral-600">{profile?.officeLocation || 'Not provided'}</span>
-                  )}
+              <div className="p-6 space-y-4">
+                <h3 className="text-sm font-semibold text-stone-800 uppercase tracking-wider">Contact Info</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                    <div className="p-2 bg-sky-100 rounded-lg">
+                      <Mail className="h-4 w-4 text-sky-600" />
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        {...register('email')}
+                        type="email"
+                        className="flex-1"
+                        error={errors.email?.message}
+                      />
+                    ) : (
+                      <span className="text-sm text-stone-600">{profile?.email}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <Phone className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        {...register('phoneNumber')}
+                        className="flex-1"
+                        placeholder="Phone number"
+                      />
+                    ) : (
+                      <span className="text-sm text-stone-600">{profile?.phoneNumber || 'Not provided'}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <MapPin className="h-4 w-4 text-amber-600" />
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        {...register('officeLocation')}
+                        className="flex-1"
+                        placeholder="Office location"
+                      />
+                    ) : (
+                      <span className="text-sm text-stone-600">{profile?.officeLocation || 'Not provided'}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
 
             {/* Supervision Stats */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4">Supervision Capacity</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-neutral-600">Current Students</span>
-                    <span className="font-medium">{profile?.currentSupervisionCount ?? 0}</span>
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-100 rounded-lg">
+                    <Users className="h-5 w-5 text-violet-600" />
                   </div>
-                  <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                  <h3 className="font-semibold text-stone-800">Supervision Capacity</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-stone-600">Current Students</span>
+                    <span className="text-lg font-bold text-stone-800">{profile?.currentSupervisionCount ?? 0}</span>
+                  </div>
+                  <div className="h-3 bg-stone-100 rounded-full overflow-hidden shadow-inner">
                     <div
-                      className="h-full bg-primary-500 rounded-full"
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all"
                       style={{
                         width: `${((profile?.currentSupervisionCount ?? 0) / (profile?.maxSupervisionQuota ?? 1)) * 100}%`,
                       }}
                     />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">Max Quota</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50">
+                  <span className="text-sm font-medium text-stone-600">Max Quota</span>
                   {isEditing ? (
                     <Input
                       type="number"
@@ -296,22 +331,29 @@ export function SupervisorProfile() {
                       max={20}
                     />
                   ) : (
-                    <span className="font-medium">{profile?.maxSupervisionQuota}</span>
+                    <span className="font-bold text-stone-800">{profile?.maxSupervisionQuota}</span>
                   )}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">Available Slots</span>
-                  <span className="font-medium text-success-600">{profile?.availableSlots}</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50">
+                  <span className="text-sm font-medium text-emerald-700">Available Slots</span>
+                  <span className="font-bold text-emerald-600">{profile?.availableSlots}</span>
                 </div>
               </div>
             </Card>
 
             {/* External Links */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4">External Profiles</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-neutral-600 block mb-1">LinkedIn</label>
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-sky-100 rounded-lg">
+                    <ExternalLink className="h-5 w-5 text-sky-600" />
+                  </div>
+                  <h3 className="font-semibold text-stone-800">External Profiles</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block mb-2">LinkedIn</label>
                   {isEditing ? (
                     <Input
                       {...register('linkedInUrl')}
@@ -323,17 +365,17 @@ export function SupervisorProfile() {
                       href={profile.linkedInUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary-600 hover:underline flex items-center gap-1"
+                      className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center gap-2"
                     >
                       View Profile
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-4 w-4" />
                     </a>
                   ) : (
-                    <span className="text-sm text-neutral-400">Not provided</span>
+                    <span className="text-sm text-stone-400">Not provided</span>
                   )}
                 </div>
-                <div>
-                  <label className="text-sm text-neutral-600 block mb-1">Google Scholar</label>
+                <div className="p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block mb-2">Google Scholar</label>
                   {isEditing ? (
                     <Input
                       {...register('googleScholarUrl')}
@@ -345,13 +387,13 @@ export function SupervisorProfile() {
                       href={profile.googleScholarUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary-600 hover:underline flex items-center gap-1"
+                      className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center gap-2"
                     >
                       View Profile
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-4 w-4" />
                     </a>
                   ) : (
-                    <span className="text-sm text-neutral-400">Not provided</span>
+                    <span className="text-sm text-stone-400">Not provided</span>
                   )}
                 </div>
               </div>
@@ -361,195 +403,225 @@ export function SupervisorProfile() {
           {/* Right Column - Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Bio */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-neutral-400" />
-                About
-              </h3>
-              {isEditing ? (
-                <textarea
-                  {...register('bio')}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Write a brief bio about yourself..."
-                />
-              ) : (
-                <p className="text-neutral-600">{profile?.bio || 'No bio provided.'}</p>
-              )}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <Briefcase className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <h3 className="font-semibold text-stone-800">About</h3>
+                </div>
+              </div>
+              <div className="p-5">
+                {isEditing ? (
+                  <textarea
+                    {...register('bio')}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
+                    placeholder="Write a brief bio about yourself..."
+                  />
+                ) : (
+                  <p className="text-stone-600 leading-relaxed">{profile?.bio || 'No bio provided.'}</p>
+                )}
+              </div>
             </Card>
 
             {/* Research Areas */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-neutral-400" />
-                Research Areas
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {(isEditing ? watchedResearchAreas : profile?.researchAreas)?.map((area, index) => (
-                  <span
-                    key={index}
-                    className={cn(
-                      'px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm',
-                      isEditing && 'flex items-center gap-1'
-                    )}
-                  >
-                    {area}
-                    {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() => removeFromArray('researchAreas', index)}
-                        className="ml-1 text-primary-500 hover:text-primary-700"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                ))}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-sky-100 rounded-lg">
+                    <BookOpen className="h-5 w-5 text-sky-600" />
+                  </div>
+                  <h3 className="font-semibold text-stone-800">Research Areas</h3>
+                </div>
               </div>
-              {isEditing && (
-                <div className="flex items-center gap-2 mt-3">
-                  <Input
-                    value={newResearchArea}
-                    onChange={(e) => setNewResearchArea(e.target.value)}
-                    placeholder="Add research area"
-                    className="flex-1"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
+              <div className="p-5">
+                <div className="flex flex-wrap gap-2">
+                  {(isEditing ? watchedResearchAreas : profile?.researchAreas)?.map((area, index) => (
+                    <span
+                      key={index}
+                      className={cn(
+                        'px-4 py-2 bg-sky-100 text-sky-700 rounded-xl text-sm font-medium transition-all hover:bg-sky-200',
+                        isEditing && 'flex items-center gap-2 pr-2'
+                      )}
+                    >
+                      {area}
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => removeFromArray('researchAreas', index)}
+                          className="p-1 rounded-full bg-sky-200 hover:bg-sky-300 text-sky-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                {isEditing && (
+                  <div className="flex items-center gap-2 mt-4">
+                    <Input
+                      value={newResearchArea}
+                      onChange={(e) => setNewResearchArea(e.target.value)}
+                      placeholder="Add research area"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addToArray('researchAreas', newResearchArea)
+                          setNewResearchArea('')
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
                         addToArray('researchAreas', newResearchArea)
                         setNewResearchArea('')
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      addToArray('researchAreas', newResearchArea)
-                      setNewResearchArea('')
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              {errors.researchAreas && (
-                <p className="text-sm text-error-500 mt-1">{errors.researchAreas.message}</p>
-              )}
+                      }}
+                      className="border-sky-300 text-sky-600 hover:bg-sky-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                {errors.researchAreas && (
+                  <p className="text-sm text-rose-500 mt-2">{errors.researchAreas.message}</p>
+                )}
+              </div>
             </Card>
 
             {/* Expertise */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4">Technical Expertise</h3>
-              <div className="flex flex-wrap gap-2">
-                {(isEditing ? watchedExpertise : profile?.expertise)?.map((skill, index) => (
-                  <span
-                    key={index}
-                    className={cn(
-                      'px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-sm',
-                      isEditing && 'flex items-center gap-1'
-                    )}
-                  >
-                    {skill}
-                    {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() => removeFromArray('expertise', index)}
-                        className="ml-1 text-accent-500 hover:text-accent-700"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                ))}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-100 rounded-lg">
+                    <Award className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <h3 className="font-semibold text-stone-800">Technical Expertise</h3>
+                </div>
               </div>
-              {isEditing && (
-                <div className="flex items-center gap-2 mt-3">
-                  <Input
-                    value={newExpertise}
-                    onChange={(e) => setNewExpertise(e.target.value)}
-                    placeholder="Add expertise"
-                    className="flex-1"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
+              <div className="p-5">
+                <div className="flex flex-wrap gap-2">
+                  {(isEditing ? watchedExpertise : profile?.expertise)?.map((skill, index) => (
+                    <span
+                      key={index}
+                      className={cn(
+                        'px-4 py-2 bg-violet-100 text-violet-700 rounded-xl text-sm font-medium transition-all hover:bg-violet-200',
+                        isEditing && 'flex items-center gap-2 pr-2'
+                      )}
+                    >
+                      {skill}
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => removeFromArray('expertise', index)}
+                          className="p-1 rounded-full bg-violet-200 hover:bg-violet-300 text-violet-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                {isEditing && (
+                  <div className="flex items-center gap-2 mt-4">
+                    <Input
+                      value={newExpertise}
+                      onChange={(e) => setNewExpertise(e.target.value)}
+                      placeholder="Add expertise"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addToArray('expertise', newExpertise)
+                          setNewExpertise('')
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
                         addToArray('expertise', newExpertise)
                         setNewExpertise('')
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      addToArray('expertise', newExpertise)
-                      setNewExpertise('')
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                      }}
+                      className="border-violet-300 text-violet-600 hover:bg-violet-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </Card>
 
             {/* Preferred Project Types */}
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-neutral-400" />
-                Preferred Project Types
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {(isEditing ? watchedProjectTypes : profile?.preferredProjectTypes)?.map((type, index) => (
-                  <span
-                    key={index}
-                    className={cn(
-                      'px-3 py-1 bg-success-50 text-success-700 rounded-full text-sm',
-                      isEditing && 'flex items-center gap-1'
-                    )}
-                  >
-                    {type}
-                    {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() => removeFromArray('preferredProjectTypes', index)}
-                        className="ml-1 text-success-500 hover:text-success-700"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </span>
-                ))}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <Target className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-stone-800">Preferred Project Types</h3>
+                </div>
               </div>
-              {isEditing && (
-                <div className="flex items-center gap-2 mt-3">
-                  <Input
-                    value={newProjectType}
-                    onChange={(e) => setNewProjectType(e.target.value)}
-                    placeholder="Add project type"
-                    className="flex-1"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
+              <div className="p-5">
+                <div className="flex flex-wrap gap-2">
+                  {(isEditing ? watchedProjectTypes : profile?.preferredProjectTypes)?.map((type, index) => (
+                    <span
+                      key={index}
+                      className={cn(
+                        'px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-sm font-medium transition-all hover:bg-emerald-200',
+                        isEditing && 'flex items-center gap-2 pr-2'
+                      )}
+                    >
+                      {type}
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => removeFromArray('preferredProjectTypes', index)}
+                          className="p-1 rounded-full bg-emerald-200 hover:bg-emerald-300 text-emerald-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                {isEditing && (
+                  <div className="flex items-center gap-2 mt-4">
+                    <Input
+                      value={newProjectType}
+                      onChange={(e) => setNewProjectType(e.target.value)}
+                      placeholder="Add project type"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addToArray('preferredProjectTypes', newProjectType)
+                          setNewProjectType('')
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
                         addToArray('preferredProjectTypes', newProjectType)
                         setNewProjectType('')
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      addToArray('preferredProjectTypes', newProjectType)
-                      setNewProjectType('')
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                      }}
+                      className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </Card>
           </div>
         </div>

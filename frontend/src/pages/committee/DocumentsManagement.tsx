@@ -26,19 +26,19 @@ import { cn } from '@/lib/utils/cn'
 import type { DocumentCategory, DocumentVisibility } from '@/types'
 
 const categoryConfig: Record<DocumentCategory, { label: string; icon: typeof FileText; color: string; bgColor: string }> = {
-  TEMPLATE: { label: 'Template', icon: FileText, color: 'text-primary-600', bgColor: 'bg-primary-50' },
-  RUBRIC: { label: 'Rubric', icon: FileCheck, color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  HANDBOOK: { label: 'Handbook', icon: Book, color: 'text-info-600', bgColor: 'bg-info-50' },
-  GUIDELINE: { label: 'Guideline', icon: ClipboardList, color: 'text-success-600', bgColor: 'bg-success-50' },
-  FORM: { label: 'Form', icon: FileText, color: 'text-accent-600', bgColor: 'bg-accent-50' },
-  OTHER: { label: 'Other', icon: FolderOpen, color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
+  TEMPLATE: { label: 'Template', icon: FileText, color: 'text-sky-600', bgColor: 'bg-sky-100' },
+  RUBRIC: { label: 'Rubric', icon: FileCheck, color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  HANDBOOK: { label: 'Handbook', icon: Book, color: 'text-violet-600', bgColor: 'bg-violet-100' },
+  GUIDELINE: { label: 'Guideline', icon: ClipboardList, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  FORM: { label: 'Form', icon: FileText, color: 'text-orange-600', bgColor: 'bg-orange-100' },
+  OTHER: { label: 'Other', icon: FolderOpen, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 }
 
 const visibilityConfig: Record<DocumentVisibility, { label: string; color: string }> = {
-  PUBLIC: { label: 'Public', color: 'text-success-600' },
-  STUDENTS_ONLY: { label: 'Students Only', color: 'text-info-600' },
-  SUPERVISORS_ONLY: { label: 'Supervisors Only', color: 'text-warning-600' },
-  COMMITTEE_ONLY: { label: 'Committee Only', color: 'text-error-600' },
+  PUBLIC: { label: 'Public', color: 'text-emerald-600' },
+  STUDENTS_ONLY: { label: 'Students Only', color: 'text-sky-600' },
+  SUPERVISORS_ONLY: { label: 'Supervisors Only', color: 'text-amber-600' },
+  COMMITTEE_ONLY: { label: 'Committee Only', color: 'text-rose-600' },
 }
 
 export function DocumentsManagement() {
@@ -87,27 +87,34 @@ export function DocumentsManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <FolderOpen className="h-7 w-7 text-primary-600" />
-            General Documents
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Manage templates, rubrics, handbooks, and guidelines
-          </p>
+      {/* Header - Gradient Style */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <FolderOpen className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">General Documents</h1>
+              <p className="text-stone-300 mt-1">
+                Manage templates, rubrics, handbooks, and guidelines
+              </p>
+            </div>
+          </div>
+          <Link to={ROUTES.COMMITTEE.DOCUMENT_UPLOAD}>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Document
+            </Button>
+          </Link>
         </div>
-        <Link to={ROUTES.COMMITTEE.DOCUMENT_UPLOAD}>
-          <Button>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
-          </Button>
-        </Link>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -123,7 +130,7 @@ export function DocumentsManagement() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value as DocumentCategory | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Categories</option>
               <option value="TEMPLATE">Templates</option>
@@ -136,7 +143,7 @@ export function DocumentsManagement() {
             <select
               value={visibilityFilter}
               onChange={(e) => setVisibilityFilter(e.target.value as DocumentVisibility | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Visibility</option>
               <option value="PUBLIC">Public</option>
@@ -159,22 +166,22 @@ export function DocumentsManagement() {
               key={category}
               onClick={() => setCategoryFilter(categoryFilter === category ? 'ALL' : category)}
               className={cn(
-                'p-3 rounded-lg border transition-colors text-center',
+                'p-3 rounded-xl border transition-all duration-300 text-center',
                 categoryFilter === category
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-neutral-200 hover:bg-neutral-50'
+                  ? 'border-amber-500 bg-amber-50 shadow-sm'
+                  : 'border-stone-200 hover:bg-stone-50 hover:border-stone-300'
               )}
             >
               <Icon className={cn('h-5 w-5 mx-auto mb-1', config.color)} />
-              <p className="text-lg font-bold text-neutral-900">{count}</p>
-              <p className="text-xs text-neutral-500">{config.label}</p>
+              <p className="text-lg font-bold text-stone-800">{count}</p>
+              <p className="text-xs text-stone-500 font-medium">{config.label}</p>
             </button>
           )
         })}
       </div>
 
       {/* Documents List */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {filteredDocuments && filteredDocuments.length > 0 ? (
           filteredDocuments.map((document) => {
             const category = categoryConfig[document.category]
@@ -182,10 +189,10 @@ export function DocumentsManagement() {
             const Icon = category.icon
 
             return (
-              <Card key={document.documentId} className="p-4">
+              <Card key={document.documentId} className="group p-4 hover:shadow-lg transition-all duration-300 border-l-4 border-l-stone-300">
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={cn('p-3 rounded-lg', category.bgColor)}>
+                  <div className={cn('p-3 rounded-xl shadow-sm', category.bgColor)}>
                     <Icon className={cn('h-6 w-6', category.color)} />
                   </div>
 
@@ -193,7 +200,7 @@ export function DocumentsManagement() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-semibold text-neutral-900">{document.title}</h3>
+                        <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">{document.title}</h3>
                         {document.description && (
                           <p className="text-sm text-neutral-500 mt-0.5 line-clamp-1">
                             {document.description}
@@ -269,8 +276,10 @@ export function DocumentsManagement() {
           })
         ) : (
           <Card className="p-12 text-center">
-            <FolderOpen className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No documents found</h3>
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FolderOpen className="h-8 w-8 text-stone-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-stone-800">No documents found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || categoryFilter !== 'ALL' || visibilityFilter !== 'ALL'
                 ? 'Try adjusting your filters'
@@ -288,13 +297,13 @@ export function DocumentsManagement() {
 
       {/* Summary */}
       {data && data.documents.length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-neutral-600">
+            <span className="text-stone-600 font-medium">
               Showing {filteredDocuments?.length ?? 0} of {data.total} documents
             </span>
-            <span className="text-neutral-500">
-              Total downloads: {data.documents.reduce((sum, d) => sum + d.downloadCount, 0)}
+            <span className="text-stone-500">
+              Total downloads: <span className="font-semibold text-amber-600">{data.documents.reduce((sum, d) => sum + d.downloadCount, 0)}</span>
             </span>
           </div>
         </Card>

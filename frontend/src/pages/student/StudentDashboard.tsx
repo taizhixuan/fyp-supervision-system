@@ -5,12 +5,17 @@ import {
   Users,
   Clock,
   CheckCircle,
-  AlertCircle,
   ArrowRight,
   ClipboardList,
   FolderOpen,
   Bell,
   Sparkles,
+  TrendingUp,
+  AlertTriangle,
+  Video,
+  MapPin,
+  ChevronRight,
+  GraduationCap,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useStudentDashboard } from '@/lib/hooks/useStudent'
@@ -187,83 +192,168 @@ export function StudentDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">
-            Welcome back, {profile.fullName.split(' ')[0]}!
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            {profile.programName} • {registrationStatus.cycle} {registrationStatus.academicYear}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to={ROUTES.STUDENT.NOTIFICATIONS}>
-            <Button variant="secondary" size="sm" leftIcon={<Bell className="h-4 w-4" />}>
-              Notifications
-              {dashboard.notifications.unreadCount > 0 && (
-                <Badge variant="error" size="sm" className="ml-2">
-                  {dashboard.notifications.unreadCount}
-                </Badge>
-              )}
-            </Button>
-          </Link>
-          <Link to={ROUTES.STUDENT.CHATBOT}>
-            <Button variant="primary" size="sm" leftIcon={<Sparkles className="h-4 w-4" />}>
-              AI Assistant
-            </Button>
-          </Link>
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+              <GraduationCap className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">
+                Welcome back, {profile.fullName.split(' ')[0]}!
+              </h1>
+              <p className="text-primary-100 mt-0.5">
+                {registrationStatus.cycle} • {registrationStatus.academicYear}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to={ROUTES.STUDENT.NOTIFICATIONS}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                leftIcon={<Bell className="h-4 w-4" />}
+              >
+                <span className="hidden sm:inline">Notifications</span>
+                {dashboard.notifications.unreadCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-error-500 text-white text-xs rounded-full">
+                    {dashboard.notifications.unreadCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+            <Link to={ROUTES.STUDENT.CHATBOT}>
+              <Button
+                size="sm"
+                className="bg-white text-primary-700 hover:bg-primary-50"
+                leftIcon={<Sparkles className="h-4 w-4" />}
+              >
+                AI Assistant
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-primary-600">{quickStats.totalMeetings}</div>
-          <p className="text-sm text-neutral-600 mt-1">Total Meetings</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-primary-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-neutral-900">{quickStats.totalMeetings}</p>
+              <p className="text-xs text-neutral-500">Total Meetings</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-success-600">{quickStats.completedLogs}</div>
-          <p className="text-sm text-neutral-600 mt-1">Completed Logs</p>
+        <Card className="border-l-4 border-l-success-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-success-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-neutral-900">{quickStats.completedLogs}</p>
+              <p className="text-xs text-neutral-500">Completed Logs</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-warning-600">{pendingLogs.length}</div>
-          <p className="text-sm text-neutral-600 mt-1">Pending Logs</p>
+        <Card className="border-l-4 border-l-warning-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <ClipboardList className="h-5 w-5 text-warning-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-neutral-900">{pendingLogs.length}</p>
+              <p className="text-xs text-neutral-500">Pending Logs</p>
+            </div>
+          </div>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-info-600">{quickStats.documentsUploaded}</div>
-          <p className="text-sm text-neutral-600 mt-1">Documents</p>
+        <Card className="border-l-4 border-l-info-500">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+              <FileText className="h-5 w-5 text-info-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-neutral-900">{quickStats.documentsUploaded}</p>
+              <p className="text-xs text-neutral-500">Documents</p>
+            </div>
+          </div>
         </Card>
       </div>
 
+      {/* Pending Logs Alert */}
+      {pendingLogs.length > 0 && (
+        <div className="bg-warning-50 border border-warning-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-warning-600" />
+            </div>
+            <div>
+              <p className="font-medium text-warning-800">Pending Supervision Logs</p>
+              <p className="text-sm text-warning-600">You have {pendingLogs.length} log(s) that need to be completed</p>
+            </div>
+          </div>
+          <Link to={ROUTES.STUDENT.LOGS}>
+            <Button variant="warning" size="sm">
+              Complete Now
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* Registration Progress */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">Registration Progress</h2>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">Registration Progress</h2>
+              <p className="text-sm text-neutral-500">Track your FYP journey</p>
+            </div>
+          </div>
           <Badge className={statusColors[registrationStatus.status]}>
             {registrationStatus.status.replace(/_/g, ' ')}
           </Badge>
         </div>
-        <div className="flex items-center gap-2 mb-4">
+
+        {/* Progress Steps */}
+        <div className="flex items-center justify-between mb-6 px-4">
           {registrationStatus.nextSteps.map((step, index) => (
-            <div key={step.step} className="flex items-center">
-              <div
-                className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
-                  step.status === 'COMPLETED' && 'bg-success-100 text-success-700',
-                  step.status === 'CURRENT' && 'bg-primary-600 text-white',
-                  step.status === 'PENDING' && 'bg-neutral-100 text-neutral-500'
-                )}
-              >
-                {step.status === 'COMPLETED' ? (
-                  <CheckCircle className="h-5 w-5" />
-                ) : (
-                  step.step
-                )}
+            <div key={step.step} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div
+                  className={cn(
+                    'w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all',
+                    step.status === 'COMPLETED' && 'bg-success-500 text-white',
+                    step.status === 'CURRENT' && 'bg-primary-600 text-white ring-4 ring-primary-100',
+                    step.status === 'PENDING' && 'bg-neutral-200 text-neutral-500'
+                  )}
+                >
+                  {step.status === 'COMPLETED' ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    step.step
+                  )}
+                </div>
+                <p className={cn(
+                  'mt-2 text-xs font-medium text-center',
+                  step.status === 'CURRENT' ? 'text-primary-700' : 'text-neutral-500'
+                )}>
+                  {step.title}
+                </p>
               </div>
               {index < registrationStatus.nextSteps.length - 1 && (
                 <div
                   className={cn(
-                    'w-12 h-1 mx-1',
+                    'flex-1 h-1 mx-3 rounded-full',
                     step.status === 'COMPLETED' ? 'bg-success-500' : 'bg-neutral-200'
                   )}
                 />
@@ -271,66 +361,57 @@ export function StudentDashboard() {
             </div>
           ))}
         </div>
-        <div className="space-y-2">
-          {registrationStatus.nextSteps.map((step) => (
-            <div
-              key={step.step}
-              className={cn(
-                'flex items-center justify-between p-3 rounded-lg',
-                step.status === 'CURRENT' && 'bg-primary-50 border border-primary-200'
-              )}
-            >
+
+        {/* Current Step Detail */}
+        {registrationStatus.nextSteps.find(s => s.status === 'CURRENT') && (
+          <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
+            <div className="flex items-center justify-between">
               <div>
-                <p className={cn(
-                  'font-medium',
-                  step.status === 'CURRENT' ? 'text-primary-900' : 'text-neutral-700'
-                )}>
-                  {step.title}
+                <p className="font-medium text-primary-900">
+                  Current: {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.title}
                 </p>
-                <p className="text-sm text-neutral-500">{step.description}</p>
+                <p className="text-sm text-primary-700 mt-0.5">
+                  {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.description}
+                </p>
               </div>
-              {step.status === 'CURRENT' && step.dueDate && (
-                <Badge variant="warning" size="sm">
-                  Due: {new Date(step.dueDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+              {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.dueDate && (
+                <Badge variant="warning">
+                  Due: {new Date(registrationStatus.nextSteps.find(s => s.status === 'CURRENT')!.dueDate!).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
                 </Badge>
               )}
-              {step.status === 'COMPLETED' && step.completedAt && (
-                <span className="text-sm text-success-600">
-                  Completed {new Date(step.completedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
-                </span>
-              )}
             </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <Link to={ROUTES.STUDENT.REGISTRATION_STATUS}>
-            <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              View Full Status
-            </Button>
-          </Link>
-        </div>
+          </div>
+        )}
       </Card>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Proposal Status */}
         {proposalStatus && (
-          <Card>
+          <Card className="flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-neutral-900">My Proposal</h2>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-success-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-neutral-900">My Proposal</h2>
+              </div>
               <Badge className={proposalStatusColors[proposalStatus.status]}>
                 {proposalStatus.status.replace(/_/g, ' ')}
               </Badge>
             </div>
-            <h3 className="font-medium text-neutral-900 mb-2">{proposalStatus.title}</h3>
-            <p className="text-sm text-neutral-600 mb-4 line-clamp-2">
-              {proposalStatus.problemStatement}
-            </p>
-            <div className="flex items-center justify-between text-sm text-neutral-500 mb-4">
-              <span>Version {proposalStatus.version}</span>
-              <span>Updated {new Date(proposalStatus.updatedAt).toLocaleDateString('en-MY')}</span>
+            <div className="flex-1">
+              <h3 className="font-medium text-neutral-900 mb-2">{proposalStatus.title}</h3>
+              <p className="text-sm text-neutral-600 mb-4 line-clamp-2">
+                {proposalStatus.problemStatement}
+              </p>
+              <div className="flex items-center gap-4 text-sm text-neutral-500 mb-4">
+                <span>Version {proposalStatus.version}</span>
+                <span>•</span>
+                <span>Updated {new Date(proposalStatus.updatedAt).toLocaleDateString('en-MY')}</span>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-4 border-t border-neutral-100">
               <Link to={ROUTES.STUDENT.PROPOSAL} className="flex-1">
                 <Button variant="primary" className="w-full" size="sm">
                   Edit Proposal
@@ -346,40 +427,41 @@ export function StudentDashboard() {
         )}
 
         {/* Upcoming Deadlines */}
-        <Card>
+        <Card className="flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-900">Upcoming Deadlines</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-error-100 rounded-lg flex items-center justify-center">
+                <Clock className="h-5 w-5 text-error-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-neutral-900">Upcoming Deadlines</h2>
+            </div>
             <Link to={ROUTES.STUDENT.DEADLINES}>
-              <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              <Button variant="ghost" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
                 View All
               </Button>
             </Link>
           </div>
-          {upcomingDeadlines.length === 0 ? (
-            <p className="text-neutral-500 text-center py-4">No upcoming deadlines</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingDeadlines.slice(0, 3).map((deadline) => (
+          <div className="flex-1 space-y-3">
+            {upcomingDeadlines.length === 0 ? (
+              <p className="text-neutral-500 text-center py-4">No upcoming deadlines</p>
+            ) : (
+              upcomingDeadlines.slice(0, 3).map((deadline) => (
                 <div
                   key={deadline.deadlineId}
                   className={cn(
-                    'flex items-center justify-between p-3 rounded-lg',
-                    deadline.daysRemaining <= 7 ? 'bg-error-50' : 'bg-neutral-50'
+                    'flex items-center justify-between p-3 rounded-xl',
+                    deadline.daysRemaining <= 7 ? 'bg-error-50 border border-error-100' : 'bg-neutral-50'
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center',
-                      deadline.daysRemaining <= 7 ? 'bg-error-100' : 'bg-primary-100'
-                    )}>
-                      <Clock className={cn(
-                        'h-5 w-5',
-                        deadline.daysRemaining <= 7 ? 'text-error-600' : 'text-primary-600'
-                      )} />
-                    </div>
+                      'w-2 h-2 rounded-full',
+                      deadline.daysRemaining <= 7 ? 'bg-error-500' :
+                      deadline.daysRemaining <= 14 ? 'bg-warning-500' : 'bg-neutral-300'
+                    )} />
                     <div>
-                      <p className="font-medium text-neutral-900">{deadline.title}</p>
-                      <p className="text-sm text-neutral-500">
+                      <p className="font-medium text-neutral-900 text-sm">{deadline.title}</p>
+                      <p className="text-xs text-neutral-500">
                         {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
                           day: 'numeric',
                           month: 'short',
@@ -392,79 +474,101 @@ export function StudentDashboard() {
                     variant={deadline.daysRemaining <= 7 ? 'error' : deadline.daysRemaining <= 14 ? 'warning' : 'default'}
                     size="sm"
                   >
-                    {deadline.daysRemaining} days
+                    {deadline.daysRemaining}d
                   </Badge>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </Card>
       </div>
 
       {/* Upcoming Meetings */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">Upcoming Meetings</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">Upcoming Meetings</h2>
+              <p className="text-sm text-neutral-500">{upcomingMeetings.length} scheduled</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <Link to={ROUTES.STUDENT.MEETING_NEW}>
-              <Button variant="secondary" size="sm">
+              <Button variant="primary" size="sm">
                 Request Meeting
               </Button>
             </Link>
             <Link to={ROUTES.STUDENT.MEETINGS}>
-              <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              <Button variant="ghost" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
                 View All
               </Button>
             </Link>
           </div>
         </div>
         {upcomingMeetings.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8 bg-neutral-50 rounded-xl">
             <Calendar className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-            <p className="text-neutral-500">No upcoming meetings</p>
+            <p className="text-neutral-500 mb-3">No upcoming meetings</p>
             <Link to={ROUTES.STUDENT.MEETING_NEW}>
-              <Button variant="primary" size="sm" className="mt-3">
+              <Button variant="primary" size="sm">
                 Schedule a Meeting
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {upcomingMeetings.map((meeting) => (
               <Link
                 key={meeting.meetingId}
                 to={ROUTES.STUDENT.MEETING_DETAIL.replace(':id', meeting.meetingId)}
                 className="block"
               >
-                <div className="flex items-center justify-between p-4 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
-                      <Calendar className="h-6 w-6 text-primary-600" />
+                <div className="p-4 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all bg-white">
+                  <div className="flex items-start justify-between mb-3">
+                    <Badge className={meetingStatusColors[meeting.status]} size="sm">
+                      {meeting.status}
+                    </Badge>
+                    <span className="text-xs text-neutral-500">
+                      {meeting.duration} min
+                    </span>
+                  </div>
+                  <h3 className="font-medium text-neutral-900 mb-1">{meeting.title}</h3>
+                  <p className="text-sm text-neutral-600 mb-3">
+                    with {meeting.supervisor.fullName}
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-neutral-500">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {new Date(meeting.scheduledAt).toLocaleDateString('en-MY', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                      })}
                     </div>
-                    <div>
-                      <p className="font-medium text-neutral-900">{meeting.title}</p>
-                      <p className="text-sm text-neutral-600">
-                        with {meeting.supervisor.fullName}
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        {new Date(meeting.scheduledAt).toLocaleDateString('en-MY', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        })}{' '}
-                        at{' '}
-                        {new Date(meeting.scheduledAt).toLocaleTimeString('en-MY', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                        {' • '}
-                        {meeting.platform === 'IN_PERSON' ? meeting.location : meeting.platform.replace('_', ' ')}
-                      </p>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {new Date(meeting.scheduledAt).toLocaleTimeString('en-MY', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
                   </div>
-                  <Badge className={meetingStatusColors[meeting.status]} size="sm">
-                    {meeting.status}
-                  </Badge>
+                  <div className="flex items-center gap-1 mt-2 text-xs text-neutral-500">
+                    {meeting.platform === 'IN_PERSON' ? (
+                      <>
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>{meeting.location}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Video className="h-3.5 w-3.5" />
+                        <span>{meeting.platform.replace('_', ' ')}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -472,45 +576,34 @@ export function StudentDashboard() {
         )}
       </Card>
 
-      {/* Pending Logs Alert */}
-      {pendingLogs.length > 0 && (
-        <AlertBanner
-          variant="warning"
-          title="Pending Supervision Logs"
-          description={`You have ${pendingLogs.length} supervision log(s) that need to be completed.`}
-          action={
-            <Link to={ROUTES.STUDENT.LOGS}>
-              <Button variant="warning" size="sm">
-                Complete Logs
-              </Button>
-            </Link>
-          }
-        />
-      )}
-
       {/* Recent Documents */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">Recent Documents</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+              <FolderOpen className="h-5 w-5 text-info-600" />
+            </div>
+            <h2 className="text-lg font-semibold text-neutral-900">Recent Documents</h2>
+          </div>
           <div className="flex gap-2">
             <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-              <Button variant="secondary" size="sm">
-                Upload Document
+              <Button variant="primary" size="sm">
+                Upload
               </Button>
             </Link>
             <Link to={ROUTES.STUDENT.DOCUMENTS}>
-              <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              <Button variant="ghost" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
                 View All
               </Button>
             </Link>
           </div>
         </div>
         {recentDocuments.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8 bg-neutral-50 rounded-xl">
             <FolderOpen className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-            <p className="text-neutral-500">No documents uploaded yet</p>
+            <p className="text-neutral-500 mb-3">No documents uploaded yet</p>
             <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-              <Button variant="primary" size="sm" className="mt-3">
+              <Button variant="primary" size="sm">
                 Upload Your First Document
               </Button>
             </Link>
@@ -523,23 +616,21 @@ export function StudentDashboard() {
                 to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', doc.documentId)}
                 className="block"
               >
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-50 transition-colors">
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-neutral-50 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-neutral-600" />
+                    <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                      <FileText className="h-5 w-5 text-neutral-600 group-hover:text-primary-600 transition-colors" />
                     </div>
                     <div>
                       <p className="font-medium text-neutral-900">{doc.title}</p>
-                      <p className="text-sm text-neutral-500">
-                        {doc.fileName} • {(doc.fileSize / 1024).toFixed(0)} KB
+                      <p className="text-xs text-neutral-500">
+                        {doc.fileName} • {(doc.fileSize / 1024 / 1024).toFixed(1)} MB
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-3">
                     <Badge variant="default" size="sm">{doc.phase}</Badge>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      {new Date(doc.uploadedAt).toLocaleDateString('en-MY')}
-                    </p>
+                    <ChevronRight className="h-4 w-4 text-neutral-400" />
                   </div>
                 </div>
               </Link>
@@ -549,31 +640,42 @@ export function StudentDashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Link to={ROUTES.STUDENT.SUPERVISORS}>
-          <Card hover className="text-center cursor-pointer">
-            <Users className="h-8 w-8 text-primary-600 mx-auto mb-2" />
-            <p className="font-medium text-neutral-900">Find Supervisor</p>
-          </Card>
-        </Link>
-        <Link to={ROUTES.STUDENT.PROPOSAL}>
-          <Card hover className="text-center cursor-pointer">
-            <FileText className="h-8 w-8 text-success-600 mx-auto mb-2" />
-            <p className="font-medium text-neutral-900">My Proposal</p>
-          </Card>
-        </Link>
-        <Link to={ROUTES.STUDENT.LOGS}>
-          <Card hover className="text-center cursor-pointer">
-            <ClipboardList className="h-8 w-8 text-warning-600 mx-auto mb-2" />
-            <p className="font-medium text-neutral-900">Supervision Logs</p>
-          </Card>
-        </Link>
-        <Link to={ROUTES.STUDENT.RESOURCES}>
-          <Card hover className="text-center cursor-pointer">
-            <FolderOpen className="h-8 w-8 text-info-600 mx-auto mb-2" />
-            <p className="font-medium text-neutral-900">Resources</p>
-          </Card>
-        </Link>
+      <div>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Link to={ROUTES.STUDENT.SUPERVISORS}>
+            <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-primary-300 hover:shadow-md transition-all group cursor-pointer">
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-600 transition-colors">
+                <Users className="h-6 w-6 text-primary-600 group-hover:text-white transition-colors" />
+              </div>
+              <p className="font-medium text-neutral-900 text-sm">Find Supervisor</p>
+            </div>
+          </Link>
+          <Link to={ROUTES.STUDENT.PROPOSAL}>
+            <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-success-300 hover:shadow-md transition-all group cursor-pointer">
+              <div className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-success-600 transition-colors">
+                <FileText className="h-6 w-6 text-success-600 group-hover:text-white transition-colors" />
+              </div>
+              <p className="font-medium text-neutral-900 text-sm">My Proposal</p>
+            </div>
+          </Link>
+          <Link to={ROUTES.STUDENT.LOGS}>
+            <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-warning-300 hover:shadow-md transition-all group cursor-pointer">
+              <div className="w-12 h-12 bg-warning-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-warning-600 transition-colors">
+                <ClipboardList className="h-6 w-6 text-warning-600 group-hover:text-white transition-colors" />
+              </div>
+              <p className="font-medium text-neutral-900 text-sm">Supervision Logs</p>
+            </div>
+          </Link>
+          <Link to={ROUTES.STUDENT.RESOURCES}>
+            <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-info-300 hover:shadow-md transition-all group cursor-pointer">
+              <div className="w-12 h-12 bg-info-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-info-600 transition-colors">
+                <FolderOpen className="h-6 w-6 text-info-600 group-hover:text-white transition-colors" />
+              </div>
+              <p className="font-medium text-neutral-900 text-sm">Resources</p>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   )

@@ -54,10 +54,11 @@ export interface DotBadgeProps extends HTMLAttributes<HTMLSpanElement> {
   count?: number
   max?: number
   show?: boolean
+  pulse?: boolean
 }
 
 const DotBadge = forwardRef<HTMLSpanElement, DotBadgeProps>(
-  ({ className, count, max = 99, show = true, children, ...props }, ref) => {
+  ({ className, count, max = 99, show = true, pulse = true, children, ...props }, ref) => {
     if (!show && !count) return <>{children}</>
 
     const displayCount = count && count > max ? `${max}+` : count
@@ -66,16 +67,25 @@ const DotBadge = forwardRef<HTMLSpanElement, DotBadgeProps>(
       <span ref={ref} className={cn('relative inline-flex', className)} {...props}>
         {children}
         {(show || count) && (
-          <span
-            className={cn(
-              'absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-accent-500 text-white font-medium',
-              count
-                ? 'min-w-[18px] h-[18px] text-xs px-1'
-                : 'w-2.5 h-2.5'
+          <>
+            {/* Pulse animation ring */}
+            {pulse && count && count > 0 && (
+              <span
+                className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-error-400 animate-ping opacity-75"
+              />
             )}
-          >
-            {displayCount}
-          </span>
+            {/* Badge */}
+            <span
+              className={cn(
+                'absolute -top-1 -right-1 flex items-center justify-center rounded-full font-semibold shadow-sm',
+                count
+                  ? 'min-w-[18px] h-[18px] text-[10px] px-1 bg-error-500 text-white ring-2 ring-white'
+                  : 'w-2.5 h-2.5 bg-error-500 ring-2 ring-white'
+              )}
+            >
+              {displayCount}
+            </span>
+          </>
         )}
       </span>
     )

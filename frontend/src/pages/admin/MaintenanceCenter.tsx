@@ -18,6 +18,7 @@ import {
   FileText,
   ChevronRight,
   History,
+  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -109,50 +110,59 @@ export function MaintenanceCenter() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <Wrench className="h-7 w-7 text-primary-600" />
-            Maintenance Center
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            System backups, health checks, and maintenance operations
-          </p>
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <Wrench className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                Maintenance Center
+                <Sparkles className="h-5 w-5 text-amber-400" />
+              </h1>
+              <p className="text-stone-300 mt-1">
+                System backups, health checks, and maintenance operations
+              </p>
+            </div>
+          </div>
+          <Link to={ROUTES.ADMIN.JOB_HISTORY}>
+            <Button variant="outline" className="border-stone-600 text-white hover:bg-stone-700">
+              <History className="h-4 w-4 mr-2" />
+              View Job History
+            </Button>
+          </Link>
         </div>
-        <Link to={ROUTES.ADMIN.JOB_HISTORY}>
-          <Button variant="outline">
-            <History className="h-4 w-4 mr-2" />
-            View Job History
-          </Button>
-        </Link>
       </div>
 
       {/* System Health Status */}
       <Card className={cn(
-        'p-4 border-l-4',
-        overallHealth === 'HEALTHY' ? 'border-l-success-500 bg-success-50' :
-        overallHealth === 'DEGRADED' ? 'border-l-warning-500 bg-warning-50' :
-        'border-l-error-500 bg-error-50'
+        'p-4 border-l-4 rounded-xl',
+        overallHealth === 'HEALTHY' ? 'border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200' :
+        overallHealth === 'DEGRADED' ? 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200' :
+        'border-l-rose-500 bg-gradient-to-r from-rose-50 to-rose-100 border-rose-200'
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {overallHealth === 'HEALTHY' ? (
-              <CheckCircle className="h-6 w-6 text-success-600" />
+              <CheckCircle className="h-6 w-6 text-emerald-600" />
             ) : overallHealth === 'DEGRADED' ? (
-              <AlertTriangle className="h-6 w-6 text-warning-600" />
+              <AlertTriangle className="h-6 w-6 text-amber-600" />
             ) : (
-              <XCircle className="h-6 w-6 text-error-600" />
+              <XCircle className="h-6 w-6 text-rose-600" />
             )}
             <div>
-              <h3 className="font-semibold text-neutral-900">
+              <h3 className="font-semibold text-stone-900">
                 System Health: {overallHealth}
               </h3>
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-stone-600">
                 {healthData?.checks.filter((c) => c.status === 'HEALTHY').length} of {healthData?.checks.length} services healthy
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetchHealth()}>
+          <Button variant="outline" size="sm" onClick={() => refetchHealth()} className="border-stone-300 hover:bg-white/50">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -162,56 +172,56 @@ export function MaintenanceCenter() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50"
           onClick={() => setShowBackupModal(true)}
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary-50 rounded-lg">
-              <HardDrive className="h-6 w-6 text-primary-600" />
+            <div className="p-3 bg-amber-100 rounded-xl ring-1 ring-amber-200">
+              <HardDrive className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-neutral-900">Create Backup</h3>
-              <p className="text-sm text-neutral-500">Full or incremental backup</p>
+              <h3 className="font-semibold text-stone-900">Create Backup</h3>
+              <p className="text-sm text-stone-500">Full or incremental backup</p>
             </div>
           </div>
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50"
           onClick={() => setShowRestoreModal(true)}
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-info-50 rounded-lg">
-              <Upload className="h-6 w-6 text-info-600" />
+            <div className="p-3 bg-sky-100 rounded-xl ring-1 ring-sky-200">
+              <Upload className="h-6 w-6 text-sky-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-neutral-900">Restore Backup</h3>
-              <p className="text-sm text-neutral-500">Restore from backup point</p>
+              <h3 className="font-semibold text-stone-900">Restore Backup</h3>
+              <p className="text-sm text-stone-500">Restore from backup point</p>
             </div>
           </div>
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50"
           onClick={() => setShowCleanupModal(true)}
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-warning-50 rounded-lg">
-              <Trash2 className="h-6 w-6 text-warning-600" />
+            <div className="p-3 bg-rose-100 rounded-xl ring-1 ring-rose-200">
+              <Trash2 className="h-6 w-6 text-rose-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-neutral-900">System Cleanup</h3>
-              <p className="text-sm text-neutral-500">Clear temp files and logs</p>
+              <h3 className="font-semibold text-stone-900">System Cleanup</h3>
+              <p className="text-sm text-stone-500">Clear temp files and logs</p>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Health Checks Detail */}
-      <Card className="p-6">
+      <Card className="p-6 border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-neutral-900 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-600" />
+          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-amber-600" />
             Service Health Checks
           </h3>
           <Button
@@ -219,6 +229,7 @@ export function MaintenanceCenter() {
             size="sm"
             onClick={() => refetchHealth()}
             disabled={healthLoading}
+            className="hover:bg-stone-100"
           >
             <RefreshCw className={cn('h-4 w-4', healthLoading && 'animate-spin')} />
           </Button>
@@ -228,32 +239,37 @@ export function MaintenanceCenter() {
           {healthData?.checks.map((check) => (
             <div
               key={check.checkId}
-              className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg"
+              className={cn(
+                'flex items-center justify-between p-4 rounded-xl border-l-4',
+                check.status === 'HEALTHY' ? 'bg-emerald-50/50 border-l-emerald-500' :
+                check.status === 'DEGRADED' ? 'bg-amber-50/50 border-l-amber-500' :
+                'bg-rose-50/50 border-l-rose-500'
+              )}
             >
               <div className="flex items-center gap-3">
                 {check.status === 'HEALTHY' ? (
-                  <CheckCircle className="h-5 w-5 text-success-600" />
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
                 ) : check.status === 'DEGRADED' ? (
-                  <AlertTriangle className="h-5 w-5 text-warning-600" />
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-error-600" />
+                  <XCircle className="h-5 w-5 text-rose-600" />
                 )}
                 <div>
-                  <h4 className="font-medium text-neutral-900">{check.name}</h4>
-                  <p className="text-sm text-neutral-500">{check.message}</p>
+                  <h4 className="font-medium text-stone-900">{check.name}</h4>
+                  <p className="text-sm text-stone-500">{check.message}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className={cn(
-                  'px-2 py-0.5 rounded-full text-xs font-medium',
-                  check.status === 'HEALTHY' ? 'bg-success-50 text-success-600' :
-                  check.status === 'DEGRADED' ? 'bg-warning-50 text-warning-600' :
-                  'bg-error-50 text-error-600'
+                  'px-3 py-1 rounded-xl text-xs font-medium',
+                  check.status === 'HEALTHY' ? 'bg-emerald-100 text-emerald-700' :
+                  check.status === 'DEGRADED' ? 'bg-amber-100 text-amber-700' :
+                  'bg-rose-100 text-rose-700'
                 )}>
                   {check.status}
                 </span>
                 {check.responseTime && (
-                  <p className="text-xs text-neutral-400 mt-1">{check.responseTime}ms</p>
+                  <p className="text-xs text-stone-400 mt-1">{check.responseTime}ms</p>
                 )}
               </div>
             </div>
@@ -262,13 +278,13 @@ export function MaintenanceCenter() {
       </Card>
 
       {/* Recent Backups */}
-      <Card className="p-6">
+      <Card className="p-6 border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-neutral-900 flex items-center gap-2">
-            <Database className="h-5 w-5 text-primary-600" />
+          <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+            <Database className="h-5 w-5 text-amber-600" />
             Recent Backups
           </h3>
-          <Button variant="ghost" size="sm" onClick={() => refetchBackups()}>
+          <Button variant="ghost" size="sm" onClick={() => refetchBackups()} className="hover:bg-stone-100">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -278,31 +294,36 @@ export function MaintenanceCenter() {
             {backupsData.backups.slice(0, 5).map((backup) => (
               <div
                 key={backup.backupId}
-                className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg"
+                className={cn(
+                  'flex items-center justify-between p-4 border rounded-xl border-l-4',
+                  backup.status === 'COMPLETED' ? 'border-l-emerald-500 bg-emerald-50/30 border-emerald-200' :
+                  backup.status === 'IN_PROGRESS' ? 'border-l-sky-500 bg-sky-50/30 border-sky-200' :
+                  'border-l-rose-500 bg-rose-50/30 border-rose-200'
+                )}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    'p-2 rounded-lg',
-                    backup.status === 'COMPLETED' ? 'bg-success-50' :
-                    backup.status === 'IN_PROGRESS' ? 'bg-info-50' :
-                    'bg-error-50'
+                    'p-2 rounded-xl',
+                    backup.status === 'COMPLETED' ? 'bg-emerald-100' :
+                    backup.status === 'IN_PROGRESS' ? 'bg-sky-100' :
+                    'bg-rose-100'
                   )}>
                     {backup.status === 'COMPLETED' ? (
-                      <CheckCircle className="h-5 w-5 text-success-600" />
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
                     ) : backup.status === 'IN_PROGRESS' ? (
-                      <RefreshCw className="h-5 w-5 text-info-600 animate-spin" />
+                      <RefreshCw className="h-5 w-5 text-sky-600 animate-spin" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-error-600" />
+                      <XCircle className="h-5 w-5 text-rose-600" />
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-neutral-900">{backup.name}</h4>
-                      <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-xs">
+                      <h4 className="font-medium text-stone-900">{backup.name}</h4>
+                      <span className="px-2 py-0.5 bg-stone-100 text-stone-600 rounded-xl text-xs">
                         {backup.type}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+                    <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
                         {new Date(backup.createdAt).toLocaleString()}
@@ -321,6 +342,7 @@ export function MaintenanceCenter() {
                         variant="ghost"
                         size="sm"
                         onClick={() => console.log('Download:', backup.backupId)}
+                        className="hover:bg-stone-100"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -331,6 +353,7 @@ export function MaintenanceCenter() {
                           setSelectedBackup(backup)
                           setShowRestoreModal(true)
                         }}
+                        className="hover:bg-stone-100"
                       >
                         <Upload className="h-4 w-4" />
                       </Button>
@@ -341,62 +364,62 @@ export function MaintenanceCenter() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-neutral-500">
-            <Database className="h-8 w-8 mx-auto mb-2 text-neutral-300" />
+          <div className="text-center py-8 text-stone-500">
+            <Database className="h-8 w-8 mx-auto mb-2 text-stone-300" />
             <p>No backups found</p>
           </div>
         )}
       </Card>
 
       {/* Scheduled Maintenance */}
-      <Card className="p-6">
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary-600" />
+      <Card className="p-6 border-stone-200">
+        <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+          <Clock className="h-5 w-5 text-amber-600" />
           Scheduled Maintenance
         </h3>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-50 rounded-lg">
-                <HardDrive className="h-5 w-5 text-primary-600" />
+              <div className="p-2 bg-amber-100 rounded-xl">
+                <HardDrive className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <h4 className="font-medium text-neutral-900">Daily Database Backup</h4>
-                <p className="text-sm text-neutral-500">Every day at 3:00 AM</p>
+                <h4 className="font-medium text-stone-900">Daily Database Backup</h4>
+                <p className="text-sm text-stone-500">Every day at 3:00 AM</p>
               </div>
             </div>
-            <span className="px-2 py-0.5 bg-success-50 text-success-600 rounded-full text-xs font-medium">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
               Active
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-rose-50/50 to-pink-50/50 rounded-xl border border-rose-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-warning-50 rounded-lg">
-                <Trash2 className="h-5 w-5 text-warning-600" />
+              <div className="p-2 bg-rose-100 rounded-xl">
+                <Trash2 className="h-5 w-5 text-rose-600" />
               </div>
               <div>
-                <h4 className="font-medium text-neutral-900">Weekly Cleanup</h4>
-                <p className="text-sm text-neutral-500">Every Sunday at 2:00 AM</p>
+                <h4 className="font-medium text-stone-900">Weekly Cleanup</h4>
+                <p className="text-sm text-stone-500">Every Sunday at 2:00 AM</p>
               </div>
             </div>
-            <span className="px-2 py-0.5 bg-success-50 text-success-600 rounded-full text-xs font-medium">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
               Active
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-sky-50/50 to-cyan-50/50 rounded-xl border border-sky-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-info-50 rounded-lg">
-                <FileText className="h-5 w-5 text-info-600" />
+              <div className="p-2 bg-sky-100 rounded-xl">
+                <FileText className="h-5 w-5 text-sky-600" />
               </div>
               <div>
-                <h4 className="font-medium text-neutral-900">Monthly Full Backup</h4>
-                <p className="text-sm text-neutral-500">1st of every month at 1:00 AM</p>
+                <h4 className="font-medium text-stone-900">Monthly Full Backup</h4>
+                <p className="text-sm text-stone-500">1st of every month at 1:00 AM</p>
               </div>
             </div>
-            <span className="px-2 py-0.5 bg-success-50 text-success-600 rounded-full text-xs font-medium">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
               Active
             </span>
           </div>
@@ -406,9 +429,9 @@ export function MaintenanceCenter() {
       {/* Backup Modal */}
       {showBackupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Create Backup</h2>
-            <p className="text-sm text-neutral-600 mb-4">
+          <Card className="w-full max-w-md p-6 border-stone-200">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4">Create Backup</h2>
+            <p className="text-sm text-stone-600 mb-4">
               Select the type of backup to create:
             </p>
 
@@ -417,30 +440,30 @@ export function MaintenanceCenter() {
                 type="button"
                 onClick={() => handleTriggerBackup('FULL')}
                 disabled={triggerBackupMutation.isPending}
-                className="w-full p-4 border border-neutral-200 rounded-lg text-left hover:bg-neutral-50 transition-colors"
+                className="w-full p-4 border border-amber-200 rounded-xl text-left hover:bg-amber-50 transition-colors"
               >
-                <h4 className="font-medium text-neutral-900">Full Backup</h4>
-                <p className="text-sm text-neutral-500">Complete system backup including all data and files</p>
+                <h4 className="font-medium text-stone-900">Full Backup</h4>
+                <p className="text-sm text-stone-500">Complete system backup including all data and files</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleTriggerBackup('INCREMENTAL')}
                 disabled={triggerBackupMutation.isPending}
-                className="w-full p-4 border border-neutral-200 rounded-lg text-left hover:bg-neutral-50 transition-colors"
+                className="w-full p-4 border border-amber-200 rounded-xl text-left hover:bg-amber-50 transition-colors"
               >
-                <h4 className="font-medium text-neutral-900">Incremental Backup</h4>
-                <p className="text-sm text-neutral-500">Only changes since last backup</p>
+                <h4 className="font-medium text-stone-900">Incremental Backup</h4>
+                <p className="text-sm text-stone-500">Only changes since last backup</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleTriggerBackup('DATABASE')}
                 disabled={triggerBackupMutation.isPending}
-                className="w-full p-4 border border-neutral-200 rounded-lg text-left hover:bg-neutral-50 transition-colors"
+                className="w-full p-4 border border-amber-200 rounded-xl text-left hover:bg-amber-50 transition-colors"
               >
-                <h4 className="font-medium text-neutral-900">Database Only</h4>
-                <p className="text-sm text-neutral-500">Database backup without files</p>
+                <h4 className="font-medium text-stone-900">Database Only</h4>
+                <p className="text-sm text-stone-500">Database backup without files</p>
               </button>
             </div>
 
@@ -449,6 +472,7 @@ export function MaintenanceCenter() {
                 variant="outline"
                 onClick={() => setShowBackupModal(false)}
                 disabled={triggerBackupMutation.isPending}
+                className="border-stone-300"
               >
                 Cancel
               </Button>
@@ -460,29 +484,29 @@ export function MaintenanceCenter() {
       {/* Restore Modal */}
       {showRestoreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-lg p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Restore Backup</h2>
+          <Card className="w-full max-w-lg p-6 border-stone-200">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4">Restore Backup</h2>
 
             {selectedBackup ? (
               <div className="space-y-4">
-                <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-warning-800">Warning</h4>
-                      <p className="text-sm text-warning-700 mt-1">
+                      <h4 className="font-medium text-amber-800">Warning</h4>
+                      <p className="text-sm text-amber-700 mt-1">
                         Restoring this backup will overwrite current data. This action cannot be undone.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-neutral-50 rounded-lg">
-                  <h4 className="font-medium text-neutral-900">{selectedBackup.name}</h4>
-                  <p className="text-sm text-neutral-500 mt-1">
+                <div className="p-4 bg-stone-50 rounded-xl border border-stone-200">
+                  <h4 className="font-medium text-stone-900">{selectedBackup.name}</h4>
+                  <p className="text-sm text-stone-500 mt-1">
                     Created: {new Date(selectedBackup.createdAt).toLocaleString()}
                   </p>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-stone-500">
                     Size: {formatBytes(selectedBackup.size)}
                   </p>
                 </div>
@@ -494,6 +518,7 @@ export function MaintenanceCenter() {
                       setShowRestoreModal(false)
                       setSelectedBackup(null)
                     }}
+                    className="border-stone-300"
                   >
                     Cancel
                   </Button>
@@ -501,7 +526,7 @@ export function MaintenanceCenter() {
                     variant="primary"
                     onClick={handleRestore}
                     disabled={restoreBackupMutation.isPending}
-                    className="bg-warning-600 hover:bg-warning-700"
+                    className="bg-amber-600 hover:bg-amber-700"
                   >
                     {restoreBackupMutation.isPending ? (
                       <Spinner size="sm" className="mr-2" />
@@ -514,7 +539,7 @@ export function MaintenanceCenter() {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-neutral-600 mb-4">
+                <p className="text-sm text-stone-600 mb-4">
                   Select a backup to restore:
                 </p>
                 {backupsData?.backups
@@ -525,16 +550,16 @@ export function MaintenanceCenter() {
                       key={backup.backupId}
                       type="button"
                       onClick={() => setSelectedBackup(backup)}
-                      className="w-full p-4 border border-neutral-200 rounded-lg text-left hover:bg-neutral-50 transition-colors"
+                      className="w-full p-4 border border-sky-200 rounded-xl text-left hover:bg-sky-50 transition-colors"
                     >
-                      <h4 className="font-medium text-neutral-900">{backup.name}</h4>
-                      <p className="text-sm text-neutral-500">
+                      <h4 className="font-medium text-stone-900">{backup.name}</h4>
+                      <p className="text-sm text-stone-500">
                         {new Date(backup.createdAt).toLocaleString()} • {formatBytes(backup.size)}
                       </p>
                     </button>
                   ))}
                 <div className="flex justify-end pt-4">
-                  <Button variant="outline" onClick={() => setShowRestoreModal(false)}>
+                  <Button variant="outline" onClick={() => setShowRestoreModal(false)} className="border-stone-300">
                     Cancel
                   </Button>
                 </div>
@@ -547,69 +572,74 @@ export function MaintenanceCenter() {
       {/* Cleanup Modal */}
       {showCleanupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">System Cleanup</h2>
-            <p className="text-sm text-neutral-600 mb-4">
+          <Card className="w-full max-w-md p-6 border-stone-200">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4">System Cleanup</h2>
+            <p className="text-sm text-stone-600 mb-4">
               Select items to clean up:
             </p>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:bg-neutral-50">
+              <label className="flex items-center gap-3 p-3 border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors">
                 <input
                   type="checkbox"
                   checked={cleanupOptions.clearTempFiles}
                   onChange={(e) => setCleanupOptions({ ...cleanupOptions, clearTempFiles: e.target.checked })}
+                  className="accent-rose-600"
                 />
                 <div>
-                  <span className="font-medium text-neutral-900">Temporary Files</span>
-                  <p className="text-sm text-neutral-500">Clear temporary uploads and cache files</p>
+                  <span className="font-medium text-stone-900">Temporary Files</span>
+                  <p className="text-sm text-stone-500">Clear temporary uploads and cache files</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:bg-neutral-50">
+              <label className="flex items-center gap-3 p-3 border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors">
                 <input
                   type="checkbox"
                   checked={cleanupOptions.clearOldLogs}
                   onChange={(e) => setCleanupOptions({ ...cleanupOptions, clearOldLogs: e.target.checked })}
+                  className="accent-rose-600"
                 />
                 <div>
-                  <span className="font-medium text-neutral-900">Old Logs</span>
-                  <p className="text-sm text-neutral-500">Clear logs older than {cleanupOptions.olderThanDays} days</p>
+                  <span className="font-medium text-stone-900">Old Logs</span>
+                  <p className="text-sm text-stone-500">Clear logs older than {cleanupOptions.olderThanDays} days</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:bg-neutral-50">
+              <label className="flex items-center gap-3 p-3 border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors">
                 <input
                   type="checkbox"
                   checked={cleanupOptions.clearExpiredSessions}
                   onChange={(e) => setCleanupOptions({ ...cleanupOptions, clearExpiredSessions: e.target.checked })}
+                  className="accent-rose-600"
                 />
                 <div>
-                  <span className="font-medium text-neutral-900">Expired Sessions</span>
-                  <p className="text-sm text-neutral-500">Remove expired user sessions</p>
+                  <span className="font-medium text-stone-900">Expired Sessions</span>
+                  <p className="text-sm text-stone-500">Remove expired user sessions</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg cursor-pointer hover:bg-neutral-50">
+              <label className="flex items-center gap-3 p-3 border border-rose-200 rounded-xl cursor-pointer hover:bg-rose-50 transition-colors">
                 <input
                   type="checkbox"
                   checked={cleanupOptions.clearOrphanedFiles}
                   onChange={(e) => setCleanupOptions({ ...cleanupOptions, clearOrphanedFiles: e.target.checked })}
+                  className="accent-rose-600"
                 />
                 <div>
-                  <span className="font-medium text-neutral-900">Orphaned Files</span>
-                  <p className="text-sm text-neutral-500">Remove files not linked to any record</p>
+                  <span className="font-medium text-stone-900">Orphaned Files</span>
+                  <p className="text-sm text-stone-500">Remove files not linked to any record</p>
                 </div>
               </label>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowCleanupModal(false)}>
+              <Button variant="outline" onClick={() => setShowCleanupModal(false)} className="border-stone-300">
                 Cancel
               </Button>
               <Button
                 onClick={handleCleanup}
                 disabled={runCleanupMutation.isPending || !Object.values(cleanupOptions).some(Boolean)}
+                className="bg-rose-600 hover:bg-rose-700"
               >
                 {runCleanupMutation.isPending ? (
                   <Spinner size="sm" className="mr-2" />

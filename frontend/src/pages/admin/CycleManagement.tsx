@@ -14,6 +14,7 @@ import {
   Archive,
   Settings,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -24,19 +25,19 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { CycleStatus, CycleType, FYPCycle } from '@/types'
 
-const statusConfig: Record<CycleStatus, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
-  DRAFT: { label: 'Draft', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Settings },
-  UPCOMING: { label: 'Upcoming', color: 'text-info-600', bgColor: 'bg-info-50', icon: Clock },
-  ACTIVE: { label: 'Active', color: 'text-success-600', bgColor: 'bg-success-50', icon: Play },
-  PAUSED: { label: 'Paused', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Pause },
-  COMPLETED: { label: 'Completed', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: CheckCircle },
-  ARCHIVED: { label: 'Archived', color: 'text-neutral-500', bgColor: 'bg-neutral-50', icon: Archive },
+const statusConfig: Record<CycleStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+  DRAFT: { label: 'Draft', color: 'text-amber-700', bgColor: 'bg-amber-100', borderColor: 'border-amber-200', icon: Settings },
+  UPCOMING: { label: 'Upcoming', color: 'text-sky-700', bgColor: 'bg-sky-100', borderColor: 'border-sky-200', icon: Clock },
+  ACTIVE: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-100', borderColor: 'border-emerald-200', icon: Play },
+  PAUSED: { label: 'Paused', color: 'text-warning-600', bgColor: 'bg-warning-50', borderColor: 'border-warning-200', icon: Pause },
+  COMPLETED: { label: 'Completed', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-stone-200', icon: CheckCircle },
+  ARCHIVED: { label: 'Archived', color: 'text-neutral-500', bgColor: 'bg-neutral-50', borderColor: 'border-neutral-200', icon: Archive },
 }
 
-const typeConfig: Record<CycleType, { label: string; color: string }> = {
-  FYP1: { label: 'FYP 1', color: 'text-info-600' },
-  FYP2: { label: 'FYP 2', color: 'text-accent-600' },
-  SHORT_SEM: { label: 'Short Semester', color: 'text-warning-600' },
+const typeConfig: Record<CycleType, { label: string; color: string; bgColor: string }> = {
+  FYP1: { label: 'FYP 1', color: 'text-violet-700', bgColor: 'bg-violet-100' },
+  FYP2: { label: 'FYP 2', color: 'text-teal-700', bgColor: 'bg-teal-100' },
+  SHORT_SEM: { label: 'Short Semester', color: 'text-warning-600', bgColor: 'bg-warning-50' },
 }
 
 export function CycleManagement() {
@@ -87,31 +88,40 @@ export function CycleManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <Calendar className="h-7 w-7 text-primary-600" />
-            FYP Cycle Management
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Manage academic cycles, semesters, and FYP periods
-          </p>
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-amber-500/20 rounded-xl ring-1 ring-amber-500/30 flex items-center justify-center">
+              <Calendar className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                FYP Cycle Management
+                <Sparkles className="h-5 w-5 text-amber-400" />
+              </h1>
+              <p className="text-stone-300 mt-1">
+                Manage academic cycles, semesters, and FYP periods
+              </p>
+            </div>
+          </div>
+          <Link to={ROUTES.ADMIN.CYCLE_NEW}>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Cycle
+            </Button>
+          </Link>
         </div>
-        <Link to={ROUTES.ADMIN.CYCLE_NEW}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Cycle
-          </Button>
-        </Link>
       </div>
 
       {/* Current Active Cycle Banner */}
       {activeCycle && (
-        <Card className="p-4 border-l-4 border-l-success-500 bg-success-50">
+        <Card className="p-4 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-success-100 rounded-lg">
-                <Play className="h-5 w-5 text-success-600" />
+              <div className="p-2 bg-emerald-200 rounded-lg">
+                <Play className="h-5 w-5 text-emerald-700" />
               </div>
               <div>
                 <h3 className="font-semibold text-neutral-900">
@@ -174,7 +184,7 @@ export function CycleManagement() {
       </div>
 
       {/* Search & Filters */}
-      <Card className="p-4">
+      <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -200,7 +210,7 @@ export function CycleManagement() {
             <option value="ARCHIVED">Archived</option>
           </select>
         </div>
-      </Card>
+      </div>
 
       {/* Cycles List */}
       <div className="space-y-4">
@@ -211,7 +221,7 @@ export function CycleManagement() {
             const StatusIcon = status.icon
 
             return (
-              <Card key={cycle.cycleId} className="p-5">
+              <Card key={cycle.cycleId} className="p-5 hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     {/* Icon */}
@@ -224,13 +234,18 @@ export function CycleManagement() {
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-neutral-900">{cycle.name}</h3>
                         <span className={cn(
-                          'px-2 py-0.5 rounded-full text-xs font-medium',
+                          'px-2 py-0.5 rounded-xl text-xs font-medium border',
                           status.bgColor,
-                          status.color
+                          status.color,
+                          status.borderColor
                         )}>
                           {status.label}
                         </span>
-                        <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded-full text-xs font-medium">
+                        <span className={cn(
+                          'px-2 py-0.5 rounded-xl text-xs font-medium',
+                          type.bgColor,
+                          type.color
+                        )}>
                           {type.label}
                         </span>
                       </div>

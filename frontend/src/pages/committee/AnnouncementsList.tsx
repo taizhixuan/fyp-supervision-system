@@ -10,6 +10,7 @@ import {
   Clock,
   Users,
   Filter,
+  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -21,10 +22,10 @@ import { cn } from '@/lib/utils/cn'
 import type { AnnouncementScope, AnnouncementPriority, AnnouncementStatus } from '@/types'
 
 const priorityConfig: Record<AnnouncementPriority, { label: string; color: string; bgColor: string }> = {
-  LOW: { label: 'Low', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
-  NORMAL: { label: 'Normal', color: 'text-info-600', bgColor: 'bg-info-50' },
-  HIGH: { label: 'High', color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  URGENT: { label: 'Urgent', color: 'text-error-600', bgColor: 'bg-error-50' },
+  LOW: { label: 'Low', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  NORMAL: { label: 'Normal', color: 'text-sky-600', bgColor: 'bg-sky-100' },
+  HIGH: { label: 'High', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  URGENT: { label: 'Urgent', color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
 const scopeConfig: Record<AnnouncementScope, { label: string }> = {
@@ -37,9 +38,9 @@ const scopeConfig: Record<AnnouncementScope, { label: string }> = {
 }
 
 const statusConfig: Record<AnnouncementStatus, { label: string; color: string; bgColor: string }> = {
-  DRAFT: { label: 'Draft', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
-  PUBLISHED: { label: 'Published', color: 'text-success-600', bgColor: 'bg-success-50' },
-  ARCHIVED: { label: 'Archived', color: 'text-neutral-500', bgColor: 'bg-neutral-100' },
+  DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  PUBLISHED: { label: 'Published', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
+  ARCHIVED: { label: 'Archived', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 }
 
 export function AnnouncementsList() {
@@ -90,27 +91,34 @@ export function AnnouncementsList() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <Megaphone className="h-7 w-7 text-primary-600" />
-            FYP Announcements
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Manage announcements for all FYP students and supervisors
-          </p>
+      {/* Header - Gradient Style */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
+              <Megaphone className="h-7 w-7 text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">FYP Announcements</h1>
+              <p className="text-stone-300 mt-1">
+                Manage announcements for all FYP students and supervisors
+              </p>
+            </div>
+          </div>
+          <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_NEW}>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              New Announcement
+            </Button>
+          </Link>
         </div>
-        <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_NEW}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Announcement
-          </Button>
-        </Link>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
@@ -151,7 +159,7 @@ export function AnnouncementsList() {
       </Card>
 
       {/* Announcements List */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
           filteredAnnouncements.map((announcement) => {
             const priority = priorityConfig[announcement.priority]
@@ -163,14 +171,18 @@ export function AnnouncementsList() {
               <Card
                 key={announcement.announcementId}
                 className={cn(
-                  'p-4',
+                  'group p-4 hover:shadow-lg transition-all duration-300 border-l-4',
+                  announcement.priority === 'URGENT' && 'border-l-rose-500',
+                  announcement.priority === 'HIGH' && 'border-l-amber-500',
+                  announcement.priority === 'NORMAL' && 'border-l-sky-500',
+                  announcement.priority === 'LOW' && 'border-l-stone-400',
                   announcement.status === 'ARCHIVED' && 'opacity-60',
-                  isExpired && 'border-l-4 border-l-neutral-400'
+                  isExpired && 'bg-stone-50'
                 )}
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={cn('p-2 rounded-lg', priority.bgColor)}>
+                  <div className={cn('p-2.5 rounded-xl', priority.bgColor)}>
                     <Megaphone className={cn('h-5 w-5', priority.color)} />
                   </div>
 
@@ -178,7 +190,7 @@ export function AnnouncementsList() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-semibold text-neutral-900">{announcement.title}</h3>
+                        <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">{announcement.title}</h3>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                           <span className={cn(
                             'px-2 py-0.5 rounded-full text-xs font-medium',
@@ -257,8 +269,10 @@ export function AnnouncementsList() {
           })
         ) : (
           <Card className="p-12 text-center">
-            <Megaphone className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No announcements found</h3>
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Megaphone className="h-8 w-8 text-stone-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-stone-800">No announcements found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || statusFilter !== 'ALL' || scopeFilter !== 'ALL'
                 ? 'Try adjusting your filters'
@@ -276,29 +290,32 @@ export function AnnouncementsList() {
 
       {/* Summary */}
       {data && data.announcements.length > 0 && (
-        <Card className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{data.total}</p>
-              <p className="text-sm text-neutral-500">Total</p>
+        <Card className="overflow-hidden">
+          <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
+            <h3 className="font-semibold text-stone-800">Summary Statistics</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+            <div className="text-center p-3 rounded-xl bg-stone-100">
+              <p className="text-2xl font-bold text-stone-800">{data.total}</p>
+              <p className="text-sm text-stone-600 font-medium">Total</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-success-600">
+            <div className="text-center p-3 rounded-xl bg-emerald-100">
+              <p className="text-2xl font-bold text-emerald-700">
                 {data.announcements.filter((a) => a.status === 'PUBLISHED').length}
               </p>
-              <p className="text-sm text-neutral-500">Published</p>
+              <p className="text-sm text-emerald-700 font-medium">Published</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-warning-600">
+            <div className="text-center p-3 rounded-xl bg-amber-100">
+              <p className="text-2xl font-bold text-amber-700">
                 {data.announcements.filter((a) => a.priority === 'HIGH' || a.priority === 'URGENT').length}
               </p>
-              <p className="text-sm text-neutral-500">High Priority</p>
+              <p className="text-sm text-amber-700 font-medium">High Priority</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-primary-600">
+            <div className="text-center p-3 rounded-xl bg-sky-100">
+              <p className="text-2xl font-bold text-sky-700">
                 {data.announcements.reduce((sum, a) => sum + a.viewCount, 0)}
               </p>
-              <p className="text-sm text-neutral-500">Total Views</p>
+              <p className="text-sm text-sky-700 font-medium">Total Views</p>
             </div>
           </div>
         </Card>

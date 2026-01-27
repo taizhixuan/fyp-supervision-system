@@ -33,7 +33,7 @@ import type { DeadlineType, DeadlineStatus, Deadline } from '@/types'
 const deadlineSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   description: z.string().optional(),
-  type: z.enum(['PROPOSAL_SUBMISSION', 'SUPERVISOR_SELECTION', 'MILESTONE_SUBMISSION', 'PRESENTATION', 'REPORT_SUBMISSION', 'OTHER'] as const),
+  type: z.enum(['PROPOSAL_SUBMISSION', 'SUPERVISOR_SELECTION', 'PROGRESS_REPORT', 'FINAL_REPORT', 'PRESENTATION', 'CUSTOM'] as const),
   cycleId: z.string().min(1, 'Please select a cycle'),
   dueDate: z.string().min(1, 'Due date is required'),
   reminderDays: z.number().min(0).max(30),
@@ -45,10 +45,10 @@ type DeadlineFormData = z.infer<typeof deadlineSchema>
 const typeConfig: Record<DeadlineType, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
   PROPOSAL_SUBMISSION: { label: 'Proposal', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: FileText },
   SUPERVISOR_SELECTION: { label: 'Supervisor Selection', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
-  MILESTONE_SUBMISSION: { label: 'Milestone', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
+  PROGRESS_REPORT: { label: 'Progress Report', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
+  FINAL_REPORT: { label: 'Final Report', color: 'text-success-600', bgColor: 'bg-success-50', icon: FileText },
   PRESENTATION: { label: 'Presentation', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Calendar },
-  REPORT_SUBMISSION: { label: 'Report', color: 'text-success-600', bgColor: 'bg-success-50', icon: FileText },
-  OTHER: { label: 'Other', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Clock },
+  CUSTOM: { label: 'Custom', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Clock },
 }
 
 const statusConfig: Record<DeadlineStatus, { label: string; color: string; bgColor: string }> = {

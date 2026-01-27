@@ -17,15 +17,15 @@ export function AuthLayout({
   backLinkText = 'Back to Home',
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col">
+    <div className="min-h-screen bg-stone-100 flex flex-col">
       {/* Header */}
       {showBackLink && (
-        <header className="py-4 px-6">
+        <header className="py-4 px-4 sm:px-6">
           <Link
             to={backLinkTo}
-            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-primary-600 transition-colors"
+            className="group inline-flex items-center gap-2.5 px-4 py-2.5 text-base font-medium text-stone-700 hover:text-amber-700 bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded-full shadow hover:shadow-md transition-all duration-200"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5 transition-transform duration-200 group-hover:-translate-x-0.5" />
             {backLinkText}
           </Link>
         </header>
@@ -37,7 +37,7 @@ export function AuthLayout({
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-sm text-neutral-500">
+      <footer className="py-6 text-center text-sm text-stone-500">
         <p>&copy; {new Date().getFullYear()} MMU FYP Committee. All rights reserved.</p>
       </footer>
     </div>
