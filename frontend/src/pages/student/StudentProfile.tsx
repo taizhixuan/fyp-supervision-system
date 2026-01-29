@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -17,10 +17,16 @@ import {
   Linkedin,
   Globe,
   Sparkles,
+  Camera,
+  Upload,
 } from 'lucide-react'
-import { Card, Button, Input, Badge, Spinner, AlertBanner } from '@/components/ui'
-import { useStudentProfile, useUpdateStudentProfile } from '@/lib/hooks/useStudent'
+import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui'
+import { useStudentProfile, useUpdateStudentProfile, useUploadProfileImage } from '@/lib/hooks/useStudent'
 import { cn } from '@/lib/utils/cn'
+
+// Allowed image types and max size
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 
 // Validation schema
 const profileSchema = z.object({
@@ -64,8 +70,16 @@ export function StudentProfile() {
   const [skills, setSkills] = useState<string[]>(SAMPLE_PROFILE.skills)
   const [interests, setInterests] = useState<string[]>(SAMPLE_PROFILE.researchInterests)
 
+  // Profile image upload state
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const { data: profile, isLoading, error } = useStudentProfile()
   const updateProfile = useUpdateStudentProfile()
+  const uploadImage = useUploadProfileImage()
 
   // Use sample data if no API data available
   const displayProfile = profile || SAMPLE_PROFILE
@@ -126,6 +140,64 @@ export function StudentProfile() {
 
   const removeInterest = (interest: string) => {
     setInterests(interests.filter((i) => i !== interest))
+  }
+
+  // Profile image handlers
+  const handleImageButtonClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    setImageError(null)
+
+    if (!file) return
+
+    // Validate file type
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setImageError('Please select a valid image file (JPEG, PNG, GIF, or WebP)')
+      return
+    }
+
+    // Validate file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      setImageError('Image size must be less than 5MB')
+      return
+    }
+
+    setSelectedImage(file)
+
+    // Create preview URL
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    setShowImageModal(true)
+
+    // Reset input so same file can be selected again
+    event.target.value = ''
+  }
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) return
+
+    try {
+      await uploadImage.mutateAsync(selectedImage)
+      setShowImageModal(false)
+      setSelectedImage(null)
+      setImagePreview(null)
+    } catch (err) {
+      setImageError('Failed to upload image. Please try again.')
+    }
+  }
+
+  const handleCancelImageUpload = () => {
+    setShowImageModal(false)
+    setSelectedImage(null)
+    setImagePreview(null)
+    setImageError(null)
   }
 
   if (isLoading) {
@@ -199,7 +271,7 @@ export function StudentProfile() {
         <div className="flex flex-col sm:flex-row items-start gap-6">
           {/* Avatar */}
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
               {displayProfile.profileImageUrl ? (
                 <img
                   src={displayProfile.profileImageUrl}
@@ -216,12 +288,23 @@ export function StudentProfile() {
                 </span>
               )}
             </div>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {/* Edit button - only show in edit mode */}
             {isEditing && (
               <button
                 type="button"
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 transition-colors"
+                onClick={handleImageButtonClick}
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700 transition-colors shadow-md"
+                title="Change profile picture"
               >
-                <Edit2 className="h-4 w-4" />
+                <Camera className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -545,6 +628,81 @@ export function StudentProfile() {
           )}
         </div>
       </Card>
+
+      {/* Profile Image Upload Modal */}
+      <Modal
+        isOpen={showImageModal}
+        onClose={handleCancelImageUpload}
+        size="sm"
+      >
+        <ModalHeader>
+          <ModalTitle>Update Profile Picture</ModalTitle>
+        </ModalHeader>
+
+        <ModalBody>
+          <div className="space-y-4">
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="flex justify-center">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-40 h-40 rounded-full object-cover border-4 border-primary-100"
+                />
+              </div>
+            )}
+
+            {/* Error Message */}
+            {imageError && (
+              <AlertBanner
+                variant="error"
+                description={imageError}
+                dismissible
+                onDismiss={() => setImageError(null)}
+              />
+            )}
+
+            {/* Upload Error from mutation */}
+            {uploadImage.isError && (
+              <AlertBanner
+                variant="error"
+                description="Failed to upload image. Please try again."
+              />
+            )}
+
+            {/* File Info */}
+            {selectedImage && (
+              <div className="text-center text-sm text-neutral-600">
+                <p className="font-medium">{selectedImage.name}</p>
+                <p>{(selectedImage.size / 1024).toFixed(1)} KB</p>
+              </div>
+            )}
+
+            {/* Instructions */}
+            <p className="text-sm text-neutral-500 text-center">
+              Supported formats: JPEG, PNG, GIF, WebP (max 5MB)
+            </p>
+          </div>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={handleCancelImageUpload}
+            disabled={uploadImage.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleImageUpload}
+            isLoading={uploadImage.isPending}
+            leftIcon={<Upload className="h-4 w-4" />}
+          >
+            Upload
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   )
 }

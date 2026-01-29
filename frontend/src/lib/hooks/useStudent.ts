@@ -188,6 +188,24 @@ export function useUpdateStudentProfile() {
   })
 }
 
+export function useUploadProfileImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('image', file)
+      const { data } = await apiClient.post<{ imageUrl: string }>('/student/profile/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studentKeys.profile() })
+      queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
+    },
+  })
+}
+
 // ==================== Supervisors ====================
 interface SupervisorListParams {
   search?: string

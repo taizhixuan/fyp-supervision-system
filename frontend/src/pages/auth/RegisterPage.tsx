@@ -30,6 +30,7 @@ export function RegisterPage() {
       phone: '',
       password: '',
       confirmPassword: '',
+      acceptTerms: false,
     },
   })
 
@@ -256,6 +257,42 @@ export function RegisterPage() {
                   <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="pt-2">
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="acceptTerms"
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                  {...register('acceptTerms')}
+                />
+                <label htmlFor="acceptTerms" className="text-sm text-stone-600">
+                  I agree to the{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-amber-600 hover:text-amber-700 underline"
+                  >
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-amber-600 hover:text-amber-700 underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  <span className="text-red-500"> *</span>
+                </label>
+              </div>
+              {errors.acceptTerms && (
+                <p className="mt-1 text-xs text-red-500">{errors.acceptTerms.message}</p>
+              )}
             </div>
 
             <Button
