@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,6 +12,11 @@ import {
   Users,
   GraduationCap,
   Send,
+  Link2,
+  Info,
+  Copy,
+  Check,
+  Globe,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +25,12 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisees, useCreateMeeting } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import {
+  ONLINE_PLATFORMS,
+  detectPlatformFromUrl,
+  getPlatformInfo,
+  type OnlinePlatform,
+} from '@/lib/utils/meetingPlatform'
 
 const meetingSchema = z.object({
   studentId: z.string().min(1, 'Please select a student'),
@@ -29,6 +40,7 @@ const meetingSchema = z.object({
   duration: z.number().min(15, 'Minimum 15 minutes').max(180, 'Maximum 3 hours'),
   location: z.string().optional(),
   meetingUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  onlinePlatform: z.enum(['MICROSOFT_TEAMS', 'ZOOM', 'GOOGLE_MEET', 'WEBEX', 'OTHER']).optional(),
   agenda: z.string().optional(),
 })
 
@@ -39,20 +51,48 @@ export function CreateMeeting() {
   const { data: superviseesData, isLoading: loadingSupervisees } = useSupervisees()
   const createMeeting = useCreateMeeting()
 
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [showPlatformHelp, setShowPlatformHelp] = useState(false)
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<MeetingFormData>({
     resolver: zodResolver(meetingSchema),
     defaultValues: {
       type: 'IN_PERSON',
       duration: 60,
+      onlinePlatform: 'MICROSOFT_TEAMS',
     },
   })
 
   const meetingType = watch('type')
+  const meetingUrl = watch('meetingUrl')
+  const onlinePlatform = watch('onlinePlatform')
+
+  // Auto-detect platform from URL
+  useEffect(() => {
+    if (meetingUrl && meetingUrl.length > 10) {
+      const detected = detectPlatformFromUrl(meetingUrl)
+      if (detected !== 'OTHER') {
+        setValue('onlinePlatform', detected)
+      }
+    }
+  }, [meetingUrl, setValue])
+
+  const selectedPlatformInfo = getPlatformInfo(onlinePlatform || 'MICROSOFT_TEAMS')
+  const showOnlineFields = meetingType === 'ONLINE' || meetingType === 'HYBRID'
+
+  const handleCopyLink = async () => {
+    if (meetingUrl) {
+      await navigator.clipboard.writeText(meetingUrl)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    }
+  }
 
   const onSubmit = async (data: MeetingFormData) => {
     try {
@@ -219,17 +259,114 @@ export function CreateMeeting() {
               </div>
             )}
 
-            {/* Meeting URL (for online or hybrid) */}
-            {(meetingType === 'ONLINE' || meetingType === 'HYBRID') && (
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Meeting URL
-                </label>
-                <Input
-                  {...register('meetingUrl')}
-                  placeholder="e.g., https://meet.google.com/..."
-                  error={errors.meetingUrl?.message}
-                />
+            {/* Online Meeting Section */}
+            {showOnlineFields && (
+              <div className="space-y-4 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-neutral-900 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-primary-500" />
+                    Online Meeting Setup
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlatformHelp(!showPlatformHelp)}
+                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    How to get a meeting link?
+                  </button>
+                </div>
+
+                {/* Platform Help Panel */}
+                {showPlatformHelp && (
+                  <div className="p-3 bg-primary-50 border border-primary-100 rounded-md text-sm space-y-2">
+                    <p className="font-medium text-primary-800">Quick Guide:</p>
+                    <ul className="space-y-1.5 text-primary-700">
+                      {ONLINE_PLATFORMS.filter(p => p.key !== 'OTHER').map((p) => (
+                        <li key={p.key} className="flex items-start gap-2">
+                          <span className={cn('font-medium min-w-[80px]', p.color)}>{p.shortLabel}:</span>
+                          <span>{p.helpText}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Platform Picker */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Platform
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {ONLINE_PLATFORMS.filter(p => p.key !== 'OTHER').map((platform) => (
+                      <button
+                        key={platform.key}
+                        type="button"
+                        onClick={() => setValue('onlinePlatform', platform.key)}
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border',
+                          onlinePlatform === platform.key
+                            ? cn('border-primary-500', platform.bgColor, platform.color)
+                            : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
+                        )}
+                      >
+                        <Video className="h-4 w-4" />
+                        {platform.shortLabel}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setValue('onlinePlatform', 'OTHER')}
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border',
+                        onlinePlatform === 'OTHER'
+                          ? 'border-primary-500 bg-neutral-100 text-neutral-700'
+                          : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
+                      )}
+                    >
+                      <Link2 className="h-4 w-4" />
+                      Other
+                    </button>
+                  </div>
+                </div>
+
+                {/* Meeting URL with auto-detect */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    Meeting Link
+                  </label>
+                  <div className="relative">
+                    <Input
+                      {...register('meetingUrl')}
+                      placeholder={selectedPlatformInfo.placeholder}
+                      error={errors.meetingUrl?.message}
+                      className="pr-10"
+                    />
+                    {meetingUrl && (
+                      <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded hover:bg-neutral-200 transition-colors"
+                        title="Copy link"
+                      >
+                        {linkCopied ? (
+                          <Check className="h-4 w-4 text-success-500" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-neutral-400" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {meetingUrl && detectPlatformFromUrl(meetingUrl) !== 'OTHER' && (
+                    <p className="text-xs text-success-600 mt-1 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Detected: {getPlatformInfo(detectPlatformFromUrl(meetingUrl)).label}
+                    </p>
+                  )}
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Paste the meeting link here. The platform will be auto-detected from the URL.
+                  </p>
+                </div>
               </div>
             )}
 

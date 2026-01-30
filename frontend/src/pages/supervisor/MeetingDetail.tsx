@@ -15,6 +15,10 @@ import {
   FileText,
   MessageSquare,
   ExternalLink,
+  Copy,
+  Check,
+  Share2,
+  Link2,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -23,6 +27,11 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorMeeting, useRespondToMeeting, useCompleteMeeting } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import {
+  detectPlatformFromUrl,
+  getPlatformInfo,
+  buildMeetingShareMailto,
+} from '@/lib/utils/meetingPlatform'
 import type { MeetingStatus, MeetingType } from '@/types'
 
 const statusConfig: Record<MeetingStatus, { label: string; color: string; bgColor: string }> = {
@@ -49,6 +58,7 @@ export function MeetingDetail() {
   const [rescheduleTime, setRescheduleTime] = useState('')
   const [meetingNotes, setMeetingNotes] = useState('')
   const [actionItems, setActionItems] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const { data: meeting, isLoading } = useSupervisorMeeting(Number(id))
   const respondMutation = useRespondToMeeting()
@@ -110,6 +120,12 @@ export function MeetingDetail() {
     }
   }
 
+  const handleCopyLink = async (url: string) => {
+    await navigator.clipboard.writeText(url)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -137,6 +153,12 @@ export function MeetingDetail() {
   const canRespond = meeting.status === 'PENDING'
   const canComplete = meeting.status === 'CONFIRMED' && new Date(meetingDate) <= new Date()
   const canCancel = meeting.status === 'PENDING' || meeting.status === 'CONFIRMED'
+
+  // Platform detection for online/hybrid meetings
+  const detectedPlatform = meeting.meetingUrl
+    ? meeting.onlinePlatform || detectPlatformFromUrl(meeting.meetingUrl)
+    : null
+  const platformInfo = detectedPlatform ? getPlatformInfo(detectedPlatform) : null
 
   return (
     <div className="space-y-6">
@@ -252,22 +274,80 @@ export function MeetingDetail() {
                   )}
                 </div>
               </div>
-              {meeting.meetingUrl && (
-                <div className="pt-2">
-                  <a
-                    href={meeting.meetingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary-600 hover:underline"
-                  >
-                    <Video className="h-4 w-4" />
-                    Join Online Meeting
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
             </div>
           </Card>
+
+          {/* Online Meeting Link Card */}
+          {meeting.meetingUrl && (
+            <Card className="p-6">
+              <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                <Video className="h-5 w-5 text-neutral-400" />
+                Online Meeting
+              </h3>
+
+              {/* Platform Badge */}
+              {platformInfo && (
+                <div className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium mb-3', platformInfo.bgColor, platformInfo.color)}>
+                  <Video className="h-3 w-3" />
+                  {platformInfo.label}
+                </div>
+              )}
+
+              {/* Join Button */}
+              <a
+                href={meeting.meetingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+              >
+                <Video className="h-4 w-4" />
+                Join Online Meeting
+                <ExternalLink className="h-3 w-3" />
+              </a>
+
+              {/* Link Actions */}
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => handleCopyLink(meeting.meetingUrl!)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-success-500" />
+                      <span className="text-success-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy Link
+                    </>
+                  )}
+                </button>
+                <a
+                  href={buildMeetingShareMailto({
+                    title: meeting.title,
+                    dateTime: meetingDate,
+                    duration: meeting.duration,
+                    meetingUrl: meeting.meetingUrl,
+                    platform: detectedPlatform || 'OTHER',
+                    agenda: meeting.agenda,
+                  })}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  Share via Email
+                </a>
+              </div>
+
+              {/* Meeting URL display */}
+              <div className="mt-3 p-2 bg-neutral-50 rounded border border-neutral-200">
+                <p className="text-xs text-neutral-500 truncate flex items-center gap-1">
+                  <Link2 className="h-3 w-3 flex-shrink-0" />
+                  {meeting.meetingUrl}
+                </p>
+              </div>
+            </Card>
+          )}
 
           {/* Alternative Times (if pending) */}
           {canRespond && meeting.alternativeDateTimes && meeting.alternativeDateTimes.length > 0 && (

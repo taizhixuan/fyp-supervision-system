@@ -6,16 +6,18 @@ import {
   Clock,
   Video,
   MapPin,
-  User,
   ExternalLink,
   XCircle,
-  Edit,
   FileText,
+  Copy,
+  Check,
+  Link2,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, Modal, AlertBanner } from '@/components/ui'
 import { useMeetingDetail, useCancelMeeting } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { detectPlatformFromUrl, getPlatformInfo } from '@/lib/utils/meetingPlatform'
 import type { MeetingStatus } from '@/types'
 
 // Sample data
@@ -60,6 +62,7 @@ export function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const cancelMeeting = useCancelMeeting()
@@ -185,22 +188,55 @@ export function MeetingDetail() {
                     <Video className="h-5 w-5 text-success-600" />
                   )}
                 </div>
-                <div>
-                  <p className="font-medium text-neutral-900">
-                    {displayMeeting.platform === 'IN_PERSON' ? 'In Person' : displayMeeting.platform.replace('_', ' ')}
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-neutral-900">
+                      {displayMeeting.platform === 'IN_PERSON' ? 'In Person' : displayMeeting.platform.replace('_', ' ')}
+                    </p>
+                    {displayMeeting.meetingLink && displayMeeting.platform !== 'IN_PERSON' && (() => {
+                      const detected = detectPlatformFromUrl(displayMeeting.meetingLink)
+                      const info = getPlatformInfo(detected)
+                      return (
+                        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', info.bgColor, info.color)}>
+                          {info.shortLabel}
+                        </span>
+                      )
+                    })()}
+                  </div>
                   {displayMeeting.platform === 'IN_PERSON' && displayMeeting.location && (
                     <p className="text-sm text-neutral-600">{displayMeeting.location}</p>
                   )}
                   {displayMeeting.meetingLink && displayMeeting.status === 'CONFIRMED' && (
-                    <a
-                      href={displayMeeting.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline mt-1"
-                    >
-                      Join Meeting <ExternalLink className="h-3 w-3" />
-                    </a>
+                    <div className="mt-2 space-y-2">
+                      <a
+                        href={displayMeeting.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
+                      >
+                        Join Meeting <ExternalLink className="h-3 w-3" />
+                      </a>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-2 py-1 bg-neutral-50 rounded border border-neutral-200 text-xs text-neutral-500 truncate flex items-center gap-1">
+                          <Link2 className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{displayMeeting.meetingLink}</span>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(displayMeeting.meetingLink!)
+                            setLinkCopied(true)
+                            setTimeout(() => setLinkCopied(false), 2000)
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 rounded border border-neutral-200 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
+                        >
+                          {linkCopied ? (
+                            <><Check className="h-3 w-3 text-success-500" /><span className="text-success-600">Copied</span></>
+                          ) : (
+                            <><Copy className="h-3 w-3" />Copy</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
