@@ -136,6 +136,7 @@ export interface ProposalFeedback {
 // Meeting types for supervisor
 export type MeetingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'NO_SHOW'
 export type MeetingType = 'IN_PERSON' | 'ONLINE' | 'HYBRID'
+export type OnlinePlatform = 'MICROSOFT_TEAMS' | 'ZOOM' | 'GOOGLE_MEET' | 'WEBEX' | 'OTHER'
 
 export interface SupervisorMeeting {
   meetingId: number
@@ -151,6 +152,7 @@ export interface SupervisorMeeting {
   duration: number // in minutes
   location?: string
   meetingUrl?: string
+  onlinePlatform?: OnlinePlatform
   agenda?: string
   notes?: string
   actionItems?: string[]
