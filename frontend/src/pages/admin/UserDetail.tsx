@@ -19,11 +19,14 @@ import {
   XCircle,
   Key,
   LogOut,
+  Send,
+  RefreshCw,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { useAdminUser, useUpdateUser, useDeleteUser } from '@/lib/hooks/useAdmin'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
+import { useAdminUser, useUpdateUser, useDeleteUser, useResendInvite, useSendCredentials } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { UserRole, UserStatus } from '@/types'
@@ -51,6 +54,10 @@ export function UserDetail() {
   const { data: user, isLoading } = useAdminUser(id!)
   const updateMutation = useUpdateUser()
   const deleteMutation = useDeleteUser()
+  const resendInviteMutation = useResendInvite()
+  const sendCredentialsMutation = useSendCredentials()
+  const successToast = useSuccessToast()
+  const errorToast = useErrorToast()
 
   if (isLoading) {
     return (
@@ -75,6 +82,13 @@ export function UserDetail() {
   const role = roleConfig[user.role]
   const status = statusConfig[user.status]
 
+  const statusLabels: Record<string, string> = {
+    ACTIVE: 'activated',
+    SUSPENDED: 'suspended',
+    BLOCKED: 'blocked',
+    PENDING: 'set to pending',
+  }
+
   const handleStatusChange = async (newStatus: UserStatus) => {
     try {
       await updateMutation.mutateAsync({
@@ -82,8 +96,9 @@ export function UserDetail() {
         data: { status: newStatus },
       })
       setShowConfirmSuspend(false)
+      successToast('Status Updated', `${user.fullName}'s account has been ${statusLabels[newStatus]}.`)
     } catch (error) {
-      console.error('Failed to update status:', error)
+      errorToast('Update Failed', 'Could not update the account status.')
     }
   }
 
@@ -93,17 +108,40 @@ export function UserDetail() {
         userId: user.userId,
         data: { isLocked: !user.isLocked },
       })
+      successToast(
+        user.isLocked ? 'Account Unlocked' : 'Account Locked',
+        `${user.fullName}'s account has been ${user.isLocked ? 'unlocked' : 'locked'}.`
+      )
     } catch (error) {
-      console.error('Failed to toggle lock:', error)
+      errorToast('Update Failed', 'Could not toggle account lock status.')
     }
   }
 
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(user.userId)
+      successToast('Account Deleted', `${user.fullName}'s account has been permanently deleted.`)
       navigate(ROUTES.ADMIN.USERS)
     } catch (error) {
-      console.error('Failed to delete user:', error)
+      errorToast('Delete Failed', 'Could not delete the account.')
+    }
+  }
+
+  const handleResendInvite = async () => {
+    try {
+      await resendInviteMutation.mutateAsync(user.userId)
+      successToast('Invitation Resent', `Invite email sent to ${user.email}`)
+    } catch (error) {
+      errorToast('Failed to Resend', 'Could not send the invitation email.')
+    }
+  }
+
+  const handleSendResetLink = async () => {
+    try {
+      await sendCredentialsMutation.mutateAsync({ userId: user.userId, method: 'RESET_LINK' })
+      successToast('Reset Link Sent', `Password reset link sent to ${user.email}`)
+    } catch (error) {
+      errorToast('Failed to Send', 'Could not send the password reset link.')
     }
   }
 
@@ -367,6 +405,30 @@ export function UserDetail() {
               </>
             )}
           </Button>
+
+          {/* Resend Invite (if pending) */}
+          {user.status === 'PENDING' && (
+            <Button
+              variant="outline"
+              onClick={handleResendInvite}
+              disabled={resendInviteMutation.isPending}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {resendInviteMutation.isPending ? 'Sending...' : 'Resend Invite'}
+            </Button>
+          )}
+
+          {/* Send Password Reset (for non-pending users) */}
+          {user.status !== 'PENDING' && (
+            <Button
+              variant="outline"
+              onClick={handleSendResetLink}
+              disabled={sendCredentialsMutation.isPending}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {sendCredentialsMutation.isPending ? 'Sending...' : 'Send Password Reset'}
+            </Button>
+          )}
 
           {/* Approve (if pending) */}
           {user.status === 'PENDING' && (

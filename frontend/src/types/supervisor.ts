@@ -275,6 +275,20 @@ export interface DashboardActivity {
   actionRequired: boolean
 }
 
+// Profile audit log entry
+export type ProfileAuditAction = 'UPDATE_PROFILE' | 'UPDATE_RESEARCH_AREAS' | 'UPDATE_QUOTA' | 'TOGGLE_AVAILABILITY'
+
+export interface ProfileAuditEntry {
+  auditId: number
+  supervisorId: string
+  action: ProfileAuditAction
+  field: string
+  oldValue: string
+  newValue: string
+  timestamp: string
+  ipAddress?: string
+}
+
 // Notification types for supervisor
 export type SupervisorNotificationType =
   | 'NEW_REQUEST'

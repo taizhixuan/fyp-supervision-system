@@ -1,117 +1,20 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Search,
-  Filter,
   Users,
-  Star,
-  MapPin,
-  Mail,
-  ChevronRight,
   Sparkles,
   X,
   SlidersHorizontal,
+  RefreshCw,
 } from 'lucide-react'
-import { Card, Button, Input, Badge, Spinner, Modal } from '@/components/ui'
+import { Card, Button, Input, Badge, Spinner, Pagination } from '@/components/ui'
 import { useSupervisorList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisorSummary } from '@/types'
 
-// Sample data for design preview
-const SAMPLE_SUPERVISORS: SupervisorSummary[] = [
-  {
-    supervisorId: '1',
-    userId: '101',
-    fullName: 'Dr. Sarah Lee Wei Lin',
-    email: 'sarah.lee@mmu.edu.my',
-    title: 'Associate Professor',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Artificial Intelligence', 'Machine Learning', 'Natural Language Processing'],
-    currentLoad: 5,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-  },
-  {
-    supervisorId: '2',
-    userId: '102',
-    fullName: 'Prof. Dr. Ahmad Razak',
-    email: 'ahmad.razak@mmu.edu.my',
-    title: 'Professor',
-    department: 'Computer Science',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Cybersecurity', 'Network Security', 'Blockchain'],
-    currentLoad: 7,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-  },
-  {
-    supervisorId: '3',
-    userId: '103',
-    fullName: 'Dr. Lisa Wong Mei Hua',
-    email: 'lisa.wong@mmu.edu.my',
-    title: 'Senior Lecturer',
-    department: 'Information Systems',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Data Science', 'Big Data Analytics', 'Business Intelligence'],
-    currentLoad: 6,
-    maxCapacity: 6,
-    isAcceptingStudents: false,
-  },
-  {
-    supervisorId: '4',
-    userId: '104',
-    fullName: 'Dr. Muhammad Hafiz',
-    email: 'muhammad.hafiz@mmu.edu.my',
-    title: 'Senior Lecturer',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Web Development', 'Cloud Computing', 'DevOps'],
-    currentLoad: 4,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-  },
-  {
-    supervisorId: '5',
-    userId: '105',
-    fullName: 'Dr. Tan Chee Keong',
-    email: 'tan.ck@mmu.edu.my',
-    title: 'Associate Professor',
-    department: 'Computer Science',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Computer Vision', 'Image Processing', 'Deep Learning'],
-    currentLoad: 3,
-    maxCapacity: 6,
-    isAcceptingStudents: true,
-  },
-  {
-    supervisorId: '6',
-    userId: '106',
-    fullName: 'Dr. Siti Aminah',
-    email: 'siti.aminah@mmu.edu.my',
-    title: 'Lecturer',
-    department: 'Information Systems',
-    faculty: 'Faculty of Computing and Informatics',
-    profileImageUrl: undefined,
-    researchAreas: ['Human-Computer Interaction', 'UX Design', 'Accessibility'],
-    currentLoad: 2,
-    maxCapacity: 5,
-    isAcceptingStudents: true,
-  },
-]
-
-const FACULTIES = [
-  'All Faculties',
-  'Faculty of Computing and Informatics',
-  'Faculty of Engineering',
-  'Faculty of Business',
-]
+const PAGE_SIZE = 6
 
 const RESEARCH_AREAS = [
   'Artificial Intelligence',
@@ -126,51 +29,106 @@ const RESEARCH_AREAS = [
   'IoT',
 ]
 
+function AvailabilityIndicator({ supervisor }: { supervisor: SupervisorSummary }) {
+  const availableSlots = supervisor.maxCapacity - supervisor.currentLoad
+  const loadPercent = Math.round((supervisor.currentLoad / supervisor.maxCapacity) * 100)
+
+  const barColor =
+    loadPercent >= 100
+      ? 'bg-error-500'
+      : loadPercent >= 80
+      ? 'bg-warning-500'
+      : 'bg-success-500'
+
+  const dotColor =
+    loadPercent >= 100
+      ? 'bg-error-500'
+      : loadPercent >= 80
+      ? 'bg-warning-500'
+      : 'bg-success-500'
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {/* Badge with live dot */}
+      <div className="flex items-center gap-2">
+        {supervisor.isAcceptingStudents ? (
+          <Badge variant="success" size="sm" className="gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span
+                className={cn(
+                  'absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping',
+                  dotColor
+                )}
+              />
+              <span
+                className={cn('relative inline-flex h-2 w-2 rounded-full', dotColor)}
+              />
+            </span>
+            {availableSlots} {availableSlots === 1 ? 'slot' : 'slots'} available
+          </Badge>
+        ) : (
+          <Badge variant="error" size="sm" className="gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-error-500" />
+            </span>
+            Full
+          </Badge>
+        )}
+      </div>
+
+      {/* Capacity bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+          <div
+            className={cn('h-full rounded-full transition-all duration-500', barColor)}
+            style={{ width: `${Math.min(loadPercent, 100)}%` }}
+          />
+        </div>
+        <span className="text-xs text-neutral-500 tabular-nums whitespace-nowrap">
+          {supervisor.currentLoad}/{supervisor.maxCapacity}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export function SupervisorDirectory() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFaculty, setSelectedFaculty] = useState('All Faculties')
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
   const [availableOnly, setAvailableOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [compareList, setCompareList] = useState<string[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const { data, isLoading } = useSupervisorList({
+  const { data, isLoading, dataUpdatedAt, refetch, isFetching } = useSupervisorList({
     search: searchQuery,
-    faculty: selectedFaculty !== 'All Faculties' ? selectedFaculty : undefined,
     researchArea: selectedAreas.length > 0 ? selectedAreas.join(',') : undefined,
     availableOnly,
+    page: currentPage,
+    limit: PAGE_SIZE,
   })
 
-  // Use sample data if no API data available
-  const supervisors = data?.supervisors || SAMPLE_SUPERVISORS
+  const supervisors = data?.supervisors || []
+  const totalItems = data?.total ?? 0
+  const totalPages = data?.totalPages ?? 1
 
-  // Filter supervisors based on search and filters
-  const filteredSupervisors = supervisors.filter((supervisor) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      supervisor.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      supervisor.researchAreas.some((area) =>
-        area.toLowerCase().includes(searchQuery.toLowerCase())
-      ) ||
-      supervisor.department.toLowerCase().includes(searchQuery.toLowerCase())
+  // Reset to page 1 when filters change
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1)
+  }, [])
 
-    const matchesFaculty =
-      selectedFaculty === 'All Faculties' || supervisor.faculty === selectedFaculty
-
-    const matchesAreas =
-      selectedAreas.length === 0 ||
-      selectedAreas.some((area) => supervisor.researchAreas.includes(area))
-
-    const matchesAvailability = !availableOnly || supervisor.isAcceptingStudents
-
-    return matchesSearch && matchesFaculty && matchesAreas && matchesAvailability
-  })
-
-  const toggleArea = (area: string) => {
+  const toggleArea = useCallback((area: string) => {
     setSelectedAreas((prev) =>
       prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
     )
-  }
+    setCurrentPage(1)
+  }, [])
+
+  const handleAvailableOnlyChange = useCallback((checked: boolean) => {
+    setAvailableOnly(checked)
+    setCurrentPage(1)
+  }, [])
 
   const toggleCompare = (supervisorId: string) => {
     setCompareList((prev) =>
@@ -183,13 +141,21 @@ export function SupervisorDirectory() {
   }
 
   const clearFilters = () => {
-    setSelectedFaculty('All Faculties')
     setSelectedAreas([])
     setAvailableOnly(false)
+    setCurrentPage(1)
   }
 
-  const hasActiveFilters =
-    selectedFaculty !== 'All Faculties' || selectedAreas.length > 0 || availableOnly
+  const hasActiveFilters = selectedAreas.length > 0 || availableOnly
+
+  // Format the last-updated timestamp
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : null
 
   return (
     <div className="space-y-6">
@@ -216,7 +182,7 @@ export function SupervisorDirectory() {
               placeholder="Search by name, research area, or department..."
               leftIcon={<Search className="h-5 w-5" />}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
           <Button
@@ -227,9 +193,7 @@ export function SupervisorDirectory() {
             Filters
             {hasActiveFilters && (
               <Badge variant="primary" size="sm" className="ml-2">
-                {(selectedFaculty !== 'All Faculties' ? 1 : 0) +
-                  selectedAreas.length +
-                  (availableOnly ? 1 : 0)}
+                {selectedAreas.length + (availableOnly ? 1 : 0)}
               </Badge>
             )}
           </Button>
@@ -238,29 +202,6 @@ export function SupervisorDirectory() {
         {/* Expanded Filters */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-neutral-200 space-y-4">
-            {/* Faculty Filter */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Faculty
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {FACULTIES.map((faculty) => (
-                  <button
-                    key={faculty}
-                    onClick={() => setSelectedFaculty(faculty)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                      selectedFaculty === faculty
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                    )}
-                  >
-                    {faculty}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Research Areas Filter */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -290,7 +231,7 @@ export function SupervisorDirectory() {
                 <input
                   type="checkbox"
                   checked={availableOnly}
-                  onChange={(e) => setAvailableOnly(e.target.checked)}
+                  onChange={(e) => handleAvailableOnlyChange(e.target.checked)}
                   className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-neutral-700">
@@ -343,11 +284,33 @@ export function SupervisorDirectory() {
         </Card>
       )}
 
-      {/* Results */}
+      {/* Results header with live status */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-neutral-600">
-          Showing {filteredSupervisors.length} supervisor(s)
+          Showing{' '}
+          <span className="font-medium">{supervisors.length}</span>
+          {totalItems > 0 && (
+            <> of <span className="font-medium">{totalItems}</span></>
+          )}{' '}
+          supervisor(s)
         </p>
+        <div className="flex items-center gap-3">
+          {lastUpdated && (
+            <span className="text-xs text-neutral-400">
+              Updated {lastUpdated}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-primary-600 transition-colors disabled:opacity-50"
+            title="Refresh availability"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Supervisor List */}
@@ -355,7 +318,7 @@ export function SupervisorDirectory() {
         <div className="flex items-center justify-center py-12">
           <Spinner size="lg" label="Loading supervisors..." />
         </div>
-      ) : filteredSupervisors.length === 0 ? (
+      ) : supervisors.length === 0 ? (
         <Card className="text-center py-12">
           <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-neutral-900 mb-2">
@@ -371,114 +334,115 @@ export function SupervisorDirectory() {
           )}
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredSupervisors.map((supervisor) => (
-            <Card key={supervisor.supervisorId} hover className="relative">
-              {/* Compare Checkbox */}
-              <div className="absolute top-4 right-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={compareList.includes(supervisor.supervisorId)}
-                    onChange={() => toggleCompare(supervisor.supervisorId)}
-                    disabled={
-                      !compareList.includes(supervisor.supervisorId) &&
-                      compareList.length >= 3
-                    }
-                    className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-xs text-neutral-500">Compare</span>
-                </label>
-              </div>
-
-              <div className="flex gap-4">
-                {/* Avatar */}
-                <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                  {supervisor.profileImageUrl ? (
-                    <img
-                      src={supervisor.profileImageUrl}
-                      alt={supervisor.fullName}
-                      className="w-16 h-16 rounded-full object-cover"
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {supervisors.map((supervisor) => (
+              <Card key={supervisor.supervisorId} hover className="relative">
+                {/* Compare Checkbox */}
+                <div className="absolute top-4 right-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={compareList.includes(supervisor.supervisorId)}
+                      onChange={() => toggleCompare(supervisor.supervisorId)}
+                      disabled={
+                        !compareList.includes(supervisor.supervisorId) &&
+                        compareList.length >= 3
+                      }
+                      className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                     />
-                  ) : (
-                    <span className="text-xl font-bold text-primary-600">
-                      {supervisor.fullName
-                        .split(' ')
-                        .filter((n) => !['Dr.', 'Prof.'].includes(n))
-                        .map((n) => n[0])
-                        .join('')
-                        .slice(0, 2)}
-                    </span>
-                  )}
+                    <span className="text-xs text-neutral-500">Compare</span>
+                  </label>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-semibold text-neutral-900">
-                        {supervisor.fullName}
-                      </h3>
-                      <p className="text-sm text-neutral-600">{supervisor.title}</p>
-                      <p className="text-sm text-neutral-500">{supervisor.department}</p>
-                    </div>
-                  </div>
-
-                  {/* Availability Badge */}
-                  <div className="mt-2">
-                    {supervisor.isAcceptingStudents ? (
-                      <Badge variant="success" size="sm">
-                        Accepting Students ({supervisor.maxCapacity - supervisor.currentLoad} slots)
-                      </Badge>
+                <div className="flex gap-4">
+                  {/* Avatar */}
+                  <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    {supervisor.profileImageUrl ? (
+                      <img
+                        src={supervisor.profileImageUrl}
+                        alt={supervisor.fullName}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
                     ) : (
-                      <Badge variant="error" size="sm">
-                        Not Accepting
-                      </Badge>
+                      <span className="text-xl font-bold text-primary-600">
+                        {supervisor.fullName
+                          .split(' ')
+                          .filter((n) => !['Dr.', 'Prof.'].includes(n))
+                          .map((n) => n[0])
+                          .join('')
+                          .slice(0, 2)}
+                      </span>
                     )}
                   </div>
 
-                  {/* Research Areas */}
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {supervisor.researchAreas.slice(0, 3).map((area) => (
-                      <Badge key={area} variant="default" size="sm">
-                        {area}
-                      </Badge>
-                    ))}
-                    {supervisor.researchAreas.length > 3 && (
-                      <Badge variant="default" size="sm">
-                        +{supervisor.researchAreas.length - 3}
-                      </Badge>
-                    )}
-                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold text-neutral-900">
+                          {supervisor.fullName}
+                        </h3>
+                        <p className="text-sm text-neutral-600">{supervisor.title}</p>
+                        <p className="text-sm text-neutral-500">{supervisor.department}</p>
+                      </div>
+                    </div>
 
-                  {/* Actions */}
-                  <div className="mt-4 flex items-center gap-2">
-                    <Link
-                      to={ROUTES.STUDENT.SUPERVISOR_DETAIL.replace(
-                        ':id',
-                        supervisor.supervisorId
+                    {/* Real-time Availability Indicator */}
+                    <AvailabilityIndicator supervisor={supervisor} />
+
+                    {/* Research Areas */}
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {supervisor.researchAreas.slice(0, 3).map((area) => (
+                        <Badge key={area} variant="default" size="sm">
+                          {area}
+                        </Badge>
+                      ))}
+                      {supervisor.researchAreas.length > 3 && (
+                        <Badge variant="default" size="sm">
+                          +{supervisor.researchAreas.length - 3}
+                        </Badge>
                       )}
-                      className="flex-1"
-                    >
-                      <Button variant="secondary" size="sm" className="w-full">
-                        View Profile
-                      </Button>
-                    </Link>
-                    {supervisor.isAcceptingStudents && (
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-4 flex items-center gap-2">
                       <Link
-                        to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${supervisor.supervisorId}`}
+                        to={ROUTES.STUDENT.SUPERVISOR_DETAIL.replace(
+                          ':id',
+                          supervisor.supervisorId
+                        )}
+                        className="flex-1"
                       >
-                        <Button variant="primary" size="sm">
-                          Request
+                        <Button variant="secondary" size="sm" className="w-full">
+                          View Profile
                         </Button>
                       </Link>
-                    )}
+                      {supervisor.isAcceptingStudents && (
+                        <Link
+                          to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${supervisor.supervisorId}`}
+                        >
+                          <Button variant="primary" size="sm">
+                            Request
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
     </div>
   )

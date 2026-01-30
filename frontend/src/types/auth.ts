@@ -1,6 +1,6 @@
 export type UserRole = 'STUDENT' | 'SUPERVISOR' | 'FYP_COMMITTEE' | 'SYSTEM_ADMIN'
 
-export type UserStatus = 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'INACTIVE'
+export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'BLOCKED'
 
 export interface User {
   userId: number

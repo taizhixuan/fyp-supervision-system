@@ -1,24 +1,24 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Users,
   Search,
   Plus,
-  Filter,
   ChevronRight,
   Mail,
-  Shield,
   Clock,
   Lock,
   Unlock,
-  MoreVertical,
   Sparkles,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { useAdminUsers } from '@/lib/hooks/useAdmin'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
+import { useAdminUsers, useUpdateUser, useBulkUpdateUserStatus } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { UserRole, UserStatus } from '@/types'
@@ -38,15 +38,61 @@ const statusConfig: Record<UserStatus, { label: string; color: string; bgColor: 
 }
 
 export function UserManagement() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL')
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL')
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
 
   const { data, isLoading } = useAdminUsers({
     role: roleFilter !== 'ALL' ? roleFilter : undefined,
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
     search: searchQuery || undefined,
   })
+
+  const updateMutation = useUpdateUser()
+  const bulkMutation = useBulkUpdateUserStatus()
+  const successToast = useSuccessToast()
+  const errorToast = useErrorToast()
+
+  const toggleSelectUser = (userId: string) => {
+    setSelectedUsers((prev) => {
+      const next = new Set(prev)
+      if (next.has(userId)) next.delete(userId)
+      else next.add(userId)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (!data?.users) return
+    if (selectedUsers.size === data.users.length) {
+      setSelectedUsers(new Set())
+    } else {
+      setSelectedUsers(new Set(data.users.map((u) => u.userId)))
+    }
+  }
+
+  const handleQuickStatusChange = async (userId: string, status: UserStatus, name: string) => {
+    try {
+      await updateMutation.mutateAsync({ userId, data: { status } })
+      const label = status === 'ACTIVE' ? 'activated' : status === 'SUSPENDED' ? 'suspended' : status
+      successToast('Status Updated', `${name}'s account has been ${label}.`)
+    } catch (error) {
+      errorToast('Update Failed', 'Could not update the account status.')
+    }
+  }
+
+  const handleBulkAction = async (status: UserStatus) => {
+    try {
+      await bulkMutation.mutateAsync({ userIds: Array.from(selectedUsers), status })
+      const label = status === 'ACTIVE' ? 'activated' : 'suspended'
+      successToast('Bulk Update Complete', `${selectedUsers.size} account(s) have been ${label}.`)
+      setSelectedUsers(new Set())
+    } catch (error) {
+      errorToast('Bulk Update Failed', 'Could not update the selected accounts.')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -62,6 +108,8 @@ export function UserManagement() {
     pending: data?.users.filter((u) => u.status === 'PENDING').length ?? 0,
     suspended: data?.users.filter((u) => u.status === 'SUSPENDED').length ?? 0,
   }
+
+  const allSelected = data?.users && data.users.length > 0 && selectedUsers.size === data.users.length
 
   return (
     <div className="space-y-6">
@@ -175,92 +223,202 @@ export function UserManagement() {
         </div>
       </div>
 
-      {/* Users List */}
+      {/* Bulk Action Bar */}
+      {selectedUsers.size > 0 && (
+        <Card className="p-3 bg-primary-50 border-primary-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm font-medium text-primary-900">
+              {selectedUsers.size} user(s) selected
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleBulkAction('ACTIVE')}
+                disabled={bulkMutation.isPending}
+              >
+                {bulkMutation.isPending ? (
+                  <Spinner size="sm" className="mr-1" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                )}
+                Activate
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-warning-600 border-warning-300 hover:bg-warning-50"
+                onClick={() => handleBulkAction('SUSPENDED')}
+                disabled={bulkMutation.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                Suspend
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedUsers(new Set())}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Select All + Users List */}
       <div className="flex flex-col gap-4">
+        {data?.users && data.users.length > 0 && (
+          <div className="flex items-center gap-3 px-1">
+            <input
+              type="checkbox"
+              checked={!!allSelected}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span className="text-sm text-neutral-500">
+              {allSelected ? 'Deselect all' : 'Select all'}
+            </span>
+          </div>
+        )}
+
         {data?.users && data.users.length > 0 ? (
           data.users.map((user) => {
             const role = roleConfig[user.role]
             const status = statusConfig[user.status]
 
             return (
-              <Link
+              <Card
                 key={user.userId}
-                to={ROUTES.ADMIN.USER_DETAIL.replace(':id', user.userId)}
+                className="p-4 hover:shadow-md transition-all duration-300"
               >
-                <Card className="p-4 hover:shadow-md hover:scale-[1.01] transition-all duration-300 cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    {/* Avatar */}
-                    <div className={cn(
+                <div className="flex items-center gap-4">
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.has(user.userId)}
+                    onChange={() => toggleSelectUser(user.userId)}
+                    className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
+                  />
+
+                  {/* Avatar */}
+                  <div
+                    className={cn(
                       'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
                       user.isLocked ? 'bg-error-100' : 'bg-primary-100'
-                    )}>
-                      {user.isLocked ? (
-                        <Lock className="h-6 w-6 text-error-600" />
-                      ) : (
-                        <span className="text-lg font-semibold text-primary-600">
-                          {user.fullName.charAt(0).toUpperCase()}
+                    )}
+                  >
+                    {user.isLocked ? (
+                      <Lock className="h-6 w-6 text-error-600" />
+                    ) : (
+                      <span className="text-lg font-semibold text-primary-600">
+                        {user.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Content (clickable for navigation) */}
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => navigate(ROUTES.ADMIN.USER_DETAIL.replace(':id', user.userId))}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-neutral-900">{user.fullName}</h3>
+                        <div className="flex items-center gap-2 text-sm text-neutral-500">
+                          <Mail className="h-4 w-4" />
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-xl text-xs font-medium border',
+                        role.bgColor,
+                        role.color,
+                        role.borderColor
+                      )}>
+                        {role.label}
+                      </span>
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-xl text-xs font-medium border',
+                        status.bgColor,
+                        status.color,
+                        status.borderColor
+                      )}>
+                        {status.label}
+                      </span>
+                      {user.department && (
+                        <span className="px-2 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded-xl text-xs">
+                          {user.department}
+                        </span>
+                      )}
+                      {user.isLocked && (
+                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-medium flex items-center gap-1">
+                          <Lock className="h-3 w-3" />
+                          Locked
                         </span>
                       )}
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-semibold text-neutral-900">{user.fullName}</h3>
-                          <div className="flex items-center gap-2 text-sm text-neutral-500">
-                            <Mail className="h-4 w-4" />
-                            {user.email}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-neutral-400 flex-shrink-0" />
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-xl text-xs font-medium border',
-                          role.bgColor,
-                          role.color,
-                          role.borderColor
-                        )}>
-                          {role.label}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Created: {new Date(user.createdAt).toLocaleDateString()}
+                      </span>
+                      {user.lastLoginAt && (
+                        <span>
+                          Last login: {new Date(user.lastLoginAt).toLocaleDateString()}
                         </span>
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-xl text-xs font-medium border',
-                          status.bgColor,
-                          status.color,
-                          status.borderColor
-                        )}>
-                          {status.label}
-                        </span>
-                        {user.department && (
-                          <span className="px-2 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded-xl text-xs">
-                            {user.department}
-                          </span>
-                        )}
-                        {user.isLocked && (
-                          <span className="px-2 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-medium flex items-center gap-1">
-                            <Lock className="h-3 w-3" />
-                            Locked
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          Created: {new Date(user.createdAt).toLocaleDateString()}
-                        </span>
-                        {user.lastLoginAt && (
-                          <span>
-                            Last login: {new Date(user.lastLoginAt).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                </Card>
-              </Link>
+
+                  {/* Quick Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {user.status === 'PENDING' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Approve"
+                        onClick={() => handleQuickStatusChange(user.userId, 'ACTIVE', user.fullName)}
+                        disabled={updateMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4 text-success-600" />
+                      </Button>
+                    )}
+                    {user.status === 'ACTIVE' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Suspend"
+                        onClick={() => handleQuickStatusChange(user.userId, 'SUSPENDED', user.fullName)}
+                        disabled={updateMutation.isPending}
+                      >
+                        <XCircle className="h-4 w-4 text-warning-600" />
+                      </Button>
+                    )}
+                    {user.status === 'SUSPENDED' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Reactivate"
+                        onClick={() => handleQuickStatusChange(user.userId, 'ACTIVE', user.fullName)}
+                        disabled={updateMutation.isPending}
+                      >
+                        <Unlock className="h-4 w-4 text-info-600" />
+                      </Button>
+                    )}
+                    <button
+                      type="button"
+                      className="p-1 text-neutral-400 hover:text-neutral-600"
+                      onClick={() => navigate(ROUTES.ADMIN.USER_DETAIL.replace(':id', user.userId))}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
             )
           })
         ) : (

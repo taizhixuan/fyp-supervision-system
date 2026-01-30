@@ -59,6 +59,8 @@ export type UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'BLOCKED'
 export interface CreateUserRequest {
   email: string
   fullName: string
+  mmuId?: string
+  phone?: string
   role: UserRole
   department?: string
   password?: string

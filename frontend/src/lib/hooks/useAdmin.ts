@@ -7,6 +7,7 @@ import type {
   UserDetail,
   CreateUserRequest,
   UpdateUserRequest,
+  UserStatus,
   SystemParameter,
   UpdateParameterRequest,
   FYPCycle,
@@ -879,6 +880,46 @@ export function useDeleteUser() {
       if (import.meta.env.DEV) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { success: true }
+      }
+      throw new Error('API not implemented')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+    },
+  })
+}
+
+export function useResendInvite() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (import.meta.env.DEV) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        return { success: true, message: 'Invitation email resent' }
+      }
+      throw new Error('API not implemented')
+    },
+  })
+}
+
+export function useSendCredentials() {
+  return useMutation({
+    mutationFn: async ({ userId, method }: { userId: string; method: 'EMAIL' | 'RESET_LINK' }) => {
+      if (import.meta.env.DEV) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        return { success: true, message: `Credentials sent via ${method.toLowerCase().replace('_', ' ')}` }
+      }
+      throw new Error('API not implemented')
+    },
+  })
+}
+
+export function useBulkUpdateUserStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userIds, status }: { userIds: string[]; status: UserStatus }) => {
+      if (import.meta.env.DEV) {
+        await new Promise((resolve) => setTimeout(resolve, 1200))
+        return { success: true, updated: userIds.length }
       }
       throw new Error('API not implemented')
     },

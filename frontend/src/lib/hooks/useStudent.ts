@@ -148,6 +148,123 @@ const MOCK_SUPERVISORS: SupervisorSummary[] = [
     maxCapacity: 10,
     isAcceptingStudents: true,
   },
+  {
+    supervisorId: 'sup-004',
+    userId: 'user-sup-004',
+    fullName: 'Dr. Muhammad Hafiz',
+    email: 'muhammad.hafiz@mmu.edu.my',
+    title: 'Senior Lecturer',
+    department: 'Software Engineering',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Web Development', 'Cloud Computing', 'DevOps'],
+    currentLoad: 4,
+    maxCapacity: 8,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-005',
+    userId: 'user-sup-005',
+    fullName: 'Dr. Tan Chee Keong',
+    email: 'tan.ck@mmu.edu.my',
+    title: 'Associate Professor',
+    department: 'Computer Science',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Computer Vision', 'Image Processing', 'Deep Learning'],
+    currentLoad: 3,
+    maxCapacity: 6,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-006',
+    userId: 'user-sup-006',
+    fullName: 'Dr. Siti Aminah',
+    email: 'siti.aminah@mmu.edu.my',
+    title: 'Lecturer',
+    department: 'Information Systems',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Human-Computer Interaction', 'UX Design', 'Accessibility'],
+    currentLoad: 2,
+    maxCapacity: 5,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-007',
+    userId: 'user-sup-007',
+    fullName: 'Prof. Dr. Lim Wei Chong',
+    email: 'lim.wc@mmu.edu.my',
+    title: 'Professor',
+    department: 'Computer Science',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Artificial Intelligence', 'Natural Language Processing', 'Robotics'],
+    currentLoad: 9,
+    maxCapacity: 10,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-008',
+    userId: 'user-sup-008',
+    fullName: 'Dr. Nurul Huda',
+    email: 'nurul.huda@mmu.edu.my',
+    title: 'Senior Lecturer',
+    department: 'Information Systems',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Data Science', 'Big Data Analytics', 'Business Intelligence'],
+    currentLoad: 7,
+    maxCapacity: 8,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-009',
+    userId: 'user-sup-009',
+    fullName: 'Dr. Raj Kumar',
+    email: 'raj.kumar@mmu.edu.my',
+    title: 'Associate Professor',
+    department: 'Software Engineering',
+    faculty: 'Faculty of Engineering',
+    researchAreas: ['Blockchain', 'Distributed Systems', 'Cybersecurity'],
+    currentLoad: 5,
+    maxCapacity: 8,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-010',
+    userId: 'user-sup-010',
+    fullName: 'Dr. Farah Nadia',
+    email: 'farah.nadia@mmu.edu.my',
+    title: 'Lecturer',
+    department: 'Computer Science',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['IoT', 'Embedded Systems', 'Edge Computing'],
+    currentLoad: 4,
+    maxCapacity: 6,
+    isAcceptingStudents: true,
+  },
+  {
+    supervisorId: 'sup-011',
+    userId: 'user-sup-011',
+    fullName: 'Dr. James Ong',
+    email: 'james.ong@mmu.edu.my',
+    title: 'Senior Lecturer',
+    department: 'Software Engineering',
+    faculty: 'Faculty of Computing and Informatics',
+    researchAreas: ['Software Testing', 'DevOps', 'Agile Methodology'],
+    currentLoad: 6,
+    maxCapacity: 6,
+    isAcceptingStudents: false,
+  },
+  {
+    supervisorId: 'sup-012',
+    userId: 'user-sup-012',
+    fullName: 'Dr. Priya Menon',
+    email: 'priya.menon@mmu.edu.my',
+    title: 'Associate Professor',
+    department: 'Information Systems',
+    faculty: 'Faculty of Business',
+    researchAreas: ['Information Systems', 'Digital Transformation', 'E-Commerce'],
+    currentLoad: 3,
+    maxCapacity: 8,
+    isAcceptingStudents: true,
+  },
 ]
 
 // ==================== Dashboard ====================
@@ -221,12 +338,39 @@ export function useSupervisorList(params?: SupervisorListParams) {
     queryKey: studentKeys.supervisorList(params),
     queryFn: async () => {
       if (USE_MOCK_DATA) {
-        return {
-          supervisors: MOCK_SUPERVISORS,
-          total: MOCK_SUPERVISORS.length,
-          page: 1,
-          totalPages: 1,
+        // Simulate server-side filtering and pagination for mock data
+        let filtered = [...MOCK_SUPERVISORS]
+
+        if (params?.search) {
+          const q = params.search.toLowerCase()
+          filtered = filtered.filter(
+            (s) =>
+              s.fullName.toLowerCase().includes(q) ||
+              s.department.toLowerCase().includes(q) ||
+              s.researchAreas.some((a) => a.toLowerCase().includes(q))
+          )
         }
+        if (params?.faculty) {
+          filtered = filtered.filter((s) => s.faculty === params.faculty)
+        }
+        if (params?.researchArea) {
+          const areas = params.researchArea.split(',')
+          filtered = filtered.filter((s) =>
+            areas.some((a) => s.researchAreas.includes(a))
+          )
+        }
+        if (params?.availableOnly) {
+          filtered = filtered.filter((s) => s.isAcceptingStudents)
+        }
+
+        const page = params?.page || 1
+        const limit = params?.limit || 6
+        const total = filtered.length
+        const totalPages = Math.max(1, Math.ceil(total / limit))
+        const start = (page - 1) * limit
+        const paged = filtered.slice(start, start + limit)
+
+        return { supervisors: paged, total, page, totalPages }
       }
       const { data } = await apiClient.get<{
         supervisors: SupervisorSummary[]
@@ -236,6 +380,8 @@ export function useSupervisorList(params?: SupervisorListParams) {
       }>('/supervisors', { params })
       return data
     },
+    // Poll every 30 seconds to keep availability slots up-to-date
+    refetchInterval: 30_000,
   })
 }
 

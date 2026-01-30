@@ -30,3 +30,4 @@ export {
   useWarningToast,
   useInfoToast,
 } from './Toast'
+export { Pagination, type PaginationProps } from './Pagination'

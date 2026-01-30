@@ -13,11 +13,14 @@ import {
   Key,
   Send,
   CheckCircle,
+  Hash,
+  Phone,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import { useCreateUser } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
@@ -26,6 +29,8 @@ import type { UserRole } from '@/types'
 const createUserSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  mmuId: z.string().regex(/^\d{10}$/, 'MMU ID must be 10 digits').optional().or(z.literal('')),
+  phone: z.string().optional(),
   role: z.enum(['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE', 'SYSTEM_ADMIN'] as const),
   department: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters').optional(),
@@ -69,6 +74,8 @@ export function CreateUser() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const createMutation = useCreateUser()
+  const successToast = useSuccessToast()
+  const errorToast = useErrorToast()
 
   const {
     register,
@@ -92,14 +99,25 @@ export function CreateUser() {
       await createMutation.mutateAsync({
         email: data.email,
         fullName: data.fullName,
+        mmuId: data.mmuId || undefined,
+        phone: data.phone || undefined,
         role: data.role,
         department: data.department,
         password: data.sendInviteEmail ? undefined : data.password,
         sendInviteEmail: data.sendInviteEmail,
       })
+      successToast(
+        'User Created',
+        data.sendInviteEmail
+          ? `Invitation email sent to ${data.email}`
+          : `Account created for ${data.fullName}`
+      )
       navigate(ROUTES.ADMIN.USERS)
     } catch (error) {
-      console.error('Failed to create user:', error)
+      errorToast(
+        'Failed to Create User',
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+      )
     }
   }
 
@@ -146,6 +164,22 @@ export function CreateUser() {
               />
             </div>
 
+            {/* MMU ID */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                MMU ID
+              </label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <Input
+                  {...register('mmuId')}
+                  placeholder="e.g., 1201234567"
+                  className="pl-9"
+                  error={errors.mmuId?.message}
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
@@ -159,6 +193,23 @@ export function CreateUser() {
                   placeholder="e.g., user@mmu.edu.my"
                   className="pl-9"
                   error={errors.email?.message}
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <Input
+                  {...register('phone')}
+                  type="tel"
+                  placeholder="e.g., +60123456789"
+                  className="pl-9"
+                  error={errors.phone?.message}
                 />
               </div>
             </div>
@@ -286,6 +337,18 @@ export function CreateUser() {
                 {roleOptions.find((r) => r.value === selectedRole)?.label}
               </span>
             </div>
+            {watch('mmuId') && (
+              <div className="flex justify-between">
+                <span className="text-neutral-500">MMU ID:</span>
+                <span className="font-medium text-neutral-900">{watch('mmuId')}</span>
+              </div>
+            )}
+            {watch('phone') && (
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Phone:</span>
+                <span className="font-medium text-neutral-900">{watch('phone')}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-neutral-500">Account Setup:</span>
               <span className="font-medium text-neutral-900">
