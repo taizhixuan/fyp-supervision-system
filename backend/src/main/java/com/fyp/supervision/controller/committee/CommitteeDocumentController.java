@@ -5,6 +5,7 @@ import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ResourceDocumentRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.CommitteeService;
 import com.fyp.supervision.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,27 +16,38 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/committee/documents")
 @RequiredArgsConstructor
 public class CommitteeDocumentController {
-    private final ResourceDocumentRepository resourceDocRepository;
+    private final ResourceDocumentRepository resourceDocRepo;
     private final UserAccountRepository userAccountRepository;
     private final FileStorageService fileStorageService;
+    private final CommitteeService committeeService;
 
     @GetMapping
-    public ResponseEntity<Page<ResourceDocument>> getDocuments(@RequestParam(required = false) String category, Pageable pageable) {
+    public ResponseEntity<?> getDocuments(@RequestParam(required = false) String category, Pageable pageable) {
+        Page<ResourceDocument> page;
         if (category != null && !category.isBlank()) {
-            return ResponseEntity.ok(resourceDocRepository.findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(category, pageable));
+            page = resourceDocRepo.findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(category, pageable);
+        } else {
+            page = resourceDocRepo.findByIsActiveTrueOrderByPublishedAtDesc(pageable);
         }
-        return ResponseEntity.ok(resourceDocRepository.findByIsActiveTrueOrderByPublishedAtDesc(pageable));
+        List<Map<String, Object>> dtos = page.getContent().stream()
+                .map(committeeService::buildResourceDocumentDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of("documents", dtos, "total", page.getTotalElements()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResourceDocument> getDocument(@PathVariable Long id) {
-        return ResponseEntity.ok(resourceDocRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+    public ResponseEntity<?> getDocument(@PathVariable Long id) {
+        ResourceDocument doc = resourceDocRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        return ResponseEntity.ok(committeeService.buildResourceDocumentDto(doc));
     }
 
     @PostMapping
@@ -58,17 +70,18 @@ public class CommitteeDocumentController {
                 .fileName(file.getOriginalFilename())
                 .storagePath(storagePath)
                 .fileSize(file.getSize())
-                .visibility(visibility != null ? visibility : "ALL")
+                .visibility(visibility != null ? visibility : "PUBLIC")
                 .build();
-        ResourceDocument saved = resourceDocRepository.save(doc);
-        return ResponseEntity.ok(Map.of("documentId", saved.getResourceId()));
+        ResourceDocument saved = resourceDocRepo.save(doc);
+        return ResponseEntity.ok(committeeService.buildResourceDocumentDto(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
-        ResourceDocument doc = resourceDocRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        ResourceDocument doc = resourceDocRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
         doc.setIsActive(false);
-        resourceDocRepository.save(doc);
+        resourceDocRepo.save(doc);
         return ResponseEntity.noContent().build();
     }
 }
