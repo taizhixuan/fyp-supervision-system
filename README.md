@@ -296,15 +296,6 @@ If a port is already in use, either:
 - Check `FILE_UPLOAD_DIR` configuration
 - Verify file size limits in `application.yml` (default: 50MB)
 
-## Contributing
-
-This is a Final Year Project. If you're working on this project:
-
-1. Follow the existing code style and conventions
-2. Write meaningful commit messages
-3. Test your changes before committing
-4. Update documentation if needed
-
 ## License
 
 This project is developed as part of a Final Year Project at MMU FCI.
