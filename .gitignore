@@ -19,6 +19,12 @@ frontend/dist/
 frontend/build/
 frontend/.vite/
 
+# Backend (Maven/Spring Boot)
+backend/target/
+*.class
+*.jar
+*.war
+
 # Backend
 backend/dist/
 backend/build/

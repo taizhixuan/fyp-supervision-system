@@ -1,0 +1,15 @@
+package com.fyp.supervision.repository;
+
+import com.fyp.supervision.entity.Deadline;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
+    List<Deadline> findByCycle_CycleIdOrderByDueDateAsc(Long cycleId);
+    List<Deadline> findByDueDateAfterOrderByDueDateAsc(LocalDate date);
+    List<Deadline> findByAudienceAndDueDateAfterOrderByDueDateAsc(String audience, LocalDate date);
+}

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: fyp_supervision
+      MYSQL_USER: fyp_user
+      MYSQL_PASSWORD: fyp_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fyp-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://db:3306/fyp_supervision?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: fyp_user
+      DB_PASS: fyp_pass
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
+      JWT_EXPIRY_MS: ${JWT_EXPIRY_MS:-86400000}
+      FILE_UPLOAD_DIR: /app/uploads
+      AI_RECOMMENDATION_URL: http://ai-recommendation:5001
+      AI_ANALYZER_URL: http://ai-proposal-analyzer:5002
+      AI_CHATBOT_URL: http://ai-chatbot:5003
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - upload_data:/app/uploads
+    networks:
+      - fyp-network
+
+  ai-recommendation:
+    build: ./ai-recommendation
+    ports:
+      - "5001:5001"
+    environment:
+      FLASK_PORT: "5001"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - fyp-network
+
+  ai-proposal-analyzer:
+    build: ./ai-proposal-analyzer
+    ports:
+      - "5002:5002"
+    environment:
+      FLASK_PORT: "5002"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - fyp-network
+
+  ai-chatbot:
+    build: ./ai-chatbot
+    ports:
+      - "5003:5003"
+    environment:
+      FLASK_PORT: "5003"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - fyp-network
+
+volumes:
+  mysql_data:
+  upload_data:
+
+networks:
+  fyp-network:
+    driver: bridge
