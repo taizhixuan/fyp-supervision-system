@@ -7,15 +7,16 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProposalRepository;
 import com.fyp.supervision.repository.ProposalReviewRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.CommitteeService;
 import com.fyp.supervision.service.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,18 +27,17 @@ public class CommitteeProposalController {
     private final ProposalReviewRepository proposalReviewRepository;
     private final UserAccountRepository userAccountRepository;
     private final NotificationService notificationService;
+    private final CommitteeService committeeService;
 
     @GetMapping
-    public ResponseEntity<Page<Proposal>> getProposals(@RequestParam(required = false) String status, Pageable pageable) {
-        if (status != null && !status.isBlank()) {
-            return ResponseEntity.ok(proposalRepository.findByStatus(ProposalStatus.valueOf(status), pageable));
-        }
-        return ResponseEntity.ok(proposalRepository.findAll(pageable));
+    public ResponseEntity<?> getProposals(@RequestParam(required = false) String status, Pageable pageable) {
+        List<Map<String, Object>> proposals = committeeService.getProposalDtos(status, pageable);
+        return ResponseEntity.ok(Map.of("proposals", proposals, "total", proposals.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Proposal> getProposal(@PathVariable Long id) {
-        return ResponseEntity.ok(proposalRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+    public ResponseEntity<?> getProposal(@PathVariable Long id) {
+        return ResponseEntity.ok(committeeService.getProposalDto(id));
     }
 
     @PostMapping("/{id}/review")
@@ -50,7 +50,7 @@ public class CommitteeProposalController {
                 .reviewer(userAccountRepository.findById(userId).orElseThrow())
                 .reviewerRole("FYP_COMMITTEE")
                 .decision((String) data.get("decision"))
-                .remarks((String) data.get("remarks"))
+                .remarks((String) data.get("feedback"))
                 .internalNotes((String) data.get("internalNotes"))
                 .build();
         proposalReviewRepository.save(review);

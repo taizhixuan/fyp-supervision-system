@@ -6,6 +6,7 @@ import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.CommitteeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/committee/announcements")
@@ -23,10 +26,15 @@ import java.util.Map;
 public class CommitteeAnnouncementController {
     private final AnnouncementRepository announcementRepository;
     private final UserAccountRepository userAccountRepository;
+    private final CommitteeService committeeService;
 
     @GetMapping
-    public ResponseEntity<Page<Announcement>> getAnnouncements(Pageable pageable) {
-        return ResponseEntity.ok(announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable));
+    public ResponseEntity<?> getAnnouncements(Pageable pageable) {
+        Page<Announcement> page = announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable);
+        List<Map<String, Object>> dtos = page.getContent().stream()
+                .map(committeeService::buildAnnouncementDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of("announcements", dtos, "total", page.getTotalElements()));
     }
 
     @PostMapping
@@ -43,7 +51,7 @@ public class CommitteeAnnouncementController {
                 .publishAt(LocalDateTime.now())
                 .build();
         Announcement saved = announcementRepository.save(announcement);
-        return ResponseEntity.ok(Map.of("announcementId", saved.getAnnouncementId()));
+        return ResponseEntity.ok(committeeService.buildAnnouncementDto(saved));
     }
 
     @PutMapping("/{id}")

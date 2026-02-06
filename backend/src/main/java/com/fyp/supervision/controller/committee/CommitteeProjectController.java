@@ -1,13 +1,9 @@
 package com.fyp.supervision.controller.committee;
 
-import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.enums.CycleStatus;
-import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.FypCycleRepository;
-import com.fyp.supervision.repository.ProjectRepository;
-import com.fyp.supervision.repository.SupervisorProfileRepository;
+import com.fyp.supervision.service.CommitteeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,39 +15,35 @@ import java.util.Map;
 @RequestMapping("/committee/projects")
 @RequiredArgsConstructor
 public class CommitteeProjectController {
-    private final ProjectRepository projectRepository;
+    private final CommitteeService committeeService;
     private final FypCycleRepository fypCycleRepository;
-    private final SupervisorProfileRepository supervisorProfileRepository;
 
     @GetMapping
-    public ResponseEntity<Page<Project>> getProjects(
-            @RequestParam(required = false) Long cycle,
-            Pageable pageable) {
-        if (cycle != null) {
-            return ResponseEntity.ok(projectRepository.findAllByCycleId(cycle, pageable));
-        }
-        return ResponseEntity.ok(projectRepository.findAll(pageable));
+    public ResponseEntity<?> getProjects(@RequestParam(required = false) Long cycle, Pageable pageable) {
+        return ResponseEntity.ok(committeeService.getProjectDtos(cycle, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Project> getProject(@PathVariable Long id) {
-        return ResponseEntity.ok(projectRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+    public ResponseEntity<?> getProject(@PathVariable Long id) {
+        return ResponseEntity.ok(committeeService.getProjectDetailDto(id));
     }
 
     @GetMapping("/unpaired-students")
     public ResponseEntity<?> getUnpairedStudents() {
         var activeCycle = fypCycleRepository.findByStatus(CycleStatus.ACTIVE).orElse(null);
         if (activeCycle == null) return ResponseEntity.ok(Map.of("students", List.of()));
-        return ResponseEntity.ok(Map.of("students", projectRepository.findUnpairedStudentsByCycle(activeCycle.getCycleId())));
+        List<Map<String, Object>> students = committeeService.getUnpairedStudentDtos(activeCycle.getCycleId());
+        return ResponseEntity.ok(Map.of("students", students));
     }
 
     @GetMapping("/supervisor-loads")
     public ResponseEntity<?> getSupervisorLoads() {
-        return ResponseEntity.ok(Map.of("supervisors", supervisorProfileRepository.findAll()));
+        List<Map<String, Object>> loads = committeeService.getSupervisorLoadDtos();
+        return ResponseEntity.ok(Map.of("supervisors", loads));
     }
 
     @GetMapping("/supervisor-loads/{id}")
     public ResponseEntity<?> getSupervisorLoad(@PathVariable Long id) {
-        return ResponseEntity.ok(supervisorProfileRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+        return ResponseEntity.ok(committeeService.getSupervisorLoadDetailDto(id));
     }
 }
