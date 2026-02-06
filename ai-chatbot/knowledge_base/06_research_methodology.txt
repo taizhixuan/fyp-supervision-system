@@ -1,0 +1,116 @@
+TITLE: Research Methodology Guide for FYP
+
+WHAT IS RESEARCH METHODOLOGY?
+Research methodology refers to the systematic approach used to conduct your FYP. It defines how you will plan, execute, and evaluate your project. Choosing the right methodology is crucial for FYP success.
+
+COMMON DEVELOPMENT METHODOLOGIES
+
+1. AGILE METHODOLOGY
+- Iterative and incremental development
+- Short development cycles (sprints of 1-4 weeks)
+- Frequent testing and feedback
+- Adaptable to changing requirements
+- Best for: Web applications, mobile apps, software projects
+- Popular frameworks: Scrum, Kanban
+
+When to use Agile:
+- Requirements may change during development
+- You want frequent supervisor feedback
+- The project involves user interface development
+- You prefer iterative improvement
+
+2. WATERFALL METHODOLOGY
+- Sequential, linear approach
+- Each phase must be completed before the next begins
+- Phases: Requirements, Design, Implementation, Testing, Deployment
+- Well-documented at each stage
+- Best for: Projects with clear, stable requirements
+
+When to use Waterfall:
+- Requirements are well-defined from the start
+- The project has strict documentation requirements
+- You need a clear, predictable timeline
+- The system has hardware components
+
+3. PROTOTYPING METHODOLOGY
+- Build a working prototype early
+- Iterate based on user/supervisor feedback
+- Refine until requirements are met
+- Best for: UI-heavy projects, innovative systems
+
+When to use Prototyping:
+- You're not sure about the exact requirements
+- The project involves new technology
+- User experience is a key focus
+- You need to demonstrate feasibility early
+
+4. DESIGN SCIENCE RESEARCH METHODOLOGY (DSRM)
+- Create artifacts (systems, models, methods) to solve problems
+- Six steps: Problem identification, Define objectives, Design and develop, Demonstrate, Evaluate, Communicate
+- Best for: Research-oriented FYPs
+- Common in IS/IT research
+
+5. EXPERIMENTAL METHODOLOGY
+- Formulate hypotheses
+- Design experiments to test hypotheses
+- Collect and analyze data
+- Draw conclusions
+- Best for: AI/ML projects, performance comparison studies
+
+CHOOSING THE RIGHT METHODOLOGY
+Consider these factors:
+- Project type (development vs. research)
+- Clarity of requirements
+- Need for flexibility
+- Documentation requirements
+- Supervisor's preference
+- Timeline constraints
+
+DATA COLLECTION METHODS
+If your FYP involves data collection:
+
+1. Surveys/Questionnaires
+- Use tools like Google Forms or SurveyMonkey
+- Design clear, unbiased questions
+- Target the right audience
+- Aim for statistically significant sample size (30+ responses)
+
+2. Interviews
+- Prepare questions in advance
+- Get consent from participants
+- Record and transcribe (with permission)
+- Useful for in-depth understanding
+
+3. Observation
+- Direct or indirect observation
+- Document findings systematically
+- Useful for usability studies
+
+4. Existing Datasets
+- Use publicly available datasets (Kaggle, UCI, etc.)
+- Ensure dataset is relevant and properly cited
+- Understand data format and limitations
+
+EVALUATION METHODS
+How to evaluate your FYP:
+
+1. Functional Testing
+- Does the system work as expected?
+- Test all features against requirements
+
+2. Performance Testing
+- Response time, throughput, resource usage
+- Compare with benchmarks or existing solutions
+
+3. Usability Testing
+- System Usability Scale (SUS) questionnaire
+- Task completion rates
+- User satisfaction surveys
+
+4. Comparison with Existing Solutions
+- Compare your system with existing alternatives
+- Use metrics relevant to your domain
+
+5. Expert Evaluation
+- Have domain experts review your system
+- Collect structured feedback

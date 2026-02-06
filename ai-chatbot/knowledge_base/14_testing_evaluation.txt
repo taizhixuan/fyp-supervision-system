@@ -1,0 +1,108 @@
+TITLE: Testing and Evaluation Methods for FYP
+
+IMPORTANCE OF TESTING
+Testing is a critical phase of your FYP that validates your system works correctly and meets its objectives. Proper testing demonstrates the quality and reliability of your work.
+
+TYPES OF TESTING
+
+1. UNIT TESTING
+- Tests individual components or functions
+- Ensures each unit works correctly in isolation
+- Tools: JUnit (Java), pytest (Python), Jest (JavaScript)
+- Write test cases for all critical functions
+- Aim for good code coverage (>70%)
+
+2. INTEGRATION TESTING
+- Tests how components work together
+- Verifies data flow between modules
+- Tests API endpoints and database interactions
+- Identifies interface issues between components
+
+3. SYSTEM TESTING
+- Tests the complete integrated system
+- Verifies all requirements are met
+- End-to-end testing of user workflows
+- Tests under realistic conditions
+
+4. USER ACCEPTANCE TESTING (UAT)
+- Tests with real or representative users
+- Validates the system meets user needs
+- Typically 5-10 test participants
+- Uses task-based scenarios
+- Collect both quantitative and qualitative feedback
+
+5. PERFORMANCE TESTING
+- Measures response time, throughput, resource usage
+- Tests system under load
+- Identifies bottlenecks
+- Tools: JMeter, k6, Apache Bench
+
+6. SECURITY TESTING (if applicable)
+- Tests for common vulnerabilities
+- OWASP Top 10 checking
+- Input validation testing
+- Authentication and authorization testing
+
+TEST CASE DESIGN
+A good test case includes:
+- Test case ID
+- Description/Purpose
+- Prerequisites
+- Input data
+- Expected result
+- Actual result
+- Pass/Fail status
+
+Example:
+TC-001: User Login
+- Purpose: Verify successful login with valid credentials
+- Prerequisites: User account exists
+- Input: Valid email and password
+- Expected: Redirect to dashboard
+- Actual: [Fill during testing]
+- Status: [Pass/Fail]
+
+EVALUATION METHODS
+
+For Software Systems:
+- Functional completeness (% of requirements implemented)
+- Defect density (bugs per module)
+- Response time benchmarks
+- User satisfaction scores (SUS questionnaire)
+
+For AI/ML Projects:
+- Accuracy, Precision, Recall, F1-Score
+- Confusion matrix
+- ROC curve and AUC
+- Cross-validation results
+- Comparison with baseline models
+
+For Data Science Projects:
+- Model performance metrics
+- Statistical significance tests
+- Visualization quality
+- Insights generated
+
+SYSTEM USABILITY SCALE (SUS)
+The SUS is a widely-used questionnaire for measuring system usability:
+- 10 questions scored on a 1-5 scale
+- Results in a score from 0-100
+- Average SUS score is 68
+- Scores above 80 are considered excellent
+- Easy to administer and interpret
+- Include SUS results in your evaluation chapter
+
+PRESENTING TEST RESULTS
+- Use tables for test case results
+- Use charts for quantitative data
+- Include screenshots as evidence
+- Show before/after comparisons if applicable
+- Discuss both successes and failures
+- Be honest about limitations
+
+DOCUMENTATION
+- Document all test cases and results
+- Include test evidence (screenshots, logs)
+- Summarize findings in the testing chapter
+- Discuss any bugs found and how they were fixed
+- Note any known issues or limitations

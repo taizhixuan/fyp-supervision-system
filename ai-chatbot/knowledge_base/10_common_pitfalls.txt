@@ -1,0 +1,108 @@
+TITLE: Common FYP Pitfalls and Solutions
+
+PITFALL 1: CHOOSING A TOPIC TOO BROAD OR TOO NARROW
+Problem: Trying to solve too many problems or choosing something too simple.
+Solution:
+- Discuss scope with your supervisor early
+- Focus on solving one specific problem well
+- Check if the scope is achievable in 2 semesters
+- Look at past FYP projects for scope reference
+
+PITFALL 2: POOR TIME MANAGEMENT
+Problem: Procrastination and leaving work to the last minute.
+Solution:
+- Create a detailed project plan with milestones
+- Set personal deadlines 1-2 weeks before official ones
+- Work consistently, even in small amounts daily
+- Use project management tools
+- Track your progress weekly
+
+PITFALL 3: INSUFFICIENT COMMUNICATION WITH SUPERVISOR
+Problem: Not meeting regularly or not seeking guidance.
+Solution:
+- Schedule regular meetings (weekly or bi-weekly)
+- Prepare an agenda before each meeting
+- Show progress and ask specific questions
+- Be proactive about scheduling meetings
+- Don't wait until you have a problem to meet
+
+PITFALL 4: STARTING IMPLEMENTATION TOO EARLY
+Problem: Jumping into coding without proper planning and design.
+Solution:
+- Complete your proposal and design first
+- Get supervisor approval on architecture
+- Plan your database and system design before coding
+- Understand requirements thoroughly
+- Create wireframes/mockups before implementation
+
+PITFALL 5: NOT DOING ENOUGH LITERATURE REVIEW
+Problem: Building without understanding what already exists.
+Solution:
+- Spend at least 3-4 weeks on literature review
+- Read at least 15-20 relevant papers
+- Understand the state of the art
+- Identify clear gaps your project addresses
+- Use academic databases, not just Google
+
+PITFALL 6: NEGLECTING DOCUMENTATION
+Problem: Leaving all report writing to the end.
+Solution:
+- Write as you go
+- Document design decisions when you make them
+- Keep screenshots of your progress
+- Write each chapter after completing that phase
+- Allocate at least 4-6 weeks for report writing
+
+PITFALL 7: NOT TESTING PROPERLY
+Problem: Minimal or no testing of the system.
+Solution:
+- Write test cases based on requirements
+- Perform unit, integration, and system testing
+- Conduct user acceptance testing with real users
+- Document all test results with evidence
+- Fix bugs before final submission
+
+PITFALL 8: IGNORING VERSION CONTROL
+Problem: Losing code or not tracking changes.
+Solution:
+- Use Git from day one
+- Commit frequently with meaningful messages
+- Use branches for features
+- Push to a remote repository (GitHub/GitLab)
+- Never work directly on the main branch
+
+PITFALL 9: SCOPE CREEP
+Problem: Adding new features beyond the original plan.
+Solution:
+- Stick to your approved proposal scope
+- Discuss any changes with your supervisor first
+- Document scope changes formally
+- Prioritize core features over nice-to-haves
+- Extra features can be mentioned as "future work"
+
+PITFALL 10: PLAGIARISM
+Problem: Copying content without proper citation.
+Solution:
+- Always paraphrase and cite sources
+- Use plagiarism checking tools before submission
+- When in doubt, cite the source
+- Never copy code without attribution
+- Understand your university's plagiarism policy
+
+PITFALL 11: POOR PRESENTATION PREPARATION
+Problem: Not practicing for the presentation or demo.
+Solution:
+- Practice your presentation at least 3-5 times
+- Time yourself to stay within limits
+- Prepare a backup demo video
+- Test all equipment beforehand
+- Prepare for common panel questions
+
+PITFALL 12: NOT ASKING FOR HELP
+Problem: Struggling alone when help is available.
+Solution:
+- Ask your supervisor for guidance
+- Consult with classmates working on similar topics
+- Use online resources and forums (Stack Overflow, etc.)
+- Attend workshops or tutorials offered by the faculty
+- Don't be afraid to admit when you're stuck

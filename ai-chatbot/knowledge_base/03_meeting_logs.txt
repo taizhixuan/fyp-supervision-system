@@ -1,0 +1,71 @@
+TITLE: Meeting Logs and Supervision Documentation
+
+WHAT ARE MEETING LOGS?
+Meeting logs (also called supervision logs or logbooks) are formal records of supervision meetings between students and their supervisors. At MMU FCI, meeting logs follow a standard format and serve as evidence of regular supervision throughout the FYP.
+
+PURPOSE OF MEETING LOGS
+- Document discussions and decisions made during meetings
+- Track project progress over time
+- Record feedback and action items
+- Serve as evidence for assessment
+- Help both student and supervisor stay aligned on project goals
+
+MMU FCI MEETING LOG FORMAT
+Each meeting log should include:
+
+1. HEADER INFORMATION
+- Student name and ID
+- Supervisor name
+- Meeting date and time
+- Meeting number (sequential)
+- Project title
+
+2. DISCUSSION SUMMARY
+- Key topics discussed during the meeting
+- Decisions made
+- Feedback from supervisor
+- Questions raised and answers provided
+
+3. WORK DONE (Since Last Meeting)
+- Progress made since the previous meeting
+- Tasks completed
+- Deliverables submitted
+- Any challenges encountered
+
+4. WORK TO BE DONE (Before Next Meeting)
+- Specific tasks assigned
+- Deadlines for each task
+- Resources needed
+- Priority of tasks
+
+5. PROBLEMS ENCOUNTERED AND SOLUTIONS
+- Technical or non-technical issues faced
+- How they were resolved or plans to resolve them
+- Help needed from supervisor
+
+6. SIGNATURES
+- Student signature with date
+- Supervisor signature with date
+- Both parties must sign to validate the log
+
+BEST PRACTICES FOR MEETING LOGS
+- Prepare before each meeting: bring progress, questions, and issues
+- Write the log immediately after the meeting while details are fresh
+- Be specific and detailed in your notes
+- Keep a professional tone
+- Submit logs promptly for supervisor review
+- Keep copies of all signed logs
+
+MEETING FREQUENCY
+- Minimum: once every two weeks during active FYP semesters
+- Recommended: weekly meetings, especially during implementation phase
+- Students should schedule meetings proactively
+- Notify supervisor in advance if you cannot attend
+
+TIPS FOR PRODUCTIVE SUPERVISION MEETINGS
+- Come prepared with an agenda
+- Show tangible progress (demos, code, documents)
+- Be honest about challenges and difficulties
+- Take notes during the meeting
+- Follow up on action items before the next meeting
+- Respect your supervisor's time

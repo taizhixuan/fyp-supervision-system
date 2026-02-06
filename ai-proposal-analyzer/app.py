@@ -1,9 +1,27 @@
+"""
+AI Proposal Analyzer Service
+
+Uses a fine-tuned DistilBERT model for overall text quality scoring combined
+with a rule-based NLP pipeline for multi-dimensional proposal evaluation.
+Falls back to NLP-only analysis if the trained model is not available.
+OpenAI is used as an optional enhancement for detailed feedback.
+
+Endpoints:
+    GET  /ai/health             - Health check
+    POST /ai/analyze-proposal   - Analyze an FYP proposal
+"""
+
 import os
 import json
 import logging
+from datetime import datetime, timezone
+from pathlib import Path
+
+import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from openai import OpenAI
+
+from nlp_utils import analyze_proposal_nlp
 
 app = Flask(__name__)
 CORS(app)
@@ -11,136 +29,272 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# Optional OpenAI client for enhanced feedback
+# ============================================================================
 client = None
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if OPENAI_API_KEY:
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        logger.info("OpenAI client initialized for enhanced feedback")
+    except ImportError:
+        logger.warning("openai package not installed; using local models only")
 
-ANALYSIS_SYSTEM_PROMPT = """You are an expert academic proposal reviewer for Final Year Projects (FYP) at a university.
-Analyze the given proposal and provide a structured assessment.
+# ============================================================================
+# Load Fine-tuned DistilBERT Model
+# ============================================================================
+MODEL_DIR = Path(__file__).parent / "models" / "essay_scorer"
 
-Return your analysis as a JSON object with exactly this structure:
-{
-  "overallScore": <number 0-100>,
-  "feasibilityScore": <number 0-100>,
-  "innovationScore": <number 0-100>,
-  "clarityScore": <number 0-100>,
-  "scopeScore": <number 0-100>,
-  "plagiarismScore": <number 0-100, where 100 means completely original>,
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "weaknesses": ["<weakness 1>", "<weakness 2>", ...],
-  "suggestions": ["<suggestion 1>", "<suggestion 2>", ...],
-  "sectionAnalysis": [
-    {
-      "section": "<section name>",
-      "score": <number 0-100>,
-      "feedback": "<detailed feedback for this section>"
-    }
-  ],
-  "summary": "<2-3 sentence overall summary>"
-}
+quality_model = None
+quality_tokenizer = None
 
-Be constructive, specific, and fair in your assessment. Consider:
-- Technical feasibility within a typical FYP timeline (2 semesters)
-- Innovation and originality of the proposed approach
-- Clarity of writing, problem statement, and objectives
-- Appropriate scope (not too broad, not too narrow)
-- Research methodology and approach
-"""
+if MODEL_DIR.exists() and (MODEL_DIR / "config.json").exists():
+    try:
+        import torch
+        from transformers import (
+            DistilBertForSequenceClassification,
+            DistilBertTokenizer,
+        )
+        logger.info(f"Loading fine-tuned DistilBERT from {MODEL_DIR}...")
+        quality_tokenizer = DistilBertTokenizer.from_pretrained(str(MODEL_DIR))
+        quality_model = DistilBertForSequenceClassification.from_pretrained(str(MODEL_DIR))
+        quality_model.eval()
+
+        # Use GPU if available
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        quality_model.to(device)
+        logger.info(f"DistilBERT model loaded on {device}")
+    except Exception as e:
+        logger.warning(f"Failed to load DistilBERT model: {e}")
+        logger.info("Will use NLP-only analysis pipeline")
+else:
+    logger.info("No fine-tuned model found at models/essay_scorer/. Using NLP-only analysis.")
 
 
-def analyze_with_openai(proposal_content, sections=None):
-    """Use OpenAI to analyze the proposal content."""
-    if not client:
-        return generate_fallback_analysis(proposal_content)
+# ============================================================================
+# Model-based Quality Prediction
+# ============================================================================
+
+def predict_quality_score(text):
+    """
+    Predict overall text quality using the fine-tuned DistilBERT model.
+    Returns a score from 0-100, or None if model is not available.
+    """
+    if quality_model is None or quality_tokenizer is None:
+        return None
 
     try:
-        user_prompt = f"Analyze this FYP proposal:\n\n{proposal_content}"
-        if sections:
-            user_prompt += f"\n\nThe proposal has these sections: {', '.join(sections)}"
+        import torch
+
+        device = next(quality_model.parameters()).device
+
+        # Tokenize
+        encoding = quality_tokenizer(
+            text,
+            max_length=512,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt",
+        )
+
+        input_ids = encoding["input_ids"].to(device)
+        attention_mask = encoding["attention_mask"].to(device)
+
+        # Predict
+        with torch.no_grad():
+            outputs = quality_model(input_ids=input_ids, attention_mask=attention_mask)
+            raw_score = outputs.logits.squeeze().item()
+
+        # Clamp to 0-1 and scale to 0-100
+        score = max(0.0, min(1.0, raw_score)) * 100
+        return round(score, 1)
+
+    except Exception as e:
+        logger.warning(f"Model prediction failed: {e}")
+        return None
+
+
+# ============================================================================
+# OpenAI Enhanced Feedback (Optional)
+# ============================================================================
+
+ANALYSIS_SYSTEM_PROMPT = """You are an expert academic proposal reviewer for Final Year Projects (FYP).
+Given the proposal text and the automated analysis scores, provide additional detailed feedback.
+
+Return your feedback as a JSON object with:
+{
+  "detailed_strengths": ["<specific strength 1>", ...],
+  "detailed_weaknesses": ["<specific weakness 1>", ...],
+  "detailed_suggestions": ["<actionable suggestion 1>", ...],
+  "summary": "<2-3 sentence overall assessment>"
+}
+
+Be constructive, specific, and fair. Focus on academic quality and FYP feasibility."""
+
+
+def get_openai_enhanced_feedback(text, nlp_analysis):
+    """Use OpenAI to generate detailed feedback based on the proposal and NLP scores."""
+    if not client:
+        return None
+
+    try:
+        scores_summary = (
+            f"Automated scores - Clarity: {nlp_analysis['clarity_score']}/100, "
+            f"Structure: {nlp_analysis['structure_score']}/100, "
+            f"Scope: {nlp_analysis['scope_score']}/100, "
+            f"Innovation: {nlp_analysis['innovation_score']}/100"
+        )
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
+                {"role": "user", "content": f"Proposal:\n{text[:3000]}\n\n{scores_summary}"},
             ],
-            max_tokens=2000,
+            max_tokens=1500,
             temperature=0.3,
             response_format={"type": "json_object"},
         )
 
-        result_text = response.choices[0].message.content.strip()
-        return json.loads(result_text)
-
+        result = json.loads(response.choices[0].message.content.strip())
+        return result
     except Exception as e:
-        logger.warning(f"OpenAI analysis failed: {e}")
-        return generate_fallback_analysis(proposal_content)
+        logger.warning(f"OpenAI enhanced feedback failed: {e}")
+        return None
 
 
-def generate_fallback_analysis(proposal_content):
-    """Generate a basic analysis without OpenAI."""
-    word_count = len(proposal_content.split()) if proposal_content else 0
+# ============================================================================
+# Main Analysis Pipeline
+# ============================================================================
 
-    # Basic heuristic scoring
-    clarity_score = min(80, 40 + (word_count // 50))
-    scope_score = 60 if 200 < word_count < 2000 else 40
-    feasibility_score = 65
-    innovation_score = 55
+def analyze_proposal(text, sections=None):
+    """
+    Full proposal analysis pipeline:
+    1. Fine-tuned DistilBERT quality prediction (if model available)
+    2. NLP metrics pipeline (always runs)
+    3. Optional OpenAI enhanced feedback
+    4. Composite scoring
+    """
+    # Step 1: NLP-based analysis (always available)
+    nlp_results = analyze_proposal_nlp(text)
 
-    overall = int((clarity_score + scope_score + feasibility_score + innovation_score) / 4)
+    # Step 2: Model-based quality prediction
+    model_quality_score = predict_quality_score(text)
+    using_model = model_quality_score is not None
 
-    strengths = []
-    weaknesses = []
-    suggestions = []
-
-    if word_count > 300:
-        strengths.append("The proposal provides adequate detail.")
+    if using_model:
+        logger.info(f"Model quality score: {model_quality_score:.1f}")
     else:
-        weaknesses.append("The proposal could benefit from more detailed explanation.")
-        suggestions.append("Expand the proposal with more specific details about methodology and approach.")
+        logger.info("Using NLP-only scoring (no trained model)")
 
-    if word_count > 100:
-        strengths.append("Clear attempt to define the project scope.")
+    # Step 3: Compute composite scores
+    clarity_score = nlp_results["clarity_score"]
+    structure_score = nlp_results["structure_score"]
+    scope_score = nlp_results["scope_score"]
+    innovation_score = nlp_results["innovation_score"]
+
+    if using_model:
+        # Blend model prediction with NLP metrics
+        # Model contributes to overall and feasibility; NLP for specific dimensions
+        feasibility_score = round(model_quality_score * 0.4 + scope_score * 0.3 + structure_score * 0.3, 1)
+        overall_score = round(
+            model_quality_score * 0.30 +
+            clarity_score * 0.20 +
+            structure_score * 0.20 +
+            scope_score * 0.15 +
+            innovation_score * 0.15,
+            1
+        )
     else:
-        weaknesses.append("The proposal is too brief to assess properly.")
-        suggestions.append("Provide a more comprehensive description of the project.")
+        # NLP-only composite
+        feasibility_score = round(scope_score * 0.5 + structure_score * 0.3 + clarity_score * 0.2, 1)
+        overall_score = round(
+            clarity_score * 0.25 +
+            structure_score * 0.25 +
+            scope_score * 0.25 +
+            innovation_score * 0.25,
+            1
+        )
 
-    suggestions.append("Consider adding a timeline or Gantt chart for project milestones.")
-    suggestions.append("Include references to related work to strengthen the proposal.")
+    # Plagiarism placeholder (would need a real plagiarism checker)
+    plagiarism_score = 85  # Default: assume mostly original
+
+    # Step 4: Get enhanced feedback from OpenAI (optional)
+    enhanced = get_openai_enhanced_feedback(text, nlp_results)
+
+    # Merge strengths/weaknesses/suggestions
+    strengths = nlp_results["strengths"]
+    weaknesses = nlp_results["weaknesses"]
+    suggestions = nlp_results["suggestions"]
+
+    if enhanced:
+        strengths = enhanced.get("detailed_strengths", strengths)
+        weaknesses = enhanced.get("detailed_weaknesses", weaknesses)
+        suggestions = enhanced.get("detailed_suggestions", suggestions)
+
+    # Build section analysis for response
+    section_analysis = []
+    for sa in nlp_results["section_analysis"]:
+        section_analysis.append({
+            "section": sa["section"].replace("_", " ").title(),
+            "score": sa["score"],
+            "feedback": sa["feedback"],
+        })
+
+    # Build summary
+    if enhanced and enhanced.get("summary"):
+        summary = enhanced["summary"]
+    else:
+        word_count = nlp_results["word_count"]
+        model_note = " (AI model + NLP pipeline)" if using_model else " (NLP pipeline)"
+        summary = (
+            f"Analysis of proposal ({word_count} words) using {model_note}. "
+            f"Overall quality score: {overall_score}/100. "
+            f"{'The proposal demonstrates good academic writing.' if overall_score >= 65 else 'The proposal has areas that need improvement.'} "
+            f"Section completeness: {nlp_results['section_completeness']}%."
+        )
 
     return {
-        "overallScore": overall,
-        "feasibilityScore": feasibility_score,
-        "innovationScore": innovation_score,
-        "clarityScore": clarity_score,
-        "scopeScore": scope_score,
-        "plagiarismScore": 85,
+        "overallScore": int(overall_score),
+        "feasibilityScore": int(feasibility_score),
+        "innovationScore": int(innovation_score),
+        "clarityScore": int(clarity_score),
+        "scopeScore": int(scope_score),
+        "plagiarismScore": plagiarism_score,
         "strengths": strengths,
         "weaknesses": weaknesses,
         "suggestions": suggestions,
-        "sectionAnalysis": [
-            {
-                "section": "Overall Content",
-                "score": overall,
-                "feedback": f"The proposal contains {word_count} words. AI-powered detailed analysis requires an OpenAI API key to be configured.",
-            }
-        ],
-        "summary": (
-            f"This proposal contains {word_count} words. "
-            "A basic structural analysis has been performed. "
-            "For detailed AI-powered feedback, ensure the OpenAI API key is configured."
-        ),
+        "sectionAnalysis": section_analysis,
+        "summary": summary,
+        "metadata": {
+            "wordCount": nlp_results["word_count"],
+            "sentenceCount": nlp_results["sentence_count"],
+            "readabilityGrade": nlp_results["readability_grade"],
+            "readingEase": nlp_results["reading_ease"],
+            "modelUsed": using_model,
+            "sectionCompleteness": nlp_results["section_completeness"],
+        },
     }
 
 
+# ============================================================================
+# API Endpoints
+# ============================================================================
+
 @app.route("/ai/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "service": "ai-proposal-analyzer"})
+    return jsonify({
+        "status": "ok",
+        "service": "ai-proposal-analyzer",
+        "model_loaded": quality_model is not None,
+        "analysis_mode": "model+nlp" if quality_model else "nlp_only",
+    })
 
 
 @app.route("/ai/analyze-proposal", methods=["POST"])
-def analyze_proposal():
+def analyze_proposal_endpoint():
     try:
         data = request.get_json()
         if not data:
@@ -152,10 +306,7 @@ def analyze_proposal():
         if not proposal_content:
             return jsonify({"error": "proposalContent is required"}), 400
 
-        result = analyze_with_openai(proposal_content, sections)
-
-        from datetime import datetime, timezone
-
+        result = analyze_proposal(proposal_content, sections)
         result["analyzedAt"] = datetime.now(timezone.utc).isoformat()
 
         return jsonify(result)

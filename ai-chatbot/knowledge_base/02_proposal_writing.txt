@@ -1,0 +1,83 @@
+TITLE: FYP Proposal Writing Guide
+
+WHAT IS AN FYP PROPOSAL?
+An FYP proposal is a formal document that outlines your proposed project, its significance, methodology, and expected outcomes. It serves as a contract between you and your supervisor about what you plan to accomplish.
+
+PROPOSAL STRUCTURE
+A standard FYP proposal should include the following sections:
+
+1. TITLE
+- Should be clear, specific, and descriptive
+- Avoid overly broad or vague titles
+- Include the main technology or approach (e.g., "A Machine Learning-Based Approach for...")
+- Typically 10-20 words
+
+2. BACKGROUND / INTRODUCTION
+- Introduce the problem domain
+- Explain why this area is important
+- Provide context for the reader
+- Should be 1-2 paragraphs
+
+3. PROBLEM STATEMENT
+- Clearly define the specific problem you are addressing
+- Explain what gap exists in current solutions
+- State who is affected by this problem
+- Should be precise and focused
+
+4. OBJECTIVES
+- List 3-5 specific, measurable objectives
+- Use action verbs: "To design...", "To develop...", "To evaluate..."
+- Each objective should be achievable within the FYP timeframe
+- Objectives should be SMART: Specific, Measurable, Achievable, Relevant, Time-bound
+
+5. SCOPE
+- Define what your project WILL cover
+- Clearly state what is OUT of scope
+- Set boundaries for the project
+- Mention any assumptions or constraints
+
+6. LITERATURE REVIEW (Summary)
+- Review 5-10 relevant existing solutions or research papers
+- Compare and contrast existing approaches
+- Identify gaps that your project will address
+- Use proper citations (IEEE or APA format)
+
+7. PROPOSED METHODOLOGY
+- Describe your development approach (Agile, Waterfall, Prototyping, etc.)
+- Explain the tools and technologies you will use
+- Outline the steps you will follow
+- Mention data collection methods if applicable
+
+8. EXPECTED OUTCOMES
+- List the deliverables of your project
+- Describe the expected results
+- Mention how you will evaluate success
+
+9. PROJECT TIMELINE
+- Provide a Gantt chart or timeline table
+- Include key milestones for both FYP1 and FYP2
+- Be realistic about time allocation
+
+10. REFERENCES
+- Use IEEE or APA citation format (check with your programme)
+- Include at least 5-10 references
+- Prefer recent publications (within 5 years)
+- Use academic sources: journals, conferences, books
+
+COMMON MISTAKES IN PROPOSALS
+- Too broad scope: trying to solve too many problems
+- Vague objectives: not specific or measurable
+- Missing methodology: not explaining HOW you will do the work
+- No literature review: not showing awareness of existing work
+- Unrealistic timeline: underestimating time needed
+- Poor writing: grammar errors, unclear sentences
+- No references: lack of academic sources
+
+TIPS FOR A GOOD PROPOSAL
+- Start early and iterate
+- Discuss your idea with your supervisor before writing
+- Use clear, academic language
+- Be specific about technologies and tools
+- Show awareness of limitations
+- Proofread carefully
+- Follow the faculty template if provided

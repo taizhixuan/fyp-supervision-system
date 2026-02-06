@@ -50,6 +50,8 @@ services:
     environment:
       FLASK_PORT: "5001"
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - recommendation_models:/app/models
     networks:
       - fyp-network
 
@@ -60,6 +62,8 @@ services:
     environment:
       FLASK_PORT: "5002"
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - analyzer_models:/app/models
     networks:
       - fyp-network
 
@@ -70,12 +74,18 @@ services:
     environment:
       FLASK_PORT: "5003"
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      USE_LOCAL_GEN: "true"
+    volumes:
+      - chatbot_vector_store:/app/vector_store
     networks:
       - fyp-network
 
 volumes:
   mysql_data:
   upload_data:
+  recommendation_models:
+  analyzer_models:
+  chatbot_vector_store:
 
 networks:
   fyp-network:

@@ -1,0 +1,80 @@
+TITLE: Technology and Tools Guidance for FYP
+
+CHOOSING THE RIGHT TECHNOLOGY STACK
+
+Web Application Development:
+- Frontend: React, Angular, Vue.js, or Svelte
+- Backend: Spring Boot (Java), Express (Node.js), Django (Python), Laravel (PHP)
+- Database: MySQL, PostgreSQL, MongoDB
+- Hosting: AWS, Heroku, Railway, Vercel
+
+Mobile Application Development:
+- Native Android: Kotlin, Java with Android Studio
+- Native iOS: Swift with Xcode
+- Cross-Platform: Flutter (Dart), React Native (JavaScript)
+- Backend: Firebase, Spring Boot, Express
+
+AI/Machine Learning Projects:
+- Language: Python (recommended)
+- Libraries: TensorFlow, PyTorch, Scikit-learn, Keras
+- Data: Pandas, NumPy, Matplotlib
+- NLP: NLTK, SpaCy, Hugging Face Transformers
+- Computer Vision: OpenCV, PIL
+- Deployment: Flask, FastAPI, Streamlit
+
+Data Science / Analytics Projects:
+- Language: Python, R
+- Libraries: Pandas, NumPy, Matplotlib, Seaborn
+- ML: Scikit-learn, XGBoost
+- Visualization: Tableau, Power BI, Plotly
+- Big Data: Apache Spark, Hadoop
+
+IoT Projects:
+- Hardware: Arduino, Raspberry Pi, ESP32
+- Protocols: MQTT, HTTP, WebSocket
+- Cloud: AWS IoT, Azure IoT, Firebase
+- Programming: C/C++, Python, MicroPython
+
+Cybersecurity Projects:
+- Tools: Wireshark, Metasploit, Burp Suite, Nmap
+- Languages: Python, Bash
+- Platforms: Kali Linux
+- Frameworks: OWASP guidelines
+
+RECOMMENDED TOOLS FOR ALL FYPs
+
+Version Control:
+- Git with GitHub or GitLab
+- Learn basic commands: init, add, commit, push, pull, branch, merge
+
+IDE/Editor:
+- VS Code (versatile, many extensions)
+- IntelliJ IDEA (Java development)
+- PyCharm (Python development)
+- Android Studio (mobile development)
+
+Documentation:
+- Microsoft Word or Google Docs (report)
+- Overleaf (LaTeX for academic writing)
+- Draw.io (diagrams)
+- Figma (UI/UX design)
+
+Project Management:
+- Trello or Jira (task management)
+- Gantt chart tools
+- Google Calendar (scheduling)
+
+Communication:
+- Email (formal communication with supervisor)
+- WhatsApp/Teams (quick questions)
+- Meeting scheduling tools
+
+TECHNOLOGY SELECTION CRITERIA
+When choosing technologies for your FYP, consider:
+1. Your existing skills and learning curve
+2. Project requirements and constraints
+3. Community support and documentation
+4. Supervisor's familiarity and preferences
+5. Scalability and maintainability
+6. License and cost considerations
+7. Availability of learning resources
