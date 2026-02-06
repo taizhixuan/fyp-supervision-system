@@ -1,0 +1,30 @@
+package com.fyp.supervision.repository;
+
+import com.fyp.supervision.entity.Meeting;
+import com.fyp.supervision.enums.MeetingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface MeetingRepository extends JpaRepository<Meeting, Long> {
+    @Query("SELECT m FROM Meeting m WHERE m.project.student.userId = :userId ORDER BY m.proposedStartAt DESC")
+    Page<Meeting> findByStudentUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT m FROM Meeting m WHERE m.project.supervisor.userId = :userId ORDER BY m.proposedStartAt DESC")
+    List<Meeting> findBySupervisorUserId(@Param("userId") Long userId);
+
+    @Query("SELECT m FROM Meeting m WHERE m.project.student.userId = :userId AND m.status = :status")
+    Page<Meeting> findByStudentUserIdAndStatus(@Param("userId") Long userId, @Param("status") MeetingStatus status, Pageable pageable);
+
+    @Query("SELECT m FROM Meeting m WHERE m.project.student.userId = :userId AND m.proposedStartAt BETWEEN :from AND :to")
+    Page<Meeting> findByStudentUserIdAndDateRange(@Param("userId") Long userId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
+
+    long countByProject_Student_UserId(Long studentUserId);
+}
