@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.student;
 
-import com.fyp.supervision.entity.Deadline;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +7,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,8 +18,7 @@ public class StudentDeadlineController {
     @GetMapping("/deadlines")
     public ResponseEntity<?> getDeadlines(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<Deadline> deadlines = studentService.getDeadlines(userId);
-        return ResponseEntity.ok(Map.of("deadlines", deadlines));
+        return ResponseEntity.ok(studentService.getDeadlinesDto(userId));
     }
 
     @GetMapping("/registration")
@@ -33,7 +30,6 @@ public class StudentDeadlineController {
 
     @GetMapping("/notification-preferences")
     public ResponseEntity<?> getNotificationPreferences(@AuthenticationPrincipal UserDetails user) {
-        // Return default preferences
         return ResponseEntity.ok(Map.of(
             "email", Map.of("enabled", true, "meetingReminders", true, "deadlineReminders", true, "proposalUpdates", true, "supervisorMessages", true, "systemAnnouncements", true),
             "push", Map.of("enabled", true, "meetingReminders", true, "deadlineReminders", true, "proposalUpdates", true, "supervisorMessages", true, "systemAnnouncements", true),
@@ -44,7 +40,6 @@ public class StudentDeadlineController {
 
     @PutMapping("/notification-preferences")
     public ResponseEntity<?> updateNotificationPreferences(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> prefs) {
-        // Placeholder — store preferences in future
         return ResponseEntity.ok(prefs);
     }
 }

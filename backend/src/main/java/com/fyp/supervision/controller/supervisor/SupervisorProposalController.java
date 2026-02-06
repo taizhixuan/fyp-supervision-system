@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.Proposal;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +19,13 @@ public class SupervisorProposalController {
     @GetMapping
     public ResponseEntity<?> getProposals(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<Proposal> proposals = supervisorService.getProposals(userId);
-        return ResponseEntity.ok(Map.of("proposals", proposals));
+        List<Map<String, Object>> proposals = supervisorService.getProposalDtos(userId);
+        return ResponseEntity.ok(Map.of("proposals", proposals, "total", proposals.size()));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProposal(@PathVariable Long id) {
-        return ResponseEntity.ok(Map.of("proposalId", id));
+        return ResponseEntity.ok(supervisorService.getProposalForReviewDto(id));
     }
 
     @PostMapping("/{id}/feedback")

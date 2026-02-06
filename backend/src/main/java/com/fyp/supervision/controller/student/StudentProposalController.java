@@ -4,7 +4,6 @@ import com.fyp.supervision.entity.Proposal;
 import com.fyp.supervision.entity.ProposalCheckResult;
 import com.fyp.supervision.entity.ProposalVersion;
 import com.fyp.supervision.repository.ProposalCheckResultRepository;
-import com.fyp.supervision.repository.ProposalReviewRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,53 +23,45 @@ public class StudentProposalController {
     private final StudentService studentService;
     private final AiServiceClient aiServiceClient;
     private final ProposalCheckResultRepository checkResultRepository;
-    private final ProposalReviewRepository reviewRepository;
 
     @GetMapping
     public ResponseEntity<?> getProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        return studentService.getProposal(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(studentService.getProposalDto(userId));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     public ResponseEntity<?> createProposal(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        Proposal proposal = studentService.createProposal(userId, data);
-        return ResponseEntity.ok(proposal);
+        return ResponseEntity.ok(studentService.createProposal(userId, data));
     }
 
     @PutMapping
     public ResponseEntity<?> updateProposal(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        Proposal proposal = studentService.updateProposal(userId, data);
-        return ResponseEntity.ok(proposal);
+        return ResponseEntity.ok(studentService.updateProposal(userId, data));
     }
 
     @PostMapping("/submit")
     public ResponseEntity<?> submitProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        Proposal proposal = studentService.submitProposal(userId);
-        return ResponseEntity.ok(proposal);
+        return ResponseEntity.ok(studentService.submitProposal(userId));
     }
 
     @GetMapping("/versions")
     public ResponseEntity<?> getVersions(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<ProposalVersion> versions = studentService.getProposalVersions(userId);
-        return ResponseEntity.ok(Map.of("versions", versions));
+        return ResponseEntity.ok(Map.of("versions", studentService.getProposalVersionDtos(userId)));
     }
 
     @GetMapping("/feedback")
     public ResponseEntity<?> getFeedback(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        return studentService.getProposal(userId)
-                .map(proposal -> {
-                    var reviews = reviewRepository.findByProposal_ProposalIdOrderByReviewedAtDesc(proposal.getProposalId());
-                    return ResponseEntity.ok(Map.of("feedback", reviews));
-                })
-                .orElse(ResponseEntity.ok(Map.of("feedback", List.of())));
+        return ResponseEntity.ok(Map.of("feedback", studentService.getProposalFeedbackDtos(userId)));
     }
 
     @GetMapping("/analysis")
@@ -83,7 +73,17 @@ public class StudentProposalController {
                     if (results.isEmpty()) {
                         return ResponseEntity.ok(Map.of());
                     }
-                    return ResponseEntity.ok((Object) results.get(0));
+                    ProposalCheckResult r = results.get(0);
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("analysisId", r.getCheckId().toString());
+                    dto.put("proposalId", proposal.getProposalId().toString());
+                    dto.put("overallScore", r.getOverallScore());
+                    dto.put("sectionAnalysis", List.of());
+                    dto.put("suggestions", List.of());
+                    dto.put("strengths", studentService.parseJsonArray(r.getStrengths()));
+                    dto.put("weaknesses", studentService.parseJsonArray(r.getWeaknesses()));
+                    dto.put("analyzedAt", r.getCheckedAt() != null ? r.getCheckedAt().toString() : "");
+                    return ResponseEntity.ok((Object) dto);
                 })
                 .orElse(ResponseEntity.ok(Map.of()));
     }
@@ -93,22 +93,18 @@ public class StudentProposalController {
         Long userId = Long.parseLong(user.getUsername());
         return studentService.getProposal(userId)
                 .map(proposal -> {
-                    // Get latest version content
-                    List<ProposalVersion> versions = studentService.getProposalVersions(userId);
-                    String content = proposal.getTitle();
-                    if (!versions.isEmpty()) {
-                        ProposalVersion latest = versions.get(0);
-                        content = proposal.getTitle() + "\n\n" + (latest.getContentText() != null ? latest.getContentText() : "");
-                    }
+                    List<ProposalVersion> versions = studentService.getProposal(userId)
+                            .map(p -> p.getVersions())
+                            .orElse(List.of());
 
-                    // Call AI service
+                    String content = proposal.getTitle();
+
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("proposalContent", content);
                     payload.put("sections", List.of("title", "problem_statement", "objectives", "methodology", "scope"));
 
                     Map<String, Object> result = aiServiceClient.analyzeProposal(payload);
 
-                    // Store result
                     try {
                         ProposalCheckResult checkResult = ProposalCheckResult.builder()
                                 .proposal(proposal)
@@ -125,7 +121,7 @@ public class StudentProposalController {
                                 .build();
                         checkResultRepository.save(checkResult);
                     } catch (Exception e) {
-                        // Log but don't fail — return the AI result even if storage fails
+                        // Log but don't fail
                     }
 
                     return ResponseEntity.ok((Object) result);
@@ -136,19 +132,12 @@ public class StudentProposalController {
     private int toInt(Object value) {
         if (value == null) return 0;
         if (value instanceof Number) return ((Number) value).intValue();
-        try {
-            return Integer.parseInt(value.toString());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        try { return Integer.parseInt(value.toString()); } catch (NumberFormatException e) { return 0; }
     }
 
     private String toJsonString(Object value) {
         if (value == null) return "[]";
-        try {
-            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value);
-        } catch (Exception e) {
-            return "[]";
-        }
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value); }
+        catch (Exception e) { return "[]"; }
     }
 }

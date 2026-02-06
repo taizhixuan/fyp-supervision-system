@@ -1,8 +1,5 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.SupervisorRequest;
-import com.fyp.supervision.exception.ResourceNotFoundException;
-import com.fyp.supervision.repository.SupervisorRequestRepository;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +15,19 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorRequestController {
     private final SupervisorService supervisorService;
-    private final SupervisorRequestRepository supervisorRequestRepository;
 
     @GetMapping
     public ResponseEntity<?> getRequests(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
         Long userId = Long.parseLong(user.getUsername());
-        List<SupervisorRequest> requests = supervisorService.getRequests(userId, status);
-        return ResponseEntity.ok(Map.of("requests", requests));
+        List<Map<String, Object>> requests = supervisorService.getRequestDtos(userId, status);
+        return ResponseEntity.ok(Map.of("requests", requests, "total", requests.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SupervisorRequest> getRequest(@PathVariable Long id) {
-        return ResponseEntity.ok(supervisorRequestRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Request not found")));
+    public ResponseEntity<?> getRequest(@PathVariable Long id) {
+        // Use the buildRequestDto from a loaded entity
+        return ResponseEntity.ok(supervisorService.buildRequestDto(
+                supervisorService.getRequestEntity(id)));
     }
 
     @PostMapping("/{id}/respond")

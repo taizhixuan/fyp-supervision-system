@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,10 +18,12 @@ public class MeetingLogSignature {
     @Column(name = "signature_id")
     private Long signatureId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "log_id", nullable = false)
     private MeetingLog meetingLog;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "signer_user_id", nullable = false)
     private UserAccount signer;

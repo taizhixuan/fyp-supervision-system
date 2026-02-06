@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.MeetingLog;
 import com.fyp.supervision.service.MeetingLogService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
@@ -22,30 +21,33 @@ public class SupervisorMeetingLogController {
     @GetMapping
     public ResponseEntity<?> getMeetingLogs(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
         Long userId = Long.parseLong(user.getUsername());
-        List<MeetingLog> logs = supervisorService.getMeetingLogs(userId, status);
-        return ResponseEntity.ok(Map.of("logs", logs));
+        List<Map<String, Object>> logs = supervisorService.getLogDtos(userId, status);
+        return ResponseEntity.ok(Map.of("logs", logs, "total", logs.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MeetingLog> getLog(@PathVariable Long id) {
-        return ResponseEntity.ok(meetingLogService.getLog(id));
+    public ResponseEntity<?> getLog(@PathVariable Long id) {
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(meetingLogService.getLog(id)));
     }
 
     @PutMapping("/{id}/comments")
-    public ResponseEntity<MeetingLog> addComments(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> addComments(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(meetingLogService.addSupervisorComments(id, userId, (String) data.get("supervisorComments")));
+        var log = meetingLogService.addSupervisorComments(id, userId, (String) data.get("supervisorComments"));
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(log));
     }
 
     @PostMapping("/{id}/request-correction")
-    public ResponseEntity<MeetingLog> requestCorrection(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> requestCorrection(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(meetingLogService.requestCorrection(id, userId, (String) data.get("correctionReason")));
+        var log = meetingLogService.requestCorrection(id, userId, (String) data.get("correctionReason"));
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(log));
     }
 
     @PostMapping("/{id}/sign")
-    public ResponseEntity<MeetingLog> signLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> signLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(meetingLogService.signLog(id, userId, data));
+        var log = meetingLogService.signLog(id, userId, data);
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(log));
     }
 }

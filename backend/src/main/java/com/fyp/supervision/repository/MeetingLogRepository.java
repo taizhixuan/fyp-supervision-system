@@ -13,7 +13,9 @@ import java.util.List;
 public interface MeetingLogRepository extends JpaRepository<MeetingLog, Long> {
     Page<MeetingLog> findByStudent_UserIdOrderByCreatedAtDesc(Long studentUserId, Pageable pageable);
     Page<MeetingLog> findByStudent_UserIdAndStatusOrderByCreatedAtDesc(Long studentUserId, MeetingLogStatus status, Pageable pageable);
+    List<MeetingLog> findByStudent_UserIdAndStatusOrderByCreatedAtDesc(Long studentUserId, MeetingLogStatus status);
     List<MeetingLog> findBySupervisor_UserIdOrderByCreatedAtDesc(Long supervisorUserId);
     List<MeetingLog> findBySupervisor_UserIdAndStatusOrderByCreatedAtDesc(Long supervisorUserId, MeetingLogStatus status);
     long countByStudent_UserIdAndStatus(Long studentUserId, MeetingLogStatus status);
+    long countBySupervisor_UserIdAndStatus(Long supervisorUserId, MeetingLogStatus status);
 }

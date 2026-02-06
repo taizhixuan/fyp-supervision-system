@@ -14,4 +14,6 @@ public interface SupervisorRequestRepository extends JpaRepository<SupervisorReq
     List<SupervisorRequest> findBySupervisorUser_UserIdAndStatusOrderBySubmittedAtDesc(Long supervisorUserId, RequestStatus status);
     long countBySupervisorUser_UserIdAndStatus(Long supervisorUserId, RequestStatus status);
     boolean existsByStudent_UserIdAndSupervisorUser_UserIdAndStatus(Long studentUserId, Long supervisorUserId, RequestStatus status);
+    boolean existsByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
+    long countByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
 }

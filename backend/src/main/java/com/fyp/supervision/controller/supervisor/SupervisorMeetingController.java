@@ -25,14 +25,15 @@ public class SupervisorMeetingController {
     @GetMapping
     public ResponseEntity<?> getMeetings(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
         Long userId = Long.parseLong(user.getUsername());
-        List<Meeting> meetings = supervisorService.getMeetings(userId, status);
-        return ResponseEntity.ok(Map.of("meetings", meetings));
+        List<Map<String, Object>> meetings = supervisorService.getMeetingDtos(userId, status);
+        return ResponseEntity.ok(Map.of("meetings", meetings, "total", meetings.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Meeting> getMeeting(@PathVariable Long id) {
-        return ResponseEntity.ok(meetingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found")));
+    public ResponseEntity<?> getMeeting(@PathVariable Long id) {
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        return ResponseEntity.ok(supervisorService.buildSupervisorMeetingDto(meeting));
     }
 
     @PostMapping("/{id}/respond")

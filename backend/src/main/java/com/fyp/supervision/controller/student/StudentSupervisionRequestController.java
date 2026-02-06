@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.student;
 
-import com.fyp.supervision.entity.SupervisorRequest;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +7,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,15 +18,13 @@ public class StudentSupervisionRequestController {
     @GetMapping
     public ResponseEntity<?> getRequests(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<SupervisorRequest> requests = studentService.getSupervisionRequests(userId);
-        return ResponseEntity.ok(Map.of("requests", requests));
+        return ResponseEntity.ok(Map.of("requests", studentService.getSupervisionRequestDtos(userId)));
     }
 
     @PostMapping
     public ResponseEntity<?> createRequest(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
-        SupervisorRequest request = studentService.createSupervisionRequest(userId, data);
-        return ResponseEntity.ok(request);
+        return ResponseEntity.ok(studentService.createSupervisionRequest(userId, data));
     }
 
     @PostMapping("/{id}/withdraw")

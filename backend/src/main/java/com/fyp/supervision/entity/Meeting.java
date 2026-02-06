@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.MeetingStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,10 +19,12 @@ public class Meeting {
     @Column(name = "meeting_id")
     private Long meetingId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_by_user_id", nullable = false)
     private UserAccount requestedBy;

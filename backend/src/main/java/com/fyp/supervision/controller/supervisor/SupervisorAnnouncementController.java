@@ -6,15 +6,15 @@ import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,18 +23,20 @@ import java.util.Map;
 public class SupervisorAnnouncementController {
     private final AnnouncementRepository announcementRepository;
     private final UserAccountRepository userAccountRepository;
+    private final SupervisorService supervisorService;
 
     @GetMapping
     public ResponseEntity<?> getAnnouncements(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        Page<Announcement> announcements = announcementRepository.findByCreatedBy_UserIdOrderByCreatedAtDesc(userId, Pageable.unpaged());
-        return ResponseEntity.ok(Map.of("announcements", announcements.getContent()));
+        List<Map<String, Object>> announcements = supervisorService.getAnnouncementDtos(userId);
+        return ResponseEntity.ok(Map.of("announcements", announcements, "total", announcements.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Announcement> getAnnouncement(@PathVariable Long id) {
-        return ResponseEntity.ok(announcementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found")));
+    public ResponseEntity<?> getAnnouncement(@PathVariable Long id) {
+        Announcement announcement = announcementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        return ResponseEntity.ok(supervisorService.buildAnnouncementDto(announcement));
     }
 
     @PostMapping
@@ -44,7 +46,7 @@ public class SupervisorAnnouncementController {
 
         Announcement announcement = Announcement.builder()
                 .createdBy(creator)
-                .scope("SUPERVISEES")
+                .scope((String) data.getOrDefault("visibility", "ALL_SUPERVISEES"))
                 .title((String) data.get("title"))
                 .content((String) data.get("content"))
                 .priority((String) data.getOrDefault("priority", "NORMAL"))
@@ -53,7 +55,7 @@ public class SupervisorAnnouncementController {
                 .build();
 
         Announcement saved = announcementRepository.save(announcement);
-        return ResponseEntity.ok(Map.of("announcementId", saved.getAnnouncementId()));
+        return ResponseEntity.ok(supervisorService.buildAnnouncementDto(saved));
     }
 
     @PutMapping("/{id}")

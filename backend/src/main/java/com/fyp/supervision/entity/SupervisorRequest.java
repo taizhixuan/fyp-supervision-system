@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,10 +19,12 @@ public class SupervisorRequest {
     @Column(name = "request_id")
     private Long requestId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_user_id", nullable = false)
     private UserAccount student;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supervisor_user_id", nullable = false)
     private UserAccount supervisorUser;

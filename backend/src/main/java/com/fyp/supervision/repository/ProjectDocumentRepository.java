@@ -12,6 +12,8 @@ import java.util.List;
 public interface ProjectDocumentRepository extends JpaRepository<ProjectDocument, Long> {
     Page<ProjectDocument> findByProject_ProjectIdOrderByUploadedAtDesc(Long projectId, Pageable pageable);
     Page<ProjectDocument> findByProject_Student_UserIdOrderByUploadedAtDesc(Long studentUserId, Pageable pageable);
+    List<ProjectDocument> findByProject_Student_UserIdOrderByUploadedAtDesc(Long studentUserId);
     List<ProjectDocument> findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(Long studentUserId, String docType);
     long countByProject_Student_UserId(Long studentUserId);
+    List<ProjectDocument> findByProject_Supervisor_UserIdOrderByUploadedAtDesc(Long supervisorUserId);
 }

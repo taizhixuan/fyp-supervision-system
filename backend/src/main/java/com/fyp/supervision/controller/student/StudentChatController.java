@@ -35,9 +35,25 @@ public class StudentChatController {
             return ResponseEntity.ok(Map.of("sessionId", "", "messages", List.of(), "createdAt", "", "updatedAt", ""));
         }
         List<ChatMessage> messages = chatMessageRepository.findBySession_SessionIdOrderBySentAtAsc(session.getSessionId());
+        List<Map<String, Object>> messageDtos = new ArrayList<>();
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        for (ChatMessage msg : messages) {
+            Map<String, Object> dto = new HashMap<>();
+            dto.put("messageId", msg.getMessageId().toString());
+            dto.put("role", msg.getSender());
+            dto.put("content", msg.getContent());
+            dto.put("timestamp", msg.getSentAt() != null ? msg.getSentAt().toString() : "");
+            try {
+                Object refs = mapper.readValue(msg.getReferencesJson() != null ? msg.getReferencesJson() : "[]", List.class);
+                dto.put("references", refs);
+            } catch (Exception e) {
+                dto.put("references", List.of());
+            }
+            messageDtos.add(dto);
+        }
         return ResponseEntity.ok(Map.of(
                 "sessionId", session.getSessionId().toString(),
-                "messages", messages,
+                "messages", messageDtos,
                 "createdAt", session.getStartedAt().toString(),
                 "updatedAt", session.getStartedAt().toString()
         ));
@@ -97,7 +113,20 @@ public class StudentChatController {
                 .build();
         chatMessageRepository.save(aiMsg);
 
-        return ResponseEntity.ok(aiMsg);
+        // Return DTO matching frontend ChatMessage type
+        Map<String, Object> msgDto = new HashMap<>();
+        msgDto.put("messageId", aiMsg.getMessageId().toString());
+        msgDto.put("role", aiMsg.getSender());
+        msgDto.put("content", aiMsg.getContent());
+        msgDto.put("timestamp", aiMsg.getSentAt() != null ? aiMsg.getSentAt().toString() : "");
+        try {
+            Object refs = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                    aiMsg.getReferencesJson() != null ? aiMsg.getReferencesJson() : "[]", List.class);
+            msgDto.put("references", refs);
+        } catch (Exception e) {
+            msgDto.put("references", List.of());
+        }
+        return ResponseEntity.ok(msgDto);
     }
 
     @DeleteMapping

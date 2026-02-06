@@ -1,14 +1,14 @@
 package com.fyp.supervision.controller.student;
 
 import com.fyp.supervision.entity.Meeting;
+import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.enums.MeetingStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
-import com.fyp.supervision.entity.Project;
+import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,23 +24,20 @@ import java.util.Map;
 public class StudentMeetingController {
     private final MeetingRepository meetingRepository;
     private final ProjectRepository projectRepository;
+    private final StudentService studentService;
 
     @GetMapping
-    public ResponseEntity<Page<Meeting>> getMeetings(
+    public ResponseEntity<?> getMeetings(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String status,
             Pageable pageable) {
         Long userId = Long.parseLong(user.getUsername());
-        if (status != null && !status.isBlank()) {
-            return ResponseEntity.ok(meetingRepository.findByStudentUserIdAndStatus(userId, MeetingStatus.valueOf(status), pageable));
-        }
-        return ResponseEntity.ok(meetingRepository.findByStudentUserId(userId, pageable));
+        return ResponseEntity.ok(studentService.getMeetingsDto(userId, status, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Meeting> getMeeting(@PathVariable Long id) {
-        return ResponseEntity.ok(meetingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found")));
+    public ResponseEntity<?> getMeeting(@PathVariable Long id) {
+        return ResponseEntity.ok(studentService.getMeetingDto(id));
     }
 
     @PostMapping
@@ -65,7 +62,7 @@ public class StudentMeetingController {
         }
 
         Meeting saved = meetingRepository.save(meeting);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(studentService.buildMeetingDto(saved));
     }
 
     @PostMapping("/{id}/cancel")
