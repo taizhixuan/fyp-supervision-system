@@ -124,7 +124,7 @@ public class SupervisorService {
         long notStarted = projects.stream().filter(p -> p.getStatus() == ProjectStatus.ACTIVE && p.getRegisteredAt() != null && p.getRegisteredAt().isAfter(LocalDateTime.now().minusDays(7))).count();
         long inProgress = projects.stream().filter(p -> p.getStatus() == ProjectStatus.ACTIVE).count();
         long completed = projects.stream().filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
-        long onHold = projects.stream().filter(p -> p.getStatus() == ProjectStatus.ON_HOLD).count();
+        long onHold = projects.stream().filter(p -> p.getStatus() == ProjectStatus.SUSPENDED).count();
 
         Map<String, Object> dashboard = new LinkedHashMap<>();
         dashboard.put("totalSupervisees", projects.size());

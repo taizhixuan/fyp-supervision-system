@@ -13,8 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/resources")
@@ -25,19 +27,22 @@ public class ResourceController {
     private final FileStorageService fileStorageService;
 
     @GetMapping
-    public ResponseEntity<Page<ResourceDocument>> getResources(
+    public ResponseEntity<?> getResources(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String visibility,
             Pageable pageable) {
-        Page<ResourceDocument> resources;
+        Page<ResourceDocument> page;
         if (category != null && !category.isBlank()) {
-            resources = resourceDocumentRepository.findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(category, pageable);
+            page = resourceDocumentRepository.findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(category, pageable);
         } else if (visibility != null && !visibility.isBlank()) {
-            resources = resourceDocumentRepository.findByVisibilityAndIsActiveTrueOrderByPublishedAtDesc(visibility, pageable);
+            page = resourceDocumentRepository.findByVisibilityAndIsActiveTrueOrderByPublishedAtDesc(visibility, pageable);
         } else {
-            resources = resourceDocumentRepository.findByIsActiveTrueOrderByPublishedAtDesc(pageable);
+            page = resourceDocumentRepository.findByIsActiveTrueOrderByPublishedAtDesc(pageable);
         }
-        return ResponseEntity.ok(resources);
+        List<Map<String, Object>> dtos = page.getContent().stream()
+                .map(this::buildResourceDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of("resources", dtos, "total", page.getTotalElements()));
     }
 
     @GetMapping("/categories")
@@ -47,10 +52,10 @@ public class ResourceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResourceDocument> getResource(@PathVariable Long id) {
+    public ResponseEntity<?> getResource(@PathVariable Long id) {
         ResourceDocument doc = resourceDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
-        return ResponseEntity.ok(doc);
+        return ResponseEntity.ok(buildResourceDto(doc));
     }
 
     @GetMapping("/{id}/download")
@@ -60,7 +65,6 @@ public class ResourceController {
 
         Resource file = fileStorageService.loadFile(doc.getStoragePath());
 
-        // Increment download count
         if (doc.getDownloadCount() != null) {
             doc.setDownloadCount(doc.getDownloadCount() + 1);
         } else {
@@ -74,5 +78,22 @@ public class ResourceController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(file);
+    }
+
+    private Map<String, Object> buildResourceDto(ResourceDocument doc) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("resourceId", doc.getResourceId());
+        dto.put("category", doc.getCategory() != null ? doc.getCategory() : "OTHER");
+        dto.put("title", doc.getTitle());
+        dto.put("description", doc.getDescription());
+        dto.put("fileUrl", doc.getStoragePath());
+        dto.put("fileName", doc.getFileName());
+        dto.put("fileSize", doc.getFileSize());
+        dto.put("visibility", doc.getVisibility() != null ? doc.getVisibility() : "PUBLIC");
+        dto.put("isFeatured", false);
+        dto.put("downloadCount", doc.getDownloadCount());
+        dto.put("tags", List.of());
+        dto.put("publishedAt", doc.getPublishedAt() != null ? doc.getPublishedAt().toString() : "");
+        return dto;
     }
 }

@@ -18,7 +18,7 @@ import type {
 } from '@/types'
 
 // Enable mock data in development mode
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 // ============================================
 // MOCK DATA

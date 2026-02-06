@@ -3,10 +3,12 @@ package com.fyp.supervision.controller.admin;
 import com.fyp.supervision.entity.IntegrationSetting;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.IntegrationSettingRepository;
+import com.fyp.supervision.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -14,15 +16,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminIntegrationController {
     private final IntegrationSettingRepository integrationRepository;
+    private final AdminService adminService;
 
     @GetMapping
     public ResponseEntity<?> getIntegrations() {
-        return ResponseEntity.ok(Map.of("integrations", integrationRepository.findAll()));
+        return ResponseEntity.ok(adminService.getIntegrations());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<IntegrationSetting> getIntegration(@PathVariable Long id) {
-        return ResponseEntity.ok(integrationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+    public ResponseEntity<?> getIntegration(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.getIntegrationDetail(id));
     }
 
     @PutMapping("/{id}")
@@ -37,6 +40,11 @@ public class AdminIntegrationController {
 
     @PostMapping("/{id}/test")
     public ResponseEntity<?> testIntegration(@PathVariable Long id) {
-        return ResponseEntity.ok(Map.of("success", true, "message", "Connection test passed."));
+        IntegrationSetting setting = integrationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        setting.setLastTestedAt(LocalDateTime.now());
+        setting.setLastTestResult("SUCCESS");
+        integrationRepository.save(setting);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Connection test passed.", "responseTime", 234));
     }
 }

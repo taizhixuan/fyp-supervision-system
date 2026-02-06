@@ -1,14 +1,13 @@
 package com.fyp.supervision.controller.admin;
 
-import com.fyp.supervision.dto.common.UserDto;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.enums.UserStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AdminService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,36 +22,20 @@ import java.util.Map;
 public class AdminUserController {
     private final UserAccountRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AdminService adminService;
 
     @GetMapping
-    public ResponseEntity<Page<UserDto>> getUsers(
+    public ResponseEntity<?> getUsers(
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             Pageable pageable) {
-        Page<UserAccount> users;
-        if (search != null && !search.isBlank()) {
-            if (role != null && !role.isBlank()) {
-                users = userRepository.searchByRoleAndTerm(UserRole.valueOf(role), search, pageable);
-            } else {
-                users = userRepository.searchByTerm(search, pageable);
-            }
-        } else if (role != null && !role.isBlank() && status != null && !status.isBlank()) {
-            users = userRepository.findByRoleAndStatus(UserRole.valueOf(role), UserStatus.valueOf(status), pageable);
-        } else if (role != null && !role.isBlank()) {
-            users = userRepository.findByRole(UserRole.valueOf(role), pageable);
-        } else if (status != null && !status.isBlank()) {
-            users = userRepository.findByStatus(UserStatus.valueOf(status), pageable);
-        } else {
-            users = userRepository.findAll(pageable);
-        }
-        return ResponseEntity.ok(users.map(UserDto::fromEntity));
+        return ResponseEntity.ok(adminService.getUserList(role, status, search, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
-        UserAccount user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return ResponseEntity.ok(UserDto.fromEntity(user));
+    public ResponseEntity<?> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.getUserDetail(id));
     }
 
     @PostMapping
@@ -72,7 +55,7 @@ public class AdminUserController {
                 .status(UserStatus.ACTIVE)
                 .build();
         UserAccount saved = userRepository.save(user);
-        return ResponseEntity.ok(Map.of("userId", saved.getUserId()));
+        return ResponseEntity.ok(Map.of("userId", saved.getUserId().toString()));
     }
 
     @PutMapping("/{id}")
