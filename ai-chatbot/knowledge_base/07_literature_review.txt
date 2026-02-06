@@ -1,0 +1,81 @@
+TITLE: Literature Review Guide
+
+PURPOSE OF LITERATURE REVIEW
+A literature review demonstrates your understanding of existing research and solutions in your project domain. It helps you:
+- Identify what has been done before
+- Find gaps that your project can address
+- Understand the theoretical foundation
+- Justify your approach
+- Learn from others' methodologies
+
+HOW TO CONDUCT A LITERATURE REVIEW
+
+Step 1: Define Your Search Strategy
+- Identify key terms related to your topic
+- Use Boolean operators (AND, OR, NOT)
+- Search in academic databases: IEEE Xplore, ACM Digital Library, Google Scholar, ScienceDirect, SpringerLink
+- Focus on papers from the last 5 years
+
+Step 2: Select Relevant Sources
+- Read abstracts first to assess relevance
+- Prioritize peer-reviewed journal articles and conference papers
+- Include a mix of foundational and recent works
+- Aim for 15-25 sources for your FYP
+- Include sources about: similar systems, technologies used, methodologies
+
+Step 3: Read and Analyze
+- Read critically, not passively
+- Note the problem each paper addresses
+- Understand the methodology used
+- Evaluate the results and limitations
+- Consider how each relates to your project
+
+Step 4: Organize Your Review
+Options for organization:
+- Chronological: trace the development of the field over time
+- Thematic: group by themes or subtopics
+- Methodological: group by research methods used
+- Comparative: compare and contrast different approaches
+
+Step 5: Write the Review
+- Don't just summarize each paper individually
+- Synthesize findings across multiple sources
+- Identify patterns, agreements, and contradictions
+- Clearly state the gap your project addresses
+- Include a comparison table
+
+COMPARISON TABLE
+A comparison table is essential in FYP literature reviews. Include:
+- Author and year
+- System/approach name
+- Key features
+- Technology used
+- Strengths
+- Limitations
+- Relevance to your project
+
+Example columns: Reference | System Name | Features | Technology | Strengths | Weaknesses
+
+WRITING TIPS FOR LITERATURE REVIEW
+- Use present tense for general facts: "Machine learning is widely used..."
+- Use past tense for specific studies: "Smith et al. (2023) proposed..."
+- Don't copy text from sources (paraphrase and cite)
+- Include critical analysis, not just description
+- Connect each source to your project
+- Transition smoothly between topics
+- End with a summary of the gap your project fills
+
+COMMON MISTAKES
+- Just listing summaries without analysis
+- Using only web sources (blogs, Wikipedia)
+- Not citing sources properly
+- Reviewing too few sources
+- Not identifying a clear research gap
+- Including irrelevant sources
+- Copying text without proper citation (plagiarism)
+
+CITATION MANAGEMENT TOOLS
+- Mendeley (free)
+- Zotero (free)
+- EndNote (institutional license may be available)
+- Google Scholar citation export

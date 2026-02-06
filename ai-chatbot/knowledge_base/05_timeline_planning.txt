@@ -1,0 +1,124 @@
+TITLE: FYP Timeline and Project Planning
+
+PROJECT PLANNING OVERVIEW
+Good project planning is essential for FYP success. A realistic timeline helps you stay on track and ensures all deliverables are completed on time.
+
+TYPICAL FYP1 TIMELINE (14-16 weeks)
+
+Week 1-2: Topic Exploration and Supervisor Selection
+- Research potential FYP topics
+- Review supervisor research areas
+- Submit supervision request
+- Meet with potential supervisor to discuss ideas
+
+Week 3-4: Literature Review and Problem Definition
+- Read at least 10-15 related papers
+- Identify research gaps
+- Define problem statement
+- Draft project objectives
+
+Week 5-6: Proposal Writing
+- Write first draft of proposal
+- Include all required sections
+- Create preliminary system design
+- Develop project timeline
+
+Week 7-8: Proposal Revision and Submission
+- Review proposal with supervisor
+- Incorporate feedback
+- Finalize and submit proposal
+- Prepare for proposal presentation
+
+Week 9-10: Proposal Defense
+- Prepare presentation slides
+- Practice presentation
+- Present and defend proposal
+- Incorporate panel feedback
+
+Week 11-12: System Design
+- Detailed system architecture
+- Database design
+- UI/UX wireframes
+- Technology selection and setup
+
+Week 13-14: Initial Implementation
+- Set up development environment
+- Implement core modules
+- Begin basic functionality
+- Document progress
+
+Week 15-16: FYP1 Wrap-up
+- Complete FYP1 deliverables
+- Submit all meeting logs
+- Prepare FYP1 report/documentation
+- Plan for FYP2
+
+TYPICAL FYP2 TIMELINE (14-16 weeks)
+
+Week 1-2: FYP2 Kickoff
+- Review FYP1 feedback
+- Refine project plan for FYP2
+- Set up development environment
+- Resume implementation
+
+Week 3-6: Core Implementation
+- Develop main system features
+- Regular testing during development
+- Weekly supervisor meetings
+- Document implementation details
+
+Week 7-8: Advanced Features and Integration
+- Implement remaining features
+- System integration
+- Begin comprehensive testing
+- Mid-semester progress review
+
+Week 9-10: Testing and Evaluation
+- Complete unit testing
+- Integration testing
+- User acceptance testing
+- Performance evaluation
+- Fix bugs and issues
+
+Week 11-12: Report Writing
+- Write all report chapters
+- Include testing results
+- Add screenshots and diagrams
+- Review with supervisor
+
+Week 13-14: Final Preparation
+- Finalize report
+- Prepare final presentation
+- Practice demo
+- Submit all deliverables
+
+Week 15-16: Final Presentation
+- Final presentation/viva voce
+- Project demonstration
+- Submit final report
+- Return any borrowed equipment
+
+PROJECT MANAGEMENT TIPS
+- Use a Gantt chart to visualize your timeline
+- Break large tasks into smaller subtasks
+- Set personal deadlines before official ones
+- Track progress weekly
+- Communicate delays early to your supervisor
+- Use version control (Git) for your code
+- Backup your work regularly
+- Don't leave report writing to the last minute
+
+TOOLS FOR PROJECT MANAGEMENT
+- Gantt charts: Microsoft Project, GanttProject, or Excel
+- Task management: Trello, Jira, or Notion
+- Version control: Git with GitHub or GitLab
+- Document collaboration: Google Docs or Overleaf (LaTeX)
+- Time tracking: Toggl or Clockify
+
+COMMON PLANNING MISTAKES
+- Underestimating implementation time
+- Not allocating enough time for testing
+- Leaving report writing to the last few weeks
+- Not accounting for unexpected issues
+- Skipping regular supervisor meetings
+- Not having a backup plan

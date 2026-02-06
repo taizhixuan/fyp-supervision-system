@@ -1,0 +1,103 @@
+TITLE: FYP Report Writing Guide
+
+FYP REPORT OVERVIEW
+The FYP report is the most significant written deliverable of your project. It documents your entire project from problem identification to evaluation. The report should demonstrate your ability to conduct independent research and development.
+
+STANDARD REPORT STRUCTURE
+
+1. PRELIMINARY PAGES
+- Title page (project title, student name, ID, supervisor, date)
+- Declaration of originality
+- Acknowledgments
+- Abstract (200-300 words summary)
+- Table of contents
+- List of figures
+- List of tables
+- List of abbreviations
+
+2. CHAPTER 1: INTRODUCTION
+- Background of the study
+- Problem statement
+- Project objectives
+- Project scope
+- Significance of the study
+- Report organization
+
+3. CHAPTER 2: LITERATURE REVIEW
+- Overview of the problem domain
+- Review of existing solutions/systems
+- Comparison table of related work
+- Theoretical framework
+- Summary of gaps identified
+- How your project addresses these gaps
+
+4. CHAPTER 3: METHODOLOGY
+- Development methodology (Agile, Waterfall, etc.)
+- System requirements (functional and non-functional)
+- System architecture/design
+- Use case diagrams, class diagrams, sequence diagrams
+- Database design (ERD)
+- Tools and technologies used
+- Data collection methods (if applicable)
+
+5. CHAPTER 4: IMPLEMENTATION
+- Development environment setup
+- Key implementation details
+- Code snippets for important features (not entire codebase)
+- Screenshots of the system
+- Challenges faced during implementation
+- Solutions applied
+
+6. CHAPTER 5: TESTING AND EVALUATION
+- Testing strategy
+- Test cases and results
+- Unit testing, integration testing, system testing
+- User acceptance testing (UAT)
+- Performance evaluation
+- Results analysis and discussion
+
+7. CHAPTER 6: CONCLUSION AND FUTURE WORK
+- Summary of achievements
+- Objectives met vs. not met
+- Limitations of the project
+- Recommendations for future improvement
+- Lessons learned
+
+8. REFERENCES
+- IEEE or APA format (as specified by programme)
+- Minimum 15-20 references
+- Prioritize academic sources
+
+9. APPENDICES
+- User manual
+- Additional diagrams
+- Survey questionnaires
+- Complete test results
+- Source code (if required)
+
+WRITING TIPS
+- Use formal academic English
+- Write in third person (avoid "I" or "we")
+- Use past tense for completed work, present tense for general facts
+- Include proper citations for ALL borrowed ideas
+- Use figures and tables to present data clearly
+- Number all figures and tables
+- Proofread multiple times
+- Follow the faculty formatting guidelines
+
+CITATION FORMAT
+IEEE Format Example:
+[1] A. Author, "Title of Paper," Journal Name, vol. X, no. Y, pp. Z-Z, Year.
+
+APA Format Example:
+Author, A. (Year). Title of paper. Journal Name, Volume(Issue), Pages. DOI
+
+COMMON REPORT WRITING MISTAKES
+- Plagiarism (even unintentional)
+- Too much code in the report
+- Missing citations
+- Poor figure/table quality
+- Inconsistent formatting
+- Exceeding or falling short of page requirements
+- Missing chapters or sections
+- Not explaining design decisions

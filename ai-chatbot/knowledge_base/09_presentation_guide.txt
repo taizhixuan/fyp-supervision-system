@@ -1,0 +1,78 @@
+TITLE: FYP Presentation and Defense Guide
+
+PRESENTATION OVERVIEW
+FYP presentations are a critical component of your assessment. You will need to present your work to a panel of evaluators and demonstrate your system.
+
+TYPES OF PRESENTATIONS
+
+1. Proposal Presentation (FYP1)
+- Duration: 10-15 minutes + Q&A
+- Focus: Problem, objectives, methodology, timeline
+- Goal: Convince the panel your project is feasible and worthwhile
+
+2. Final Presentation / Viva Voce (FYP2)
+- Duration: 15-20 minutes + Q&A
+- Focus: Entire project from problem to evaluation
+- Goal: Demonstrate your work and defend your approach
+
+PRESENTATION STRUCTURE
+
+For Proposal Presentation:
+1. Title slide (1 slide)
+2. Introduction and background (1-2 slides)
+3. Problem statement (1 slide)
+4. Objectives (1 slide)
+5. Literature review summary (2-3 slides)
+6. Proposed methodology (2-3 slides)
+7. System design overview (1-2 slides)
+8. Timeline (1 slide)
+9. Expected outcomes (1 slide)
+10. Questions slide
+
+For Final Presentation:
+1. Title slide (1 slide)
+2. Introduction and problem (1-2 slides)
+3. Objectives (1 slide)
+4. Literature review highlights (1-2 slides)
+5. Methodology (1-2 slides)
+6. System design/architecture (2-3 slides)
+7. Implementation highlights (3-4 slides with screenshots)
+8. System demo (live or recorded)
+9. Testing and evaluation results (2-3 slides)
+10. Conclusion and future work (1-2 slides)
+11. Questions slide
+
+PRESENTATION TIPS
+- Practice multiple times before the actual presentation
+- Time yourself to stay within limits
+- Speak clearly and at a moderate pace
+- Make eye contact with the panel
+- Don't read directly from slides
+- Use bullet points, not paragraphs on slides
+- Include visually appealing diagrams and screenshots
+- Prepare for common questions
+
+DEMO PREPARATION
+- Have a backup plan (recorded video) in case of technical issues
+- Prepare test data that showcases your system's capabilities
+- Know your system inside out
+- Be ready to show specific features when asked
+- Test all equipment before the presentation
+
+COMMON QUESTIONS FROM PANEL
+- Why did you choose this topic?
+- How is your project different from existing solutions?
+- Why did you choose this particular technology/methodology?
+- What were the biggest challenges?
+- How did you test your system?
+- What are the limitations of your project?
+- What would you do differently if you started again?
+- How can this project be extended in the future?
+
+HANDLING Q&A
+- Listen carefully to the question
+- Take a moment to think before answering
+- Be honest if you don't know something
+- Refer to your report or specific results when possible
+- Stay calm and professional
+- Thank the panel for their questions

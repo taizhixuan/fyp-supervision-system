@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,16 @@ public class StudentProposalController {
                             .map(p -> p.getVersions())
                             .orElse(List.of());
 
-                    String content = proposal.getTitle();
+                    // Send full proposal content (not just title) to the AI analyzer
+                    String content = versions.stream()
+                            .max(Comparator.comparing(ProposalVersion::getVersionNo))
+                            .map(ProposalVersion::getContentText)
+                            .orElse(proposal.getTitle());
+
+                    // Prepend title if content doesn't already contain it
+                    if (proposal.getTitle() != null && !content.contains(proposal.getTitle())) {
+                        content = "Title: " + proposal.getTitle() + "\n\n" + content;
+                    }
 
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("proposalContent", content);

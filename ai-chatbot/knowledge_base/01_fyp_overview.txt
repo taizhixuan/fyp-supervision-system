@@ -1,0 +1,46 @@
+TITLE: FYP Overview and Process
+
+WHAT IS FYP?
+The Final Year Project (FYP) is a capstone academic project undertaken by undergraduate students in their final year of study. At MMU Faculty of Computing and Informatics (FCI), the FYP spans two semesters (FYP1 and FYP2) and demonstrates a student's ability to apply knowledge and skills acquired throughout their degree programme.
+
+FYP OBJECTIVES
+The FYP aims to develop students' abilities in:
+- Independent research and critical thinking
+- Problem identification and solution design
+- Technical implementation and software development
+- Academic writing and documentation
+- Project management and time management
+- Oral presentation and communication skills
+
+FYP STRUCTURE
+FYP1 (First Semester):
+- Topic selection and supervisor matching
+- Literature review and background research
+- Proposal writing and submission
+- Proposal defense/presentation
+- Initial system design and planning
+- Meeting log documentation
+
+FYP2 (Second Semester):
+- System implementation and development
+- Testing and evaluation
+- Final report writing
+- Final presentation/viva voce
+- Project demonstration
+
+GRADING COMPONENTS
+FYP assessment typically includes:
+- Proposal quality and presentation (FYP1): 20-30%
+- Progress and supervision meetings: 10-15%
+- Final report documentation: 30-40%
+- Final presentation and demonstration: 20-30%
+- Supervisor evaluation: 10-15%
+
+IMPORTANT DEADLINES
+Students must adhere to faculty-announced deadlines for:
+- Supervisor selection/request submission
+- Proposal submission
+- Mid-semester progress report
+- Final report submission
+- Presentation scheduling
+Check the FYP committee announcements for specific dates each semester.

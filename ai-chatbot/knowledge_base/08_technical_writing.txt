@@ -1,0 +1,76 @@
+TITLE: Technical Writing Tips for FYP
+
+ACADEMIC WRITING STYLE
+FYP reports and proposals require formal academic writing. This means:
+- Use formal language (avoid slang, colloquialisms, contractions)
+- Write in third person ("The system was developed..." not "I developed...")
+- Be precise and specific
+- Use technical terminology correctly
+- Maintain a professional tone throughout
+
+GRAMMAR AND LANGUAGE
+- Use consistent tense (past for completed work, present for general facts)
+- Avoid run-on sentences
+- Keep sentences concise (15-25 words on average)
+- Use active voice when possible ("The system processes data" vs "Data is processed by the system")
+- Proofread for spelling and grammar errors
+- Use grammar tools: Grammarly, Microsoft Editor
+
+PARAGRAPH STRUCTURE
+- Each paragraph should focus on one main idea
+- Start with a topic sentence
+- Provide supporting details and evidence
+- End with a concluding or transition sentence
+- Typical paragraph length: 4-8 sentences
+
+FIGURES AND TABLES
+- Number all figures and tables sequentially
+- Provide clear captions
+- Reference every figure/table in the text before it appears
+- Ensure readability (legible text, appropriate size)
+- Use consistent styling throughout
+
+Format for figures:
+"Figure X.Y: Description of the figure"
+
+Format for tables:
+"Table X.Y: Description of the table"
+
+CITING SOURCES
+Always cite when you:
+- Quote someone directly
+- Paraphrase someone's ideas
+- Use data or statistics from a source
+- Refer to a specific system or approach
+
+IEEE Citation Style (commonly used in CS):
+- In-text: "...as described in [1]"
+- Reference list: numbered, in order of appearance
+
+APA Citation Style:
+- In-text: "...as described by Author (Year)"
+- Reference list: alphabetical by author
+
+FORMATTING GUIDELINES
+- Font: Times New Roman 12pt or similar
+- Line spacing: 1.5 or double
+- Margins: 2.5cm or 1 inch on all sides
+- Page numbers: bottom center or bottom right
+- Headings: consistent hierarchy (Chapter, Section, Subsection)
+- Follow your faculty's specific formatting requirements
+
+WRITING PROCESS
+1. Create an outline first
+2. Write a rough draft (don't worry about perfection)
+3. Review and revise for content
+4. Edit for clarity and flow
+5. Proofread for grammar and spelling
+6. Get feedback from supervisor or peers
+7. Make final revisions
+
+COMMON WRITING ISSUES
+- Vague language: "The system is fast" → "The system responds within 200ms"
+- Unsupported claims: Always back up statements with evidence or citations
+- Poor transitions: Use connecting phrases between paragraphs
+- Inconsistent terminology: Use the same term for the same concept throughout
+- Missing definitions: Define technical terms on first use

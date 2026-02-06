@@ -1,0 +1,58 @@
+TITLE: Frequently Asked Questions about FYP
+
+Q: How long is the FYP?
+A: The FYP spans two semesters. FYP1 focuses on research, proposal writing, and initial design. FYP2 focuses on implementation, testing, and final documentation. Each semester is typically 14-16 weeks.
+
+Q: Can I choose my own topic?
+A: Yes, students are encouraged to propose their own topics. However, the topic must be approved by your supervisor and the FYP committee. You can also select from a list of topics suggested by supervisors.
+
+Q: How do I find a supervisor?
+A: Use the FYP supervision system to browse supervisor profiles, check their research areas and availability, and submit a supervision request. Choose a supervisor whose expertise aligns with your project topic.
+
+Q: What if my preferred supervisor is full?
+A: If a supervisor has reached their supervision quota, you'll need to select another supervisor. The FYP committee may also help with supervisor assignment.
+
+Q: How often should I meet my supervisor?
+A: At minimum, meet bi-weekly during active FYP semesters. Weekly meetings are recommended, especially during the implementation phase. Always schedule meetings proactively.
+
+Q: What programming language should I use?
+A: Choose based on your project requirements and your skills. Common choices include Java (enterprise systems), Python (AI/ML, data science), JavaScript (web development), and Kotlin/Swift (mobile development). Discuss with your supervisor.
+
+Q: How many pages should my report be?
+A: Typical FYP reports range from 60-120 pages. Focus on quality over quantity. Follow your faculty's specific guidelines for page limits.
+
+Q: Can I use AI tools like ChatGPT for my FYP?
+A: Check your programme's specific policy on AI tool usage. Generally, AI tools can be used as assistants but all work must be your own. You must declare any AI tools used. Never present AI-generated content as your own original work.
+
+Q: What if I'm falling behind schedule?
+A: Communicate with your supervisor immediately. Adjust your timeline, prioritize core features, and consider reducing scope if necessary. It's better to deliver a smaller, well-done project than an incomplete large one.
+
+Q: Do I need to use a specific citation format?
+A: Check with your programme. IEEE format is commonly used in computer science, but some programmes prefer APA. Be consistent throughout your report.
+
+Q: How many references do I need?
+A: Minimum 15-20 references for the final report. For the proposal, 5-10 references are typical. Prioritize academic sources (journals, conferences) over web sources.
+
+Q: Can I change my project topic after the proposal is approved?
+A: Major topic changes are generally not allowed after approval. Minor adjustments to scope are possible with supervisor agreement and committee notification.
+
+Q: What if I encounter technical problems I can't solve?
+A: First, try to solve it yourself using documentation and online resources. Then discuss with your supervisor. You can also consult peers or attend faculty workshops. Document the problem and your solution process.
+
+Q: How is the FYP graded?
+A: Grading typically includes: proposal quality and presentation, supervisor evaluation, examiner evaluation, final report, final presentation and demo, and meeting logs. Exact weights vary by programme.
+
+Q: Can I work in a group for FYP?
+A: Typically, FYP is an individual project in most programmes. However, some programmes may allow pair or group projects with clearly defined individual contributions. Check with your programme coordinator.
+
+Q: What happens if I fail FYP?
+A: If you fail FYP1, you typically need to repeat it. If you fail FYP2, you may need to extend your studies. Consult your programme coordinator for specific policies and options.
+
+Q: Do I need to submit source code?
+A: Yes, you typically need to submit your complete source code along with the final report. Use a repository (GitHub/GitLab) and include the link in your report. Ensure the code is well-documented.
+
+Q: Can I use open-source code in my project?
+A: Yes, but you must properly attribute it. Clearly state which parts are your original work and which use open-source components. Follow the open-source license requirements. The majority of the system should be your own work.
+
+Q: How do I prepare for the viva/presentation?
+A: Practice your presentation multiple times, prepare a system demo, anticipate common questions, know your project thoroughly, and have backup plans for technical issues. Time yourself to stay within the allocated time.

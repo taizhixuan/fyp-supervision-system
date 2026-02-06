@@ -1,0 +1,65 @@
+TITLE: MMU FCI FYP Procedures and Policies
+
+DISCLAIMER: This document provides general guidance about typical FYP procedures at MMU FCI. Always check with the FYP committee for the latest official procedures, deadlines, and requirements.
+
+GENERAL FYP REGISTRATION
+- Students register for FYP as part of their course enrollment
+- FYP1 is typically taken in the penultimate semester
+- FYP2 is taken in the final semester
+- Prerequisites may apply (check with your programme coordinator)
+
+SUPERVISOR ASSIGNMENT PROCESS
+1. Students submit supervision requests through the system
+2. Students can indicate their preferred supervisors
+3. Supervisors review and accept/reject requests
+4. The FYP committee may reassign students if needed
+5. Once confirmed, the supervisor-student pair is formalized
+
+PROPOSAL SUBMISSION AND REVIEW
+1. Students write proposals with supervisor guidance
+2. Proposals are submitted through the official system
+3. The FYP committee reviews proposals
+4. Proposals may be approved, require revision, or be rejected
+5. Students must address reviewer feedback
+6. Final proposal approval is required before proceeding to implementation
+
+PROGRESS MONITORING
+- Regular supervision meetings are mandatory
+- Meeting logs must be submitted and signed
+- Mid-semester reviews may be conducted
+- Students must show continuous progress
+- Failure to meet with supervisor may affect assessment
+
+ACADEMIC INTEGRITY
+- All work must be original
+- Plagiarism is a serious academic offense
+- Cite all sources properly
+- Use plagiarism checking tools before submission
+- Code written by others must be attributed
+- Using AI tools: check your programme's specific policy
+
+SUBMISSION REQUIREMENTS
+- Follow the official format and template
+- Submit both soft copy and hard copy (if required)
+- Meet all submission deadlines
+- Include all required documents (report, meeting logs, source code)
+- Ensure proper binding and formatting (for hard copy)
+
+ASSESSMENT CRITERIA
+Typical assessment components:
+- Proposal and presentation (FYP1)
+- Supervisor evaluation
+- Examiner evaluation
+- Final report quality
+- Final presentation and demo
+- Meeting log completeness
+- Technical complexity and innovation
+
+CONTACT INFORMATION
+For FYP-related queries:
+- Check the FYP committee notice board
+- Email the FYP coordinator
+- Attend FYP briefing sessions
+- Check the official university portal for announcements
+
+Note: Specific policies, deadlines, and procedures may vary by programme and semester. Always refer to the official FYP guidelines document provided by your faculty.
