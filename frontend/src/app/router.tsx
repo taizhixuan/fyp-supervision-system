@@ -1,118 +1,119 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { lazy } from 'react'
+import { createBrowserRouter } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants/routes'
 
-// Auth pages
+// Auth pages - Keep essential pages eager for fast initial load
 import { LandingPage } from '@/pages/auth/LandingPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
-import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
-import { AccountPendingPage } from '@/pages/auth/AccountPendingPage'
-import { AccountBlockedPage } from '@/pages/auth/AccountBlockedPage'
 import { RedirectPage } from '@/pages/auth/RedirectPage'
 
-// Common pages
-import { AccountSettingsPage } from '@/pages/common/AccountSettingsPage'
-import { HelpFaqPage } from '@/pages/common/HelpFaqPage'
-import { NotFoundPage } from '@/pages/common/NotFoundPage'
-import { AccessDeniedPage } from '@/pages/common/AccessDeniedPage'
-import { ServerErrorPage } from '@/pages/common/ServerErrorPage'
-import { SessionExpiredPage } from '@/pages/common/SessionExpiredPage'
-import { MaintenancePage } from '@/pages/common/MaintenancePage'
+// Lazy load less critical auth pages
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
+const AccountPendingPage = lazy(() => import('@/pages/auth/AccountPendingPage').then(m => ({ default: m.AccountPendingPage })))
+const AccountBlockedPage = lazy(() => import('@/pages/auth/AccountBlockedPage').then(m => ({ default: m.AccountBlockedPage })))
 
-// Student pages
-import {
-  StudentDashboard,
-  StudentProfile,
-  SupervisorDirectory,
-  SupervisorDetail,
-  AIRecommendations,
-  CompareSupervisors,
-  CreateSupervisionRequest,
-  MyRequests,
-  ProposalWorkspace,
-  ProposalHistory,
-  ProposalAnalysis,
-  ProposalStatus,
-  RegistrationStatus,
-  MeetingList,
-  MeetingRequest,
-  MeetingDetail,
-  MeetingExport,
-  LogList,
-  LogCreate,
-  LogDetail,
-  LogEdit,
-  DocumentList,
-  DocumentUpload,
-  DocumentDetail,
-  DocumentHistory,
-  ResourcesHub,
-  ResourceDetail,
-  DeadlineCalendar,
-  NotificationCenter,
-  NotificationSettings,
-  Chatbot,
-} from '@/pages/student'
+// Common pages - Lazy load
+const AccountSettingsPage = lazy(() => import('@/pages/common/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })))
+const HelpFaqPage = lazy(() => import('@/pages/common/HelpFaqPage').then(m => ({ default: m.HelpFaqPage })))
+const NotFoundPage = lazy(() => import('@/pages/common/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
+const AccessDeniedPage = lazy(() => import('@/pages/common/AccessDeniedPage').then(m => ({ default: m.AccessDeniedPage })))
+const ServerErrorPage = lazy(() => import('@/pages/common/ServerErrorPage').then(m => ({ default: m.ServerErrorPage })))
+const SessionExpiredPage = lazy(() => import('@/pages/common/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })))
+const MaintenancePage = lazy(() => import('@/pages/common/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
 
-// Supervisor pages
-import {
-  SupervisorDashboard,
-  SupervisorProfile,
-  RequestInbox,
-  RequestDetail,
-  SuperviseesList,
-  SuperviseeDetail,
-  ProposalReviewQueue,
-  ProposalReviewDetail,
-  MeetingManagement,
-  MeetingDetail as SupervisorMeetingDetail,
-  CreateMeeting,
-  LogsReview,
-  LogDetail as SupervisorLogDetail,
-  DocumentsReview,
-  DocumentDetail as SupervisorDocumentDetail,
-  AnnouncementsList,
-  CreateAnnouncement,
-  NotificationsCenter,
-} from '@/pages/supervisor'
+// Student pages - All lazy loaded
+const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard').then(m => ({ default: m.StudentDashboard })))
+const StudentProfile = lazy(() => import('@/pages/student/StudentProfile').then(m => ({ default: m.StudentProfile })))
+const SupervisorDirectory = lazy(() => import('@/pages/student/SupervisorDirectory').then(m => ({ default: m.SupervisorDirectory })))
+const SupervisorDetail = lazy(() => import('@/pages/student/SupervisorDetail').then(m => ({ default: m.SupervisorDetail })))
+const AIRecommendations = lazy(() => import('@/pages/student/AIRecommendations').then(m => ({ default: m.AIRecommendations })))
+const CompareSupervisors = lazy(() => import('@/pages/student/CompareSupervisors').then(m => ({ default: m.CompareSupervisors })))
+const CreateSupervisionRequest = lazy(() => import('@/pages/student/CreateSupervisionRequest').then(m => ({ default: m.CreateSupervisionRequest })))
+const MyRequests = lazy(() => import('@/pages/student/MyRequests').then(m => ({ default: m.MyRequests })))
+const ProposalWorkspace = lazy(() => import('@/pages/student/ProposalWorkspace').then(m => ({ default: m.ProposalWorkspace })))
+const ProposalHistory = lazy(() => import('@/pages/student/ProposalHistory').then(m => ({ default: m.ProposalHistory })))
+const ProposalAnalysis = lazy(() => import('@/pages/student/ProposalAnalysis').then(m => ({ default: m.ProposalAnalysis })))
+const ProposalStatus = lazy(() => import('@/pages/student/ProposalStatus').then(m => ({ default: m.ProposalStatus })))
+const RegistrationStatus = lazy(() => import('@/pages/student/RegistrationStatus').then(m => ({ default: m.RegistrationStatus })))
+const MeetingList = lazy(() => import('@/pages/student/MeetingList').then(m => ({ default: m.MeetingList })))
+const MeetingRequest = lazy(() => import('@/pages/student/MeetingRequest').then(m => ({ default: m.MeetingRequest })))
+const MeetingDetail = lazy(() => import('@/pages/student/MeetingDetail').then(m => ({ default: m.MeetingDetail })))
+const MeetingExport = lazy(() => import('@/pages/student/MeetingExport').then(m => ({ default: m.MeetingExport })))
+const LogList = lazy(() => import('@/pages/student/LogList').then(m => ({ default: m.LogList })))
+const LogCreate = lazy(() => import('@/pages/student/LogCreate').then(m => ({ default: m.LogCreate })))
+const LogDetail = lazy(() => import('@/pages/student/LogDetail').then(m => ({ default: m.LogDetail })))
+const LogEdit = lazy(() => import('@/pages/student/LogEdit').then(m => ({ default: m.LogEdit })))
+const MeetingLogList = lazy(() => import('@/pages/student/MeetingLogList').then(m => ({ default: m.MeetingLogList })))
+const MeetingLogCreate = lazy(() => import('@/pages/student/MeetingLogCreate').then(m => ({ default: m.MeetingLogCreate })))
+const MeetingLogDetail = lazy(() => import('@/pages/student/MeetingLogDetail').then(m => ({ default: m.MeetingLogDetail })))
+const MeetingLogEdit = lazy(() => import('@/pages/student/MeetingLogEdit').then(m => ({ default: m.MeetingLogEdit })))
+const DocumentList = lazy(() => import('@/pages/student/DocumentList').then(m => ({ default: m.DocumentList })))
+const DocumentUpload = lazy(() => import('@/pages/student/DocumentUpload').then(m => ({ default: m.DocumentUpload })))
+const DocumentDetail = lazy(() => import('@/pages/student/DocumentDetail').then(m => ({ default: m.DocumentDetail })))
+const DocumentHistory = lazy(() => import('@/pages/student/DocumentHistory').then(m => ({ default: m.DocumentHistory })))
+const ResourcesHub = lazy(() => import('@/pages/student/ResourcesHub').then(m => ({ default: m.ResourcesHub })))
+const ResourceDetail = lazy(() => import('@/pages/student/ResourceDetail').then(m => ({ default: m.ResourceDetail })))
+const DeadlineCalendar = lazy(() => import('@/pages/student/DeadlineCalendar').then(m => ({ default: m.DeadlineCalendar })))
+const NotificationCenter = lazy(() => import('@/pages/student/NotificationCenter').then(m => ({ default: m.NotificationCenter })))
+const NotificationSettings = lazy(() => import('@/pages/student/NotificationSettings').then(m => ({ default: m.NotificationSettings })))
+const Chatbot = lazy(() => import('@/pages/student/Chatbot').then(m => ({ default: m.Chatbot })))
 
-// Committee pages
-import {
-  CommitteeDashboard,
-  AnnouncementsList as CommitteeAnnouncementsList,
-  CreateAnnouncement as CommitteeCreateAnnouncement,
-  ProposalReviewQueue as CommitteeProposalQueue,
-  ProposalReviewDetail as CommitteeProposalDetail,
-  DocumentsManagement,
-  DocumentUpload as CommitteeDocumentUpload,
-  DocumentVersions,
-  ProjectOverview,
-  ProjectDetail,
-  UnpairedStudents,
-  SupervisorLoad,
-  SupervisorLoadDetail,
-  ExportOverview,
-  ReportsModule,
-  ReportsHistory,
-  NotificationsCenter as CommitteeNotificationsCenter,
-} from '@/pages/committee'
+// Supervisor pages - All lazy loaded
+const SupervisorDashboard = lazy(() => import('@/pages/supervisor/SupervisorDashboard').then(m => ({ default: m.SupervisorDashboard })))
+const SupervisorProfile = lazy(() => import('@/pages/supervisor/SupervisorProfile').then(m => ({ default: m.SupervisorProfile })))
+const RequestInbox = lazy(() => import('@/pages/supervisor/RequestInbox').then(m => ({ default: m.RequestInbox })))
+const RequestDetail = lazy(() => import('@/pages/supervisor/RequestDetail').then(m => ({ default: m.RequestDetail })))
+const SuperviseesList = lazy(() => import('@/pages/supervisor/SuperviseesList').then(m => ({ default: m.SuperviseesList })))
+const SuperviseeDetail = lazy(() => import('@/pages/supervisor/SuperviseeDetail').then(m => ({ default: m.SuperviseeDetail })))
+const ProposalReviewQueue = lazy(() => import('@/pages/supervisor/ProposalReviewQueue').then(m => ({ default: m.ProposalReviewQueue })))
+const ProposalReviewDetail = lazy(() => import('@/pages/supervisor/ProposalReviewDetail').then(m => ({ default: m.ProposalReviewDetail })))
+const MeetingManagement = lazy(() => import('@/pages/supervisor/MeetingManagement').then(m => ({ default: m.MeetingManagement })))
+const SupervisorMeetingDetail = lazy(() => import('@/pages/supervisor/MeetingDetail').then(m => ({ default: m.MeetingDetail })))
+const CreateMeeting = lazy(() => import('@/pages/supervisor/CreateMeeting').then(m => ({ default: m.CreateMeeting })))
+const LogsReview = lazy(() => import('@/pages/supervisor/LogsReview').then(m => ({ default: m.LogsReview })))
+const SupervisorLogDetail = lazy(() => import('@/pages/supervisor/LogDetail').then(m => ({ default: m.LogDetail })))
+const MeetingLogReview = lazy(() => import('@/pages/supervisor/MeetingLogReview').then(m => ({ default: m.MeetingLogReview })))
+const MeetingLogReviewDetail = lazy(() => import('@/pages/supervisor/MeetingLogReviewDetail').then(m => ({ default: m.MeetingLogReviewDetail })))
+const DocumentsReview = lazy(() => import('@/pages/supervisor/DocumentsReview').then(m => ({ default: m.DocumentsReview })))
+const SupervisorDocumentDetail = lazy(() => import('@/pages/supervisor/DocumentDetail').then(m => ({ default: m.DocumentDetail })))
+const AnnouncementsList = lazy(() => import('@/pages/supervisor/AnnouncementsList').then(m => ({ default: m.AnnouncementsList })))
+const CreateAnnouncement = lazy(() => import('@/pages/supervisor/CreateAnnouncement').then(m => ({ default: m.CreateAnnouncement })))
+const NotificationsCenter = lazy(() => import('@/pages/supervisor/NotificationsCenter').then(m => ({ default: m.NotificationsCenter })))
 
-// Admin pages
-import {
-  AdminDashboard,
-  UserManagement,
-  CreateUser,
-  UserDetail,
-  SystemParameters,
-  CycleManagement,
-  DeadlineManagement,
-  IntegrationSettings,
-  ExportConfigurationPage,
-  MaintenanceCenter,
-  JobHistory,
-  AuditLogs,
-} from '@/pages/admin'
+// Committee pages - All lazy loaded
+const CommitteeDashboard = lazy(() => import('@/pages/committee/CommitteeDashboard').then(m => ({ default: m.CommitteeDashboard })))
+const CommitteeAnnouncementsList = lazy(() => import('@/pages/committee/AnnouncementsList').then(m => ({ default: m.AnnouncementsList })))
+const CommitteeCreateAnnouncement = lazy(() => import('@/pages/committee/CreateAnnouncement').then(m => ({ default: m.CreateAnnouncement })))
+const CommitteeProposalQueue = lazy(() => import('@/pages/committee/ProposalReviewQueue').then(m => ({ default: m.ProposalReviewQueue })))
+const CommitteeProposalDetail = lazy(() => import('@/pages/committee/ProposalReviewDetail').then(m => ({ default: m.ProposalReviewDetail })))
+const DocumentsManagement = lazy(() => import('@/pages/committee/DocumentsManagement').then(m => ({ default: m.DocumentsManagement })))
+const CommitteeDocumentUpload = lazy(() => import('@/pages/committee/DocumentUpload').then(m => ({ default: m.DocumentUpload })))
+const DocumentVersions = lazy(() => import('@/pages/committee/DocumentVersions').then(m => ({ default: m.DocumentVersions })))
+const ProjectOverview = lazy(() => import('@/pages/committee/ProjectOverview').then(m => ({ default: m.ProjectOverview })))
+const ProjectDetail = lazy(() => import('@/pages/committee/ProjectDetail').then(m => ({ default: m.ProjectDetail })))
+const UnpairedStudents = lazy(() => import('@/pages/committee/UnpairedStudents').then(m => ({ default: m.UnpairedStudents })))
+const SupervisorLoad = lazy(() => import('@/pages/committee/SupervisorLoad').then(m => ({ default: m.SupervisorLoad })))
+const SupervisorLoadDetail = lazy(() => import('@/pages/committee/SupervisorLoadDetail').then(m => ({ default: m.SupervisorLoadDetail })))
+const ExportOverview = lazy(() => import('@/pages/committee/ExportOverview').then(m => ({ default: m.ExportOverview })))
+const ReportsModule = lazy(() => import('@/pages/committee/ReportsModule').then(m => ({ default: m.ReportsModule })))
+const ReportsHistory = lazy(() => import('@/pages/committee/ReportsHistory').then(m => ({ default: m.ReportsHistory })))
+const CommitteeNotificationsCenter = lazy(() => import('@/pages/committee/NotificationsCenter').then(m => ({ default: m.NotificationsCenter })))
+
+// Admin pages - All lazy loaded
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then(m => ({ default: m.UserManagement })))
+const CreateUser = lazy(() => import('@/pages/admin/CreateUser').then(m => ({ default: m.CreateUser })))
+const UserDetail = lazy(() => import('@/pages/admin/UserDetail').then(m => ({ default: m.UserDetail })))
+const SystemParameters = lazy(() => import('@/pages/admin/SystemParameters').then(m => ({ default: m.SystemParameters })))
+const CycleManagement = lazy(() => import('@/pages/admin/CycleManagement').then(m => ({ default: m.CycleManagement })))
+const DeadlineManagement = lazy(() => import('@/pages/admin/DeadlineManagement').then(m => ({ default: m.DeadlineManagement })))
+const IntegrationSettings = lazy(() => import('@/pages/admin/IntegrationSettings').then(m => ({ default: m.IntegrationSettings })))
+const ExportConfigurationPage = lazy(() => import('@/pages/admin/ExportConfiguration').then(m => ({ default: m.ExportConfigurationPage })))
+const MaintenanceCenter = lazy(() => import('@/pages/admin/MaintenanceCenter').then(m => ({ default: m.MaintenanceCenter })))
+const JobHistory = lazy(() => import('@/pages/admin/JobHistory').then(m => ({ default: m.JobHistory })))
+const AuditLogs = lazy(() => import('@/pages/admin/AuditLogs').then(m => ({ default: m.AuditLogs })))
 
 // Layout components
 import { AppShell } from '@/components/layout/AppShell'
@@ -381,6 +382,40 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Meeting Logs (MMU FCI Format)
+      {
+        path: ROUTES.STUDENT.MEETING_LOGS,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <MeetingLogList />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.MEETING_LOG_NEW,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <MeetingLogCreate />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.MEETING_LOG_DETAIL,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <MeetingLogDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.MEETING_LOG_EDIT,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <MeetingLogEdit />
+          </ProtectedRoute>
+        ),
+      },
+
       // Documents
       {
         path: ROUTES.STUDENT.DOCUMENTS,
@@ -585,6 +620,24 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
             <SupervisorLogDetail />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Meeting Logs (MMU FCI Format)
+      {
+        path: ROUTES.SUPERVISOR.MEETING_LOGS,
+        element: (
+          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+            <MeetingLogReview />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.SUPERVISOR.MEETING_LOG_DETAIL,
+        element: (
+          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+            <MeetingLogReviewDetail />
           </ProtectedRoute>
         ),
       },

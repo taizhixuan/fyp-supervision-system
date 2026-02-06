@@ -23,6 +23,74 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus } from '@/types'
 
+// Helper function to generate registration steps based on proposal status
+const getRegistrationSteps = (proposalStatus?: ProposalStatus) => {
+  const baseSteps = [
+    { step: 1, title: 'Find Supervisor', description: 'Select a supervisor', status: 'COMPLETED' as const, completedAt: '2024-09-15' },
+    { step: 2, title: 'Submit Proposal', description: 'Submit your proposal', status: 'CURRENT' as const, dueDate: '2024-10-30' },
+    { step: 3, title: 'Committee Review', description: 'Wait for review', status: 'PENDING' as const },
+    { step: 4, title: 'Registered', description: 'FYP registration complete', status: 'PENDING' as const },
+  ]
+
+  if (!proposalStatus) return baseSteps
+
+  switch (proposalStatus) {
+    case 'DRAFT':
+      return baseSteps
+    case 'SUBMITTED':
+    case 'UNDER_REVIEW':
+      return [
+        { ...baseSteps[0] },
+        { ...baseSteps[1], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
+        { ...baseSteps[2], status: 'CURRENT' as const },
+        { ...baseSteps[3] },
+      ]
+    case 'REVISION_REQUIRED':
+      return [
+        { ...baseSteps[0] },
+        { step: 2, title: 'Revise Proposal', description: 'Address feedback', status: 'CURRENT' as const },
+        { ...baseSteps[2], status: 'PENDING' as const },
+        { ...baseSteps[3] },
+      ]
+    case 'APPROVED':
+      return [
+        { ...baseSteps[0] },
+        { ...baseSteps[1], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
+        { ...baseSteps[2], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
+        { ...baseSteps[3], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
+      ]
+    case 'REJECTED':
+      return [
+        { ...baseSteps[0] },
+        { step: 2, title: 'Resubmit Proposal', description: 'Start a new proposal', status: 'CURRENT' as const },
+        { ...baseSteps[2], status: 'PENDING' as const },
+        { ...baseSteps[3] },
+      ]
+    default:
+      return baseSteps
+  }
+}
+
+// Helper function to get registration status based on proposal status
+const getRegistrationStatus = (proposalStatus?: ProposalStatus): RegistrationStatus => {
+  if (!proposalStatus) return 'PROPOSAL_PENDING'
+  switch (proposalStatus) {
+    case 'DRAFT':
+      return 'PROPOSAL_PENDING'
+    case 'SUBMITTED':
+    case 'UNDER_REVIEW':
+      return 'UNDER_REVIEW'
+    case 'REVISION_REQUIRED':
+      return 'PROPOSAL_PENDING'
+    case 'APPROVED':
+      return 'REGISTERED'
+    case 'REJECTED':
+      return 'PROPOSAL_PENDING'
+    default:
+      return 'PROPOSAL_PENDING'
+  }
+}
+
 // Sample data for design preview
 const SAMPLE_DASHBOARD = {
   profile: {
@@ -47,11 +115,7 @@ const SAMPLE_DASHBOARD = {
     semester: 1,
     cycle: 'FYP1',
     status: 'PROPOSAL_PENDING' as RegistrationStatus,
-    nextSteps: [
-      { step: 1, title: 'Find Supervisor', description: 'Select a supervisor', status: 'COMPLETED' as const, completedAt: '2024-09-15' },
-      { step: 2, title: 'Submit Proposal', description: 'Submit your proposal', status: 'CURRENT' as const, dueDate: '2024-10-30' },
-      { step: 3, title: 'Committee Review', description: 'Wait for review', status: 'PENDING' as const },
-    ],
+    nextSteps: getRegistrationSteps('DRAFT'),
     timeline: [],
   },
   upcomingMeetings: [
@@ -64,7 +128,7 @@ const SAMPLE_DASHBOARD = {
       agenda: 'Discuss proposal draft and timeline',
       scheduledAt: '2025-01-25T10:00:00Z',
       duration: 60,
-      platform: 'ZOOM' as const,
+      platform: 'MICROSOFT_TEAMS' as const,
       status: 'CONFIRMED' as MeetingStatus,
       createdAt: '2024-01-01',
       updatedAt: '2024-01-01',
@@ -96,7 +160,7 @@ const SAMPLE_DASHBOARD = {
         title: 'Initial Meeting',
         scheduledAt: '2025-01-15T10:00:00Z',
         duration: 60,
-        platform: 'ZOOM' as const,
+        platform: 'MICROSOFT_TEAMS' as const,
         status: 'COMPLETED' as MeetingStatus,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01',
@@ -187,7 +251,16 @@ export function StudentDashboard() {
     )
   }
 
-  const { profile, registrationStatus, upcomingMeetings, pendingLogs, recentDocuments, upcomingDeadlines, proposalStatus, quickStats } = dashboard
+  const { profile, upcomingMeetings, pendingLogs, recentDocuments, upcomingDeadlines, proposalStatus, quickStats } = dashboard
+
+  // Dynamic registration status based on proposal
+  const dynamicRegistrationSteps = getRegistrationSteps(proposalStatus?.status)
+  const dynamicRegistrationStatus = getRegistrationStatus(proposalStatus?.status)
+  const registrationStatus = {
+    ...dashboard.registrationStatus,
+    status: dynamicRegistrationStatus,
+    nextSteps: dynamicRegistrationSteps,
+  }
 
   return (
     <div className="space-y-6">
@@ -300,7 +373,7 @@ export function StudentDashboard() {
             </div>
           </div>
           <Link to={ROUTES.STUDENT.LOGS}>
-            <Button variant="warning" size="sm">
+            <Button variant="secondary" size="sm" className="border-warning-300 text-warning-700 hover:bg-warning-100">
               Complete Now
             </Button>
           </Link>
@@ -308,77 +381,185 @@ export function StudentDashboard() {
       )}
 
       {/* Registration Progress */}
-      <Card>
+      <Card className="overflow-hidden">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-primary-600" />
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-neutral-900">Registration Progress</h2>
               <p className="text-sm text-neutral-500">Track your FYP journey</p>
             </div>
           </div>
-          <Badge className={statusColors[registrationStatus.status]}>
+          <Badge className={cn(statusColors[registrationStatus.status], 'px-3 py-1')}>
             {registrationStatus.status.replace(/_/g, ' ')}
           </Badge>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-6 px-4">
-          {registrationStatus.nextSteps.map((step, index) => (
-            <div key={step.step} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div
-                  className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all',
-                    step.status === 'COMPLETED' && 'bg-success-500 text-white',
-                    step.status === 'CURRENT' && 'bg-primary-600 text-white ring-4 ring-primary-100',
-                    step.status === 'PENDING' && 'bg-neutral-200 text-neutral-500'
-                  )}
-                >
-                  {step.status === 'COMPLETED' ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    step.step
+        {/* Progress Steps - Enhanced with Icons */}
+        <div className="relative mb-6">
+          {/* Progress Bar Background */}
+          <div className="absolute top-6 left-12 right-12 h-1 bg-neutral-200 rounded-full" />
+          {/* Progress Bar Fill */}
+          <div
+            className="absolute top-6 left-12 h-1 bg-gradient-to-r from-success-500 to-primary-500 rounded-full transition-all duration-500"
+            style={{
+              width: `${Math.max(0, (registrationStatus.nextSteps.filter(s => s.status === 'COMPLETED').length / (registrationStatus.nextSteps.length - 1)) * 100)}%`,
+              maxWidth: 'calc(100% - 6rem)'
+            }}
+          />
+
+          <div className="flex items-start justify-between relative px-2">
+            {registrationStatus.nextSteps.map((step) => {
+              // Define icons for each step with appropriate colors
+              const getStepIcon = (stepNum: number, status: string) => {
+                const iconClass = cn(
+                  'h-5 w-5',
+                  status === 'COMPLETED' && 'text-white',
+                  status === 'CURRENT' && 'text-white',
+                  status === 'PENDING' && 'text-neutral-400'
+                )
+                switch (stepNum) {
+                  case 1: return <Users className={iconClass} />
+                  case 2: return <FileText className={iconClass} />
+                  case 3: return <ClipboardList className={iconClass} />
+                  case 4: return <GraduationCap className={iconClass} />
+                  default: return <span>{stepNum}</span>
+                }
+              }
+
+              return (
+                <div key={step.step} className="flex flex-col items-center flex-1">
+                  <div
+                    className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 relative z-10',
+                      step.status === 'COMPLETED' && 'bg-success-500 shadow-lg shadow-success-500/40',
+                      step.status === 'CURRENT' && 'bg-primary-600 ring-4 ring-primary-100 shadow-lg shadow-primary-500/40',
+                      step.status === 'PENDING' && 'bg-neutral-100 border-2 border-neutral-200'
+                    )}
+                  >
+                    {getStepIcon(step.step, step.status)}
+                  </div>
+                  <p className={cn(
+                    'mt-3 text-xs font-medium text-center max-w-[90px]',
+                    step.status === 'COMPLETED' && 'text-success-700',
+                    step.status === 'CURRENT' && 'text-primary-700 font-semibold',
+                    step.status === 'PENDING' && 'text-neutral-400'
+                  )}>
+                    {step.title}
+                  </p>
+                  {step.status === 'COMPLETED' && step.completedAt && (
+                    <p className="text-[10px] text-success-600 mt-0.5">
+                      {new Date(step.completedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                    </p>
                   )}
                 </div>
-                <p className={cn(
-                  'mt-2 text-xs font-medium text-center',
-                  step.status === 'CURRENT' ? 'text-primary-700' : 'text-neutral-500'
-                )}>
-                  {step.title}
-                </p>
-              </div>
-              {index < registrationStatus.nextSteps.length - 1 && (
-                <div
-                  className={cn(
-                    'flex-1 h-1 mx-3 rounded-full',
-                    step.status === 'COMPLETED' ? 'bg-success-500' : 'bg-neutral-200'
-                  )}
-                />
-              )}
-            </div>
-          ))}
+              )
+            })}
+          </div>
         </div>
 
-        {/* Current Step Detail */}
+        {/* Current Step Detail - Enhanced */}
         {registrationStatus.nextSteps.find(s => s.status === 'CURRENT') && (
-          <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-primary-900">
-                  Current: {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.title}
-                </p>
-                <p className="text-sm text-primary-700 mt-0.5">
-                  {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.description}
-                </p>
+          <div className={cn(
+            'rounded-xl p-4 border transition-all',
+            proposalStatus?.status === 'REVISION_REQUIRED'
+              ? 'bg-warning-50 border-warning-200'
+              : proposalStatus?.status === 'SUBMITTED' || proposalStatus?.status === 'UNDER_REVIEW'
+              ? 'bg-info-50 border-info-200'
+              : 'bg-primary-50 border-primary-100'
+          )}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  'w-10 h-10 rounded-lg flex items-center justify-center',
+                  proposalStatus?.status === 'REVISION_REQUIRED'
+                    ? 'bg-warning-100'
+                    : proposalStatus?.status === 'SUBMITTED' || proposalStatus?.status === 'UNDER_REVIEW'
+                    ? 'bg-info-100'
+                    : 'bg-primary-100'
+                )}>
+                  {proposalStatus?.status === 'SUBMITTED' || proposalStatus?.status === 'UNDER_REVIEW' ? (
+                    <Clock className={cn('h-5 w-5', proposalStatus?.status === 'UNDER_REVIEW' ? 'text-info-600' : 'text-info-600')} />
+                  ) : proposalStatus?.status === 'REVISION_REQUIRED' ? (
+                    <AlertTriangle className="h-5 w-5 text-warning-600" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-primary-600" />
+                  )}
+                </div>
+                <div>
+                  <p className={cn(
+                    'font-semibold',
+                    proposalStatus?.status === 'REVISION_REQUIRED'
+                      ? 'text-warning-900'
+                      : proposalStatus?.status === 'SUBMITTED' || proposalStatus?.status === 'UNDER_REVIEW'
+                      ? 'text-info-900'
+                      : 'text-primary-900'
+                  )}>
+                    {proposalStatus?.status === 'SUBMITTED'
+                      ? 'Proposal Submitted - Awaiting Review'
+                      : proposalStatus?.status === 'UNDER_REVIEW'
+                      ? 'Under Review by Committee'
+                      : proposalStatus?.status === 'REVISION_REQUIRED'
+                      ? 'Revision Required'
+                      : `Current: ${registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.title}`}
+                  </p>
+                  <p className={cn(
+                    'text-sm mt-0.5',
+                    proposalStatus?.status === 'REVISION_REQUIRED'
+                      ? 'text-warning-700'
+                      : proposalStatus?.status === 'SUBMITTED' || proposalStatus?.status === 'UNDER_REVIEW'
+                      ? 'text-info-700'
+                      : 'text-primary-700'
+                  )}>
+                    {proposalStatus?.status === 'SUBMITTED'
+                      ? 'Your supervisor will review your proposal soon'
+                      : proposalStatus?.status === 'UNDER_REVIEW'
+                      ? 'The FYP committee is evaluating your submission'
+                      : proposalStatus?.status === 'REVISION_REQUIRED'
+                      ? 'Please address the feedback and resubmit'
+                      : registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.description}
+                  </p>
+                </div>
               </div>
-              {registrationStatus.nextSteps.find(s => s.status === 'CURRENT')?.dueDate && (
-                <Badge variant="warning">
-                  Due: {new Date(registrationStatus.nextSteps.find(s => s.status === 'CURRENT')!.dueDate!).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const currentStep = registrationStatus.nextSteps.find(s => s.status === 'CURRENT')
+                  return currentStep && 'dueDate' in currentStep && currentStep.dueDate ? (
+                    <Badge variant="warning" size="sm">
+                      Due: {new Date(currentStep.dueDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                    </Badge>
+                  ) : null
+                })()}
+                {(proposalStatus?.status === 'DRAFT' || proposalStatus?.status === 'REVISION_REQUIRED') && (
+                  <Link to={ROUTES.STUDENT.PROPOSAL}>
+                    <Button
+                      variant={proposalStatus?.status === 'REVISION_REQUIRED' ? 'secondary' : 'primary'}
+                      size="sm"
+                      className={proposalStatus?.status === 'REVISION_REQUIRED' ? 'border-warning-300 text-warning-700 hover:bg-warning-100' : ''}
+                      rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+                    >
+                      {proposalStatus?.status === 'REVISION_REQUIRED' ? 'View Feedback' : 'Continue'}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* All Steps Completed */}
+        {registrationStatus.nextSteps.every(s => s.status === 'COMPLETED') && (
+          <div className="bg-gradient-to-r from-success-50 to-success-100 rounded-xl p-4 border border-success-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-success-500 rounded-lg flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-success-900">Registration Complete!</p>
+                <p className="text-sm text-success-700">Your FYP project has been successfully registered</p>
+              </div>
             </div>
           </div>
         )}
@@ -445,39 +626,42 @@ export function StudentDashboard() {
             {upcomingDeadlines.length === 0 ? (
               <p className="text-neutral-500 text-center py-4">No upcoming deadlines</p>
             ) : (
-              upcomingDeadlines.slice(0, 3).map((deadline) => (
-                <div
-                  key={deadline.deadlineId}
-                  className={cn(
-                    'flex items-center justify-between p-3 rounded-xl',
-                    deadline.daysRemaining <= 7 ? 'bg-error-50 border border-error-100' : 'bg-neutral-50'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      'w-2 h-2 rounded-full',
-                      deadline.daysRemaining <= 7 ? 'bg-error-500' :
-                      deadline.daysRemaining <= 14 ? 'bg-warning-500' : 'bg-neutral-300'
-                    )} />
-                    <div>
-                      <p className="font-medium text-neutral-900 text-sm">{deadline.title}</p>
-                      <p className="text-xs text-neutral-500">
-                        {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={deadline.daysRemaining <= 7 ? 'error' : deadline.daysRemaining <= 14 ? 'warning' : 'default'}
-                    size="sm"
+              upcomingDeadlines.slice(0, 3).map((deadline) => {
+                const days = deadline.daysRemaining ?? 999
+                return (
+                  <div
+                    key={deadline.deadlineId}
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-xl',
+                      days <= 7 ? 'bg-error-50 border border-error-100' : 'bg-neutral-50'
+                    )}
                   >
-                    {deadline.daysRemaining}d
-                  </Badge>
-                </div>
-              ))
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        'w-2 h-2 rounded-full',
+                        days <= 7 ? 'bg-error-500' :
+                        days <= 14 ? 'bg-warning-500' : 'bg-neutral-300'
+                      )} />
+                      <div>
+                        <p className="font-medium text-neutral-900 text-sm">{deadline.title}</p>
+                        <p className="text-xs text-neutral-500">
+                          {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant={days <= 7 ? 'error' : days <= 14 ? 'warning' : 'default'}
+                      size="sm"
+                    >
+                      {days}d
+                    </Badge>
+                  </div>
+                )
+              })
             )}
           </div>
         </Card>

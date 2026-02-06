@@ -49,11 +49,16 @@ export const ROUTES = {
     MEETING_NEW: '/student/meetings/new',
     MEETING_DETAIL: '/student/meetings/:id',
     MEETING_EXPORT: '/student/meetings/export',
-    // Supervision Logs
+    // Supervision Logs (Weekly Progress)
     LOGS: '/student/logs',
     LOG_NEW: '/student/logs/new',
     LOG_DETAIL: '/student/logs/:id',
     LOG_EDIT: '/student/logs/:id/edit',
+    // Meeting Logs (MMU FCI Format)
+    MEETING_LOGS: '/student/meeting-logs',
+    MEETING_LOG_NEW: '/student/meeting-logs/new',
+    MEETING_LOG_DETAIL: '/student/meeting-logs/:id',
+    MEETING_LOG_EDIT: '/student/meeting-logs/:id/edit',
     // Documents
     DOCUMENTS: '/student/documents',
     DOCUMENT_UPLOAD: '/student/documents/upload',
@@ -86,9 +91,12 @@ export const ROUTES = {
     MEETINGS: '/supervisor/meetings',
     MEETING_NEW: '/supervisor/meetings/new',
     MEETING_DETAIL: '/supervisor/meetings/:id',
-    // Logs
+    // Logs (Weekly Progress)
     LOGS: '/supervisor/logs',
     LOG_DETAIL: '/supervisor/logs/:id',
+    // Meeting Logs (MMU FCI Format)
+    MEETING_LOGS: '/supervisor/meeting-logs',
+    MEETING_LOG_DETAIL: '/supervisor/meeting-logs/:id',
     // Documents
     DOCUMENTS: '/supervisor/documents',
     DOCUMENT_DETAIL: '/supervisor/documents/:id',

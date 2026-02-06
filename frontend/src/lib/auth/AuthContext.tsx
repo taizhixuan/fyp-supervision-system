@@ -9,78 +9,72 @@ import type { User, LoginRequest, RegisterRequest } from '@/types'
 import { authApi, tokenStorage } from '@/lib/api/auth'
 import { getApiErrorMessage } from '@/lib/api/client'
 
-// Mock user for development - set to true to bypass authentication
-const USE_MOCK_AUTH = import.meta.env.DEV // Enable mock auth in development
+// Mock auth for development - set to true to enable mock login flow
+const USE_MOCK_AUTH = import.meta.env.DEV
 
-// Mock users for different roles - switch by adding ?role=supervisor or ?role=student to URL
+// Mock users for different roles - matching correct User type
 const MOCK_STUDENT_USER: User = {
-  userId: 'mock-student-001',
-  email: 'student@mmu.edu.my',
+  userId: 1,
+  mmuId: '1201234567',
+  email: 'student@student.mmu.edu.my',
   fullName: 'Ahmad bin Abdullah',
   role: 'STUDENT',
   status: 'ACTIVE',
+  lastLoginAt: new Date().toISOString(),
   createdAt: '2024-09-01T00:00:00Z',
-  updatedAt: '2025-01-20T00:00:00Z',
+  updatedAt: new Date().toISOString(),
 }
 
 const MOCK_SUPERVISOR_USER: User = {
-  userId: 'mock-supervisor-001',
-  email: 'supervisor@mmu.edu.my',
+  userId: 2,
+  mmuId: '2001000001',
+  email: 'sarah.lee@mmu.edu.my',
   fullName: 'Dr. Sarah Lee',
   role: 'SUPERVISOR',
   status: 'ACTIVE',
+  lastLoginAt: new Date().toISOString(),
   createdAt: '2023-01-15T00:00:00Z',
-  updatedAt: '2025-01-20T00:00:00Z',
+  updatedAt: new Date().toISOString(),
 }
 
 const MOCK_COMMITTEE_USER: User = {
-  userId: 'mock-committee-001',
-  email: 'committee@mmu.edu.my',
+  userId: 3,
+  mmuId: '2001000002',
+  email: 'ahmad.razak@mmu.edu.my',
   fullName: 'Prof. Ahmad Razak',
   role: 'FYP_COMMITTEE',
   status: 'ACTIVE',
+  lastLoginAt: new Date().toISOString(),
   createdAt: '2022-06-01T00:00:00Z',
-  updatedAt: '2025-01-20T00:00:00Z',
+  updatedAt: new Date().toISOString(),
 }
 
 const MOCK_ADMIN_USER: User = {
-  userId: 'mock-admin-001',
+  userId: 4,
+  mmuId: '2001000003',
   email: 'admin@mmu.edu.my',
   fullName: 'System Administrator',
   role: 'SYSTEM_ADMIN',
   status: 'ACTIVE',
+  lastLoginAt: new Date().toISOString(),
   createdAt: '2020-01-01T00:00:00Z',
-  updatedAt: '2025-01-20T00:00:00Z',
+  updatedAt: new Date().toISOString(),
 }
 
-// Function to get mock user based on URL parameter or localStorage
-// Usage: Add ?role=student|supervisor|committee|admin to URL
-function getMockUser(): User {
-  // Check URL parameter first
-  const urlParams = new URLSearchParams(window.location.search)
-  const roleParam = urlParams.get('role')
-
-  // Check localStorage for persisted role
-  const storedRole = localStorage.getItem('mock_user_role')
-
-  // Persist role if specified in URL
-  if (roleParam) {
-    localStorage.setItem('mock_user_role', roleParam)
-  }
-
-  const role = roleParam || storedRole || 'student'
-
-  switch (role.toLowerCase()) {
-    case 'supervisor':
-      return MOCK_SUPERVISOR_USER
-    case 'committee':
-      return MOCK_COMMITTEE_USER
-    case 'admin':
-      return MOCK_ADMIN_USER
-    case 'student':
-    default:
-      return MOCK_STUDENT_USER
-  }
+// Mock credentials map - login by email or MMU ID
+const MOCK_CREDENTIALS: Record<string, { user: User; password: string }> = {
+  // Student
+  'student@student.mmu.edu.my': { user: MOCK_STUDENT_USER, password: 'Test@123' },
+  '1201234567': { user: MOCK_STUDENT_USER, password: 'Test@123' },
+  // Supervisor
+  'sarah.lee@mmu.edu.my': { user: MOCK_SUPERVISOR_USER, password: 'Test@123' },
+  '2001000001': { user: MOCK_SUPERVISOR_USER, password: 'Test@123' },
+  // Committee
+  'ahmad.razak@mmu.edu.my': { user: MOCK_COMMITTEE_USER, password: 'Test@123' },
+  '2001000002': { user: MOCK_COMMITTEE_USER, password: 'Test@123' },
+  // Admin
+  'admin@mmu.edu.my': { user: MOCK_ADMIN_USER, password: 'Test@123' },
+  '2001000003': { user: MOCK_ADMIN_USER, password: 'Test@123' },
 }
 
 interface AuthContextValue {
@@ -100,16 +94,24 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(USE_MOCK_AUTH ? getMockUser() : null)
-  const [isLoading, setIsLoading] = useState(!USE_MOCK_AUTH)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const isAuthenticated = !!user
 
-  // Fetch current user on mount if token exists
+  // Fetch current user on mount if token exists or mock session persists
   const fetchUser = useCallback(async () => {
-    // Skip API call if using mock auth
     if (USE_MOCK_AUTH) {
-      setUser(getMockUser())
+      // Check for persisted mock session
+      const storedUserId = localStorage.getItem('mock_user_id')
+      if (storedUserId) {
+        const mockUser = Object.values(MOCK_CREDENTIALS).find(
+          (cred) => cred.user.userId.toString() === storedUserId
+        )?.user
+        if (mockUser) {
+          setUser(mockUser)
+        }
+      }
       setIsLoading(false)
       return
     }
@@ -137,6 +139,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchUser])
 
   const login = useCallback(async (data: LoginRequest) => {
+    if (USE_MOCK_AUTH) {
+      const identifier = data.identifier.toLowerCase().trim()
+      const credential = MOCK_CREDENTIALS[identifier]
+
+      if (!credential || credential.password !== data.password) {
+        throw new Error('Invalid credentials. Please try again.')
+      }
+
+      localStorage.setItem('mock_user_id', credential.user.userId.toString())
+      setUser(credential.user)
+      return
+    }
+
     try {
       const response = await authApi.login(data)
       tokenStorage.set(response.accessToken)
@@ -156,6 +171,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const logout = useCallback(async () => {
+    if (USE_MOCK_AUTH) {
+      localStorage.removeItem('mock_user_id')
+      localStorage.removeItem('mock_user_role')
+      setUser(null)
+      return
+    }
+
     try {
       await authApi.logout()
     } catch {
