@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 
 // Enable mock data in development mode (no backend needed)
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 import type {
   StudentProfile,

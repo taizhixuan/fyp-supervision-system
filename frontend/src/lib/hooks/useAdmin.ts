@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiClient } from '@/lib/api/client'
 import type {
   SystemHealthStats,
   SystemAlert,
@@ -30,6 +31,8 @@ import type {
   AdminNotification,
   ParameterCategory,
 } from '@/types'
+
+const USE_MOCK_DATA = false
 
 // ============================================
 // Mock Data
@@ -768,7 +771,7 @@ export function useAdminDashboard() {
   return useQuery({
     queryKey: adminKeys.dashboard(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         return {
           stats: MOCK_HEALTH_STATS,
@@ -776,7 +779,8 @@ export function useAdminDashboard() {
           recentActivity: MOCK_RECENT_ACTIVITY,
         }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/dashboard')
+      return data
     },
   })
 }
@@ -785,11 +789,12 @@ export function useSystemAlerts() {
   return useQuery({
     queryKey: adminKeys.alerts(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return { alerts: MOCK_SYSTEM_ALERTS }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/dashboard')
+      return { alerts: data.alerts }
     },
   })
 }
@@ -802,7 +807,7 @@ export function useAdminUsers(filters?: { role?: string; status?: string; search
   return useQuery({
     queryKey: [...adminKeys.users(), filters],
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         let users = [...MOCK_USERS]
         if (filters?.role && filters.role !== 'ALL') {
@@ -821,7 +826,8 @@ export function useAdminUsers(filters?: { role?: string; status?: string; search
         }
         return { users, total: users.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/users', { params: { role: filters?.role, status: filters?.status, search: filters?.search } })
+      return data
     },
   })
 }
@@ -830,11 +836,12 @@ export function useAdminUser(userId: string) {
   return useQuery({
     queryKey: adminKeys.user(userId),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return MOCK_USER_DETAIL
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/admin/users/${userId}`)
+      return data
     },
     enabled: !!userId,
   })
@@ -844,11 +851,12 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: CreateUserRequest) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { userId: `user-${Date.now()}`, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.post('/admin/users', data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
@@ -860,11 +868,12 @@ export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: UpdateUserRequest }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { userId, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.put(`/admin/users/${userId}`, data)
+      return responseData
     },
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
@@ -877,11 +886,12 @@ export function useDeleteUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.delete(`/admin/users/${userId}`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
@@ -892,11 +902,12 @@ export function useDeleteUser() {
 export function useResendInvite() {
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { success: true, message: 'Invitation email resent' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/admin/users/${userId}/resend-invite`)
+      return data
     },
   })
 }
@@ -904,11 +915,12 @@ export function useResendInvite() {
 export function useSendCredentials() {
   return useMutation({
     mutationFn: async ({ userId, method }: { userId: string; method: 'EMAIL' | 'RESET_LINK' }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { success: true, message: `Credentials sent via ${method.toLowerCase().replace('_', ' ')}` }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/admin/users/${userId}/send-credentials`, { method })
+      return data
     },
   })
 }
@@ -917,11 +929,12 @@ export function useBulkUpdateUserStatus() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ userIds, status }: { userIds: string[]; status: UserStatus }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1200))
         return { success: true, updated: userIds.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.put('/admin/users/bulk-status', { userIds, status })
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
@@ -937,7 +950,7 @@ export function useSystemParameters(category?: ParameterCategory) {
   return useQuery({
     queryKey: [...adminKeys.parameters(), category],
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         let params = [...MOCK_PARAMETERS]
         if (category) {
@@ -945,7 +958,8 @@ export function useSystemParameters(category?: ParameterCategory) {
         }
         return { parameters: params, total: params.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/parameters', { params: { category } })
+      return data
     },
   })
 }
@@ -954,11 +968,12 @@ export function useSystemParameter(parameterId: number) {
   return useQuery({
     queryKey: adminKeys.parameter(parameterId),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_PARAMETERS.find((p) => p.parameterId === parameterId)
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/admin/parameters/${parameterId}`)
+      return data
     },
     enabled: !!parameterId,
   })
@@ -974,11 +989,12 @@ export function useUpdateParameter() {
       parameterId: number
       data: UpdateParameterRequest
     }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 600))
         return { parameterId, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.put(`/admin/parameters/${parameterId}`, data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.parameters() })
@@ -994,11 +1010,12 @@ export function useFYPCycles() {
   return useQuery({
     queryKey: adminKeys.cycles(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { cycles: MOCK_CYCLES, total: MOCK_CYCLES.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/cycles')
+      return data
     },
   })
 }
@@ -1007,11 +1024,12 @@ export function useFYPCycle(cycleId: number) {
   return useQuery({
     queryKey: adminKeys.cycle(cycleId),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_CYCLES.find((c) => c.cycleId === cycleId)
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/admin/cycles/${cycleId}`)
+      return data
     },
     enabled: !!cycleId,
   })
@@ -1021,11 +1039,12 @@ export function useCreateCycle() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: CreateCycleRequest) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { cycleId: Date.now(), ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.post('/admin/cycles', data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
@@ -1037,11 +1056,12 @@ export function useUpdateCycle() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ cycleId, data }: { cycleId: number; data: UpdateCycleRequest }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 600))
         return { cycleId, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.put(`/admin/cycles/${cycleId}`, data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
@@ -1057,7 +1077,7 @@ export function useDeadlines(cycleId?: number) {
   return useQuery({
     queryKey: [...adminKeys.deadlines(), cycleId],
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         let deadlines = [...MOCK_DEADLINES]
         if (cycleId) {
@@ -1065,7 +1085,8 @@ export function useDeadlines(cycleId?: number) {
         }
         return { deadlines, total: deadlines.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/deadlines', { params: { cycleId } })
+      return data
     },
   })
 }
@@ -1074,11 +1095,12 @@ export function useDeadline(deadlineId: number) {
   return useQuery({
     queryKey: adminKeys.deadline(deadlineId),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_DEADLINES.find((d) => d.deadlineId === deadlineId)
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/admin/deadlines/${deadlineId}`)
+      return data
     },
     enabled: !!deadlineId,
   })
@@ -1088,11 +1110,12 @@ export function useCreateDeadline() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: CreateDeadlineRequest) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { deadlineId: Date.now(), ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.post('/admin/deadlines', data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.deadlines() })
@@ -1110,11 +1133,12 @@ export function useUpdateDeadline() {
       deadlineId: number
       data: UpdateDeadlineRequest
     }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 600))
         return { deadlineId, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.put(`/admin/deadlines/${deadlineId}`, data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.deadlines() })
@@ -1126,11 +1150,12 @@ export function useDeleteDeadline() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (deadlineId: number) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 600))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.delete(`/admin/deadlines/${deadlineId}`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.deadlines() })
@@ -1146,11 +1171,12 @@ export function useIntegrations() {
   return useQuery({
     queryKey: adminKeys.integrations(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { integrations: MOCK_INTEGRATIONS, total: MOCK_INTEGRATIONS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/integrations')
+      return data
     },
   })
 }
@@ -1159,11 +1185,12 @@ export function useIntegration(integrationId: number) {
   return useQuery({
     queryKey: adminKeys.integration(integrationId),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_INTEGRATIONS.find((i) => i.integrationId === integrationId)
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/admin/integrations/${integrationId}`)
+      return data
     },
     enabled: !!integrationId,
   })
@@ -1179,11 +1206,12 @@ export function useUpdateIntegration() {
       integrationId: number
       data: UpdateIntegrationRequest
     }) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { integrationId, ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.put(`/admin/integrations/${integrationId}`, data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.integrations() })
@@ -1194,7 +1222,7 @@ export function useUpdateIntegration() {
 export function useTestIntegration() {
   return useMutation({
     mutationFn: async (integrationId: number): Promise<TestIntegrationResult> => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 2000))
         return {
           success: true,
@@ -1202,7 +1230,8 @@ export function useTestIntegration() {
           responseTime: 234,
         }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/admin/integrations/${integrationId}/test`)
+      return data
     },
   })
 }
@@ -1215,11 +1244,12 @@ export function useExportConfigurations() {
   return useQuery({
     queryKey: adminKeys.exportConfigs(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { configs: MOCK_EXPORT_CONFIGS, total: MOCK_EXPORT_CONFIGS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/export-configs')
+      return data
     },
   })
 }
@@ -1228,11 +1258,12 @@ export function useCreateExportConfig() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: CreateExportConfigRequest) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { configId: Date.now(), ...data }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.post('/admin/export-configs', data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.exportConfigs() })
@@ -1243,11 +1274,12 @@ export function useCreateExportConfig() {
 export function useRunExport() {
   return useMutation({
     mutationFn: async (configId: number) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 2000))
         return { success: true, downloadUrl: '/exports/report.xlsx' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/admin/export-configs/${configId}/run`)
+      return data
     },
   })
 }
@@ -1260,11 +1292,12 @@ export function useMaintenanceJobs() {
   return useQuery({
     queryKey: adminKeys.jobs(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { jobs: MOCK_MAINTENANCE_JOBS, total: MOCK_MAINTENANCE_JOBS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/maintenance/jobs')
+      return data
     },
     refetchInterval: 5000, // Refresh every 5 seconds for running jobs
   })
@@ -1274,11 +1307,12 @@ export function useBackups() {
   return useQuery({
     queryKey: adminKeys.backups(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { backups: MOCK_BACKUPS, total: MOCK_BACKUPS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/maintenance/backups')
+      return data
     },
   })
 }
@@ -1287,11 +1321,12 @@ export function useSystemHealthChecks() {
   return useQuery({
     queryKey: adminKeys.healthChecks(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         return { checks: MOCK_HEALTH_CHECKS }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/maintenance/health-checks')
+      return data
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   })
@@ -1301,11 +1336,12 @@ export function useTriggerBackup() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (type: 'FULL' | 'INCREMENTAL') => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { jobId: Date.now(), type, status: 'PENDING' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post('/admin/maintenance/backup', { type })
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.jobs() })
@@ -1317,11 +1353,12 @@ export function useRestoreBackup() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (backupId: number) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { jobId: Date.now(), backupId, status: 'PENDING' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/admin/maintenance/restore/${backupId}`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.jobs() })
@@ -1333,11 +1370,12 @@ export function useRunCleanup() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (options: CleanupOptions) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { jobId: Date.now(), options, status: 'PENDING' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post('/admin/maintenance/cleanup', options)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.jobs() })
@@ -1348,11 +1386,12 @@ export function useRunCleanup() {
 export function useClearCache() {
   return useMutation({
     mutationFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         return { success: true, message: 'Cache cleared successfully' }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post('/admin/maintenance/clear-cache')
+      return data
     },
   })
 }
@@ -1365,7 +1404,7 @@ export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery({
     queryKey: [...adminKeys.auditLogs(), filters],
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         let logs = [...MOCK_AUDIT_LOGS]
         if (filters?.action) {
@@ -1381,7 +1420,8 @@ export function useAuditLogs(filters?: AuditLogFilters) {
         }
         return { logs, total: logs.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/admin/audit-logs', { params: { action: filters?.action, entityType: filters?.entityType, performedBy: filters?.performedBy, dateFrom: filters?.dateFrom, dateTo: filters?.dateTo } })
+      return data
     },
   })
 }
@@ -1394,11 +1434,12 @@ export function useAdminNotifications() {
   return useQuery({
     queryKey: adminKeys.notifications(),
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return { notifications: MOCK_ADMIN_NOTIFICATIONS, total: MOCK_ADMIN_NOTIFICATIONS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/notifications')
+      return data
     },
   })
 }
@@ -1407,11 +1448,12 @@ export function useAdminUnreadCount() {
   return useQuery({
     queryKey: [...adminKeys.notifications(), 'unread'],
     queryFn: async () => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 200))
         return { count: MOCK_ADMIN_NOTIFICATIONS.filter((n) => !n.isRead).length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/notifications/unread-count')
+      return data
     },
   })
 }
@@ -1420,11 +1462,12 @@ export function useMarkAdminNotificationRead() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (notificationId: number) => {
-      if (import.meta.env.DEV) {
+      if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.put(`/notifications/${notificationId}/read`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.notifications() })

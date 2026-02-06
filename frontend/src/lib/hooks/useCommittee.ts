@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiClient } from '@/lib/api/client'
 import type {
   CommitteeDashboardStats,
   DashboardAlert,
@@ -19,7 +20,7 @@ import type {
 } from '@/types'
 
 // Use mock data in development
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 // ============================================
 // MOCK DATA
@@ -671,7 +672,8 @@ export function useCommitteeDashboard() {
           recentActivities: MOCK_RECENT_ACTIVITIES,
         }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/dashboard')
+      return data
     },
   })
 }
@@ -688,7 +690,8 @@ export function useCommitteeAnnouncements() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { announcements: MOCK_ANNOUNCEMENTS, total: MOCK_ANNOUNCEMENTS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/announcements')
+      return data
     },
   })
 }
@@ -701,7 +704,8 @@ export function useCommitteeAnnouncement(announcementId: number) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_ANNOUNCEMENTS.find((a) => a.announcementId === announcementId) || null
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/committee/announcements/${announcementId}`)
+      return data
     },
     enabled: !!announcementId,
   })
@@ -715,7 +719,8 @@ export function useCreateCommitteeAnnouncement() {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { success: true, announcementId: Date.now() }
       }
-      throw new Error('API not implemented')
+      const { data: responseData } = await apiClient.post('/committee/announcements', data)
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.announcements() })
@@ -731,7 +736,9 @@ export function useUpdateCommitteeAnnouncement() {
         await new Promise((resolve) => setTimeout(resolve, 600))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { announcementId, ...body } = data
+      const { data: responseData } = await apiClient.put(`/committee/announcements/${announcementId}`, body)
+      return responseData
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.announcements() })
@@ -748,7 +755,8 @@ export function useArchiveAnnouncement() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post(`/committee/announcements/${announcementId}/archive`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.announcements() })
@@ -778,7 +786,8 @@ export function useCommitteeProposals(filters?: { status?: string; cycle?: strin
         }
         return { proposals: filtered, total: filtered.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/proposals', { params: filters })
+      return data
     },
   })
 }
@@ -791,7 +800,8 @@ export function useCommitteeProposal(proposalId: number) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return MOCK_PROPOSALS.find((p) => p.proposalId === proposalId) || null
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/committee/proposals/${proposalId}`)
+      return data
     },
     enabled: !!proposalId,
   })
@@ -805,7 +815,9 @@ export function useSubmitCommitteeProposalReview() {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { proposalId, ...body } = data
+      const { data: responseData } = await apiClient.post(`/committee/proposals/${proposalId}/review`, body)
+      return responseData
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.proposals() })
@@ -834,7 +846,8 @@ export function useGeneralDocuments(filters?: { category?: string; visibility?: 
         }
         return { documents: filtered, total: filtered.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/documents', { params: filters })
+      return data
     },
   })
 }
@@ -847,7 +860,8 @@ export function useGeneralDocument(documentId: number) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_DOCUMENTS.find((d) => d.documentId === documentId) || null
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/committee/documents/${documentId}`)
+      return data
     },
     enabled: !!documentId,
   })
@@ -861,7 +875,17 @@ export function useUploadGeneralDocument() {
         await new Promise((resolve) => setTimeout(resolve, 1500))
         return { success: true, documentId: Date.now() }
       }
-      throw new Error('API not implemented')
+      const formData = new FormData()
+      formData.append('file', data.file)
+      formData.append('title', data.title)
+      formData.append('category', data.category)
+      formData.append('visibility', data.visibility)
+      if (data.description) formData.append('description', data.description)
+      if (data.changeNotes) formData.append('changeNotes', data.changeNotes)
+      const { data: responseData } = await apiClient.post('/committee/documents', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return responseData
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.documents() })
@@ -877,7 +901,16 @@ export function useUpdateGeneralDocument() {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { documentId, file, ...rest } = data
+      const formData = new FormData()
+      if (file) formData.append('file', file)
+      Object.entries(rest).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) formData.append(key, String(value))
+      })
+      const { data: responseData } = await apiClient.put(`/committee/documents/${documentId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return responseData
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.documents() })
@@ -894,7 +927,8 @@ export function useDeleteGeneralDocument() {
         await new Promise((resolve) => setTimeout(resolve, 500))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.delete(`/committee/documents/${documentId}`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.documents() })
@@ -927,7 +961,8 @@ export function useProjectOverview(filters?: { cycle?: string; programme?: strin
         }
         return { projects: filtered, total: filtered.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/projects', { params: filters })
+      return data
     },
   })
 }
@@ -977,7 +1012,8 @@ export function useProjectDetail(projectId: number) {
           ],
         }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/committee/projects/${projectId}`)
+      return data
     },
     enabled: !!projectId,
   })
@@ -991,7 +1027,8 @@ export function useUnpairedStudents() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { students: MOCK_UNPAIRED_STUDENTS, total: MOCK_UNPAIRED_STUDENTS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/projects/unpaired-students')
+      return data
     },
   })
 }
@@ -1004,7 +1041,8 @@ export function useSupervisorLoads() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { supervisors: MOCK_SUPERVISOR_LOADS, total: MOCK_SUPERVISOR_LOADS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/projects/supervisor-loads')
+      return data
     },
   })
 }
@@ -1017,7 +1055,8 @@ export function useSupervisorLoadDetail(supervisorId: string) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return MOCK_SUPERVISOR_LOADS.find((s) => s.supervisorId === supervisorId) || null
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get(`/committee/projects/supervisor-loads/${supervisorId}`)
+      return data
     },
     enabled: !!supervisorId,
   })
@@ -1030,7 +1069,8 @@ export function useExportProjectData() {
         await new Promise((resolve) => setTimeout(resolve, 2000))
         return { success: true, downloadUrl: `/exports/projects_${Date.now()}.${options.format.toLowerCase()}` }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post('/committee/projects/export', options)
+      return data
     },
   })
 }
@@ -1047,7 +1087,8 @@ export function useGeneratedReports() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { reports: MOCK_REPORTS, total: MOCK_REPORTS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/committee/reports')
+      return data
     },
   })
 }
@@ -1064,7 +1105,8 @@ export function useGenerateReport() {
           downloadUrl: `/reports/generated_${Date.now()}.${config.format.toLowerCase()}`,
         }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.post('/committee/reports', config)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.reports() })
@@ -1080,7 +1122,8 @@ export function useDeleteReport() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.delete(`/committee/reports/${reportId}`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.reports() })
@@ -1100,7 +1143,8 @@ export function useCommitteeNotifications(limit = 50) {
         await new Promise((resolve) => setTimeout(resolve, 300))
         return { notifications: MOCK_NOTIFICATIONS.slice(0, limit), total: MOCK_NOTIFICATIONS.length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/notifications', { params: { limit } })
+      return data
     },
   })
 }
@@ -1113,7 +1157,8 @@ export function useCommitteeUnreadCount() {
         await new Promise((resolve) => setTimeout(resolve, 200))
         return { count: MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.get('/notifications/unread-count')
+      return data
     },
   })
 }
@@ -1126,7 +1171,8 @@ export function useMarkCommitteeNotificationRead() {
         await new Promise((resolve) => setTimeout(resolve, 200))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.put(`/notifications/${notificationId}/read`)
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.notifications() })
@@ -1143,7 +1189,8 @@ export function useMarkAllCommitteeNotificationsRead() {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { success: true }
       }
-      throw new Error('API not implemented')
+      const { data } = await apiClient.put('/notifications/mark-all-read')
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.notifications() })

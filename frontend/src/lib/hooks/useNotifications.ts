@@ -3,7 +3,7 @@ import { notificationsApi } from '@/lib/api/notifications'
 import type { Notification } from '@/types'
 
 // Enable mock data in development mode
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {

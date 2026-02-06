@@ -4,12 +4,12 @@ import com.fyp.supervision.entity.FypCycle;
 import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.FypCycleRepository;
+import com.fyp.supervision.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -17,16 +17,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminCycleController {
     private final FypCycleRepository cycleRepository;
+    private final AdminService adminService;
 
     @GetMapping
     public ResponseEntity<?> getCycles() {
-        List<FypCycle> cycles = cycleRepository.findAllByOrderByStartDateDesc();
-        return ResponseEntity.ok(Map.of("cycles", cycles));
+        return ResponseEntity.ok(adminService.getCycles());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FypCycle> getCycle(@PathVariable Long id) {
-        return ResponseEntity.ok(cycleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found")));
+    public ResponseEntity<?> getCycle(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.getCycleDetail(id));
     }
 
     @PostMapping

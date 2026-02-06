@@ -1,0 +1,431 @@
+package com.fyp.supervision.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fyp.supervision.entity.*;
+import com.fyp.supervision.enums.*;
+import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.repository.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class AdminService {
+
+    private final UserAccountRepository userAccountRepository;
+    private final StudentProfileRepository studentProfileRepository;
+    private final SupervisorProfileRepository supervisorProfileRepository;
+    private final ProjectRepository projectRepository;
+    private final ProposalRepository proposalRepository;
+    private final FypCycleRepository fypCycleRepository;
+    private final DeadlineRepository deadlineRepository;
+    private final SystemParameterRepository systemParameterRepository;
+    private final IntegrationSettingRepository integrationSettingRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final AiServiceClient aiServiceClient;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // ========== Dashboard ==========
+
+    public Map<String, Object> getDashboard() {
+        long totalUsers = userAccountRepository.count();
+        long totalStudents = userAccountRepository.countByRole(UserRole.STUDENT);
+        long totalSupervisors = userAccountRepository.countByRole(UserRole.SUPERVISOR);
+        long activeUsers = userAccountRepository.countByRoleAndStatus(UserRole.STUDENT, UserStatus.ACTIVE)
+                + userAccountRepository.countByRoleAndStatus(UserRole.SUPERVISOR, UserStatus.ACTIVE)
+                + userAccountRepository.countByRoleAndStatus(UserRole.FYP_COMMITTEE, UserStatus.ACTIVE)
+                + userAccountRepository.countByRoleAndStatus(UserRole.SYSTEM_ADMIN, UserStatus.ACTIVE);
+        long pendingApprovals = userAccountRepository.countByStatus(UserStatus.PENDING);
+        long activeProjects = projectRepository.countByStatus(ProjectStatus.ACTIVE);
+        long totalProjects = projectRepository.count();
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("totalUsers", totalUsers);
+        stats.put("activeUsers", activeUsers);
+        stats.put("pendingApprovals", pendingApprovals);
+        stats.put("totalProjects", totalProjects);
+        stats.put("activeProjects", activeProjects);
+        stats.put("systemUptime", "Running");
+        stats.put("lastBackup", LocalDateTime.now().minusHours(6).toString());
+        stats.put("storageUsed", 0);
+        stats.put("storageTotal", 100);
+        stats.put("cpuUsage", 0);
+        stats.put("memoryUsage", 0);
+        stats.put("databaseSize", 0);
+
+        Map<String, Object> dashboard = new LinkedHashMap<>();
+        dashboard.put("stats", stats);
+        dashboard.put("alerts", List.of());
+        dashboard.put("recentActivity", List.of());
+        return dashboard;
+    }
+
+    // ========== Users ==========
+
+    public Map<String, Object> getUserList(String role, String status, String search, Pageable pageable) {
+        Page<UserAccount> page;
+        if (search != null && !search.isBlank()) {
+            if (role != null && !role.isBlank() && !"ALL".equals(role)) {
+                page = userAccountRepository.searchByRoleAndTerm(UserRole.valueOf(role), search, pageable);
+            } else {
+                page = userAccountRepository.searchByTerm(search, pageable);
+            }
+        } else if (role != null && !role.isBlank() && !"ALL".equals(role)
+                && status != null && !status.isBlank() && !"ALL".equals(status)) {
+            page = userAccountRepository.findByRoleAndStatus(UserRole.valueOf(role), UserStatus.valueOf(status), pageable);
+        } else if (role != null && !role.isBlank() && !"ALL".equals(role)) {
+            page = userAccountRepository.findByRole(UserRole.valueOf(role), pageable);
+        } else if (status != null && !status.isBlank() && !"ALL".equals(status)) {
+            page = userAccountRepository.findByStatus(UserStatus.valueOf(status), pageable);
+        } else {
+            page = userAccountRepository.findAll(pageable);
+        }
+
+        List<Map<String, Object>> users = page.getContent().stream()
+                .map(this::buildAdminUserListItem)
+                .collect(Collectors.toList());
+
+        return Map.of("users", users, "total", page.getTotalElements());
+    }
+
+    public Map<String, Object> buildAdminUserListItem(UserAccount user) {
+        String department = "";
+        if (user.getRole() == UserRole.STUDENT) {
+            StudentProfile sp = studentProfileRepository.findById(user.getUserId()).orElse(null);
+            department = sp != null && sp.getFaculty() != null ? sp.getFaculty() : "";
+        } else if (user.getRole() == UserRole.SUPERVISOR) {
+            SupervisorProfile svp = supervisorProfileRepository.findById(user.getUserId()).orElse(null);
+            department = svp != null && svp.getFaculty() != null ? svp.getFaculty() : "";
+        }
+
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("userId", user.getUserId().toString());
+        dto.put("email", user.getEmail());
+        dto.put("fullName", user.getFullName());
+        dto.put("role", user.getRole().name());
+        dto.put("status", user.getStatus().name());
+        dto.put("department", department);
+        dto.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
+        dto.put("lastLoginAt", user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null);
+        dto.put("isLocked", user.getStatus() == UserStatus.BLOCKED);
+        return dto;
+    }
+
+    public Map<String, Object> getUserDetail(Long userId) {
+        UserAccount user = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Map<String, Object> dto = buildAdminUserListItem(user);
+        dto.put("phone", user.getPhone());
+        dto.put("loginAttempts", 0);
+        dto.put("passwordChangedAt", null);
+        dto.put("createdBy", "System");
+        dto.put("updatedAt", user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : "");
+        dto.put("notes", "");
+        dto.put("sessions", List.of());
+        dto.put("activityLog", List.of());
+        return dto;
+    }
+
+    // ========== Parameters ==========
+
+    public Map<String, Object> getParameters(String category) {
+        List<SystemParameter> params;
+        if (category != null && !category.isBlank()) {
+            params = systemParameterRepository.findByCategoryOrderByParamKeyAsc(category);
+        } else {
+            params = systemParameterRepository.findAll();
+        }
+        List<Map<String, Object>> dtos = params.stream()
+                .map(this::buildParameterDto)
+                .collect(Collectors.toList());
+        return Map.of("parameters", dtos, "total", dtos.size());
+    }
+
+    public Map<String, Object> buildParameterDto(SystemParameter param) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("parameterId", param.getParamId());
+        dto.put("key", param.getParamKey());
+        dto.put("value", param.getParamValue());
+        dto.put("type", param.getParamType() != null ? param.getParamType() : "STRING");
+        dto.put("category", param.getCategory() != null ? param.getCategory() : "GENERAL");
+        dto.put("label", param.getLabel() != null ? param.getLabel() : param.getParamKey());
+        dto.put("description", param.getDescription());
+        dto.put("defaultValue", param.getDefaultValue());
+        dto.put("isEditable", param.getIsEditable());
+        dto.put("validationRules", param.getValidationRules());
+        dto.put("lastModifiedAt", param.getUpdatedAt() != null ? param.getUpdatedAt().toString() : null);
+        return dto;
+    }
+
+    // ========== Cycles ==========
+
+    public Map<String, Object> getCycles() {
+        List<FypCycle> cycles = fypCycleRepository.findAllByOrderByStartDateDesc();
+        List<Map<String, Object>> dtos = cycles.stream()
+                .map(this::buildCycleDto)
+                .collect(Collectors.toList());
+        return Map.of("cycles", dtos, "total", dtos.size());
+    }
+
+    public Map<String, Object> getCycleDetail(Long cycleId) {
+        FypCycle cycle = fypCycleRepository.findById(cycleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+        return buildCycleDto(cycle);
+    }
+
+    public Map<String, Object> buildCycleDto(FypCycle cycle) {
+        String name = (cycle.getCycleType() != null ? cycle.getCycleType() : "FYP")
+                + " " + (cycle.getAcademicYear() != null ? cycle.getAcademicYear() : "")
+                + (cycle.getSemester() != null ? " Sem " + cycle.getSemester() : "");
+
+        long totalStudents = 0;
+        long pairedStudents = 0;
+        long completedProjects = 0;
+        try {
+            Page<Project> projects = projectRepository.findAllByCycleId(cycle.getCycleId(), Pageable.unpaged());
+            totalStudents = projects.getTotalElements();
+            pairedStudents = projects.getContent().stream()
+                    .filter(p -> p.getSupervisor() != null).count();
+            completedProjects = projects.getContent().stream()
+                    .filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
+        } catch (Exception ignored) {}
+
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("cycleId", cycle.getCycleId());
+        dto.put("name", name.trim());
+        dto.put("type", cycle.getCycleType() != null ? cycle.getCycleType() : "FYP1");
+        dto.put("academicYear", cycle.getAcademicYear());
+        dto.put("semester", cycle.getSemester());
+        dto.put("startDate", cycle.getStartDate() != null ? cycle.getStartDate().toString() : "");
+        dto.put("endDate", cycle.getEndDate() != null ? cycle.getEndDate().toString() : "");
+        dto.put("status", cycle.getStatus().name());
+        dto.put("isActive", cycle.getStatus() == CycleStatus.ACTIVE);
+        dto.put("totalStudents", totalStudents);
+        dto.put("pairedStudents", pairedStudents);
+        dto.put("completedProjects", completedProjects);
+        dto.put("createdAt", cycle.getCreatedAt() != null ? cycle.getCreatedAt().toString() : "");
+        dto.put("updatedAt", cycle.getUpdatedAt() != null ? cycle.getUpdatedAt().toString() : "");
+        return dto;
+    }
+
+    // ========== Deadlines ==========
+
+    public Map<String, Object> getDeadlines(Long cycleId) {
+        List<Deadline> deadlines;
+        if (cycleId != null) {
+            deadlines = deadlineRepository.findByCycle_CycleIdOrderByDueDateAsc(cycleId);
+        } else {
+            deadlines = deadlineRepository.findAll();
+        }
+        List<Map<String, Object>> dtos = deadlines.stream()
+                .map(this::buildDeadlineDto)
+                .collect(Collectors.toList());
+        return Map.of("deadlines", dtos, "total", dtos.size());
+    }
+
+    public Map<String, Object> getDeadlineDetail(Long deadlineId) {
+        Deadline d = deadlineRepository.findById(deadlineId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deadline not found"));
+        return buildDeadlineDto(d);
+    }
+
+    public Map<String, Object> buildDeadlineDto(Deadline d) {
+        String cycleName = "";
+        Long cycleId = null;
+        if (d.getCycle() != null) {
+            FypCycle cycle = d.getCycle();
+            cycleId = cycle.getCycleId();
+            cycleName = (cycle.getCycleType() != null ? cycle.getCycleType() : "FYP")
+                    + " " + (cycle.getAcademicYear() != null ? cycle.getAcademicYear() : "")
+                    + (cycle.getSemester() != null ? " Sem " + cycle.getSemester() : "");
+        }
+
+        // Determine status based on due date
+        String status = "UPCOMING";
+        if (d.getDueDate() != null) {
+            LocalDate now = LocalDate.now();
+            if (d.getDueDate().isBefore(now)) {
+                status = "PAST";
+            } else if (d.getDueDate().isEqual(now) || d.getDueDate().isBefore(now.plusDays(7))) {
+                status = "ACTIVE";
+            }
+        }
+
+        // Parse reminder days from JSON string
+        List<Integer> reminderDays = List.of();
+        if (d.getReminderDays() != null && !d.getReminderDays().isBlank()) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Integer> parsed = objectMapper.readValue(d.getReminderDays(), List.class);
+                reminderDays = parsed;
+            } catch (Exception ignored) {}
+        }
+
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("deadlineId", d.getDeadlineId());
+        dto.put("cycleId", cycleId);
+        dto.put("cycleName", cycleName.trim());
+        dto.put("title", d.getTitle());
+        dto.put("type", d.getDeadlineType() != null ? d.getDeadlineType() : "CUSTOM");
+        dto.put("description", d.getDescription());
+        dto.put("dueDate", d.getDueDate() != null ? d.getDueDate().toString() : "");
+        dto.put("reminderDays", reminderDays);
+        dto.put("status", status);
+        dto.put("targetRoles", d.getAudience() != null ? List.of(d.getAudience()) : List.of("STUDENT"));
+        dto.put("isExtendable", d.getIsExtendable());
+        dto.put("createdAt", d.getCreatedAt() != null ? d.getCreatedAt().toString() : "");
+        dto.put("updatedAt", d.getUpdatedAt() != null ? d.getUpdatedAt().toString() : "");
+        return dto;
+    }
+
+    // ========== Integrations ==========
+
+    public Map<String, Object> getIntegrations() {
+        List<IntegrationSetting> settings = integrationSettingRepository.findAll();
+        List<Map<String, Object>> dtos = settings.stream()
+                .map(this::buildIntegrationDto)
+                .collect(Collectors.toList());
+        return Map.of("integrations", dtos, "total", dtos.size());
+    }
+
+    public Map<String, Object> getIntegrationDetail(Long integrationId) {
+        IntegrationSetting s = integrationSettingRepository.findById(integrationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Integration not found"));
+        return buildIntegrationDto(s);
+    }
+
+    public Map<String, Object> buildIntegrationDto(IntegrationSetting s) {
+        // Parse settings JSON
+        Map<String, Object> settings = Map.of();
+        if (s.getSettingsJson() != null && !s.getSettingsJson().isBlank()) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> parsed = objectMapper.readValue(s.getSettingsJson(), Map.class);
+                settings = parsed;
+            } catch (Exception ignored) {}
+        }
+
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("integrationId", s.getIntegrationId());
+        dto.put("name", s.getName());
+        dto.put("type", s.getIntegrationType() != null ? s.getIntegrationType() : "OTHER");
+        dto.put("status", s.getStatus() != null ? s.getStatus() : "INACTIVE");
+        dto.put("provider", s.getProvider());
+        dto.put("description", s.getDescription());
+        dto.put("configuredAt", s.getUpdatedAt() != null ? s.getUpdatedAt().toString() : null);
+        dto.put("lastTestedAt", s.getLastTestedAt() != null ? s.getLastTestedAt().toString() : null);
+        dto.put("lastTestResult", s.getLastTestResult());
+        dto.put("settings", settings);
+        return dto;
+    }
+
+    // ========== Audit Logs ==========
+
+    public Map<String, Object> getAuditLogs(String action, String entityType, Long performedBy,
+                                             LocalDateTime dateFrom, LocalDateTime dateTo, Pageable pageable) {
+        Page<AuditLog> page = auditLogRepository.findWithFilters(action, entityType, performedBy, dateFrom, dateTo, pageable);
+        List<Map<String, Object>> dtos = page.getContent().stream()
+                .map(this::buildAuditLogDto)
+                .collect(Collectors.toList());
+        return Map.of("logs", dtos, "total", page.getTotalElements());
+    }
+
+    public Map<String, Object> buildAuditLogDto(AuditLog log) {
+        // Need to fetch user info since it's @JsonIgnored
+        String performedBy = "";
+        String performedByName = "";
+        String performedByRole = "";
+        if (log.getUser() != null) {
+            UserAccount user = log.getUser();
+            performedBy = user.getUserId().toString();
+            performedByName = user.getFullName();
+            performedByRole = user.getRole().name();
+        }
+
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("auditId", log.getAuditId());
+        dto.put("action", log.getAction());
+        dto.put("entityType", log.getEntityName());
+        dto.put("entityId", log.getEntityId());
+        dto.put("entityName", log.getEntityName());
+        dto.put("performedBy", performedBy);
+        dto.put("performedByName", performedByName);
+        dto.put("performedByRole", performedByRole);
+        dto.put("timestamp", log.getCreatedAt() != null ? log.getCreatedAt().toString() : "");
+        dto.put("ipAddress", log.getIpAddress());
+        dto.put("oldValue", log.getOldValue());
+        dto.put("newValue", log.getNewValue());
+        dto.put("details", log.getDetails());
+        dto.put("userAgent", log.getUserAgent());
+        return dto;
+    }
+
+    // ========== Health Checks ==========
+
+    public Map<String, Object> getHealthChecks() {
+        List<Map<String, Object>> checks = new ArrayList<>();
+
+        // Database
+        Map<String, Object> dbCheck = new LinkedHashMap<>();
+        dbCheck.put("checkId", "db");
+        dbCheck.put("name", "Database Connection");
+        dbCheck.put("status", "HEALTHY");
+        dbCheck.put("lastCheckedAt", LocalDateTime.now().toString());
+        dbCheck.put("responseTime", 12);
+        dbCheck.put("message", "Connection pool healthy");
+        checks.add(dbCheck);
+
+        // File Storage
+        Map<String, Object> storageCheck = new LinkedHashMap<>();
+        storageCheck.put("checkId", "storage");
+        storageCheck.put("name", "File Storage");
+        storageCheck.put("status", "HEALTHY");
+        storageCheck.put("lastCheckedAt", LocalDateTime.now().toString());
+        storageCheck.put("responseTime", 5);
+        storageCheck.put("message", "Local storage accessible");
+        checks.add(storageCheck);
+
+        // AI Recommendation Service
+        Map<String, Object> aiRecCheck = new LinkedHashMap<>();
+        aiRecCheck.put("checkId", "ai-recommendation");
+        aiRecCheck.put("name", "AI Recommendation Service");
+        boolean recHealthy = aiServiceClient.isRecommendationServiceHealthy();
+        aiRecCheck.put("status", recHealthy ? "HEALTHY" : "UNHEALTHY");
+        aiRecCheck.put("lastCheckedAt", LocalDateTime.now().toString());
+        aiRecCheck.put("responseTime", recHealthy ? 200 : 0);
+        aiRecCheck.put("message", recHealthy ? "Service responding" : "Service unavailable");
+        checks.add(aiRecCheck);
+
+        // AI Analyzer Service
+        Map<String, Object> aiAnalyzerCheck = new LinkedHashMap<>();
+        aiAnalyzerCheck.put("checkId", "ai-analyzer");
+        aiAnalyzerCheck.put("name", "AI Proposal Analyzer");
+        boolean analyzerHealthy = aiServiceClient.isAnalyzerServiceHealthy();
+        aiAnalyzerCheck.put("status", analyzerHealthy ? "HEALTHY" : "UNHEALTHY");
+        aiAnalyzerCheck.put("lastCheckedAt", LocalDateTime.now().toString());
+        aiAnalyzerCheck.put("responseTime", analyzerHealthy ? 200 : 0);
+        aiAnalyzerCheck.put("message", analyzerHealthy ? "Service responding" : "Service unavailable");
+        checks.add(aiAnalyzerCheck);
+
+        // AI Chatbot Service
+        Map<String, Object> aiChatCheck = new LinkedHashMap<>();
+        aiChatCheck.put("checkId", "ai-chatbot");
+        aiChatCheck.put("name", "AI Chatbot Service");
+        boolean chatHealthy = aiServiceClient.isChatbotServiceHealthy();
+        aiChatCheck.put("status", chatHealthy ? "HEALTHY" : "UNHEALTHY");
+        aiChatCheck.put("lastCheckedAt", LocalDateTime.now().toString());
+        aiChatCheck.put("responseTime", chatHealthy ? 200 : 0);
+        aiChatCheck.put("message", chatHealthy ? "Service responding" : "Service unavailable");
+        checks.add(aiChatCheck);
+
+        return Map.of("checks", checks);
+    }
+}

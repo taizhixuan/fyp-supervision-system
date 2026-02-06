@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { resourcesApi, announcementsApi, systemApi } from '@/lib/api/resources'
 
 // Enable mock data in development mode
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 const MOCK_RESOURCES = [
   {

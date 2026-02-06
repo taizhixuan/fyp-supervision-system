@@ -10,7 +10,7 @@ import { authApi, tokenStorage } from '@/lib/api/auth'
 import { getApiErrorMessage } from '@/lib/api/client'
 
 // Mock auth for development - set to true to enable mock login flow
-const USE_MOCK_AUTH = import.meta.env.DEV
+const USE_MOCK_AUTH = false
 
 // Mock users for different roles - matching correct User type
 const MOCK_STUDENT_USER: User = {

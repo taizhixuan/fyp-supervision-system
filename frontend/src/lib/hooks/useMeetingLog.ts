@@ -11,7 +11,7 @@ import type {
 import { getDefaultTasks, MEETING_LOG_TASKS } from '@/types/meetingLog'
 
 // Enable mock data in development mode (no backend needed)
-const USE_MOCK_DATA = import.meta.env.DEV
+const USE_MOCK_DATA = false
 
 // Query Keys
 export const meetingLogKeys = {

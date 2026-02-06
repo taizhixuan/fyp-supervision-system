@@ -10,7 +10,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/notifications")
@@ -20,11 +23,15 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<Page<Notification>> getNotifications(
+    public ResponseEntity<?> getNotifications(
             @AuthenticationPrincipal UserDetails user,
             Pageable pageable) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(notificationService.getNotifications(userId, pageable));
+        Page<Notification> page = notificationService.getNotifications(userId, pageable);
+        List<Map<String, Object>> dtos = page.getContent().stream()
+                .map(this::buildNotificationDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of("notifications", dtos, "total", page.getTotalElements()));
     }
 
     @GetMapping("/unread-count")
@@ -35,12 +42,12 @@ public class NotificationController {
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<Notification> markAsRead(
+    public ResponseEntity<?> markAsRead(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
         Notification notification = notificationService.markAsRead(id, userId);
-        return ResponseEntity.ok(notification);
+        return ResponseEntity.ok(buildNotificationDto(notification));
     }
 
     @PutMapping("/mark-all-read")
@@ -48,5 +55,18 @@ public class NotificationController {
         Long userId = Long.parseLong(user.getUsername());
         notificationService.markAllAsRead(userId);
         return ResponseEntity.ok(Map.of("message", "All notifications marked as read."));
+    }
+
+    private Map<String, Object> buildNotificationDto(Notification n) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("notificationId", n.getNotificationId());
+        dto.put("userId", n.getUser() != null ? n.getUser().getUserId() : null);
+        dto.put("type", n.getType());
+        dto.put("title", n.getTitle());
+        dto.put("message", n.getMessage());
+        dto.put("targetRoute", n.getTargetRoute());
+        dto.put("createdAt", n.getCreatedAt() != null ? n.getCreatedAt().toString() : "");
+        dto.put("readAt", n.getReadAt() != null ? n.getReadAt().toString() : null);
+        return dto;
     }
 }
