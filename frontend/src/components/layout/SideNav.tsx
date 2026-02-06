@@ -19,7 +19,6 @@ import {
   BookOpen,
   Clock,
   Download,
-  Database,
   Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -57,6 +56,11 @@ const studentNavItems: NavItem[] = [
     label: 'Meetings',
     href: ROUTES.STUDENT.MEETINGS,
     icon: <Calendar className="h-5 w-5" />,
+  },
+  {
+    label: 'Meeting Logs',
+    href: ROUTES.STUDENT.MEETING_LOGS,
+    icon: <ClipboardList className="h-5 w-5" />,
   },
   {
     label: 'Documents',
@@ -97,9 +101,9 @@ const supervisorNavItems: NavItem[] = [
     icon: <Calendar className="h-5 w-5" />,
   },
   {
-    label: 'Logs',
-    href: ROUTES.SUPERVISOR.LOGS,
-    icon: <BookOpen className="h-5 w-5" />,
+    label: 'Meeting Logs',
+    href: ROUTES.SUPERVISOR.MEETING_LOGS,
+    icon: <ClipboardList className="h-5 w-5" />,
   },
   {
     label: 'Documents',

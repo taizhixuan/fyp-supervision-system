@@ -16,6 +16,7 @@ import {
   AlertCircle,
   User,
   ArrowRight,
+  ClipboardList,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, Modal } from '@/components/ui'
 import { useMeetingList } from '@/lib/hooks/useStudent'
@@ -34,8 +35,8 @@ const SAMPLE_MEETINGS: Meeting[] = [
     agenda: 'Discuss proposal progress and next steps',
     scheduledAt: '2025-01-25T10:00:00Z',
     duration: 60,
-    platform: 'ZOOM',
-    meetingLink: 'https://zoom.us/j/123456789',
+    platform: 'MICROSOFT_TEAMS',
+    meetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_123456789',
     status: 'CONFIRMED',
     createdAt: '2025-01-15',
     updatedAt: '2025-01-15',
@@ -62,7 +63,8 @@ const SAMPLE_MEETINGS: Meeting[] = [
     title: 'Initial Consultation',
     scheduledAt: '2025-01-15T10:00:00Z',
     duration: 30,
-    platform: 'ZOOM',
+    platform: 'MICROSOFT_TEAMS',
+    meetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_987654321',
     status: 'COMPLETED',
     notes: 'Discussed project scope and timeline',
     createdAt: '2025-01-10',
@@ -208,6 +210,29 @@ export function MeetingList() {
           </div>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card className="bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <ClipboardList className="h-5 w-5 text-primary-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-primary-900">Supervision Logs</h3>
+              <p className="text-sm text-primary-600">Record and manage your meeting logs in MMU FCI format</p>
+            </div>
+          </div>
+          <Link to={ROUTES.STUDENT.MEETING_LOGS}>
+            <Button
+              variant="primary"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+            >
+              View Logs
+            </Button>
+          </Link>
+        </div>
+      </Card>
 
       {/* Filters */}
       <Card className="bg-gradient-to-r from-stone-50 to-neutral-50 border-stone-200">

@@ -2,12 +2,19 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LogIn, Mail, Lock } from 'lucide-react'
+import { LogIn, Mail, Lock, GraduationCap, Users, ClipboardList, Shield, Info } from 'lucide-react'
 import { AuthLayout } from '@/components/layout/AuthLayout'
-import { Button, Input, AlertBanner } from '@/components/ui'
+import { Button, AlertBanner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { loginSchema, type LoginFormData } from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
+
+const DEMO_ACCOUNTS = [
+  { role: 'Student', identifier: '1201234567', password: 'Test@123', Icon: GraduationCap },
+  { role: 'Supervisor', identifier: 'sarah.lee@mmu.edu.my', password: 'Test@123', Icon: Users },
+  { role: 'Committee', identifier: 'ahmad.razak@mmu.edu.my', password: 'Test@123', Icon: ClipboardList },
+  { role: 'Admin', identifier: 'admin@mmu.edu.my', password: 'Test@123', Icon: Shield },
+]
 
 export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +27,7 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -134,6 +142,34 @@ export function LoginPage() {
               Log In
             </Button>
           </form>
+
+          {import.meta.env.DEV && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-800">Demo Accounts</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.role}
+                    type="button"
+                    onClick={() => {
+                      setValue('identifier', account.identifier)
+                      setValue('password', account.password)
+                    }}
+                    className="flex items-center gap-2 p-2 text-left text-sm bg-white rounded-lg border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                  >
+                    <account.Icon className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                    <span className="font-medium text-stone-700 truncate">{account.role}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-amber-600 text-center">
+                Click to auto-fill credentials. Password: Test@123
+              </p>
+            </div>
+          )}
 
           <div className="mt-8 pt-6 border-t border-stone-200 text-center">
             <p className="text-sm text-stone-600">

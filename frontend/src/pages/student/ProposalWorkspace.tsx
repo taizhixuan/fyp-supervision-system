@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,6 +15,11 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
+  Rocket,
+  PartyPopper,
+  ArrowRight,
+  Clock,
+  User,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal } from '@/components/ui'
 import {
@@ -83,9 +88,13 @@ const SAMPLE_PROPOSAL = {
   updatedAt: '2025-01-15',
 }
 
+type SubmitModalState = 'confirm' | 'submitting' | 'success'
+
 export function ProposalWorkspace() {
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [submitModalState, setSubmitModalState] = useState<SubmitModalState>('confirm')
   const [uploadingFile, setUploadingFile] = useState(false)
+  const navigate = useNavigate()
 
   const { data: proposal, isLoading } = useCurrentProposal()
   const createProposal = useCreateProposal()
@@ -102,7 +111,6 @@ export function ProposalWorkspace() {
     handleSubmit,
     control,
     formState: { errors, isDirty },
-    watch,
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
     defaultValues: {
@@ -127,7 +135,8 @@ export function ProposalWorkspace() {
     name: 'expectedOutcomes',
   })
 
-  const { fields: referenceFields, append: appendReference, remove: removeReference } = useFieldArray({
+  // References field array - unused for now but kept for future use
+  useFieldArray({
     control,
     name: 'references',
   })
@@ -152,12 +161,24 @@ export function ProposalWorkspace() {
   }
 
   const onSubmit = async () => {
+    setSubmitModalState('submitting')
     try {
       await submitProposal.mutateAsync()
-      setShowSubmitModal(false)
+      setSubmitModalState('success')
     } catch (err) {
-      // Error handled by mutation
+      setSubmitModalState('confirm')
     }
+  }
+
+  const handleCloseSubmitModal = () => {
+    setShowSubmitModal(false)
+    // Reset state after animation
+    setTimeout(() => setSubmitModalState('confirm'), 300)
+  }
+
+  const handleGoToDashboard = () => {
+    handleCloseSubmitModal()
+    navigate(ROUTES.STUDENT.DASHBOARD)
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,7 +217,7 @@ export function ProposalWorkspace() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={statusColors[currentProposal.status]} size="lg">
+          <Badge className={cn(statusColors[currentProposal.status], 'px-3 py-1.5')}>
             {currentProposal.status.replace(/_/g, ' ')}
           </Badge>
           <span className="text-sm text-neutral-500">v{currentProposal.version}</span>
@@ -254,16 +275,22 @@ export function ProposalWorkspace() {
 
       {/* Revision Required Alert */}
       {currentProposal.status === 'REVISION_REQUIRED' && (
-        <AlertBanner
-          variant="warning"
-          title="Revision Required"
-          description="Your proposal requires revision based on feedback. Please review the comments and make necessary changes before resubmitting."
-          action={
-            <Link to={ROUTES.STUDENT.PROPOSAL_STATUS}>
-              <Button variant="warning" size="sm">View Feedback</Button>
-            </Link>
-          }
-        />
+        <div className="bg-warning-50 border border-warning-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <AlertCircle className="h-5 w-5 text-warning-600" />
+            </div>
+            <div>
+              <p className="font-medium text-warning-800">Revision Required</p>
+              <p className="text-sm text-warning-600">Your proposal requires revision based on feedback.</p>
+            </div>
+          </div>
+          <Link to={ROUTES.STUDENT.PROPOSAL_STATUS}>
+            <Button variant="secondary" size="sm" className="border-warning-300 text-warning-700 hover:bg-warning-100">
+              View Feedback
+            </Button>
+          </Link>
+        </div>
       )}
 
       {/* Success Messages */}
@@ -501,8 +528,10 @@ export function ProposalWorkspace() {
                   <Button variant="secondary" size="sm">Download</Button>
                 </a>
                 {canEdit && (
-                  <label>
-                    <Button variant="ghost" size="sm" as="span">Replace</Button>
+                  <label className="cursor-pointer">
+                    <span className="inline-flex items-center justify-center gap-2 font-medium rounded-md transition-all duration-200 text-primary-900 bg-transparent hover:bg-primary-50 h-8 px-3 text-sm">
+                      Replace
+                    </span>
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
@@ -536,60 +565,189 @@ export function ProposalWorkspace() {
         </Card>
       </form>
 
-      {/* Submit Modal */}
+      {/* Enhanced Submit Modal */}
       <Modal
         isOpen={showSubmitModal}
-        onClose={() => setShowSubmitModal(false)}
-        title="Submit Proposal"
+        onClose={submitModalState === 'submitting' ? () => {} : handleCloseSubmitModal}
         size="md"
+        showCloseButton={submitModalState !== 'submitting'}
       >
-        <div className="space-y-4">
-          <AlertBanner
-            variant="warning"
-            description="Once submitted, you cannot edit your proposal until feedback is received."
-          />
+        {submitModalState === 'confirm' && (
+          <div className="p-6">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/25">
+                <Rocket className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-neutral-900">Submit Your Proposal</h2>
+              <p className="text-neutral-500 mt-1">Ready to take the next step?</p>
+            </div>
 
-          <div className="space-y-2">
-            <h4 className="font-medium text-neutral-900">Submission Checklist</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success-600" />
-                <span>Project title is clear and descriptive</span>
+            {/* Warning Notice */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-amber-800 text-sm">Important Notice</p>
+                  <p className="text-amber-700 text-sm mt-0.5">
+                    Once submitted, you cannot edit your proposal until feedback is received from your supervisor.
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success-600" />
-                <span>Problem statement explains the issue and importance</span>
+            </div>
+
+            {/* Checklist */}
+            <div className="bg-neutral-50 rounded-xl p-4 mb-6">
+              <h4 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary-600" />
+                Submission Checklist
+              </h4>
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Project title is clear and descriptive', checked: true },
+                  { label: 'Problem statement explains the issue', checked: true },
+                  { label: 'At least 2 objectives defined', checked: true },
+                  { label: 'Scope and methodology described', checked: true },
+                  { label: 'Expected outcomes listed', checked: true },
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 bg-success-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3.5 w-3.5 text-success-600" />
+                    </div>
+                    <span className="text-sm text-neutral-700">{item.label}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success-600" />
-                <span>At least 2 clear objectives defined</span>
+            </div>
+
+            {/* Review Info */}
+            <div className="flex items-center gap-4 p-4 bg-primary-50 rounded-xl mb-6">
+              <div className="flex -space-x-2">
+                <div className="w-10 h-10 bg-primary-200 rounded-full flex items-center justify-center border-2 border-white">
+                  <User className="h-5 w-5 text-primary-700" />
+                </div>
+                <div className="w-10 h-10 bg-primary-300 rounded-full flex items-center justify-center border-2 border-white">
+                  <User className="h-5 w-5 text-primary-800" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success-600" />
-                <span>Scope and methodology described</span>
+              <div>
+                <p className="font-medium text-primary-900 text-sm">Review Process</p>
+                <p className="text-primary-700 text-xs">Your supervisor & FYP committee will review within 5-7 days</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                onClick={handleCloseSubmitModal}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={onSubmit}
+                className="flex-1 bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg shadow-primary-500/25"
+                leftIcon={<Send className="h-4 w-4" />}
+              >
+                Submit Proposal
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {submitModalState === 'submitting' && (
+          <div className="p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 relative">
+              <div className="absolute inset-0 bg-primary-100 rounded-full animate-ping opacity-50" />
+              <div className="relative w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                <Send className="h-8 w-8 text-white animate-pulse" />
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-neutral-900 mb-2">Submitting Your Proposal</h2>
+            <p className="text-neutral-500">Please wait while we process your submission...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
+        )}
 
-          <p className="text-neutral-600">
-            Your proposal will be reviewed by your supervisor and the FYP committee.
-            You will be notified of the outcome.
-          </p>
+        {submitModalState === 'success' && (
+          <div className="p-8 text-center">
+            {/* Success Animation */}
+            <div className="relative mb-6">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-success-400 to-success-600 rounded-full flex items-center justify-center shadow-xl shadow-success-500/30">
+                <CheckCircle className="h-12 w-12 text-white" />
+              </div>
+              {/* Confetti-like decorations */}
+              <div className="absolute top-0 left-1/4 w-3 h-3 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="absolute top-2 right-1/4 w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '100ms' }} />
+              <div className="absolute bottom-0 left-1/3 w-2.5 h-2.5 bg-success-300 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
+              <div className="absolute bottom-2 right-1/3 w-2 h-2 bg-error-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            </div>
 
-          <div className="flex gap-3 justify-end pt-4 border-t border-neutral-200">
-            <Button variant="ghost" onClick={() => setShowSubmitModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              leftIcon={<Send className="h-4 w-4" />}
-              onClick={onSubmit}
-              isLoading={submitProposal.isPending}
-            >
-              Submit Proposal
-            </Button>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <PartyPopper className="h-5 w-5 text-amber-500" />
+              <h2 className="text-2xl font-bold text-neutral-900">Congratulations!</h2>
+              <PartyPopper className="h-5 w-5 text-amber-500 scale-x-[-1]" />
+            </div>
+            <p className="text-neutral-600 mb-6">Your proposal has been submitted successfully!</p>
+
+            {/* Timeline Card */}
+            <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl p-5 mb-6 text-left border border-neutral-200">
+              <h4 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary-600" />
+                What Happens Next?
+              </h4>
+              <div className="space-y-4">
+                {[
+                  { step: 1, title: 'Supervisor Review', desc: 'Your supervisor will review your proposal', time: '2-3 days' },
+                  { step: 2, title: 'Committee Review', desc: 'FYP committee evaluates your submission', time: '3-5 days' },
+                  { step: 3, title: 'Feedback & Decision', desc: 'You\'ll receive feedback via notification', time: 'Total ~7 days' },
+                ].map((item, index) => (
+                  <div key={index} className="flex gap-3">
+                    <div className="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary-700">
+                      {item.step}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-neutral-900 text-sm">{item.title}</p>
+                      <p className="text-neutral-500 text-xs">{item.desc}</p>
+                    </div>
+                    <span className="text-xs text-primary-600 font-medium bg-primary-50 px-2 py-1 rounded-full h-fit">
+                      {item.time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={handleCloseSubmitModal}
+                className="flex-1"
+              >
+                Stay Here
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleGoToDashboard}
+                className="flex-1 bg-gradient-to-r from-success-500 to-success-600"
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+              >
+                Go to Dashboard
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
     </div>
   )
