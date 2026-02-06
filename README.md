@@ -309,10 +309,6 @@ This is a Final Year Project. If you're working on this project:
 
 This project is developed as part of a Final Year Project at MMU FCI.
 
-## Contact
-
-For questions or issues related to this project, please contact the development team.
-
 ---
 
 **Note:** This system is designed specifically for MMU FCI's FYP supervision process. Some features may be tailored to MMU's specific requirements and workflows.
