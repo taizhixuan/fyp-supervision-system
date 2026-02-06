@@ -12,7 +12,12 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+
     Page<AuditLog> findByUser_UserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM AuditLog a WHERE a.createdAt < :before")
+    int deleteByCreatedAtBefore(@Param("before") LocalDateTime before);
 
     @Query("SELECT a FROM AuditLog a WHERE " +
            "(:action IS NULL OR a.action = :action) AND " +

@@ -80,6 +80,19 @@ services:
     networks:
       - fyp-network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - fyp-network
+
 volumes:
   mysql_data:
   upload_data:

@@ -116,8 +116,10 @@ cp .env.example .env
 ```
 
 Edit `.env` and set:
-- `JWT_SECRET` - A secure secret key (at least 32 characters)
+- `JWT_SECRET` - A secure secret key (at least 32 characters). **Do not use the default in production.**
 - `OPENAI_API_KEY` - Your OpenAI API key for AI features
+- `VITE_API_BASE_URL` - Backend API base URL for the frontend (e.g. `http://localhost:8080/api` when frontend runs on host; when both run in Docker, use `http://backend:8080/api` or the public URL of the backend)
+- `DB_URL`, `DB_USER`, `DB_PASS` - Database connection (required for backend; use strong credentials in production)
 
 ### 3. Run with Docker Compose (Recommended)
 
@@ -127,13 +129,15 @@ The easiest way to get everything running:
 docker-compose up --build
 ```
 
-This will start:
-- MySQL database on port 3306
-- Backend API on port 8080
-- Frontend on port 3000 (or configured port)
-- AI recommendation service on port 5001
-- AI proposal analyzer on port 5002
-- AI chatbot on port 5003
+This will start the full stack:
+- **MySQL** on port 3306
+- **Backend API** on port 8080 (context path `/api`)
+- **Frontend** on port 3000 (served by nginx in container; build uses `VITE_API_BASE_URL` from `.env`)
+- **AI recommendation** on port 5001
+- **AI proposal analyzer** on port 5002
+- **AI chatbot** on port 5003
+
+For local frontend development (hot reload), run the frontend separately: `cd frontend && npm run dev`, and set `VITE_API_BASE_URL=http://localhost:8080/api` so it talks to the backend.
 
 ### 4. Run Locally (Development)
 
@@ -195,6 +199,10 @@ By default, uploaded files are stored in `./uploads` (backend) or `/app/uploads`
 JWT tokens are used for authentication. Configure via:
 - `JWT_SECRET` - Secret key for signing tokens
 - `JWT_EXPIRY_MS` - Token expiration time in milliseconds (default: 24 hours)
+
+### CORS and cross-origin
+
+When the frontend and backend run on different origins (e.g. frontend on port 3000, backend on 8080), the backend is configured to allow the frontend origin. For production, ensure CORS allowed origins and cookie/same-site settings match your deployment (e.g. same site or trusted domain).
 
 ## User Roles
 
@@ -295,6 +303,12 @@ If a port is already in use, either:
 - Ensure the upload directory exists and has write permissions
 - Check `FILE_UPLOAD_DIR` configuration
 - Verify file size limits in `application.yml` (default: 50MB)
+
+## Feature completion status
+
+- **Committee reports (UC29):** Report generation (proposal summary, supervisor load, pairing status) with CSV export and download; reports stored under `uploads/reports/`.
+- **Admin export configs (UC32):** CRUD for export configurations; run export (e.g. users/projects CSV) with download; configs and last export path persisted.
+- **Admin maintenance (UC33):** Jobs list, backups list, create backup (marker file under `uploads/backups/`), restore (recorded; full DB restore via mysql client), cleanup (old audit logs), clear cache.
 
 ## License
 
