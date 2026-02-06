@@ -953,7 +953,7 @@ export function useChatbot() {
 
 // ==================== Notifications ====================
 interface Notification {
-  notificationId: string
+  notificationId: number
   title: string
   message: string
   type: string
@@ -964,7 +964,7 @@ interface Notification {
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
-    notificationId: '1',
+    notificationId: 1,
     title: 'Meeting Confirmed',
     message: 'Your meeting with Dr. Sarah Lee on 25 Jan at 10:00 AM has been confirmed.',
     type: 'MEETING',
@@ -973,7 +973,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-20T10:30:00Z',
   },
   {
-    notificationId: '2',
+    notificationId: 2,
     title: 'Proposal Feedback Available',
     message: 'Your supervisor has provided feedback on your proposal.',
     type: 'FEEDBACK',
@@ -981,7 +981,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-19T14:00:00Z',
   },
   {
-    notificationId: '3',
+    notificationId: 3,
     title: 'Deadline Reminder',
     message: 'Proposal submission deadline is in 7 days.',
     type: 'DEADLINE',
@@ -998,10 +998,29 @@ export function useNotifications() {
         return { notifications: MOCK_NOTIFICATIONS, total: MOCK_NOTIFICATIONS.length }
       }
       const { data } = await apiClient.get<{
-        notifications: Notification[]
+        notifications: Array<{
+          notificationId: number
+          title: string
+          message: string
+          type: string
+          targetRoute?: string
+          createdAt: string
+          readAt?: string | null
+        }>
         total: number
       }>('/notifications')
-      return data
+      return {
+        notifications: (data.notifications ?? []).map((n) => ({
+          notificationId: n.notificationId,
+          title: n.title,
+          message: n.message,
+          type: n.type,
+          isRead: !!n.readAt,
+          actionUrl: n.targetRoute,
+          createdAt: n.createdAt,
+        })),
+        total: data.total ?? 0,
+      }
     },
   })
 }
@@ -1009,7 +1028,7 @@ export function useNotifications() {
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (notificationId: string) => {
+    mutationFn: async (notificationId: number) => {
       await apiClient.put(`/notifications/${notificationId}/read`)
     },
     onSuccess: () => {

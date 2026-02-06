@@ -1,9 +1,18 @@
 package com.fyp.supervision.controller.committee;
 
+import com.fyp.supervision.service.CommitteeReportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.PathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -12,19 +21,50 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CommitteeReportController {
 
+    private final CommitteeReportService committeeReportService;
+
     @GetMapping
     public ResponseEntity<?> getReports() {
-        return ResponseEntity.ok(Map.of("reports", List.of()));
+        List<Map<String, Object>> reports = committeeReportService.getReportDtos();
+        return ResponseEntity.ok(Map.of("reports", reports, "total", reports.size()));
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<?> generateReport(@RequestBody Map<String, Object> config) {
-        // Placeholder — will generate reports
-        return ResponseEntity.ok(Map.of("reportId", "1", "downloadUrl", "/api/committee/reports/1/download"));
+    public ResponseEntity<?> generateReport(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody Map<String, Object> config) {
+        try {
+            Long userId = Long.parseLong(user.getUsername());
+            Map<String, Object> result = committeeReportService.generateReport(userId, config);
+            return ResponseEntity.ok(result);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Failed to generate report: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<Resource> downloadReport(@PathVariable Long id) {
+        try {
+            Path path = committeeReportService.getReportFilePath(id);
+            Resource resource = new PathResource(path);
+            String filename = path.getFileName() != null ? path.getFileName().toString() : "report.csv";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReport(@PathVariable Long id) {
-        return ResponseEntity.noContent().build();
+        try {
+            committeeReportService.deleteReport(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

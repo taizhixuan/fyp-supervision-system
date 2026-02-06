@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils/cn'
 type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' | 'MEETING' | 'DEADLINE' | 'FEEDBACK' | 'SYSTEM'
 
 interface Notification {
-  notificationId: string
+  notificationId: number
   title: string
   message: string
   type: NotificationType
@@ -34,7 +34,7 @@ interface Notification {
 // Sample data
 const SAMPLE_NOTIFICATIONS: Notification[] = [
   {
-    notificationId: '1',
+    notificationId: 1,
     title: 'Meeting Confirmed',
     message: 'Your meeting with Dr. Sarah Lee on 25 Jan at 10:00 AM has been confirmed.',
     type: 'MEETING',
@@ -43,7 +43,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-20T10:30:00Z',
   },
   {
-    notificationId: '2',
+    notificationId: 2,
     title: 'Proposal Feedback Available',
     message: 'Your supervisor has provided feedback on your proposal. Please review and make necessary revisions.',
     type: 'FEEDBACK',
@@ -52,7 +52,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-19T14:00:00Z',
   },
   {
-    notificationId: '3',
+    notificationId: 3,
     title: 'Deadline Reminder',
     message: 'Proposal submission deadline is in 7 days. Make sure to submit your final version.',
     type: 'DEADLINE',
@@ -61,7 +61,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-18T09:00:00Z',
   },
   {
-    notificationId: '4',
+    notificationId: 4,
     title: 'Log Approved',
     message: 'Your supervision log for Week 4 has been approved by your supervisor.',
     type: 'SUCCESS',
@@ -70,7 +70,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-17T16:30:00Z',
   },
   {
-    notificationId: '5',
+    notificationId: 5,
     title: 'New Resource Available',
     message: 'A new template for literature review has been added to the resources hub.',
     type: 'INFO',
@@ -79,7 +79,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-16T11:00:00Z',
   },
   {
-    notificationId: '6',
+    notificationId: 6,
     title: 'System Maintenance',
     message: 'The system will undergo maintenance on Sunday 21 Jan from 2:00 AM to 4:00 AM.',
     type: 'SYSTEM',
@@ -87,7 +87,7 @@ const SAMPLE_NOTIFICATIONS: Notification[] = [
     createdAt: '2025-01-15T10:00:00Z',
   },
   {
-    notificationId: '7',
+    notificationId: 7,
     title: 'Meeting Rescheduled',
     message: 'Your meeting originally scheduled for 20 Jan has been rescheduled to 25 Jan.',
     type: 'WARNING',
