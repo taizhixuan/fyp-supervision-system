@@ -1,8 +1,6 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.ProjectDocument;
-import com.fyp.supervision.exception.ResourceNotFoundException;
-import com.fyp.supervision.repository.ProjectDocumentRepository;
+import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,31 +14,26 @@ import java.util.Map;
 @RequestMapping("/supervisor/documents")
 @RequiredArgsConstructor
 public class SupervisorDocumentController {
-    private final ProjectDocumentRepository documentRepository;
+    private final SupervisorService supervisorService;
 
     @GetMapping
     public ResponseEntity<?> getDocuments(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) String type) {
-        // For now return all documents for the supervisor's students
-        List<ProjectDocument> docs;
-        if (studentId != null) {
-            docs = documentRepository.findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(studentId, type);
-        } else {
-            docs = documentRepository.findAll();
-        }
-        return ResponseEntity.ok(Map.of("documents", docs));
+        Long userId = Long.parseLong(user.getUsername());
+        List<Map<String, Object>> documents = supervisorService.getDocumentDtos(userId, studentId, type);
+        return ResponseEntity.ok(Map.of("documents", documents, "total", documents.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectDocument> getDocument(@PathVariable Long id) {
-        return ResponseEntity.ok(documentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found")));
+    public ResponseEntity<?> getDocument(@PathVariable Long id) {
+        return ResponseEntity.ok(supervisorService.getDocumentDetailDto(id));
     }
 
     @PostMapping("/{id}/feedback")
     public ResponseEntity<?> provideFeedback(@PathVariable Long id, @RequestBody Map<String, Object> data) {
+        // Stub — document feedback not yet implemented
         return ResponseEntity.ok(Map.of("success", true));
     }
 }

@@ -19,12 +19,12 @@ public class SupervisorSuperviseeController {
     @GetMapping
     public ResponseEntity<?> getSupervisees(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(Map.of("supervisees", supervisorService.getSupervisees(userId)));
+        List<Map<String, Object>> supervisees = supervisorService.getSuperviseeDtos(userId);
+        return ResponseEntity.ok(Map.of("supervisees", supervisees, "total", supervisees.size()));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getSupervisee(@PathVariable Long id) {
-        // Return supervisee detail — for now return basic info
-        return ResponseEntity.ok(Map.of("superviseeId", id));
+        return ResponseEntity.ok(supervisorService.getSuperviseeDetailDto(id));
     }
 }

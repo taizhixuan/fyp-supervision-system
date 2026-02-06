@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.MeetingLogStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,18 +22,22 @@ public class MeetingLog {
     @Column(name = "log_id")
     private Long logId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
     private Meeting meeting;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_user_id", nullable = false)
     private UserAccount student;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supervisor_user_id", nullable = false)
     private UserAccount supervisor;
@@ -92,6 +97,7 @@ public class MeetingLog {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "meetingLog", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MeetingLogSignature> signatures = new ArrayList<>();

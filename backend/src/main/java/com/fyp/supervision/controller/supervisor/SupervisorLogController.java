@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.MeetingLog;
 import com.fyp.supervision.service.MeetingLogService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +21,25 @@ public class SupervisorLogController {
     @GetMapping
     public ResponseEntity<?> getLogs(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<MeetingLog> logs = supervisorService.getMeetingLogs(userId, null);
-        return ResponseEntity.ok(Map.of("logs", logs));
+        List<Map<String, Object>> logs = supervisorService.getLogDtos(userId, null);
+        return ResponseEntity.ok(Map.of("logs", logs, "total", logs.size()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MeetingLog> getLog(@PathVariable Long id) {
-        return ResponseEntity.ok(meetingLogService.getLog(id));
+    public ResponseEntity<?> getLog(@PathVariable Long id) {
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(meetingLogService.getLog(id)));
     }
 
     @PostMapping("/{id}/review")
     public ResponseEntity<?> reviewLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         String action = (String) data.get("action");
-        if ("SIGN".equalsIgnoreCase(action)) {
-            return ResponseEntity.ok(meetingLogService.signLog(id, userId, data));
+        if ("SIGN".equalsIgnoreCase(action) || "APPROVE".equalsIgnoreCase(action)) {
+            meetingLogService.signLog(id, userId, data);
+        }
+        // For REQUEST_REVISION, add supervisor comment
+        if ("REQUEST_REVISION".equalsIgnoreCase(action)) {
+            meetingLogService.requestCorrection(id, userId, (String) data.get("comment"));
         }
         return ResponseEntity.ok(Map.of("success", true));
     }
@@ -44,6 +47,7 @@ public class SupervisorLogController {
     @PostMapping("/{id}/sign")
     public ResponseEntity<?> signLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(meetingLogService.signLog(id, userId, Map.of()));
+        meetingLogService.signLog(id, userId, Map.of());
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

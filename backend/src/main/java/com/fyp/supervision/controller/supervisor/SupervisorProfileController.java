@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.supervisor;
 
-import com.fyp.supervision.entity.SupervisorProfile;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,17 +17,18 @@ public class SupervisorProfileController {
     private final SupervisorService supervisorService;
 
     @GetMapping
-    public ResponseEntity<SupervisorProfile> getProfile(@AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(supervisorService.getProfile(Long.parseLong(user.getUsername())));
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(supervisorService.getProfileDto(Long.parseLong(user.getUsername())));
     }
 
     @PutMapping
-    public ResponseEntity<SupervisorProfile> updateProfile(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> updates) {
         return ResponseEntity.ok(supervisorService.updateProfile(Long.parseLong(user.getUsername()), updates));
     }
 
     @GetMapping("/audit-log")
     public ResponseEntity<?> getAuditLog(@AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(Map.of("entries", List.of()));
+        // Audit log stub — returns empty list for now
+        return ResponseEntity.ok(Map.of("entries", List.of(), "total", 0));
     }
 }

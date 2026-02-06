@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.AnnouncementStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,7 @@ public class Announcement {
     @Column(name = "announcement_id")
     private Long announcementId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private UserAccount createdBy;
@@ -56,6 +58,7 @@ public class Announcement {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AnnouncementAudience> audiences = new ArrayList<>();

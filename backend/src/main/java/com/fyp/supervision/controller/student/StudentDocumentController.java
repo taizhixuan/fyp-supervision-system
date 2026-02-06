@@ -7,9 +7,9 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProjectDocumentRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.service.FileStorageService;
+import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -25,21 +25,21 @@ public class StudentDocumentController {
     private final ProjectDocumentRepository documentRepository;
     private final ProjectRepository projectRepository;
     private final FileStorageService fileStorageService;
+    private final StudentService studentService;
 
     @GetMapping
-    public ResponseEntity<Page<ProjectDocument>> getDocuments(
+    public ResponseEntity<?> getDocuments(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String phase,
             Pageable pageable) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(documentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId, pageable));
+        return ResponseEntity.ok(studentService.getDocumentsDto(userId, type, phase, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectDocument> getDocument(@PathVariable Long id) {
-        return ResponseEntity.ok(documentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found")));
+    public ResponseEntity<?> getDocument(@PathVariable Long id) {
+        return ResponseEntity.ok(studentService.getDocumentDto(id));
     }
 
     @GetMapping("/{id}/download")
@@ -54,7 +54,7 @@ public class StudentDocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDocument> uploadDocument(
+    public ResponseEntity<?> uploadDocument(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String title,
@@ -80,7 +80,8 @@ public class StudentDocumentController {
                 .mimeType(file.getContentType())
                 .build();
 
-        return ResponseEntity.ok(documentRepository.save(document));
+        ProjectDocument saved = documentRepository.save(document);
+        return ResponseEntity.ok(studentService.buildDocumentDto(saved));
     }
 
     @DeleteMapping("/{id}")

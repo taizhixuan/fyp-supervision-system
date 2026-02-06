@@ -17,6 +17,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     @Query("SELECT m FROM Meeting m WHERE m.project.student.userId = :userId ORDER BY m.proposedStartAt DESC")
     Page<Meeting> findByStudentUserId(@Param("userId") Long userId, Pageable pageable);
 
+    @Query("SELECT m FROM Meeting m WHERE m.project.student.userId = :userId ORDER BY m.proposedStartAt DESC")
+    List<Meeting> findAllByStudentUserId(@Param("userId") Long userId);
+
     @Query("SELECT m FROM Meeting m WHERE m.project.supervisor.userId = :userId ORDER BY m.proposedStartAt DESC")
     List<Meeting> findBySupervisorUserId(@Param("userId") Long userId);
 
@@ -27,4 +30,10 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     Page<Meeting> findByStudentUserIdAndDateRange(@Param("userId") Long userId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to, Pageable pageable);
 
     long countByProject_Student_UserId(Long studentUserId);
+
+    @Query("SELECT m FROM Meeting m WHERE m.project.supervisor.userId = :userId AND m.status = :status ORDER BY m.proposedStartAt DESC")
+    List<Meeting> findBySupervisorUserIdAndStatus(@Param("userId") Long userId, @Param("status") MeetingStatus status);
+
+    @Query("SELECT COUNT(m) FROM Meeting m WHERE m.project.supervisor.userId = :userId AND m.status IN :statuses")
+    long countBySupervisorUserIdAndStatusIn(@Param("userId") Long userId, @Param("statuses") List<MeetingStatus> statuses);
 }

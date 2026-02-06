@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.ProposalStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,14 +21,17 @@ public class Proposal {
     @Column(name = "proposal_id")
     private Long proposalId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_user_id", nullable = false)
     private UserAccount student;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supervisor_user_id")
     private UserAccount supervisor;
@@ -49,10 +53,12 @@ public class Proposal {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProposalVersion> versions = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProposalReview> reviews = new ArrayList<>();

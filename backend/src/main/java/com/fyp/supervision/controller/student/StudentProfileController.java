@@ -1,6 +1,5 @@
 package com.fyp.supervision.controller.student;
 
-import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.FileStorageService;
@@ -25,15 +24,13 @@ public class StudentProfileController {
     @GetMapping
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        StudentProfile profile = studentService.getProfile(userId);
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(studentService.getProfileDto(userId));
     }
 
     @PutMapping
     public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> updates) {
         Long userId = Long.parseLong(user.getUsername());
-        StudentProfile profile = studentService.updateProfile(userId, updates);
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(studentService.updateProfile(userId, updates));
     }
 
     @PostMapping("/image")

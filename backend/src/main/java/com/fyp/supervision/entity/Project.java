@@ -1,5 +1,6 @@
 package com.fyp.supervision.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fyp.supervision.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,14 +19,17 @@ public class Project {
     @Column(name = "project_id")
     private Long projectId;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cycle_id")
     private FypCycle cycle;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_user_id")
     private UserAccount student;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supervisor_user_id")
     private UserAccount supervisor;

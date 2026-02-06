@@ -17,6 +17,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findByStudent_UserId(Long studentUserId);
     List<Project> findBySupervisor_UserId(Long supervisorUserId);
     Page<Project> findByCycle_CycleId(Long cycleId, Pageable pageable);
+    long countBySupervisor_UserId(Long supervisorUserId);
     long countBySupervisor_UserIdAndStatus(Long supervisorUserId, ProjectStatus status);
     long countByStatus(ProjectStatus status);
 
