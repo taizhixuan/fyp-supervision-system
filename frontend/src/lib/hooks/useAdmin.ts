@@ -9,12 +9,12 @@ import type {
   CreateUserRequest,
   UpdateUserRequest,
   UserStatus,
-  SystemParameter,
+  AdminSystemParameter,
   UpdateParameterRequest,
   FYPCycle,
   CreateCycleRequest,
   UpdateCycleRequest,
-  Deadline,
+  AdminDeadline,
   CreateDeadlineRequest,
   UpdateDeadlineRequest,
   Integration,
@@ -222,7 +222,7 @@ const MOCK_USER_DETAIL: UserDetail = {
   ],
 }
 
-const MOCK_PARAMETERS: SystemParameter[] = [
+const MOCK_PARAMETERS: AdminSystemParameter[] = [
   {
     parameterId: 1,
     key: 'max_students_per_supervisor',
@@ -372,7 +372,7 @@ const MOCK_CYCLES: FYPCycle[] = [
   },
 ]
 
-const MOCK_DEADLINES: Deadline[] = [
+const MOCK_DEADLINES: AdminDeadline[] = [
   {
     deadlineId: 1,
     cycleId: 1,

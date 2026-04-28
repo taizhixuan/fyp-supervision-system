@@ -9,7 +9,7 @@ import type {
   ProposalForCommitteeReview,
   SubmitProposalReviewData,
   GeneralDocument,
-  UploadDocumentData,
+  CommitteeUploadDocumentData,
   ProjectOverview,
   UnpairedStudent,
   SupervisorLoad,
@@ -870,7 +870,7 @@ export function useGeneralDocument(documentId: number) {
 export function useUploadGeneralDocument() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: UploadDocumentData) => {
+    mutationFn: async (data: CommitteeUploadDocumentData) => {
       if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1500))
         return { success: true, documentId: Date.now() }

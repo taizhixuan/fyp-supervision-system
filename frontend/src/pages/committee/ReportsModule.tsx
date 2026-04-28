@@ -124,7 +124,7 @@ export function ReportsModule() {
             </div>
           </div>
           <Link to={ROUTES.COMMITTEE.REPORTS_HISTORY}>
-            <Button variant="outline" className="border-stone-600 text-stone-200 hover:bg-stone-700">
+            <Button variant="secondary" className="border-stone-600 text-stone-200 hover:bg-stone-700">
               <History className="h-4 w-4 mr-2" />
               View Generated Reports
             </Button>
@@ -331,7 +331,7 @@ export function ReportsModule() {
       {/* Actions */}
       <div className="flex justify-end gap-3">
         <Link to={ROUTES.COMMITTEE.DASHBOARD}>
-          <Button variant="outline" className="border-stone-300">Cancel</Button>
+          <Button variant="secondary" className="border-stone-300">Cancel</Button>
         </Link>
         <Button
           onClick={handleGenerate}

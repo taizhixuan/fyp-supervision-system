@@ -258,12 +258,12 @@ export function SupervisorLoadDetail() {
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
-        <Button variant="outline">
+        <Button variant="secondary">
           <Mail className="h-4 w-4 mr-2" />
           Contact Supervisor
         </Button>
         <Link to={ROUTES.COMMITTEE.PROJECTS}>
-          <Button variant="outline">
+          <Button variant="secondary">
             <FolderKanban className="h-4 w-4 mr-2" />
             View All Projects
           </Button>

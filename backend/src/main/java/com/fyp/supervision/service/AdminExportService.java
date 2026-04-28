@@ -118,7 +118,7 @@ public class AdminExportService {
         return mapToEntity(data, new ExportConfig());
     }
 
-    private void mapToEntity(Map<String, Object> data, ExportConfig config) {
+    private ExportConfig mapToEntity(Map<String, Object> data, ExportConfig config) {
         if (data.containsKey("name")) config.setName((String) data.get("name"));
         if (data.containsKey("dataType")) config.setDataType((String) data.get("dataType"));
         if (data.containsKey("format")) config.setFormat((String) data.get("format"));
@@ -127,6 +127,7 @@ public class AdminExportService {
         if (data.containsKey("fields")) config.setFieldsJson(writeJson(data.get("fields")));
         if (data.containsKey("filters")) config.setFiltersJson(writeJson(data.get("filters")));
         if (data.containsKey("schedule")) config.setScheduleJson(writeJson(data.get("schedule")));
+        return config;
     }
 
     private String buildCsv(ExportConfig config) throws IOException {

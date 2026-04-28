@@ -19,7 +19,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisee } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProjectStatus, ProposalStatus } from '@/types'
+import type { ProjectStatus, SvProposalStatus } from '@/types'
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
   NOT_STARTED: { label: 'Not Started', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
@@ -29,7 +29,7 @@ const projectStatusConfig: Record<ProjectStatus, { label: string; color: string;
   TERMINATED: { label: 'Terminated', color: 'text-error-600', bgColor: 'bg-error-50' },
 }
 
-const proposalStatusConfig: Record<ProposalStatus, { label: string; color: string; bgColor: string }> = {
+const proposalStatusConfig: Record<SvProposalStatus, { label: string; color: string; bgColor: string }> = {
   NOT_SUBMITTED: { label: 'Not Submitted', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
   DRAFT: { label: 'Draft', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
   SUBMITTED: { label: 'Submitted', color: 'text-info-600', bgColor: 'bg-info-50' },
@@ -224,17 +224,17 @@ export function SuperviseeDetail() {
             <h3 className="font-semibold text-neutral-900 mb-4">Quick Actions</h3>
             <div className="space-y-2">
               <Link to={ROUTES.SUPERVISOR.MEETING_NEW} className="block">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="secondary" className="w-full justify-start">
                   <Calendar className="h-4 w-4 mr-2" />
                   Schedule Meeting
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="secondary" className="w-full justify-start">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Send Message
               </Button>
               <Link to={ROUTES.SUPERVISOR.LOGS} className="block">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="secondary" className="w-full justify-start">
                   <FileText className="h-4 w-4 mr-2" />
                   Review Logs
                 </Button>

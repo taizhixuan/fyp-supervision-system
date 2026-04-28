@@ -314,7 +314,7 @@ export function DocumentUpload() {
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <Link to={ROUTES.COMMITTEE.DOCUMENTS}>
-            <Button variant="outline" type="button">
+            <Button variant="secondary" type="button">
               Cancel
             </Button>
           </Link>

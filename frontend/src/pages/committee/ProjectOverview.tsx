@@ -21,9 +21,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useProjectOverview } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProjectStatus, PairingStatus } from '@/types'
+import type { CommitteeProjectStatus, PairingStatus } from '@/types'
 
-const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
+const projectStatusConfig: Record<CommitteeProjectStatus, { label: string; color: string; bgColor: string }> = {
   NOT_STARTED: { label: 'Not Started', color: 'text-stone-600', bgColor: 'bg-stone-100' },
   IN_PROGRESS: { label: 'In Progress', color: 'text-sky-600', bgColor: 'bg-sky-100' },
   COMPLETED: { label: 'Completed', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
@@ -46,7 +46,7 @@ const riskConfig = {
 export function ProjectOverview() {
   const [searchQuery, setSearchQuery] = useState('')
   const [cycleFilter, setCycleFilter] = useState<'FYP1' | 'FYP2' | 'ALL'>('ALL')
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'ALL'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<CommitteeProjectStatus | 'ALL'>('ALL')
   const [pairingFilter, setPairingFilter] = useState<PairingStatus | 'ALL'>('ALL')
 
   const { data, isLoading } = useProjectOverview({
@@ -102,7 +102,7 @@ export function ProjectOverview() {
           </div>
           <div className="flex gap-2">
             <Link to={ROUTES.COMMITTEE.UNPAIRED_STUDENTS}>
-              <Button variant="outline" className="border-stone-600 text-stone-200 hover:bg-stone-700">
+              <Button variant="secondary" className="border-stone-600 text-stone-200 hover:bg-stone-700">
                 <UserX className="h-4 w-4 mr-2" />
                 Unpaired ({stats.unpaired})
               </Button>
@@ -172,7 +172,7 @@ export function ProjectOverview() {
             </select>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'ALL')}
+              onChange={(e) => setStatusFilter(e.target.value as CommitteeProjectStatus | 'ALL')}
               className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Status</option>
@@ -188,7 +188,7 @@ export function ProjectOverview() {
       {/* Quick Links */}
       <div className="flex gap-3">
         <Link to={ROUTES.COMMITTEE.SUPERVISOR_LOAD}>
-          <Button variant="outline" size="sm" className="border-stone-300 hover:bg-stone-100">
+          <Button variant="secondary" size="sm" className="border-stone-300 hover:bg-stone-100">
             <Users className="h-4 w-4 mr-2" />
             Supervisor Load Analysis
           </Button>

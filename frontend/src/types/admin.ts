@@ -1,3 +1,5 @@
+import type { UserRole, UserStatus } from './auth'
+
 // ============================================
 // Admin Dashboard Types
 // ============================================
@@ -53,8 +55,7 @@ export interface AdminUserListItem {
   isLocked: boolean
 }
 
-export type UserRole = 'STUDENT' | 'SUPERVISOR' | 'FYP_COMMITTEE' | 'SYSTEM_ADMIN'
-export type UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'BLOCKED'
+// UserRole and UserStatus imported from './auth' to avoid duplicate exports
 
 export interface CreateUserRequest {
   email: string
@@ -118,7 +119,7 @@ export type ParameterCategory =
 
 export type ParameterType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON' | 'DATE'
 
-export interface SystemParameter {
+export interface AdminSystemParameter {
   parameterId: number
   key: string
   value: string
@@ -182,7 +183,7 @@ export interface UpdateCycleRequest {
 // Deadline Management Types (UC31)
 // ============================================
 
-export type DeadlineType =
+export type AdminDeadlineType =
   | 'PROPOSAL_SUBMISSION'
   | 'SUPERVISOR_SELECTION'
   | 'PROGRESS_REPORT'
@@ -192,12 +193,12 @@ export type DeadlineType =
 
 export type DeadlineStatus = 'UPCOMING' | 'ACTIVE' | 'PASSED' | 'EXTENDED'
 
-export interface Deadline {
+export interface AdminDeadline {
   deadlineId: number
   cycleId: number
   cycleName: string
   title: string
-  type: DeadlineType
+  type: AdminDeadlineType
   description?: string
   dueDate: string
   reminderDays: number[]
@@ -212,7 +213,7 @@ export interface Deadline {
 export interface CreateDeadlineRequest {
   cycleId: number
   title: string
-  type: DeadlineType
+  type: AdminDeadlineType
   description?: string
   dueDate: string
   reminderDays: number[]

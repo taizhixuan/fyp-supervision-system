@@ -388,49 +388,49 @@ export function AdminDashboard() {
 
           <div className="grid grid-cols-2 gap-3">
             <Link to={ROUTES.ADMIN.USERS}>
-              <Button variant="outline" className="w-full justify-start hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors">
                 <Users className="h-4 w-4 mr-2" />
                 Manage Users
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.PARAMETERS}>
-              <Button variant="outline" className="w-full justify-start hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-colors">
                 <Settings className="h-4 w-4 mr-2" />
                 System Settings
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.CYCLES}>
-              <Button variant="outline" className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
                 <Calendar className="h-4 w-4 mr-2" />
                 FYP Cycles
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.DEADLINES}>
-              <Button variant="outline" className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-colors">
                 <Clock className="h-4 w-4 mr-2" />
                 Deadlines
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.INTEGRATIONS}>
-              <Button variant="outline" className="w-full justify-start hover:bg-violet-50 hover:border-violet-300 hover:text-violet-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-violet-50 hover:border-violet-300 hover:text-violet-700 transition-colors">
                 <Activity className="h-4 w-4 mr-2" />
                 Integrations
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.MAINTENANCE}>
-              <Button variant="outline" className="w-full justify-start hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition-colors">
                 <HardDrive className="h-4 w-4 mr-2" />
                 Maintenance
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.AUDIT_LOGS}>
-              <Button variant="outline" className="w-full justify-start hover:bg-stone-100 hover:border-stone-400 hover:text-stone-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-stone-100 hover:border-stone-400 hover:text-stone-700 transition-colors">
                 <FileText className="h-4 w-4 mr-2" />
                 Audit Logs
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.EXPORT_CONFIG}>
-              <Button variant="outline" className="w-full justify-start hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-colors">
+              <Button variant="secondary" className="w-full justify-start hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700 transition-colors">
                 <Database className="h-4 w-4 mr-2" />
                 Export Data
               </Button>

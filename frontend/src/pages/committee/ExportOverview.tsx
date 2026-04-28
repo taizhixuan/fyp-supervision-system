@@ -15,7 +15,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useExportProjectData } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProjectStatus, PairingStatus } from '@/types'
+import type { CommitteeProjectStatus, PairingStatus } from '@/types'
 
 type ExportFormat = 'CSV' | 'PDF'
 type ExportType = 'PROJECTS' | 'STUDENTS' | 'SUPERVISORS' | 'PAIRINGS' | 'PROGRESS'
@@ -32,7 +32,7 @@ export function ExportOverview() {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('CSV')
   const [selectedType, setSelectedType] = useState<ExportType>('PROJECTS')
   const [cycleFilter, setCycleFilter] = useState<'FYP1' | 'FYP2' | 'ALL'>('ALL')
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'ALL'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<CommitteeProjectStatus | 'ALL'>('ALL')
   const [pairingFilter, setPairingFilter] = useState<PairingStatus | 'ALL'>('ALL')
 
   const exportMutation = useExportProjectData()
@@ -151,7 +151,7 @@ export function ExportOverview() {
             </label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | 'ALL')}
+              onChange={(e) => setStatusFilter(e.target.value as CommitteeProjectStatus | 'ALL')}
               className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
             >
               <option value="ALL">All Status</option>
@@ -290,7 +290,7 @@ export function ExportOverview() {
       {/* Actions */}
       <div className="flex justify-end gap-3">
         <Link to={ROUTES.COMMITTEE.PROJECTS}>
-          <Button variant="outline">Cancel</Button>
+          <Button variant="secondary">Cancel</Button>
         </Link>
         <Button onClick={handleExport} disabled={exportMutation.isPending}>
           {exportMutation.isPending ? (

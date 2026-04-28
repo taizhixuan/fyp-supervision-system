@@ -129,7 +129,7 @@ export function MaintenanceCenter() {
             </div>
           </div>
           <Link to={ROUTES.ADMIN.JOB_HISTORY}>
-            <Button variant="outline" className="border-stone-600 text-white hover:bg-stone-700">
+            <Button variant="secondary" className="border-stone-600 text-white hover:bg-stone-700">
               <History className="h-4 w-4 mr-2" />
               View Job History
             </Button>
@@ -162,7 +162,7 @@ export function MaintenanceCenter() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetchHealth()} className="border-stone-300 hover:bg-white/50">
+          <Button variant="secondary" size="sm" onClick={() => refetchHealth()} className="border-stone-300 hover:bg-white/50">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -469,7 +469,7 @@ export function MaintenanceCenter() {
 
             <div className="flex justify-end gap-3 mt-6">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setShowBackupModal(false)}
                 disabled={triggerBackupMutation.isPending}
                 className="border-stone-300"
@@ -513,7 +513,7 @@ export function MaintenanceCenter() {
 
                 <div className="flex justify-end gap-3">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       setShowRestoreModal(false)
                       setSelectedBackup(null)
@@ -559,7 +559,7 @@ export function MaintenanceCenter() {
                     </button>
                   ))}
                 <div className="flex justify-end pt-4">
-                  <Button variant="outline" onClick={() => setShowRestoreModal(false)} className="border-stone-300">
+                  <Button variant="secondary" onClick={() => setShowRestoreModal(false)} className="border-stone-300">
                     Cancel
                   </Button>
                 </div>
@@ -633,7 +633,7 @@ export function MaintenanceCenter() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowCleanupModal(false)} className="border-stone-300">
+              <Button variant="secondary" onClick={() => setShowCleanupModal(false)} className="border-stone-300">
                 Cancel
               </Button>
               <Button

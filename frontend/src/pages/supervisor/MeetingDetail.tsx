@@ -32,9 +32,9 @@ import {
   getPlatformInfo,
   buildMeetingShareMailto,
 } from '@/lib/utils/meetingPlatform'
-import type { MeetingStatus, MeetingType } from '@/types'
+import type { SvMeetingStatus, MeetingType } from '@/types'
 
-const statusConfig: Record<MeetingStatus, { label: string; color: string; bgColor: string }> = {
+const statusConfig: Record<SvMeetingStatus, { label: string; color: string; bgColor: string }> = {
   PENDING: { label: 'Pending Confirmation', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   CONFIRMED: { label: 'Confirmed', color: 'text-success-600', bgColor: 'bg-success-50' },
   COMPLETED: { label: 'Completed', color: 'text-primary-600', bgColor: 'bg-primary-50' },
@@ -186,7 +186,7 @@ export function MeetingDetail() {
         {canRespond && (
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => setShowRescheduleModal(true)}
               disabled={respondMutation.isPending}
             >
@@ -226,7 +226,7 @@ export function MeetingDetail() {
               <p className="text-sm text-neutral-500">Supervisee</p>
             </div>
             <div className="mt-4 pt-4 border-t border-neutral-200">
-              <Button variant="outline" className="w-full">
+              <Button variant="secondary" className="w-full">
                 <Mail className="h-4 w-4 mr-2" />
                 Send Email
               </Button>
@@ -386,7 +386,7 @@ export function MeetingDetail() {
               <div className="space-y-2">
                 {canRespond && (
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full"
                     onClick={() => setShowRescheduleModal(true)}
                   >
@@ -394,7 +394,7 @@ export function MeetingDetail() {
                   </Button>
                 )}
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   className="w-full text-error-600 border-error-300 hover:bg-error-50"
                   onClick={handleCancel}
                   disabled={respondMutation.isPending}
@@ -477,7 +477,7 @@ export function MeetingDetail() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowRescheduleModal(false)}>
+              <Button variant="secondary" onClick={() => setShowRescheduleModal(false)}>
                 Cancel
               </Button>
               <Button
@@ -522,7 +522,7 @@ export function MeetingDetail() {
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
+              <Button variant="secondary" onClick={() => setShowCompleteModal(false)}>
                 Cancel
               </Button>
               <Button

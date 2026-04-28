@@ -34,7 +34,7 @@ export interface RecentActivity {
 
 // Announcement Types
 export type AnnouncementScope = 'ALL' | 'FYP1' | 'FYP2' | 'PROGRAMME_CS' | 'PROGRAMME_SE' | 'PROGRAMME_DS'
-export type AnnouncementPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+export type CommitteeAnnouncementPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type AnnouncementStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
 export interface FYPAnnouncement {
@@ -42,7 +42,7 @@ export interface FYPAnnouncement {
   title: string
   content: string
   scope: AnnouncementScope
-  priority: AnnouncementPriority
+  priority: CommitteeAnnouncementPriority
   status: AnnouncementStatus
   publishAt: string
   expiresAt?: string
@@ -64,7 +64,7 @@ export interface CreateAnnouncementData {
   title: string
   content: string
   scope: AnnouncementScope
-  priority: AnnouncementPriority
+  priority: CommitteeAnnouncementPriority
   publishAt: string
   expiresAt?: string
   attachments?: File[]
@@ -124,14 +124,14 @@ export interface SubmitProposalReviewData {
 }
 
 // General Documents Types
-export type DocumentCategory = 'TEMPLATE' | 'RUBRIC' | 'HANDBOOK' | 'GUIDELINE' | 'FORM' | 'OTHER'
+export type CommitteeDocumentCategory = 'TEMPLATE' | 'RUBRIC' | 'HANDBOOK' | 'GUIDELINE' | 'FORM' | 'OTHER'
 export type DocumentVisibility = 'PUBLIC' | 'STUDENTS_ONLY' | 'SUPERVISORS_ONLY' | 'COMMITTEE_ONLY'
 
 export interface GeneralDocument {
   documentId: number
   title: string
   description?: string
-  category: DocumentCategory
+  category: CommitteeDocumentCategory
   visibility: DocumentVisibility
   fileName: string
   fileSize: number
@@ -142,10 +142,10 @@ export interface GeneralDocument {
   uploadedAt: string
   updatedAt: string
   downloadCount: number
-  versions: DocumentVersion[]
+  versions: CommitteeDocumentVersion[]
 }
 
-export interface DocumentVersion {
+export interface CommitteeDocumentVersion {
   versionId: number
   version: number
   fileName: string
@@ -156,17 +156,17 @@ export interface DocumentVersion {
   changeNotes?: string
 }
 
-export interface UploadDocumentData {
+export interface CommitteeUploadDocumentData {
   title: string
   description?: string
-  category: DocumentCategory
+  category: CommitteeDocumentCategory
   visibility: DocumentVisibility
   file: File
   changeNotes?: string
 }
 
 // Project & Pairing Types
-export type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED'
+export type CommitteeProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED'
 export type PairingStatus = 'UNPAIRED' | 'PENDING_APPROVAL' | 'PAIRED'
 
 export interface ProjectOverview {
@@ -180,7 +180,7 @@ export interface ProjectOverview {
   supervisorName?: string
   supervisorId?: string
   pairingStatus: PairingStatus
-  projectStatus: ProjectStatus
+  projectStatus: CommitteeProjectStatus
   proposalStatus: CommitteeProposalStatus
   progress: number
   lastActivity: string
@@ -240,7 +240,7 @@ export interface ProjectDetail {
   supervisorEmail?: string
   supervisorDepartment?: string
   pairingStatus: PairingStatus
-  projectStatus: ProjectStatus
+  projectStatus: CommitteeProjectStatus
   proposalStatus?: CommitteeProposalStatus
   progress: number
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'

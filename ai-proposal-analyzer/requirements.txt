@@ -6,3 +6,4 @@ transformers==4.47.1
 torch==2.5.1
 numpy==1.26.4
 scikit-learn==1.4.0
+pandas==2.1.4

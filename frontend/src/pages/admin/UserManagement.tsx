@@ -245,7 +245,7 @@ export function UserManagement() {
               </Button>
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 className="text-warning-600 border-warning-300 hover:bg-warning-50"
                 onClick={() => handleBulkAction('SUSPENDED')}
                 disabled={bulkMutation.isPending}

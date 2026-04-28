@@ -28,7 +28,7 @@ export interface SupervisorProfile {
 // Supervision request from student
 export type RequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN' | 'EXPIRED'
 
-export interface SupervisionRequest {
+export interface SvSupervisionRequest {
   requestId: number
   studentId: string
   studentName: string
@@ -58,7 +58,7 @@ export interface RequestAttachment {
 
 // Supervisee (student under supervision)
 export type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'TERMINATED'
-export type ProposalStatus = 'NOT_SUBMITTED' | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'REVISION_REQUIRED' | 'APPROVED' | 'REJECTED'
+export type SvProposalStatus = 'NOT_SUBMITTED' | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'REVISION_REQUIRED' | 'APPROVED' | 'REJECTED'
 
 export interface Supervisee {
   superviseeId: string
@@ -71,7 +71,7 @@ export interface Supervisee {
   cgpa?: number
   projectTitle: string
   projectStatus: ProjectStatus
-  proposalStatus: ProposalStatus
+  proposalStatus: SvProposalStatus
   supervisionStartDate: string
   expectedCompletionDate: string
   lastMeetingDate?: string
@@ -91,7 +91,7 @@ export interface ProposalForReview {
   studentName: string
   title: string
   version: number
-  status: ProposalStatus
+  status: SvProposalStatus
   submittedAt: string
   lastUpdatedAt: string
   content: {
@@ -113,18 +113,18 @@ export interface ProposalForReview {
     weaknesses: string[]
     analyzedAt: string
   }
-  previousVersions: ProposalVersion[]
-  feedbackHistory: ProposalFeedback[]
+  previousVersions: SvProposalVersion[]
+  feedbackHistory: SvProposalFeedback[]
 }
 
-export interface ProposalVersion {
+export interface SvProposalVersion {
   versionId: number
   version: number
   submittedAt: string
-  status: ProposalStatus
+  status: SvProposalStatus
 }
 
-export interface ProposalFeedback {
+export interface SvProposalFeedback {
   feedbackId: number
   supervisorId: string
   supervisorName: string
@@ -134,7 +134,7 @@ export interface ProposalFeedback {
 }
 
 // Meeting types for supervisor
-export type MeetingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'NO_SHOW'
+export type SvMeetingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'NO_SHOW'
 export type MeetingType = 'IN_PERSON' | 'ONLINE' | 'HYBRID'
 export type OnlinePlatform = 'MICROSOFT_TEAMS' | 'ZOOM' | 'GOOGLE_MEET' | 'WEBEX' | 'OTHER'
 
@@ -144,7 +144,7 @@ export interface SupervisorMeeting {
   studentName: string
   title: string
   type: MeetingType
-  status: MeetingStatus
+  status: SvMeetingStatus
   requestedBy: 'STUDENT' | 'SUPERVISOR'
   proposedDateTime: string
   alternativeDateTimes?: string[]
@@ -161,7 +161,7 @@ export interface SupervisorMeeting {
 }
 
 // Supervision Log for review
-export type LogStatus = 'PENDING' | 'APPROVED' | 'REVISION_REQUIRED' | 'SIGNED' | 'LOCKED'
+export type SvLogStatus = 'PENDING' | 'APPROVED' | 'REVISION_REQUIRED' | 'SIGNED' | 'LOCKED'
 
 export interface SupervisionLogForReview {
   logId: number
@@ -170,7 +170,7 @@ export interface SupervisionLogForReview {
   weekNumber: number
   weekStartDate: string
   weekEndDate: string
-  status: LogStatus
+  status: SvLogStatus
   activities: string
   progressSummary: string
   challenges?: string
@@ -192,14 +192,14 @@ export interface LogAttachment {
 }
 
 // Document types for supervisor
-export type DocumentType = 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'MEETING_NOTES' | 'REFERENCE' | 'FEEDBACK' | 'OTHER'
+export type SvDocumentType = 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'MEETING_NOTES' | 'REFERENCE' | 'FEEDBACK' | 'OTHER'
 
 export interface SuperviseeDocument {
   documentId: number
   studentId: string
   studentName: string
   title: string
-  type: DocumentType
+  type: SvDocumentType
   version: number
   fileName: string
   fileType: string

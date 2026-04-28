@@ -202,7 +202,7 @@ export function UserDetail() {
 
         <div className="flex gap-2">
           <Link to={ROUTES.ADMIN.USER_EDIT.replace(':id', user.userId)}>
-            <Button variant="outline">
+            <Button variant="secondary">
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
@@ -389,7 +389,7 @@ export function UserDetail() {
         <div className="flex flex-wrap gap-3">
           {/* Lock/Unlock */}
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={handleLockToggle}
             disabled={updateMutation.isPending}
           >
@@ -409,7 +409,7 @@ export function UserDetail() {
           {/* Resend Invite (if pending) */}
           {user.status === 'PENDING' && (
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={handleResendInvite}
               disabled={resendInviteMutation.isPending}
             >
@@ -421,7 +421,7 @@ export function UserDetail() {
           {/* Send Password Reset (for non-pending users) */}
           {user.status !== 'PENDING' && (
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={handleSendResetLink}
               disabled={sendCredentialsMutation.isPending}
             >
@@ -444,7 +444,7 @@ export function UserDetail() {
           {/* Suspend/Reactivate */}
           {user.status === 'ACTIVE' && (
             <Button
-              variant="outline"
+              variant="secondary"
               className="text-warning-600 border-warning-300 hover:bg-warning-50"
               onClick={() => setShowConfirmSuspend(true)}
             >
@@ -454,7 +454,7 @@ export function UserDetail() {
           )}
           {user.status === 'SUSPENDED' && (
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => handleStatusChange('ACTIVE')}
               disabled={updateMutation.isPending}
             >
@@ -465,7 +465,7 @@ export function UserDetail() {
 
           {/* Delete */}
           <Button
-            variant="outline"
+            variant="secondary"
             className="text-error-600 border-error-300 hover:bg-error-50"
             onClick={() => setShowConfirmDelete(true)}
           >
@@ -494,7 +494,7 @@ export function UserDetail() {
               Are you sure you want to suspend <strong>{user.fullName}</strong>'s account?
             </p>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmSuspend(false)}>
+              <Button variant="secondary" onClick={() => setShowConfirmSuspend(false)}>
                 Cancel
               </Button>
               <Button
@@ -529,7 +529,7 @@ export function UserDetail() {
               account and all associated data?
             </p>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>
+              <Button variant="secondary" onClick={() => setShowConfirmDelete(false)}>
                 Cancel
               </Button>
               <Button

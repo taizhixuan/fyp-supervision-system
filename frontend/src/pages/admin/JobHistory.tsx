@@ -115,7 +115,7 @@ export function JobHistory() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => refetch()}>
+        <Button variant="secondary" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -333,7 +333,7 @@ export function JobHistory() {
                       {/* Actions */}
                       {job.status === 'RUNNING' && (
                         <div className="flex justify-end">
-                          <Button variant="outline" size="sm">
+                          <Button variant="secondary" size="sm">
                             <Pause className="h-4 w-4 mr-1" />
                             Cancel Job
                           </Button>
@@ -366,10 +366,10 @@ export function JobHistory() {
               Showing {filteredJobs.length} of {data?.jobs.length} jobs
             </span>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
+              <Button variant="secondary" size="sm" disabled>
                 Previous
               </Button>
-              <Button variant="outline" size="sm" disabled>
+              <Button variant="secondary" size="sm" disabled>
                 Next
               </Button>
             </div>

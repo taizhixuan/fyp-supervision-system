@@ -23,9 +23,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useGeneralDocuments, useDeleteGeneralDocument } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { DocumentCategory, DocumentVisibility } from '@/types'
+import type { CommitteeDocumentCategory, DocumentVisibility } from '@/types'
 
-const categoryConfig: Record<DocumentCategory, { label: string; icon: typeof FileText; color: string; bgColor: string }> = {
+const categoryConfig: Record<CommitteeDocumentCategory, { label: string; icon: typeof FileText; color: string; bgColor: string }> = {
   TEMPLATE: { label: 'Template', icon: FileText, color: 'text-sky-600', bgColor: 'bg-sky-100' },
   RUBRIC: { label: 'Rubric', icon: FileCheck, color: 'text-amber-600', bgColor: 'bg-amber-100' },
   HANDBOOK: { label: 'Handbook', icon: Book, color: 'text-violet-600', bgColor: 'bg-violet-100' },
@@ -43,7 +43,7 @@ const visibilityConfig: Record<DocumentVisibility, { label: string; color: strin
 
 export function DocumentsManagement() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<DocumentCategory | 'ALL'>('ALL')
+  const [categoryFilter, setCategoryFilter] = useState<CommitteeDocumentCategory | 'ALL'>('ALL')
   const [visibilityFilter, setVisibilityFilter] = useState<DocumentVisibility | 'ALL'>('ALL')
 
   const { data, isLoading } = useGeneralDocuments({
@@ -129,7 +129,7 @@ export function DocumentsManagement() {
           <div className="flex gap-2">
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as DocumentCategory | 'ALL')}
+              onChange={(e) => setCategoryFilter(e.target.value as CommitteeDocumentCategory | 'ALL')}
               className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
             >
               <option value="ALL">All Categories</option>
@@ -157,7 +157,7 @@ export function DocumentsManagement() {
 
       {/* Category Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {(Object.keys(categoryConfig) as DocumentCategory[]).map((category) => {
+        {(Object.keys(categoryConfig) as CommitteeDocumentCategory[]).map((category) => {
           const config = categoryConfig[category]
           const count = data?.documents.filter((d) => d.category === category).length ?? 0
           const Icon = config.icon

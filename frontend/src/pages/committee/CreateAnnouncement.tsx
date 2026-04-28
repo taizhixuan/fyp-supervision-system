@@ -338,7 +338,7 @@ export function CreateAnnouncement() {
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <Link to={ROUTES.COMMITTEE.ANNOUNCEMENTS}>
-            <Button variant="outline" type="button">
+            <Button variant="secondary" type="button">
               Cancel
             </Button>
           </Link>

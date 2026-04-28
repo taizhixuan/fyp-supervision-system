@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import type {
   SupervisorProfile,
-  SupervisionRequest,
+  SvSupervisionRequest,
   Supervisee,
   ProposalForReview,
   SupervisorMeeting,
@@ -12,7 +12,7 @@ import type {
   SupervisorDashboardStats,
   SupervisorNotification,
   RequestStatus,
-  ProposalFeedback,
+  SvProposalFeedback,
   DocumentFeedback,
   ProfileAuditEntry,
 } from '@/types'
@@ -48,7 +48,7 @@ const MOCK_SUPERVISOR_PROFILE: SupervisorProfile = {
   updatedAt: '2025-01-15T00:00:00Z',
 }
 
-const MOCK_REQUESTS: SupervisionRequest[] = [
+const MOCK_REQUESTS: SvSupervisionRequest[] = [
   {
     requestId: 1,
     studentId: 'std-001',
@@ -812,7 +812,7 @@ export function useSupervisionRequests(status?: RequestStatus) {
           : MOCK_REQUESTS
         return { requests: filtered, total: filtered.length }
       }
-      const { data } = await apiClient.get<{ requests: SupervisionRequest[]; total: number }>(
+      const { data } = await apiClient.get<{ requests: SvSupervisionRequest[]; total: number }>(
         '/supervisor/requests',
         { params: { status } }
       )
@@ -829,7 +829,7 @@ export function useSupervisionRequest(requestId: number) {
       if (USE_MOCK_DATA) {
         return MOCK_REQUESTS.find(r => r.requestId === requestId) || null
       }
-      const { data } = await apiClient.get<SupervisionRequest>(`/supervisor/requests/${requestId}`)
+      const { data } = await apiClient.get<SvSupervisionRequest>(`/supervisor/requests/${requestId}`)
       return data
     },
     enabled: !!requestId,
@@ -926,7 +926,7 @@ export function useProposalForReview(proposalId: number) {
   })
 }
 
-export function useSubmitProposalFeedback() {
+export function useSubmitSvProposalFeedback() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({
@@ -936,7 +936,7 @@ export function useSubmitProposalFeedback() {
     }: {
       proposalId: number
       content: string
-      feedbackType: ProposalFeedback['feedbackType']
+      feedbackType: SvProposalFeedback['feedbackType']
     }) => {
       if (USE_MOCK_DATA) {
         return { success: true }

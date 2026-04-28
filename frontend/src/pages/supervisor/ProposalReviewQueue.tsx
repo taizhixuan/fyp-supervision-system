@@ -19,9 +19,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useProposalsForReview } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProposalStatus } from '@/types'
+import type { SvProposalStatus } from '@/types'
 
-const statusConfig: Record<ProposalStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+const statusConfig: Record<SvProposalStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
   NOT_SUBMITTED: { label: 'Not Submitted', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400', icon: AlertCircle },
   DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400', icon: FileText },
   SUBMITTED: { label: 'Submitted', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500', icon: Clock },

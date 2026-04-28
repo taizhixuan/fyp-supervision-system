@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useSystemParameters, useUpdateParameter } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { ParameterCategory, SystemParameter } from '@/types'
+import type { ParameterCategory, AdminSystemParameter } from '@/types'
 
 const categoryConfig: Record<ParameterCategory, { label: string; color: string; bgColor: string; icon: typeof Settings }> = {
   GENERAL: { label: 'General', color: 'text-stone-700', bgColor: 'bg-stone-100 border-stone-200', icon: Settings },
@@ -49,7 +49,7 @@ export function SystemParameters() {
     )
   })
 
-  const handleEdit = (param: SystemParameter) => {
+  const handleEdit = (param: AdminSystemParameter) => {
     setEditingParam(param.parameterId)
     setEditValue(param.value)
   }
@@ -71,7 +71,7 @@ export function SystemParameters() {
     setEditValue('')
   }
 
-  const renderValueInput = (param: SystemParameter) => {
+  const renderValueInput = (param: AdminSystemParameter) => {
     if (param.type === 'BOOLEAN') {
       return (
         <select
@@ -94,7 +94,7 @@ export function SystemParameters() {
     )
   }
 
-  const renderValue = (param: SystemParameter) => {
+  const renderValue = (param: AdminSystemParameter) => {
     if (param.type === 'BOOLEAN') {
       return (
         <span className={cn(
@@ -123,7 +123,7 @@ export function SystemParameters() {
     }
     acc[param.category].push(param)
     return acc
-  }, {} as Record<ParameterCategory, SystemParameter[]>)
+  }, {} as Record<ParameterCategory, AdminSystemParameter[]>)
 
   return (
     <div className="space-y-6">
@@ -263,15 +263,15 @@ export function SystemParameters() {
 }
 
 interface ParameterRowProps {
-  param: SystemParameter
+  param: AdminSystemParameter
   isEditing: boolean
   editValue: string
   onEdit: () => void
   onSave: () => void
   onCancel: () => void
   onValueChange: (value: string) => void
-  renderValueInput: (param: SystemParameter) => React.ReactNode
-  renderValue: (param: SystemParameter) => React.ReactNode
+  renderValueInput: (param: AdminSystemParameter) => React.ReactNode
+  renderValue: (param: AdminSystemParameter) => React.ReactNode
   isSaving: boolean
 }
 
