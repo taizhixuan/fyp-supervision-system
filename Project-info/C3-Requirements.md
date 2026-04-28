@@ -1,322 +1,4 @@
-# Chapter 3: REQUIREMENTS 
-
-## <img src="./media/media/image1.png" style="width:4.675in;height:3.36736in" />3.1 System Overview
-
-Figure 3.1 System Overview
-
-Figure 3.1 illustrates the overall architecture of the proposed FYP Supervision System. The system is implemented as a web-based client–server application. At the top of the diagram there are four user workstation icons:
-
-- a computer icon labelled Student,
-
-- a computer icon labelled Supervisor,
-
-- a computer icon labelled FYP Committee, and
-
-- a computer icon labelled System Administrator.
-
-Each icon represents a user accessing the system through a web browser on a PC or laptop. In the centre of the diagram, a cloud icon labelled Internet shows that all users connect to the system via the Internet using secure HTTP/HTTPS. Arrows from each user workstation to the Internet cloud indicate these connections.
-
-At the bottom of the diagram is the server layer. On the left, a rack-style server icon labelled FYP Web Server hosts the web application (frontend and backend) and processes all user requests. On the right, a cylindrical icon labelled Database Server (MySQL) represents the central database that stores users, projects, proposals, supervision logs, meetings, evaluation records and uploaded documents. Two-way arrows between the FYP Web Server and the Database Server indicate continuous reading and updating of data.
-
-Next to the web server, a separate box labelled AI Services contains the AI modules used by the system (e.g. Supervisor Recommendation, Proposal Analyzer, Chatbot). A two-way arrow between the FYP Web Server and the AI Services box shows that the main application invokes these components through REST APIs when intelligent support is needed.
-
-All users interact only with the FYP Web Server through the Internet; they do not access the database or AI services directly. This separation of concerns improves security, scalability and maintainability of the system.
-
-The main roles in the system are:
-
-- Student – registers projects, submits proposals and documents, books meetings and views feedback.
-
-- Supervisor – manages supervisees, reviews proposals and documents, records meetings and provides feedback.
-
-- FYP Committee – manages FYP configuration, users, project records, allocations and reporting for the faculty.
-
-- System Administrator – maintains user accounts at system level, manages backups, monitoring and technical configuration.
-
-## 3.2 System minimum requirements
-
-This section outlines the minimum hardware and software requirements necessary to run the FYP Supervision System effectively. The system is designed as a web-based application using a Spring Boot backend, MySQL database, and optional AI microservices. Therefore, both client-side (student/supervisor devices) and server-side environments must meet the minimum specifications listed below.
-
-### 3.2.1 Personal Computer (Client Side)
-
-- Processor : Intel Core i3 (2.0 GHz) or equivalent
-
-- Memory : 4 GB RAM or higher
-
-- Storage : At least 10 GB free disk space
-
-- Operating System : Windows 10 / 11, macOS, or Linux
-
-- Web Browser : Latest version of Google Chrome, Microsoft Edge, Mozilla Firefox or equivalent (JavaScript and cookies enabled)
-
-- Network : Stable broadband Internet connection (wired or Wi-Fi)
-
-- Peripherals : Keyboard, mouse/trackpad and monitor with minimum 1366 × 768 resolution
-
-These specifications are sufficient for students, supervisors, FYP Committees and system administrators to access the system via a web browser.
-
-### 3.2.2 Application Server (Web + Database + AI Services)
-
-For deployment in a small faculty environment (or on a dedicated virtual machine), the following minimum specifications are recommended:
-
-- **Processor** : Quad-core Intel Core i5 / Xeon or equivalent (2.4 GHz or higher)
-
-- **Memory** : 8 GB RAM (16 GB recommended for heavier usage)
-
-- **Storage** :
-
-  - Minimum 200 GB SSD or HDD
-
-  - Separate logical volumes for:
-
-    - Operating system and application files
-
-    - Database data and backups
-
-- **Operating System** : Windows Server 2019 / 2022, or a modern Linux distribution (e.g. Ubuntu Server LTS)
-
-- **Software Stack** :
-
-  - Java Development Kit (JDK 17 or above) for Spring Boot
-
-  - Node.js + npm for building the React frontend
-
-  - Python 3.x and Flask for AI microservices
-
-  - MySQL Server 8.x for the relational database
-
-  - Web server / reverse proxy such as Nginx or Apache HTTP Server
-
-- **Network** :
-
-  - Reliable Internet connection
-
-  - Configured firewall and HTTPS support (TLS certificate)
-
-For development and testing purposes, the client and server components may be hosted on the same physical machine (e.g. the student’s laptop), provided that the above minimum specifications are met.
-
-## 3.3 Fact-Finding Techniques
-
-### 3.2.1 Justification
-
-Different stakeholders experience the FYP supervision process in different ways. Students experience the process directly through supervisor selection, proposal submission, meetings and report writing. Supervisors and coordinators interact with internal systems such as FYP System 3.0, eBwise and email. In order to capture these experiences in a systematic way, a combination of quantitative and qualitative techniques is used.
-
-A questionnaire is suitable for collecting feedback from a relatively large number of students within a short time, and for quantifying common problems and preferences. Observation of existing systems allows the researcher to see how current tools actually behave in practice, beyond what is written in documentation. Using multiple techniques improves the validity of the requirements and reduces the risk of overlooking important issues.
-
-### 3.3.1 Questionnaire Design
-
-The questionnaire was designed and administered using Google Forms. It targeted two main groups of students in the Faculty of Computing and Informatics (FCI):
-
-1.  Completed FYP students, who had finished their Final Year Project within the last one or two trimesters and therefore experienced the full supervision process from topic selection to final submission; and
-
-2.  Current FYP students, who were taking FYP 1 or FYP 2 during the current trimester and could provide feedback on ongoing activities such as supervisor selection, proposal handling and supervision meetings.
-
-The questionnaire is divided into several sections:
-
-- **Section 1: Background Information**
-
-This section collected respondents’ current FYP status (Currently taking FYP 1, Currently taking FYP 2, Completed FYP) and the systems/platforms they used for FYP-related activities. Examples included FCI FYP System 3.0, eBwise/Moodle, Microsoft Teams, Microsoft Outlook, WhatsApp/Telegram and cloud storage services such as Google Drive or OneDrive. Multiple selections were allowed for the systems/platforms item.
-
-- **Section 2A – Experience After Completing FYP**
-
-This section was displayed only to respondents who indicated that they had completed FYP. Using a 5-point Likert scale (1 = *Strongly Disagree*, 5 = *Strongly Agree*), it measured their perceptions of:
-
-- alignment between supervisor’s research area and the FYP topic;
-
-- ease of finding and contacting a supervisor;
-
-- clarity of topic proposal and registration steps;
-
-- satisfaction with proposal submission and revision;
-
-- ease of booking and managing supervision meetings;
-
-- ease of keeping track of meeting records;
-
-- time spent checking multiple systems just to keep track of FYP information;
-
-- clarity of FYP rules, guidelines and deadlines; and
-
-- overall satisfaction with the current FYP supervision process and tools.
-
-A multiple-response question then asked them to select up to three major challenges faced during their FYP (e.g. finding a supervisor, understanding rules and deadlines, managing files across platforms).
-
-- **Section 2B – Current FYP Supervision Experience**
-
-This section was shown only to students who were currently taking FYP 1 or FYP 2. Using the same 5-point Likert scale, it captured their current experience with:
-
-- finding and contacting a supervisor;
-
-- understanding proposal and registration steps;
-
-- satisfaction with the proposal process so far;
-
-- ease of booking and tracking meetings;
-
-- fragmentation across systems;
-
-- uncertainty about deadlines and formats; and
-
-- perceived effectiveness of existing tools in supporting their FYP work.
-
-They were also asked to indicate the main challenges they were currently facing, again selecting up to three options.
-
-- **Section 3 – Interest in Proposed Features**
-
-All respondents (Completed FYP and Current FYP) answered this section. A 5-point usefulness scale (1 = *Not useful at all*, 5 = *Very useful*) was used to assess their interest in several proposed features for a new FYP supervision system:
-
-- an automatic proposal checker that highlights missing sections or unclear objectives;
-
-- a supervisor recommendation feature based on the student’s proposed topic;
-
-- a 24/7 FYP chatbot that answers common questions; and
-
-- a single integrated platform combining project registration, proposal submission, meeting logs, file uploads and announcements.
-
-#### 3.3.1.1 Analysis of Questionnaire Results
-
-An online questionnaire was conducted from 24 November 2025 to 30 November 2025, and 45 valid responses were collected from FCI students. The detailed question-by-question results, charts, and response distributions are provided in Appendix C.
-
-Among the 45 respondents, 46.7% (21) had completed FYP, 31.1% (14) were currently taking FYP 2, and 22.2% (10) were currently taking FYP 1 (Appendix C). This distribution is useful because it captures both retrospective feedback from completed students and ongoing issues faced by current students.
-
-The results show that FYP activities are not handled in a single platform. Nearly all respondents reported using multiple systems concurrently, including eBwise/Moodle (100%), Microsoft Teams (97.8%), Microsoft Outlook (95.6%), and the FCI FYP System (93.3%) (Appendix C). This confirms that students must switch across platforms to manage proposals, meetings, documents, and announcements, reinforcing the need for a unified supervision platform.
-
-Key pain points in the current supervision process. For both completed and current students, the strongest issues are consistently related to supervisor matching, proposal process clarity, and tracking supervision activities (Appendix C).
-
-- Completed students reported major difficulties in finding and contacting a suitable supervisor, understanding proposal/registration steps, and tracking meeting records, indicating that current processes are not sufficiently structured.
-
-- Current students similarly reported difficulties in finding supervisors, knowing supervisor availability, and managing FYP information across multiple tools, suggesting these problems remain unresolved for ongoing cohorts.
-
-Across both groups, the “top challenge” selections highlight three recurring themes:
-
-1.  Supervisor selection and matching (finding a supervisor and knowing who is suitable/available)
-
-2.  Fragmented file and document management across different tools
-
-3.  Meeting tracking and supervision record-keeping (meeting history, feedback, and action items)
-
-These findings directly inform the proposed system requirements, particularly the need for a searchable supervisor directory, supervisor recommendation support, a structured proposal workflow, and a centralised meeting log module.
-
-Support for the proposed system features. Respondents also showed strong interest in the proposed features of the FYP Supervision System (Appendix C). The most supported enhancements include:
-
-- Automatic proposal checking (all respondents rated it useful/very useful)
-
-- Supervisor recommendation (all respondents rated it useful/very useful)
-
-- A single integrated FYP platform combining key workflows (all respondents rated it useful/very useful)
-
-- A 24/7 FYP chatbot (the majority rated it useful/very useful)
-
-Overall, the questionnaire results provide strong quantitative justification that the current FYP supervision workflow is fragmented and difficult to manage, and that students support an integrated platform with structured supervision features and AI-assisted guidance.
-
-### 3.3.2 Observation
-
-In addition to the questionnaire, direct observation was carried out on the current FYP supervision process used in MMU FCI. The observation focused on the actual tools and workflows that students and supervisors use in the October/November 2025 trimester. The main environments observed were:
-
-- Microsoft Teams – “T2530 FYP1 (Pre-FYP)” team
-
-- Microsoft Teams – “FYP 1 T2530” team
-
-- eBwise FYP1 course site (Moodle)
-
-- FCI FYP System 3.0 (web portal)
-
-- Email (Microsoft Outlook)
-
-1)  **Supervisor–student pairing and proposal workflow**
-
-From the student’s point of view, the supervisor–student pairing process begins with information distributed through Teams. Students are expected to email supervisors individually via Outlook to ask whether the lecturer is willing to supervise their project idea or one of the available project titles.
-
-Once a supervisor has agreed, the proposal is prepared as a Word document and sent to the supervisor. Any revisions are handled through multiple rounds of comments and updated attachments. Importantly, students do not submit the proposal directly into FYP System 3.0. Instead, after the proposal is finalised, the supervisor logs into FYP System 3.0 and uploads the proposal on behalf of the student, following the faculty’s “FYP Student Proposal Submission Process”. Only proposals submitted by supervisors through the portal are reviewed by the FYP Committee, and students are explicitly told that proposals sent directly by email will not be accepted.
-
-2)  **Project registration from the student view**
-
-After a supervisor and project title have been confirmed, the student must complete several steps:
-
-1.  Access FYP System 3.0 via the MMU intranet (or VPN if off-campus).
-
-2.  Register in the system and link themselves to the selected supervisor and project title.
-
-3.  Download and upload a signed registration form so that faculty administrators can later enrol the student into the official FYP subject in the central academic system.
-
-From observation, some students have difficulty accessing the FYP System from home and ask in the Teams channel whether the link is working or whether they must use a campus lab PC. This confirms that the intranet-only access and VPN requirement are real constraints for students.
-
-3)  **Supervision and reporting workflow**
-
-After registration, the actual supervision is carried out mainly through Microsoft Teams spaces created by individual supervisors for their own supervisees.
-
-In my case, my supervisor created a class team named “FYP 1 T2530” which is used only by him and his FYP students. Within this team:
-
-- The General channel – Files tab stores the FYP 1 report template, the requirements document and the Meeting Log_FYP1_T2530.docx templates.
-
-- A private channel (for example, “P01 FYP Supervision System”) is used to share project-specific files and discussions between the supervisor and me.
-
-- Under Assignments, a series of tasks (“Meeting Log 1” to “Meeting Log 10”) act as submission slots. For every meeting, I download the meeting log template, fill in the details, and upload it back to the corresponding assignment. The supervisor opens each file to review and add comments.
-
-From informal discussion with peers, other supervisors follow a similar pattern, either by creating their own FYP Teams class or by using private channels in an existing class team to manage their supervisees. In all cases, Teams is the primary tool for meeting coordination, file sharing, and weekly meeting-log submission, while the exact team name or structure may differ between supervisors.
-
-In parallel, eBwise is used as the official course shell. It contains the FYP Handbook, interim report templates, rubrics and submission links for interim/final reports. Links to the online Meeting Log Form and weekly plan are also posted there. Therefore, day-to-day supervision (meetings, chat, file sharing) occurs mainly in Teams, while formal documents and assessment-related uploads are handled through eBwise.
-
-Throughout the trimester, email (Outlook) remains an important channel. Students use email to approach supervisors initially, to ask clarification questions, and sometimes to send updated proposals or drafts. Supervisors and coordinators also use email to broadcast important notices to groups of students, in addition to posting messages in Teams and eBwise.
-
-4)  **Overall observation**
-
-From these observations, it is clear that managing one FYP currently requires students and supervisors to juggle several tools: FYP System 3.0 for registration and official proposal submission, Microsoft Teams for meetings and weekly logs, eBwise for handbooks and report submissions, and Outlook/OneDrive for email and document sharing. There is no single system that provides an end-to-end supervision workflow.
-
-#### 3.3.2.1 Analysis of Observation Results
-
-The observations above confirm and deepen the issues highlighted by the questionnaire:
-
-1.  Manual, email-based supervisor–student pairing
-
-    1.  Students must search a contact list and individually email potential supervisors to ask if they are willing to supervise.
-
-    2.  There is no central interface that shows supervisor availability, research interests and current load in a structured, searchable way.
-
-    3.  Multiple back-and-forth emails are required before a match is finalised, and coordinators have limited real-time visibility of which students are still unpaired.
-
-    4.  This manual process explains why many respondents indicated that finding a suitable supervisor and knowing who is available are among their top challenges.
-
-2.  Separated proposal handling and student perspective
-
-    1.  Students draft proposals in Word and exchange versions via email or Teams, but only supervisors can submit proposals into FYP System 3.0.
-
-    2.  From the student’s point of view, the portal is mainly a registration and record-keeping tool; they cannot see a clear proposal workflow, submission history, or automated checks on content.
-
-    3.  This separation contributes to confusion about proposal steps and dissatisfaction with the submission and revision process.
-
-3.  Multi-step project registration with limited transparency
-
-    1.  After supervisor approval, students must: register in FYP System 3.0, link to the project, upload a signed form, and later ensure they are officially enrolled in the FYP subject.
-
-    2.  These steps are spread across different systems (FYP portal, manual forms, central academic system) and are not visualised as a single, guided process.
-
-    3.  Students who miss or misunderstand one of the steps may only discover the issue much later, which aligns with the survey finding that many feel unsure about deadlines and procedures.
-
-4.  Fragmented tools for supervision and documentation
-
-    1.  Meetings and weekly logs are handled via Teams assignments using separate Word files for each session; supervision history is therefore split across many individual documents.
-
-    2.  Report templates, handbooks and rubrics are stored on eBwise, while proposals and drafts may also reside in email threads or OneDrive folders.
-
-    3.  Because there is no unified dashboard, supervisors and students must manually open and cross-check multiple files and platforms to reconstruct the full supervision story.
-
-5.  Limited automation and lack of intelligent support
-
-    1.  None of the observed tools provide automated proposal checking, supervisor matching, or reminders based on supervision activity.
-
-    2.  Coordinators must rely on manual monitoring of Teams, eBwise and FYP System 3.0 to identify students who are at risk (for example, no recent meeting logs) or supervisors who are overloaded.
-
-    3.  This confirms that current systems mainly digitise documents but do not actively assist decision-making.
-
-Overall, the observation shows that the existing FYP supervision process at MMU FCI is spread across multiple generic platforms that were never designed as a single supervision system. Supervisor–student pairing is email-driven, proposal submission is indirect from the student’s perspective, project registration involves several disconnected steps, and supervision records are scattered among Teams, eBwise, Outlook and the FYP portal. These findings strongly justify the proposed FYP Supervision System, which will:
-
-- centralise project registration, supervision records and document management,
-
-- provide a structured, student-visible workflow for proposal submission and approval,
-
-- incorporate AI-based supervisor recommendation and proposal analysis, and
-
-- offer dashboards and meeting logs that give students, supervisors and coordinators a clear, up-to-date view of FYP progress.
+# Chapter 3: REQUIREMENTS
 
 ## 3.4 Requirements
 
@@ -830,7 +512,8 @@ Table 3.9 UC5: View AI Supervisor Recommendations
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Missing topic information → system prompts student to enter keywords.</td>
+<td>A1: Missing topic information → system prompts student to enter keywords.<br />
+<mark>A2: System filters out supervisors who are unavailable or over the supervision quota before displaying the ranked list, so only eligible supervisors are recommended.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -955,7 +638,8 @@ Table 3.11 UC7: Manage Proposal
 <td style="text-align: left;">A1: Student skips AI checker → Student saves draft and proceeds to submit directly (Steps 3–5, then Step 9–10).<br />
 A2: Student uploads file instead of form input → System extracts/stores file and creates a new version (Steps 3–5).<br />
 A3: Student edits after running AI checker → Student saves a new version, then runs AI checker again (repeat Steps 3–8) before submission.<br />
-A4: No supervisor assigned yet → System allows submission but routes to committee queue or prevents submission and prompts student to request/confirm supervisor (depends on your rules).</td>
+A4: No supervisor assigned yet → System allows submission but routes to committee queue or prevents submission and prompts student to request/confirm supervisor (depends on your rules).<br />
+<mark>A5: Student runs AI checker on the overall proposal (not a specific version) → System aggregates the latest proposal content across versions and stores the AI result at proposal level for traceability, instead of attaching it to a single version.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -1003,7 +687,7 @@ Table 3.12 UC8: View Proposal Status
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Proposal status is displayed.</td>
+<td><mark>Proposal status timeline is displayed, including the current status, AI proposal-checker results (score, missing sections, suggested improvements), and the full supervisor / committee review history with remarks and decisions.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
@@ -1183,7 +867,7 @@ Table 3.15 UC11: Manage Supervision Log
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Logs are displayed.</td>
+<td><mark>Log is saved in the corresponding state (Draft, Submitted, Signed, or Locked) depending on the action performed. Once both the student and supervisor signatures have been recorded, the system locks the log and marks it as an immutable official supervision record.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
@@ -1347,7 +1031,7 @@ Table 3.18 UC14: View Reminders and Notifications
 <tbody>
 <tr>
 <td>Use Case ID</td>
-<td>UC18</td>
+<td><mark>UC14</mark></td>
 </tr>
 <tr>
 <td>Use Case Name</td>
@@ -1359,7 +1043,7 @@ Table 3.18 UC14: View Reminders and Notifications
 </tr>
 <tr>
 <td>Description</td>
-<td>System notifies student about meetings, deadlines, and announcements.</td>
+<td>System notifies student about meetings, deadlines, and announcements <mark>through configured channels (in-app inbox and email), based on the student's notification preferences</mark>.</td>
 </tr>
 <tr>
 <td>Pre-condition</td>
@@ -1373,13 +1057,14 @@ Table 3.18 UC14: View Reminders and Notifications
 <td>Basic Path</td>
 <td><ol type="1">
 <li><p>Trigger occurs (deadline, meeting update, announcement).</p></li>
-<li><p>System sends notification.</p></li>
+<li><mark><p>System reads the student's notification preferences (channels and categories enabled).</p></li></mark>
+<li><p>System sends notification <mark>through each enabled channel (in-app, email)</mark>.</p></li>
 <li><p>Student views notification in system.</p></li>
 </ol></td>
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Student customises notification preferences.</td>
+<td>A1: Student <mark>opens notification preferences and customises which categories (meetings, proposals, announcements, deadlines) and channels (in-app / email) to receive; the system stores the preferences and applies them to subsequent notifications</mark>.</td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -1404,7 +1089,7 @@ Table 3.19 UC15: Ask Questions Using the FYP Chatbot
 <tbody>
 <tr>
 <td>Use Case ID</td>
-<td>UC19</td>
+<td><mark>UC15</mark></td>
 </tr>
 <tr>
 <td>Use Case Name</td>
@@ -1841,14 +1526,14 @@ Table 3.26 UC22: View Supervisee Progress Dashboard
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Dashboard is displayed.</td>
+<td><mark>Dashboard is displayed showing, for each supervisee: proposal status, total and recent meeting count, supervision-log compliance (submitted / signed / locked), document submission state per phase, and upcoming deadlines, with at-risk supervisees highlighted.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
 <td><ol type="1">
 <li><p>Supervisor opens progress dashboard.</p></li>
-<li><p>System aggregates supervisee progress data.</p></li>
-<li><p>System displays indicators and alerts.</p></li>
+<li><p>System aggregates supervisee progress data <mark>(proposal status, meeting count, log compliance, document submission state, upcoming deadlines)</mark>.</p></li>
+<li><p>System displays indicators and alerts <mark>and highlights supervisees who are at risk (e.g., overdue logs, missing documents, no recent meetings)</mark>.</p></li>
 </ol></td>
 </tr>
 <tr>
@@ -2322,20 +2007,20 @@ Table 3.34 UC29: Generate and Export FYP Reports
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Report generated and downloaded.</td>
+<td><mark>Report file is produced in the requested format (CSV / PDF) and the report metadata (type, title, filters, format, file path, generated-by user, timestamp, expiry) is persisted in the system so it can be re-downloaded later from the report history.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
 <td><ol type="1">
 <li><p>Admin selects report type.</p></li>
-<li><p>Admin sets filters.</p></li>
-<li><p>System generates report.</p></li>
-<li><p>Admin downloads output file.</p></li>
+<li><p>Admin sets filters <mark>and chooses output format (CSV / PDF)</mark>.</p></li>
+<li><p>System generates report <mark>and stores the report metadata (filters, format, file path, generated-by user, timestamp) for later retrieval</mark>.</p></li>
+<li><p>Admin downloads output file <mark>or accesses it later from the report history list</mark>.</p></li>
 </ol></td>
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Save report configuration for reuse.</td>
+<td>A1: Save report configuration for reuse <mark>(stored as a reusable export preset with selected fields, filters, and schedule)</mark>.</td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -2394,7 +2079,8 @@ Table 3.35 UC30: Manage User Accounts and Roles
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Disable account for security reasons.</td>
+<td>A1: Disable account for security reasons.<br />
+<mark>A2: Bulk-create user accounts from a CSV file → Admin uploads a CSV containing MMU ID, email, full name, and role; the system validates each row, creates the accounts in one batch, and reports successes and row-level errors.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -2489,7 +2175,7 @@ Table 3.37 UC32: Configure Integration and Export Settings
 </tr>
 <tr>
 <td>Description</td>
-<td>Admin configures integrations and export formats for faculty systems.</td>
+<td>Admin configures integrations and export formats for faculty systems. <mark>The use case covers two related sub-flows: (a) Integration Settings — managing third-party endpoints (e.g., MMU SSO, email service, AI services) with credentials and test connections; and (b) Export Configurations — defining reusable export presets (data type, fields, filters, format, schedule) used by reporting and data-exchange features.</mark></td>
 </tr>
 <tr>
 <td>Pre-condition</td>
@@ -2497,23 +2183,27 @@ Table 3.37 UC32: Configure Integration and Export Settings
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Integration settings stored; connection tested.</td>
+<td><mark>(a) Integration sub-flow: Integration record is stored with type, provider, endpoint, settings, and last-test result; connection is tested and status is recorded. (b) Export sub-flow: Export configuration record is stored with name, data type, format, included fields, filters, date format, and optional schedule, and is available as a reusable preset for report generation and data export.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
 <td><ol type="1">
-<li><p>Admin enters endpoints and credentials.</p></li>
-<li><p>Admin runs test connection.</p></li>
-<li><p>System saves settings.</p></li>
+<li><mark><p>Admin chooses to manage Integration Settings or Export Configurations.</p></li></mark>
+<li><p>Admin enters endpoints and credentials <mark>(integration sub-flow) or defines export name, data type, format, fields, filters, and schedule (export sub-flow)</mark>.</p></li>
+<li><p>Admin runs test connection <mark>(integration sub-flow) or previews a sample export (export sub-flow)</mark>.</p></li>
+<li><p>System saves settings <mark>and records the last-test result or last-export timestamp accordingly</mark>.</p></li>
 </ol></td>
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Disable integration temporarily.</td>
+<td>A1: Disable integration temporarily.<br />
+<mark>A2: Edit an existing export configuration → Admin updates fields, filters, or schedule; system updates the preset and the next scheduled run uses the new definition.<br />
+A3: Run an export immediately from a saved configuration → System generates the file using the preset and updates the last-export path and timestamp.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
-<td>E1: Test connection fails → system blocks or saves as disabled with error note.</td>
+<td>E1: Test connection fails → system blocks or saves as disabled with error note.<br />
+<mark>E2: Export configuration validation fails (e.g., unknown field, invalid date format) → System blocks save and displays the offending field.</mark></td>
 </tr>
 </tbody>
 </table>
@@ -2554,23 +2244,24 @@ Table 3.38 UC33: Perform System Maintenance
 </tr>
 <tr>
 <td>Postcondition</td>
-<td>Maintenance task completed and logged.</td>
+<td><mark>A maintenance job record is created with job type, status (Pending / Running / Completed / Failed), start and completion timestamps, result message and structured result data, and the triggering administrator's identity. The job result is retained for auditing and visible in the maintenance job history.</mark></td>
 </tr>
 <tr>
 <td>Basic Path</td>
 <td><ol type="1">
-<li><p>Admin selects maintenance task.</p></li>
+<li><p>Admin selects maintenance task <mark>(e.g., backup, cleanup, integrity check, cache reset)</mark>.</p></li>
 <li><p>Admin confirms execution.</p></li>
-<li><p>System runs task and logs outcome.</p></li>
+<li><p>System <mark>creates a maintenance job record (status = Running, triggered-by user recorded), runs the task, and updates the record on completion with outcome status, result data, and timestamps</mark>.</p></li>
 </ol></td>
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Schedule automatic backup.</td>
+<td>A1: Schedule automatic backup.<br />
+<mark>A2: View maintenance job history → Admin opens the job list, filters by job type or status, and inspects past runs and their result details.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
-<td>E1: Backup fails due to storage issue → system alerts and logs critical error.</td>
+<td>E1: Backup fails due to storage issue → system alerts and logs critical error <mark>and marks the maintenance job as Failed with the error message captured in the job record</mark>.</td>
 </tr>
 </tbody>
 </table>
@@ -2583,15 +2274,17 @@ Figure 3.3 Entity Relationship Diagram
 
 ### 3.6.1 ERD Overview
 
-Figure 3.3 presents the Entity Relationship Diagram (ERD) of the FYP Supervision System. The ERD models the core data structure required to support user management, project supervision workflows, proposal handling, meeting management, document storage, system communications, and administrative auditing. The USER_ACCOUNT entity serves as the central identity table for all system roles (student, supervisor, and administrators), while STUDENT_PROFILE and SUPERVISOR_PROFILE store role-specific information using optional one-to-one relationships.
+Figure 3.3 presents the Entity Relationship Diagram (ERD) of the FYP Supervision System. The ERD models the core data structure required to support user management, project supervision workflows, proposal handling, meeting management, document storage, system communications, and administrative auditing. The USER_ACCOUNT entity serves as the central identity table for all system roles (student, supervisor, and administrators), while STUDENT_PROFILE and SUPERVISOR_PROFILE store role-specific information using optional one-to-one relationships <mark>(both profile tables share their primary key with USER_ACCOUNT.user_id, and all role-based foreign keys throughout the schema reference USER_ACCOUNT.user_id directly)</mark>.
 
 Each FYP_CYCLE contains multiple PROJECT records. A project is owned by a student and may be assigned to a supervisor through foreign keys referencing USER_ACCOUNT. Students may submit SUPERVISOR_REQUEST records to request supervision, supporting the supervisor selection and assignment process.
 
-For proposal handling, each project is associated with PROPOSAL records and maintains revision history through PROPOSAL_VERSION. Automated proposal analysis results are stored in PROPOSAL_CHECK_RESULT, while review decisions and feedback are captured in PROPOSAL_REVIEW to support approval tracking and revision management.
+For proposal handling, each project is associated with PROPOSAL records and maintains revision history through PROPOSAL_VERSION. Automated proposal analysis results are stored in PROPOSAL_CHECK_RESULT, while review decisions and feedback are captured in PROPOSAL_REVIEW to support approval tracking and revision management. <mark>To support overall (proposal-level) AI checks, PROPOSAL_CHECK_RESULT may also reference a PROPOSAL directly, in addition to the version-level link, so AI evaluation can be recorded against either a specific PROPOSAL_VERSION or the proposal as a whole.</mark>
 
 Supervision meetings are managed in MEETING, and each meeting may optionally generate a corresponding MEETING_LOG (0..1). Meeting logs can be verified by both parties via MEETING_LOG_SIGNATURE before being locked as an official supervision record. Project deliverables and uploaded files are stored in PROJECT_DOCUMENT, while shared templates, rubrics, and administrative materials are stored in RESOURCE_DOCUMENT.
 
-Important dates and submissions are tracked using DEADLINE. System communication is supported through ANNOUNCEMENT, targeted audiences in ANNOUNCEMENT_AUDIENCE, and user NOTIFICATION for reminders and alerts. Chatbot interactions are recorded in CHAT_SESSION and CHAT_MESSAGE. Administrative configuration and traceability are supported through SYSTEM_PARAMETER, INTEGRATION_SETTING, and AUDIT_LOG.
+Important dates and submissions are tracked using DEADLINE. System communication is supported through ANNOUNCEMENT, targeted audiences in ANNOUNCEMENT_AUDIENCE, and user NOTIFICATION for reminders and alerts. <mark>Per-user channel and category preferences for notifications are stored in USER_NOTIFICATION_PREFERENCES, which has an optional one-to-one relationship with USER_ACCOUNT.</mark> Chatbot interactions are recorded in CHAT_SESSION and CHAT_MESSAGE. Administrative configuration and traceability are supported through SYSTEM_PARAMETER, INTEGRATION_SETTING, and AUDIT_LOG.
+
+<mark>For administrative reporting and operational tasks, three additional entities are introduced. GENERATED_REPORT records the metadata of every report produced by the FYP Committee (report type, title, format, filters, file path, expiry, and the generating user) so that previously generated reports can be retrieved later. EXPORT_CONFIG stores reusable export presets (data type, included fields, filters, output format, optional schedule, and last-export information) used by the reporting and data-exchange features. MAINTENANCE_JOB tracks system maintenance and cleanup tasks performed by the System Administrator, capturing the job type, status, start/completion timestamps, result, and the triggering administrator for full auditability.</mark>
 
 The full database table descriptions for all entities shown in Figure 3.3, including attributes, keys, constraints, and field definitions, are provided in Appendix F (ERD Table Dictionary).
 
@@ -2599,7 +2292,7 @@ The full database table descriptions for all entities shown in Figure 3.3, inclu
 
 Tables 3.47–3.50 show traceability between use cases and database tables.
 
-Table 3.47: Student Use Cases (UC1–UC19) and Main Database Tables Involved (CRUD)
+Table 3.47: Student Use Cases (UC1<mark>–UC15</mark>) and Main Database Tables Involved (CRUD)
 
 | **Use Case** | **Main Tables Involved (CRUD)** |
 |----|----|
@@ -2609,17 +2302,17 @@ Table 3.47: Student Use Cases (UC1–UC19) and Main Database Tables Involved (CR
 | UC4 – Browse and Search Supervisors | SUPERVISOR_PROFILE (R), USER_ACCOUNT (R) |
 | UC5 – View AI Supervisor Recommendations | SUPERVISOR_PROFILE (R), USER_ACCOUNT (R), AUDIT_LOG (C) |
 | UC6 – Send Supervisor Request | SUPERVISOR_REQUEST (C), NOTIFICATION (C), AUDIT_LOG (C) |
-| UC7 – Manage Proposal | PROPOSAL (C/U), PROPOSAL_VERSION (C), PROPOSAL_CHECK_RESULT (C), PROPOSAL_REVIEW (R), NOTIFICATION (C), AUDIT_LOG (C) |
-| UC8 – View Proposal Status | PROPOSAL (R), PROPOSAL_VERSION (R), PROPOSAL_REVIEW (R) |
+| UC7 – Manage Proposal | PROPOSAL (C/U), PROPOSAL_VERSION (C), PROPOSAL_CHECK_RESULT (C<mark>, version-level or proposal-level</mark>), PROPOSAL_REVIEW (R), NOTIFICATION (C), AUDIT_LOG (C) |
+| UC8 – View Proposal Status | PROPOSAL (R), PROPOSAL_VERSION (R), <mark>PROPOSAL_CHECK_RESULT (R), </mark>PROPOSAL_REVIEW (R) |
 | UC9 – View Project Registration Status | PROJECT (R), FYP_CYCLE (R) |
 | UC10 – Manage Meeting Schedule | MEETING (C/R/U), NOTIFICATION (C), AUDIT_LOG (C) |
 | UC11 – Manage Supervision Log | MEETING_LOG (C/R/U), MEETING_LOG_SIGNATURE (C/R), MEETING (R), NOTIFICATION (C), AUDIT_LOG (C) |
 | UC12 – Upload and Manage FYP Documents | PROJECT_DOCUMENT (C/R/U/D), AUDIT_LOG (C) |
 | UC13 – View FYP Guidelines, Rubrics and Deadlines | RESOURCE_DOCUMENT (R), DEADLINE (R), ANNOUNCEMENT (R) |
-| UC14 – View Reminders and Notifications | NOTIFICATION (R/U read_at) |
-| UC15 – Ask Questions Using the FYP Chatbot | CHAT_SESSION (C/R), CHAT_MESSAGE (C/R |
+| UC14 – View Reminders and Notifications | NOTIFICATION (R/U read_at)<mark>, USER_NOTIFICATION_PREFERENCES (R/U)</mark> |
+| UC15 – Ask Questions Using the FYP Chatbot | CHAT_SESSION (C/R), CHAT_MESSAGE (C/R<mark>)</mark> |
 
-Table 3.48: Supervisor Use Cases (UC1, UC20–UC30) and Main Database Tables Involved (CRUD)
+Table 3.48: Supervisor Use Cases (UC1, <mark>UC16–UC24</mark>) and Main Database Tables Involved (CRUD)
 
 | **Use Case** | **Main Tables Involved (CRUD)** |
 |:---|:---|
@@ -2634,7 +2327,7 @@ Table 3.48: Supervisor Use Cases (UC1, UC20–UC30) and Main Database Tables Inv
 | UC23 – Upload, Download and Review FYP Documents | PROJECT_DOCUMENT (C/R), AUDIT_LOG (C) |
 | UC24 – Publish FYP Announcements | ANNOUNCEMENT (C/R), ANNOUNCEMENT_AUDIENCE (C/R), NOTIFICATION (C), AUDIT_LOG (C) |
 
-Table 3.49: FYP Committee Use Cases (UC1, UC31–UC38) and Main Database Tables Involved (CRUD)
+Table 3.49: FYP Committee Use Cases (UC1, <mark>UC24–UC29</mark>) and Main Database Tables Involved (CRUD)
 
 | **Use Case** | **Main Tables Involved (CRUD)** |
 |:---|:---|
@@ -2644,21 +2337,23 @@ Table 3.49: FYP Committee Use Cases (UC1, UC31–UC38) and Main Database Tables 
 | UC26 – Review Proposal | PROPOSAL (R/U), PROPOSAL_VERSION (R), PROPOSAL_CHECK_RESULT (R), PROPOSAL_REVIEW (C), PROJECT (U), NOTIFICATION (C), AUDIT_LOG (C) |
 | UC27 – Manage General FYP Documents | RESOURCE_DOCUMENT (C/R/U/D), AUDIT_LOG (C) |
 | UC28 – View FYP Project and Pairing Overview | PROJECT (R), FYP_CYCLE (R), SUPERVISOR_PROFILE (R), STUDENT_PROFILE (R), SUPERVISOR_REQUEST (R), USER_ACCOUNT (R), AUDIT_LOG (C) |
-| UC29 – Generate and Export FYP Reports | PROJECT (R), PROPOSAL (R), MEETING_LOG (R), PROJECT_DOCUMENT (R), USER_ACCOUNT (R), AUDIT_LOG (C) |
+| UC29 – Generate and Export FYP Reports | PROJECT (R), PROPOSAL (R), MEETING_LOG (R), PROJECT_DOCUMENT (R), USER_ACCOUNT (R), <mark>GENERATED_REPORT (C/R), EXPORT_CONFIG (R), </mark>AUDIT_LOG (C) |
 
-Table 3.50: System Administrator Use Cases (UC1, UC39–UC42) and Main Database Tables Involved (CRUD)
+Table 3.50: System Administrator Use Cases (UC1, <mark>UC30–UC33</mark>) and Main Database Tables Involved (CRUD)
 
 | **Use Case** | **Main Tables Involved (CRUD)** |
 |:---|:---|
 | UC1 – Register and Log In | USER_ACCOUNT (C/R/U last_login_at), AUDIT_LOG (C) |
 | UC30 – Manage User Accounts and Roles | USER_ACCOUNT (C/R/U/D), STUDENT_PROFILE (C/R/U/D), SUPERVISOR_PROFILE (C/R/U/D), AUDIT_LOG (C) |
 | UC31 – Configure System Parameters | SYSTEM_PARAMETER (C/R/U/D), FYP_CYCLE (C/R/U/D), DEADLINE (C/R/U/D), AUDIT_LOG (C) |
-| UC32 – Configure Integration and Export Settings | INTEGRATION_SETTING (C/R/U/D), AUDIT_LOG (C) |
-| UC33 – Perform System Maintenance | AUDIT_LOG (C/R) |
+| UC32 – Configure Integration and Export Settings | INTEGRATION_SETTING (C/R/U/D), <mark>EXPORT_CONFIG (C/R/U/D), </mark>AUDIT_LOG (C) |
+| UC33 – Perform System Maintenance | <mark>MAINTENANCE_JOB (C/R/U), </mark>AUDIT_LOG (C/R) |
 
 ### 3.6.3 Sub-ERDs by Actor
 
 <img src="./media/media/image6.svg" style="width:5.54514in;height:7.15208in" />To improve readability of the complete ERD (Figure 3.3), role-based Sub-ERDs are provided to show the main entities involved in each actor’s workflow. Figures 3.4 –3.7 summarise the database entities and key relationships relevant to the Student, Supervisor, FYP Committee, and System Administrator perspectives.
+
+<mark>Note: the Student and FYP Committee Sub-ERDs should be regenerated to include USER_NOTIFICATION_PREFERENCES (Student) and GENERATED_REPORT (Committee). The System Administrator Sub-ERD should be regenerated to include EXPORT_CONFIG and MAINTENANCE_JOB.</mark>
 
 Figure 3.4 Student Sub-ERD
 
@@ -2668,6 +2363,6 @@ Figure 3.5 Supervisor Sub-ERD
 
 <img src="./media/media/image10.svg" style="width:5.72014in;height:7.44516in" />
 
-Figure 3.6 Supervisor Sub-ERD
+Figure 3.6 <mark>FYP Committee</mark> Sub-ERD
 
-<img src="./media/media/image12.svg" style="width:5.72014in;height:5.19097in" />Figure 3.7 Supervisor Sub-ERD
+<img src="./media/media/image12.svg" style="width:5.72014in;height:5.19097in" />Figure 3.7 <mark>System Administrator</mark> Sub-ERD

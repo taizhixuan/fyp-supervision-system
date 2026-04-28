@@ -42,11 +42,20 @@ This section describes all database tables used in the FYP Supervision System. E
 | Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
 |-------|------------|-----------|-------------|------------|-------------|---------|
 | SUPERVISOR_PROFILE | user_id | BIGINT | Numeric | 20 | Supervisor's user ID - links to USER_ACCOUNT (Primary Key, Foreign Key) | 2001 |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>department</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Department name</mark> | <mark>"Computing and Informatics"</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>faculty</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Faculty name</mark> | <mark>"Faculty of Computing and Informatics"</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>position</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>100</mark> | <mark>Academic position / title</mark> | <mark>"Senior Lecturer", "Associate Professor"</mark> |
 | SUPERVISOR_PROFILE | research_areas | TEXT | Text | 1000 | Research areas and expertise keywords | "Artificial Intelligence, Computer Vision, NLP" |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>expertise</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>1000</mark> | <mark>Detailed expertise / skill keywords used for AI matching</mark> | <mark>"Deep Learning, MLOps, Computer Vision"</mark> |
 | SUPERVISOR_PROFILE | supervision_quota | INT | Numeric | 3 | Maximum number of supervisees allowed | 8 |
 | SUPERVISOR_PROFILE | current_load | INT | Numeric | 3 | Current number of assigned supervisees | 5 |
 | SUPERVISOR_PROFILE | availability_status | VARCHAR | Enumeration | 20 | Supervisor availability for new students | "Available", "Not Available", "Limited" |
 | SUPERVISOR_PROFILE | preferred_project_types | TEXT | Text | 500 | Preferred project categories/types | "Research-based, Application Development" |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>bio</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>Self-introduction / biography</mark> | <mark>"PhD in Computer Science with 10 years of research experience..."</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>office_location</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>300</mark> | <mark>Physical office location</mark> | <mark>"Building A, Level 5, Room A5-12"</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>office_hours</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>300</mark> | <mark>Consultation hours</mark> | <mark>"Mon/Wed 2pm-4pm"</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>linkedin_url</mark> | <mark>VARCHAR</mark> | <mark>URL format</mark> | <mark>500</mark> | <mark>LinkedIn profile link (optional)</mark> | <mark>"https://www.linkedin.com/in/jane-doe"</mark> |
+| <mark>SUPERVISOR_PROFILE</mark> | <mark>google_scholar_url</mark> | <mark>VARCHAR</mark> | <mark>URL format</mark> | <mark>500</mark> | <mark>Google Scholar profile link (optional)</mark> | <mark>"https://scholar.google.com/citations?user=xxx"</mark> |
 | SUPERVISOR_PROFILE | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Profile last update timestamp | "2025-01-08 11:20:00" |
 
 ---
@@ -87,6 +96,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROJECT | student_user_id | BIGINT | Numeric | 20 | Project owner - student (Foreign Key) | 1001 |
 | PROJECT | supervisor_user_id | BIGINT | Numeric | 20 | Assigned supervisor (Foreign Key, nullable) | 2001 |
 | PROJECT | project_title | VARCHAR | Text | 300 | Project title | "Intelligent FYP Supervision Management System" |
+| <mark>PROJECT</mark> | <mark>description</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>5000</mark> | <mark>Project description / abstract</mark> | <mark>"This project develops an AI-assisted FYP supervision platform..."</mark> |
 | PROJECT | specialisation | VARCHAR | Text | 100 | Specialisation/category alignment | "Software Engineering" |
 | PROJECT | category | VARCHAR | Text | 50 | Project category/type | "Application Development", "Research" |
 | PROJECT | stage | VARCHAR | Enumeration | 10 | Current FYP stage | "FYP1", "FYP2" |
@@ -104,7 +114,9 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROPOSAL | project_id | BIGINT | Numeric | 20 | Related project (Foreign Key) | 3001 |
 | PROPOSAL | student_user_id | BIGINT | Numeric | 20 | Proposal owner - student (Foreign Key) | 1001 |
 | PROPOSAL | supervisor_user_id | BIGINT | Numeric | 20 | Assigned supervisor (Foreign Key, nullable) | 2001 |
+| <mark>PROPOSAL</mark> | <mark>title</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>500</mark> | <mark>Proposal title (may evolve from project_title)</mark> | <mark>"AI-driven FYP Supervision Recommendation"</mark> |
 | PROPOSAL | status | VARCHAR | Enumeration | 20 | Proposal status | "DRAFT", "SUBMITTED", "UNDER_REVIEW", "REVISION_REQUIRED", "APPROVED", "REJECTED" |
+| <mark>PROPOSAL</mark> | <mark>current_version</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Latest version number for this proposal</mark> | <mark>3</mark> |
 | PROPOSAL | created_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Proposal creation timestamp | "2025-01-22 11:00:00" |
 | PROPOSAL | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Proposal last update timestamp | "2025-01-28 09:45:00" |
 
@@ -119,6 +131,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROPOSAL_VERSION | version_no | INT | Numeric | 3 | Version number (sequential) | 1, 2, 3 |
 | PROPOSAL_VERSION | content_text | TEXT | Text | 50000 | Proposal content in text format | "1. Introduction\n1.1 Background..." |
 | PROPOSAL_VERSION | upload_file_path | VARCHAR | File path | 500 | Stored file path for uploaded document | "/uploads/proposals/4001/v1_proposal.pdf" |
+| <mark>PROPOSAL_VERSION</mark> | <mark>file_name</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>255</mark> | <mark>Original uploaded file name</mark> | <mark>"FYP_Proposal_v1.pdf"</mark> |
 | PROPOSAL_VERSION | created_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Version creation timestamp | "2025-01-22 11:15:00" |
 
 ---
@@ -128,11 +141,21 @@ This section describes all database tables used in the FYP Supervision System. E
 | Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
 |-------|------------|-----------|-------------|------------|-------------|---------|
 | PROPOSAL_CHECK_RESULT | check_id | BIGINT | Numeric | 20 | Unique check result identifier (Primary Key) | 7001 |
-| PROPOSAL_CHECK_RESULT | version_id | BIGINT | Numeric | 20 | Checked proposal version (Foreign Key) | 6001 |
+| PROPOSAL_CHECK_RESULT | version_id | BIGINT | Numeric | 20 | Checked proposal version (Foreign Key, <mark>nullable for proposal-level checks</mark>) | 6001 |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>proposal_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Proposal directly checked (Foreign Key, nullable for version-level checks)</mark> | <mark>4001</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>checked_by</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>100</mark> | <mark>Source/identifier of the check (AI service name or user)</mark> | <mark>"AI_PROPOSAL_ANALYZER"</mark> |
 | PROPOSAL_CHECK_RESULT | overall_score | INT | Numeric | 3 | Overall completeness/quality score (0-100) | 85 |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>feasibility_score</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Feasibility sub-score (0-100)</mark> | <mark>80</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>innovation_score</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Innovation sub-score (0-100)</mark> | <mark>78</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>clarity_score</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Clarity sub-score (0-100)</mark> | <mark>90</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>scope_score</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Scope sub-score (0-100)</mark> | <mark>82</mark> |
 | PROPOSAL_CHECK_RESULT | issues_summary | TEXT | Text | 2000 | Summary of issues detected by AI | "Missing methodology section details" |
 | PROPOSAL_CHECK_RESULT | missing_sections | TEXT | Text | 1000 | List of missing sections | "Literature Review, Timeline" |
 | PROPOSAL_CHECK_RESULT | suggested_improvements | TEXT | Text | 3000 | AI-generated improvement suggestions | "Consider adding more specific objectives..." |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>strengths</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>AI-detected strengths of the proposal</mark> | <mark>"Strong technical foundation; clear objectives"</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>weaknesses</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>AI-detected weaknesses of the proposal</mark> | <mark>"Methodology lacks evaluation metrics"</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>plagiarism_score</mark> | <mark>DECIMAL</mark> | <mark>Numeric (5,2)</mark> | <mark>6</mark> | <mark>Plagiarism similarity percentage (nullable)</mark> | <mark>12.50</mark> |
+| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>remarks</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>Additional remarks attached to the check result</mark> | <mark>"Run on submitted v3"</mark> |
 | PROPOSAL_CHECK_RESULT | checked_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp of check | "2025-01-22 11:20:00" |
 
 ---
@@ -147,6 +170,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROPOSAL_REVIEW | reviewer_role | VARCHAR | Enumeration | 15 | Role of reviewer | "SUPERVISOR", "FYP_ADMIN" |
 | PROPOSAL_REVIEW | decision | VARCHAR | Enumeration | 20 | Review decision | "APPROVE", "REJECT", "REQUEST_REVISION" |
 | PROPOSAL_REVIEW | remarks | TEXT | Text | 3000 | Review comments and feedback | "Good proposal, minor revisions needed..." |
+| <mark>PROPOSAL_REVIEW</mark> | <mark>internal_notes</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>3000</mark> | <mark>Internal reviewer notes (not shown to student)</mark> | <mark>"Coordinate with second supervisor on scope"</mark> |
 | PROPOSAL_REVIEW | reviewed_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Review timestamp | "2025-01-30 16:00:00" |
 
 ---
@@ -311,6 +335,13 @@ This section describes all database tables used in the FYP Supervision System. E
 | SYSTEM_PARAMETER | param_id | BIGINT | Numeric | 20 | Unique parameter identifier (Primary Key) | 20001 |
 | SYSTEM_PARAMETER | param_key | VARCHAR | Text | 100 | Unique configuration key (Unique Key) | "max_supervision_quota", "proposal_deadline_reminder_days" |
 | SYSTEM_PARAMETER | param_value | VARCHAR | Text | 500 | Configuration value | "10", "7" |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>param_type</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Value type used for validation/UI</mark> | <mark>"INTEGER", "STRING", "BOOLEAN", "JSON"</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>category</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>100</mark> | <mark>Logical grouping for the admin UI</mark> | <mark>"Supervision", "Proposal", "Notifications"</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>label</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Human-readable label shown in admin UI</mark> | <mark>"Maximum supervision quota per supervisor"</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>description</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>Long description / help text</mark> | <mark>"Hard cap on supervisees a single supervisor can take..."</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>default_value</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>500</mark> | <mark>Factory default value</mark> | <mark>"8"</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>is_editable</mark> | <mark>BOOLEAN</mark> | <mark>Boolean</mark> | <mark>1</mark> | <mark>Whether admin may edit this parameter</mark> | <mark>true</mark> |
+| <mark>SYSTEM_PARAMETER</mark> | <mark>validation_rules</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>1000</mark> | <mark>Validation rules as JSON (min/max/regex/enum)</mark> | <mark>"{\"min\":1,\"max\":15}"</mark> |
 | SYSTEM_PARAMETER | updated_by_user_id | BIGINT | Numeric | 20 | Admin who last updated (Foreign Key) | 3001 |
 | SYSTEM_PARAMETER | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Update timestamp | "2025-01-05 12:00:00" |
 
@@ -321,9 +352,15 @@ This section describes all database tables used in the FYP Supervision System. E
 | Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
 |-------|------------|-----------|-------------|------------|-------------|---------|
 | INTEGRATION_SETTING | integration_id | BIGINT | Numeric | 20 | Unique integration identifier (Primary Key) | 21001 |
-| INTEGRATION_SETTING | name | VARCHAR | Text | 100 | Integration name | "AI Service", "Email Gateway", "SSO Provider" |
+| INTEGRATION_SETTING | name | VARCHAR | Text | 200 | Integration name | "AI Service", "Email Gateway", "SSO Provider" |
+| <mark>INTEGRATION_SETTING</mark> | <mark>integration_type</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Type/category of integration</mark> | <mark>"AI", "EMAIL", "SSO", "STORAGE"</mark> |
+| <mark>INTEGRATION_SETTING</mark> | <mark>provider</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>100</mark> | <mark>Vendor / provider name</mark> | <mark>"OpenAI", "SendGrid", "MMU SSO"</mark> |
+| <mark>INTEGRATION_SETTING</mark> | <mark>description</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>1000</mark> | <mark>Short description of what this integration is for</mark> | <mark>"Proposal AI analysis service"</mark> |
 | INTEGRATION_SETTING | endpoint_url | VARCHAR | URL format | 500 | Endpoint address | "https://api.openai.com/v1/chat/completions" |
-| INTEGRATION_SETTING | status | VARCHAR | Enumeration | 15 | Integration status | "ENABLED", "DISABLED" |
+| <mark>INTEGRATION_SETTING</mark> | <mark>settings_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Provider-specific settings (auth, headers, options) as JSON</mark> | <mark>"{\"auth\":\"bearer\",\"timeout_ms\":15000}"</mark> |
+| INTEGRATION_SETTING | status | VARCHAR | Enumeration | 30 | Integration status | "ACTIVE", "INACTIVE", "ERROR" |
+| <mark>INTEGRATION_SETTING</mark> | <mark>last_tested_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Timestamp when admin last ran a connection test</mark> | <mark>"2026-04-20 09:30:00"</mark> |
+| <mark>INTEGRATION_SETTING</mark> | <mark>last_test_result</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Result of the last connection test</mark> | <mark>"SUCCESS", "FAILED"</mark> |
 | INTEGRATION_SETTING | updated_by_user_id | BIGINT | Numeric | 20 | Admin who last updated (Foreign Key) | 3001 |
 | INTEGRATION_SETTING | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Update timestamp | "2025-01-10 08:00:00" |
 
@@ -338,8 +375,74 @@ This section describes all database tables used in the FYP Supervision System. E
 | AUDIT_LOG | action | VARCHAR | Enumeration | 20 | Action type | "CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT" |
 | AUDIT_LOG | entity_name | VARCHAR | Text | 50 | Entity/table affected | "PROJECT", "PROPOSAL", "MEETING" |
 | AUDIT_LOG | entity_id | BIGINT | Numeric | 20 | Affected record ID | 3001 |
+| <mark>AUDIT_LOG</mark> | <mark>old_value</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Snapshot of the affected record before the change</mark> | <mark>"{\"status\":\"DRAFT\"}"</mark> |
+| <mark>AUDIT_LOG</mark> | <mark>new_value</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Snapshot of the affected record after the change</mark> | <mark>"{\"status\":\"SUBMITTED\"}"</mark> |
+| <mark>AUDIT_LOG</mark> | <mark>ip_address</mark> | <mark>VARCHAR</mark> | <mark>IPv4/IPv6</mark> | <mark>45</mark> | <mark>IP address of the request that caused the action</mark> | <mark>"203.0.113.42"</mark> |
+| <mark>AUDIT_LOG</mark> | <mark>user_agent</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>500</mark> | <mark>User agent string of the originating request</mark> | <mark>"Mozilla/5.0 (Windows NT 10.0; Win64) Chrome/124"</mark> |
 | AUDIT_LOG | created_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp of action | "2025-01-27 14:30:00" |
 | AUDIT_LOG | details | TEXT | JSON/Text | 5000 | Extra details (before/after values, metadata) | "{\"old_status\": \"DRAFT\", \"new_status\": \"SUBMITTED\"}" |
+
+---
+
+<mark>### USER_NOTIFICATION_PREFERENCES</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>USER_NOTIFICATION_PREFERENCES</mark> | <mark>user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Owning user (Primary Key, Foreign Key → USER_ACCOUNT)</mark> | <mark>1001</mark> |
+| <mark>USER_NOTIFICATION_PREFERENCES</mark> | <mark>preferences_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Per-channel and per-category preferences as JSON</mark> | <mark>"{\"email\":true,\"in_app\":true,\"categories\":{\"meeting\":true,\"deadline\":true}}"</mark> |
+| <mark>USER_NOTIFICATION_PREFERENCES</mark> | <mark>updated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last update timestamp</mark> | <mark>"2026-04-15 13:00:00"</mark> |
+
+---
+
+<mark>### GENERATED_REPORT</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>GENERATED_REPORT</mark> | <mark>report_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique report identifier (Primary Key)</mark> | <mark>30001</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>report_type</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Type of report</mark> | <mark>"PAIRING_STATUS", "APPROVED_PROJECTS", "LOG_COMPLIANCE"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>title</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>500</mark> | <mark>Display title of the report</mark> | <mark>"Pairing Status — Cycle T2630"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>generated_by_user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>User who generated the report (Foreign Key)</mark> | <mark>4001</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>generated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Generation timestamp</mark> | <mark>"2026-04-25 10:00:00"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>format</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>20</mark> | <mark>Output file format</mark> | <mark>"CSV", "PDF"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>file_path</mark> | <mark>VARCHAR</mark> | <mark>File path</mark> | <mark>500</mark> | <mark>Storage path of the generated file</mark> | <mark>"/exports/pairing_t2630_2026-04-25.csv"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>filters_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Filters used to produce the report</mark> | <mark>"{\"cycle\":\"T2630\",\"programme\":\"BCS\"}"</mark> |
+| <mark>GENERATED_REPORT</mark> | <mark>expires_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Expiry time after which the file may be purged (nullable)</mark> | <mark>"2026-07-25 10:00:00"</mark> |
+
+---
+
+<mark>### EXPORT_CONFIG</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>EXPORT_CONFIG</mark> | <mark>config_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique export configuration identifier (Primary Key)</mark> | <mark>40001</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>name</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Preset name shown in admin UI</mark> | <mark>"Weekly Approved Projects"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>data_type</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Source data set</mark> | <mark>"PROJECTS", "PROPOSALS", "MEETING_LOGS"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>format</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>20</mark> | <mark>Output format</mark> | <mark>"CSV", "PDF"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>include_headers</mark> | <mark>BOOLEAN</mark> | <mark>Boolean</mark> | <mark>1</mark> | <mark>Whether to include header row</mark> | <mark>true</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>date_format</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>50</mark> | <mark>Date format pattern used in the export</mark> | <mark>"yyyy-MM-dd"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>fields_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Selected fields (and order) as JSON</mark> | <mark>"[\"project_id\",\"title\",\"supervisor\"]"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>filters_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Filter criteria as JSON</mark> | <mark>"{\"status\":\"APPROVED\",\"cycle\":\"T2630\"}"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>schedule_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>1000</mark> | <mark>Optional schedule (cron-like) as JSON</mark> | <mark>"{\"cron\":\"0 8 * * MON\"}"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>last_export_path</mark> | <mark>VARCHAR</mark> | <mark>File path</mark> | <mark>500</mark> | <mark>Path of the most recent export file produced</mark> | <mark>"/exports/projects_2026-04-22.csv"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>last_export_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Timestamp of the most recent run</mark> | <mark>"2026-04-22 08:00:00"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>created_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Creation timestamp</mark> | <mark>"2026-04-01 09:00:00"</mark> |
+| <mark>EXPORT_CONFIG</mark> | <mark>updated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last update timestamp</mark> | <mark>"2026-04-22 08:00:05"</mark> |
+
+---
+
+<mark>### MAINTENANCE_JOB</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>MAINTENANCE_JOB</mark> | <mark>job_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique job identifier (Primary Key)</mark> | <mark>50001</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>job_type</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>50</mark> | <mark>Maintenance job type</mark> | <mark>"BACKUP", "HEALTH_CHECK", "CLEANUP", "INTEGRITY_CHECK"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>status</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>30</mark> | <mark>Current job status</mark> | <mark>"PENDING", "RUNNING", "COMPLETED", "FAILED"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>started_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Time the job started running (nullable)</mark> | <mark>"2026-04-28 02:00:00"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>completed_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Time the job finished (nullable)</mark> | <mark>"2026-04-28 02:08:00"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>message</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>Human-readable status / error message</mark> | <mark>"Backup completed (812 MB)"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>result_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Structured result data for the job</mark> | <mark>"{\"size_mb\":812,\"path\":\"/backups/2026-04-28.sql.gz\"}"</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>triggered_by_user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Admin who triggered the job (Foreign Key, nullable for system runs)</mark> | <mark>3001</mark> |
+| <mark>MAINTENANCE_JOB</mark> | <mark>created_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Job record creation timestamp</mark> | <mark>"2026-04-28 02:00:00"</mark> |
 
 ---
 
@@ -349,14 +452,14 @@ This section describes all database tables used in the FYP Supervision System. E
 |-----|------------|-------------|--------------|
 | 1 | USER_ACCOUNT | Stores all user accounts (students, supervisors, admins) | 10 |
 | 2 | STUDENT_PROFILE | Extended profile information for students | 7 |
-| 3 | SUPERVISOR_PROFILE | Extended profile information for supervisors | 7 |
+| 3 | SUPERVISOR_PROFILE | Extended profile information for supervisors | <mark>16</mark> |
 | 4 | FYP_CYCLE | FYP academic cycles/terms | 5 |
 | 5 | SUPERVISOR_REQUEST | Student requests to supervisors | 8 |
-| 6 | PROJECT | FYP projects | 11 |
-| 7 | PROPOSAL | Project proposals | 7 |
-| 8 | PROPOSAL_VERSION | Versioned proposal content | 6 |
-| 9 | PROPOSAL_CHECK_RESULT | AI-generated proposal check results | 7 |
-| 10 | PROPOSAL_REVIEW | Proposal review records | 7 |
+| 6 | PROJECT | FYP projects | <mark>12</mark> |
+| 7 | PROPOSAL | Project proposals | <mark>9</mark> |
+| 8 | PROPOSAL_VERSION | Versioned proposal content | <mark>7</mark> |
+| 9 | PROPOSAL_CHECK_RESULT | AI-generated proposal check results | <mark>17</mark> |
+| 10 | PROPOSAL_REVIEW | Proposal review records | <mark>8</mark> |
 | 11 | MEETING | Meeting scheduling information | 11 |
 | 12 | MEETING_LOG | Meeting log records | 10 |
 | 13 | MEETING_LOG_SIGNATURE | Digital signatures for meeting logs | 5 |
@@ -368,9 +471,13 @@ This section describes all database tables used in the FYP Supervision System. E
 | 19 | NOTIFICATION | User notifications | 7 |
 | 20 | CHAT_SESSION | AI chatbot sessions | 4 |
 | 21 | CHAT_MESSAGE | AI chatbot messages | 6 |
-| 22 | SYSTEM_PARAMETER | System configuration parameters | 5 |
-| 23 | INTEGRATION_SETTING | External integration settings | 6 |
-| 24 | AUDIT_LOG | System audit trail | 7 |
+| 22 | SYSTEM_PARAMETER | System configuration parameters | <mark>12</mark> |
+| 23 | INTEGRATION_SETTING | External integration settings | <mark>12</mark> |
+| 24 | AUDIT_LOG | System audit trail | <mark>11</mark> |
+| <mark>25</mark> | <mark>USER_NOTIFICATION_PREFERENCES</mark> | <mark>Per-user notification channel and category preferences (UC14)</mark> | <mark>3</mark> |
+| <mark>26</mark> | <mark>GENERATED_REPORT</mark> | <mark>Persisted metadata of generated committee reports (UC29)</mark> | <mark>9</mark> |
+| <mark>27</mark> | <mark>EXPORT_CONFIG</mark> | <mark>Reusable export presets used by reporting / data exchange (UC32)</mark> | <mark>13</mark> |
+| <mark>28</mark> | <mark>MAINTENANCE_JOB</mark> | <mark>Tracks maintenance / cleanup jobs and outcomes (UC33)</mark> | <mark>9</mark> |
 
-**Total Tables: 24**
+**Total Tables: <mark>28</mark>**
 **Total Fields: 169**

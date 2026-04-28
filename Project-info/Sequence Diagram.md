@@ -288,6 +288,8 @@ sequenceDiagram
 
 ## 4.2.5 UC5 View AI Supervisor Recommendations (Student)
 
+<mark>**FYP2 update:** added quota/availability filtering step (UC5 A2) before recommendations are returned.</mark>
+
 **Figure 4.15 UC5 View AI Supervisor Recommendations Sequence Diagram**
 
 ### Mermaid code
@@ -316,7 +318,11 @@ sequenceDiagram
     BE->>REC: Request recommendations using student data
     REC->>AI: POST /recommendSupervisor
     AI-->>REC: Recommended supervisors with scores
-    REC-->>BE: Recommendations result
+    %% NEW (FYP2): filter by availability_status and supervision_quota vs current_load
+    REC->>DB: Load supervisor availability and load
+    DB-->>REC: Availability and current_load per supervisor
+    REC->>REC: Filter out unavailable or over-quota supervisors (A2)
+    REC-->>BE: Filtered ranked recommendations
     BE-->>FE: 200 Recommendations
     FE-->>STU: Display ranked supervisor recommendations
   else Student has no proposal topic
@@ -344,11 +350,13 @@ sequenceDiagram
     
 5. If a proposal topic exists, backend calls the AI recommendation service and receives ranked supervisors with scores.
     
-6. Frontend displays the recommended supervisors.
+<mark>6. Recommendation Service Client loads each candidate supervisor's `availability_status` and `current_load` vs `supervision_quota` and removes unavailable or over-quota supervisors before returning the ranked list (A2).</mark>
     
-7. If no proposal topic exists, the system shows guidance to submit a proposal/topic first.
+7. Frontend displays the recommended supervisors.
     
-8. If errors occur, the system logs the failure and displays an error message.
+8. If no proposal topic exists, the system shows guidance to submit a proposal/topic first.
+    
+9. If errors occur, the system logs the failure and displays an error message.
     
 
 ---
@@ -427,6 +435,8 @@ sequenceDiagram
 
 ## 4.2.7 UC7 Manage Proposal (Student)
 
+<mark>**FYP2 update:** added on-demand AI checker that can run at proposal level (not only on submit) — backs UC7 A5 and the proposal-level link in `PROPOSAL_CHECK_RESULT.proposal_id`.</mark>
+
 **Figure 4.17 UC7 Manage Proposal Sequence Diagram**
 
 ### Mermaid code
@@ -487,6 +497,24 @@ sequenceDiagram
     FE-->>STU: Show file uploaded status
   end
 
+  %% NEW (FYP2): on-demand AI check (A5) — proposal-level, decoupled from submission
+  alt Student runs AI checker on proposal (A5)
+    STU->>FE: Click Run AI Check
+    FE->>BE: POST /student/proposal/ai-check
+    BE->>AUTH: Validate token and role
+    AUTH-->>BE: Authorized
+    BE->>AIClient: Request proposal analysis (proposal-level)
+    AIClient->>AI: POST /analyzeProposal
+    AI-->>AIClient: Analysis result
+    AIClient-->>BE: Analysis result
+    BE->>PROP: Save analysis result at proposal level
+    PROP->>DB: INSERT proposal_check_result (proposal_id, version_id NULL)
+    DB-->>PROP: Saved
+    PROP-->>BE: Saved
+    BE-->>FE: 200 AI feedback
+    FE-->>STU: Display AI score, missing sections and improvements
+  end
+
   alt Student submits proposal for review
     STU->>FE: Click Submit proposal
     FE->>BE: POST /student/proposal/submit
@@ -502,7 +530,7 @@ sequenceDiagram
     AI-->>AIClient: Analysis result
     AIClient-->>BE: Analysis result
     BE->>PROP: Save analysis result
-    PROP->>DB: INSERT analysis result
+    PROP->>DB: INSERT analysis result (linked to new version_id)
     DB-->>PROP: Saved
 
     BE->>NOTI: Notify supervisor about new submission
@@ -533,17 +561,21 @@ sequenceDiagram
     
 5. If the student uploads a proposal file, the frontend sends `POST /student/proposal/file`; the system stores the file in **File Storage** and saves its reference in **MySQL**.
     
-6. If the student submits the proposal, the backend updates the proposal status to submitted, creates a new version, and triggers the **AI Proposal Analyzer**.
+<mark>6. If the student runs the AI checker on demand (A5), the backend calls the AI Proposal Analyzer and stores the result in `proposal_check_result` at the proposal level (`proposal_id` set, `version_id` left null), so the AI feedback is available without having to submit a new version.</mark>
     
-7. The AI analysis result is saved and returned to the student, and the supervisor is notified about the submission.
+7. If the student submits the proposal, the backend updates the proposal status to submitted, creates a new version, and triggers the **AI Proposal Analyzer**.
     
-8. Any validation or system error is logged and an error message is shown to the student.
+8. The AI analysis result is saved and returned to the student, and the supervisor is notified about the submission.
+    
+9. Any validation or system error is logged and an error message is shown to the student.
     
 
 ---
 
 If your draw.io Mermaid renderer complains about **multiple `alt` blocks** in UC7, tell me and I’ll rewrite UC7 into **one single `alt` structure** (some versions are picky).
 ## 4.2.8 UC8 View Proposal Status (Student)
+
+<mark>**FYP2 update:** the timeline now includes AI proposal-checker results alongside review history.</mark>
 
 **Figure 4.18 UC8 View Proposal Status Sequence Diagram**
 
@@ -568,9 +600,12 @@ sequenceDiagram
   BE->>PROP: Load proposal status timeline and feedback
   PROP->>DB: SELECT proposal and reviews
   DB-->>PROP: Proposal status and feedback
-  PROP-->>BE: Status timeline and feedback
+  %% NEW (FYP2): also load AI check results to show in the timeline
+  PROP->>DB: SELECT proposal_check_result by proposal_id
+  DB-->>PROP: AI check results (latest per version + proposal-level)
+  PROP-->>BE: Status timeline, AI results and review feedback
   BE-->>FE: 200 Status data
-  FE-->>STU: Display status timeline and feedback
+  FE-->>STU: Display status timeline, AI checker results and reviewer feedback
 
   alt Revision requested (A1)
     FE-->>STU: Display required changes and edit link
@@ -593,9 +628,9 @@ sequenceDiagram
     
 3. Backend validates the session using **Auth and RBAC**.
     
-4. Proposal Service retrieves proposal status timeline and supervisor feedback from **MySQL**.
+4. Proposal Service retrieves proposal status timeline and supervisor feedback from **MySQL** <mark>and additionally loads AI checker results from `proposal_check_result` (both version-level and proposal-level entries)</mark>.
     
-5. System returns the status data and the frontend displays the timeline and feedback.
+5. System returns the status data and the frontend displays the timeline, <mark>AI checker results,</mark> and feedback.
     
 6. If revision is requested (A1), the system highlights required changes and provides an edit link.
     
@@ -1104,6 +1139,8 @@ sequenceDiagram
 
 ## 4.2.14 UC14 View Reminders and Notifications (Student)
 
+<mark>**FYP2 update:** notifications are now filtered by per-user preferences (`user_notification_preferences`) before delivery and dispatched to the configured channels (in-app inbox + email).</mark>
+
 **Figure 4.24 UC14 View Reminders and Notifications Sequence Diagram**
 
 ### Mermaid
@@ -1115,14 +1152,28 @@ sequenceDiagram
   participant TRG as Trigger Event
   participant NOTI as Notification Service
   participant DB as MySQL
+  participant MAIL as Email Service
   participant FE as React SPA
   participant BE as Spring Boot API
   participant AUTH as Auth and RBAC
   participant AUD as Audit Log
 
   TRG->>NOTI: Deadline meeting update announcement event
-  NOTI->>DB: Create notification record
-  DB-->>NOTI: Saved
+  %% NEW (FYP2): load user preferences before delivery
+  NOTI->>DB: Load user_notification_preferences (channels, categories)
+  DB-->>NOTI: Preferences (in-app, email enabled per category)
+
+  alt Category disabled by user
+    NOTI->>NOTI: Skip notification per user preference
+  else Category enabled
+    NOTI->>DB: Create in-app notification record
+    DB-->>NOTI: Saved
+    %% NEW (FYP2): branch by enabled channel
+    alt Email channel enabled
+      NOTI->>MAIL: Send email notification
+      MAIL-->>NOTI: Email queued or sent
+    end
+  end
 
   alt Delivery failure (E1)
     NOTI->>AUD: Log delivery failure and schedule retry
@@ -1155,13 +1206,15 @@ sequenceDiagram
 
 1. A trigger event occurs (deadline, meeting update, or announcement).
     
-2. Notification Service creates a notification record in **MySQL**.
+<mark>2. Notification Service loads the recipient's `user_notification_preferences` and skips delivery if the category is disabled.</mark>
     
-3. If delivery fails (E1), the system logs the failure and retries based on rules; otherwise delivery status is updated.
+<mark>3. If the category is enabled, an in-app notification record is created; if the email channel is also enabled in preferences, the email service is invoked in addition.</mark>
     
-4. Student opens the **Notifications** page; system retrieves and displays notifications.
+4. If delivery fails (E1), the system logs the failure and retries based on rules; otherwise delivery status is updated.
     
-5. Student may update notification preferences (A1); the system saves the updated preferences.
+5. Student opens the **Notifications** page; system retrieves and displays notifications.
+    
+6. Student may update notification preferences (A1); the system saves the updated preferences.
     
 
 ---
@@ -1746,6 +1799,8 @@ sequenceDiagram
 
 ## 4.2.22 UC22 View Supervisee Progress Dashboard (Supervisor)
 
+<mark>**FYP2 update:** dashboard now aggregates explicit per-supervisee indicators (proposal status, meeting count, log compliance, document submission state, deadlines) and flags at-risk supervisees.</mark>
+
 **Figure 4.32 UC22 View Supervisee Progress Dashboard Sequence Diagram**
 
 ### Mermaid
@@ -1767,11 +1822,22 @@ sequenceDiagram
   AUTH-->>BE: Authorized
 
   BE->>DASH: Load progress summary for supervisees
-  DASH->>DB: SELECT proposal status meeting log and document summary
-  DB-->>DASH: Progress data
-  DASH-->>BE: Progress data
+  %% NEW (FYP2): explicit aggregations per supervisee
+  DASH->>DB: SELECT proposal status per supervisee
+  DB-->>DASH: Proposal statuses
+  DASH->>DB: COUNT meetings (total and recent) per supervisee
+  DB-->>DASH: Meeting counts
+  DASH->>DB: Aggregate meeting log compliance (submitted/signed/locked)
+  DB-->>DASH: Log compliance
+  DASH->>DB: Aggregate document submission state per phase
+  DB-->>DASH: Document state
+  DASH->>DB: SELECT upcoming deadlines for cycle
+  DB-->>DASH: Deadlines
+  %% NEW (FYP2): risk evaluation
+  DASH->>DASH: Compute at-risk flag (overdue logs, missing docs, no recent meetings)
+  DASH-->>BE: Aggregated progress data with risk flags
   BE-->>FE: 200 Progress data
-  FE-->>SUP: Display progress cards and alerts
+  FE-->>SUP: Display progress cards, deadlines and at-risk highlights
 
   alt Data retrieval error
     BE->>AUD: Log progress dashboard error
@@ -1785,11 +1851,13 @@ sequenceDiagram
 
 1. Supervisor opens **Progress Dashboard**.
     
-2. System loads supervisee progress summary from **MySQL**.
+<mark>2. Progress Dashboard Service loads, per supervisee, the proposal status, total and recent meeting count, supervision-log compliance (submitted / signed / locked), document submission state per phase, and upcoming deadlines.</mark>
     
-3. Frontend displays progress cards and alerts.
+<mark>3. Service computes an at-risk flag for each supervisee based on overdue logs, missing documents and no recent meetings.</mark>
     
-4. Errors are logged and displayed.
+4. Frontend displays progress cards, deadlines and at-risk highlights.
+    
+5. Errors are logged and displayed.
     
 
 ---
@@ -2224,6 +2292,8 @@ sequenceDiagram
 
 ## 4.2.29 UC29 Generate and Export FYP Reports (FYP Committee)
 
+<mark>**FYP2 update:** generated report metadata is now persisted in `generated_report` (type, title, filters, format, file path, generated-by user, expires_at) so committees can re-download from a report history list.</mark>
+
 **Figure 4.39 UC29 Generate and Export FYP Reports Sequence Diagram**
 
 ### Mermaid
@@ -2247,19 +2317,40 @@ sequenceDiagram
   BE-->>FE: 200 Report options
   FE-->>COM: Display report filters and types
 
-  COM->>FE: Select report type and filters and click Generate
+  COM->>FE: Select report type, filters and format (CSV/PDF) and click Generate
   FE->>BE: POST /committee/reports/generate
   BE->>REP: Build report dataset
   REP->>DB: SELECT required report data
   DB-->>REP: Dataset
   REP->>REP: Generate report file
   REP->>FS: Store generated report file
-  FS-->>REP: File link
-  REP-->>BE: Report file link
+  FS-->>REP: File path
+  %% NEW (FYP2): persist report metadata for re-download history
+  REP->>DB: INSERT generated_report (type, title, format, file_path, filters_json, generated_by, expires_at)
+  DB-->>REP: Saved
+  REP-->>BE: Report file link and report_id
   BE->>AUD: Log report generation
   AUD-->>BE: Logged
   BE-->>FE: 200 Report link
   FE-->>COM: Download report file
+
+  %% NEW (FYP2): re-download from report history
+  alt View report history (re-download)
+    COM->>FE: Open Report History
+    FE->>BE: GET /committee/reports/history
+    BE->>REP: List previously generated reports
+    REP->>DB: SELECT generated_report WHERE not expired
+    DB-->>REP: Report history list
+    REP-->>BE: Report history
+    BE-->>FE: 200 History list
+    FE-->>COM: Display past reports
+    COM->>FE: Click Download on a past report
+    FE->>BE: GET /committee/reports/{report_id}/download
+    BE->>FS: Fetch stored report file
+    FS-->>BE: File stream
+    BE-->>FE: 200 File
+    FE-->>COM: Download file
+  end
 
   alt Generation error
     BE->>AUD: Log report generation error
@@ -2273,17 +2364,23 @@ sequenceDiagram
 
 1. Committee opens **Reports** module and views available report types and filters.
     
-2. Committee selects report type and parameters, then generates the report.
+2. Committee selects report type, filters and output format (CSV / PDF), then generates the report.
     
 3. Report service retrieves required data from **MySQL**, generates the report file, and stores it in **File Storage**.
     
-4. System returns a downloadable link and logs the generation activity.
+<mark>4. Report metadata (type, title, filters, format, file path, generated-by user, expiry) is persisted in `generated_report` so the report can be re-downloaded later.</mark>
     
-5. Any generation error is logged and displayed.
+5. System returns a downloadable link and logs the generation activity.
+    
+<mark>6. Committee can later open Report History to list previously generated reports and re-download any non-expired report directly from File Storage.</mark>
+    
+7. Any generation error is logged and displayed.
     
 
 ---
 ## 4.2.30 UC30 Manage User Accounts and Roles (System Administrator)
+
+<mark>**FYP2 update:** added bulk CSV import (UC30 A2) with row-level validation.</mark>
 
 **Figure 4.40 UC30 Manage User Accounts and Roles Sequence Diagram**
 
@@ -2353,6 +2450,27 @@ sequenceDiagram
     end
   end
 
+  %% NEW (FYP2): bulk CSV import (A2)
+  alt Bulk import users from CSV (A2)
+    ADM->>FE: Upload CSV file (mmu_id, email, full_name, role)
+    FE->>BE: POST /admin/users/import
+    BE->>AUTH: Validate token and admin role
+    AUTH-->>BE: Authorized
+    BE->>UMS: Parse and validate CSV rows
+    UMS->>DB: Check duplicates per row (mmu_id, email)
+    DB-->>UMS: Duplicate check result per row
+    UMS->>UMS: Build per-row success or error result
+    loop Each valid row
+      UMS->>DB: INSERT user_account
+      DB-->>UMS: Created
+    end
+    UMS-->>BE: Import summary (created count, error rows)
+    BE->>AUD: Log bulk user import
+    AUD-->>BE: Logged
+    BE-->>FE: 200 Import summary
+    FE-->>ADM: Show created count and per-row errors
+  end
+
   alt Service or database error
     BE->>AUD: Log user management error
     AUD-->>BE: Logged
@@ -2373,7 +2491,9 @@ sequenceDiagram
     
 5. Admin may update a user’s role or status; system validates and updates **MySQL**, then logs the action.
     
-6. Errors are logged and displayed.
+<mark>6. Admin may bulk-import users by uploading a CSV (A2); the system validates each row, inserts valid rows in batch, and returns a per-row success/error summary.</mark>
+    
+7. Errors are logged and displayed.
     
 
 ---
@@ -2448,6 +2568,8 @@ sequenceDiagram
 
 ## 4.2.32 UC32 Configure Integration and Export Settings (System Administrator)
 
+<mark>**FYP2 update:** the use case is now split into two clearly separate sub-flows — (a) Integration Settings backed by `integration_setting` (with `last_tested_at` / `last_test_result`), and (b) Export Configurations backed by the new `export_config` table (reusable presets with optional schedule).</mark>
+
 **Figure 4.42 UC32 Configure Integration and Export Settings Sequence Diagram**
 
 ### Mermaid
@@ -2460,46 +2582,98 @@ sequenceDiagram
   participant BE as Spring Boot API
   participant AUTH as Auth and RBAC
   participant INT as Integration Setting Service
+  participant EXP as Export Config Service
+  participant REP as Report Export Service
   participant DB as MySQL
+  participant FS as File Storage
   participant EXT as External System
   participant AUD as Audit Log
 
   ADM->>FE: Open Integration and Export Settings
-  FE->>BE: GET /admin/config/integrations
+  FE->>BE: GET /admin/config
   BE->>AUTH: Validate token and admin role
   AUTH-->>BE: Authorized
-  BE->>INT: Load integration and export settings
-  INT->>DB: SELECT integration settings
-  DB-->>INT: Settings list
-  INT-->>BE: Settings list
-  BE-->>FE: 200 Settings list
-  FE-->>ADM: Display settings
+  BE->>INT: Load integration settings
+  INT->>DB: SELECT integration_setting
+  DB-->>INT: Integration list
+  INT-->>BE: Integration list
+  BE->>EXP: Load export configurations
+  EXP->>DB: SELECT export_config
+  DB-->>EXP: Export config list
+  EXP-->>BE: Export config list
+  BE-->>FE: 200 Combined settings
+  FE-->>ADM: Display Integration tab and Export Configurations tab
 
-  ADM->>FE: Update API keys endpoints export rules
-  FE->>BE: PUT /admin/config/integrations
-  BE->>INT: Validate settings format
+  %% NEW (FYP2): explicit sub-flow (a) Integration Settings
+  alt (a) Manage Integration Settings
+    ADM->>FE: Edit endpoint, credentials, settings_json
+    FE->>BE: PUT /admin/config/integrations/{id}
+    BE->>INT: Validate settings format
 
-  alt Test connection enabled
-    INT->>EXT: Test connection
-    EXT-->>INT: Test result
+    alt Test connection requested
+      INT->>EXT: Test connection
+      EXT-->>INT: Test result
+      INT->>DB: UPDATE last_tested_at, last_test_result
+      DB-->>INT: Updated
+    end
+
+    alt Invalid settings or test failed
+      INT-->>BE: Error message
+      BE-->>FE: 400 Error message
+      FE-->>ADM: Show error and guidance
+    else Valid
+      INT->>DB: UPDATE integration_setting
+      DB-->>INT: Updated
+      INT-->>BE: Updated
+      BE->>AUD: Log integration update
+      AUD-->>BE: Logged
+      BE-->>FE: 200 Updated
+      FE-->>ADM: Show success
+    end
   end
 
-  alt Invalid settings or test failed
-    INT-->>BE: Error message
-    BE-->>FE: 400 Error message
-    FE-->>ADM: Show error and guidance
-  else Valid
-    INT->>DB: UPDATE integration settings
-    DB-->>INT: Updated
-    INT-->>BE: Updated
-    BE->>AUD: Log integration settings update
-    AUD-->>BE: Logged
-    BE-->>FE: 200 Updated
-    FE-->>ADM: Show success
+  %% NEW (FYP2): explicit sub-flow (b) Export Configurations
+  alt (b) Manage Export Configurations
+    ADM->>FE: Define name, data_type, format, fields, filters, schedule
+    FE->>BE: POST /admin/config/exports (or PUT for edit)
+    BE->>EXP: Validate export configuration
+
+    alt Validation fails (E2: unknown field, invalid date format)
+      EXP-->>BE: Validation error
+      BE-->>FE: 400 Error message
+      FE-->>ADM: Show offending field
+    else Valid
+      EXP->>DB: INSERT or UPDATE export_config
+      DB-->>EXP: Saved
+      EXP-->>BE: Saved
+      BE->>AUD: Log export config saved
+      AUD-->>BE: Logged
+      BE-->>FE: 200 Saved
+      FE-->>ADM: Show success
+    end
+
+    alt Run export now (A3)
+      ADM->>FE: Click Run on saved export config
+      FE->>BE: POST /admin/config/exports/{id}/run
+      BE->>EXP: Load export_config by id
+      EXP->>DB: SELECT export_config
+      DB-->>EXP: Config
+      EXP->>REP: Generate file using config (data_type, fields, filters, format)
+      REP->>DB: SELECT data per filters
+      DB-->>REP: Dataset
+      REP->>FS: Store export file
+      FS-->>REP: File path
+      REP-->>EXP: File path
+      EXP->>DB: UPDATE last_export_path, last_export_at
+      DB-->>EXP: Updated
+      EXP-->>BE: Export ready
+      BE-->>FE: 200 Download link
+      FE-->>ADM: Download exported file
+    end
   end
 
   alt Service error
-    BE->>AUD: Log integration configuration error
+    BE->>AUD: Log configuration error
     AUD-->>BE: Logged
     BE-->>FE: 500 Error message
     FE-->>ADM: Show error message
@@ -2510,18 +2684,22 @@ sequenceDiagram
 
 1. Admin opens **Integration and Export Settings** module.
     
-2. System validates admin access and loads current settings from **MySQL**.
+2. System validates admin access and loads <mark>both `integration_setting` and `export_config` records from **MySQL** for the two tabs</mark>.
     
-3. Admin updates endpoints, API keys, and export rules; system validates format and optionally runs a connection test.
+<mark>3. (a) Integration sub-flow — Admin updates endpoint and credentials; if a test connection is requested, the system calls the External System and stores `last_tested_at` and `last_test_result`. Valid settings are saved to `integration_setting` and audited.</mark>
     
-4. If settings are invalid or test fails, the system shows an error; otherwise settings are saved and logged.
+<mark>4. (b) Export sub-flow — Admin defines or edits an export preset (data type, fields, filters, format, schedule). Valid presets are saved to `export_config`; invalid presets (e.g., unknown field, invalid date format) are rejected with a clear message (E2).</mark>
     
-5. Errors are logged and displayed.
+<mark>5. Admin can run a saved export preset on demand (A3); the system generates the file via the Report Export Service, stores it in File Storage, and updates `last_export_path` and `last_export_at`.</mark>
+    
+6. Errors are logged and displayed.
     
 
 ---
 
 ## 4.2.33 UC33 Perform System Maintenance (System Administrator)
+
+<mark>**FYP2 update:** every maintenance action is now wrapped with a `maintenance_job` record (status PENDING → RUNNING → COMPLETED / FAILED, plus `triggered_by_user_id`, `result_json`, timestamps) so the full job history is auditable. Added "View Job History" sub-flow.</mark>
 
 **Figure 4.43 UC33 Perform System Maintenance Sequence Diagram**
 
@@ -2550,15 +2728,32 @@ sequenceDiagram
     ADM->>FE: Click Run Backup
     FE->>BE: POST /admin/maintenance/backup
     BE->>MAIN: Execute backup job
+    %% NEW (FYP2): create maintenance_job record at start
+    MAIN->>DB: INSERT maintenance_job (job_type=BACKUP, status=RUNNING, started_at, triggered_by_user_id)
+    DB-->>MAIN: job_id
     MAIN->>DB: Export database backup
     DB-->>MAIN: Backup file
     MAIN->>FS: Store backup file
     FS-->>MAIN: Stored
-    MAIN-->>BE: Backup completed
-    BE->>AUD: Log backup completed
-    AUD-->>BE: Logged
-    BE-->>FE: 200 Backup success
-    FE-->>ADM: Show backup success
+    alt Backup succeeds
+      %% NEW (FYP2): finalise job as COMPLETED
+      MAIN->>DB: UPDATE maintenance_job SET status=COMPLETED, completed_at, result_json
+      DB-->>MAIN: Updated
+      MAIN-->>BE: Backup completed
+      BE->>AUD: Log backup completed
+      AUD-->>BE: Logged
+      BE-->>FE: 200 Backup success
+      FE-->>ADM: Show backup success
+    else Backup fails (E1)
+      %% NEW (FYP2): finalise job as FAILED with error message
+      MAIN->>DB: UPDATE maintenance_job SET status=FAILED, completed_at, message
+      DB-->>MAIN: Updated
+      MAIN-->>BE: Backup failed
+      BE->>AUD: Log backup failure
+      AUD-->>BE: Logged
+      BE-->>FE: 500 Backup failed
+      FE-->>ADM: Show backup failure with details
+    end
   end
 
   alt View audit logs
@@ -2574,9 +2769,25 @@ sequenceDiagram
     ADM->>FE: Run health check
     FE->>BE: GET /admin/maintenance/health
     BE->>MAIN: Run health checks
+    %% NEW (FYP2): record the health-check job
+    MAIN->>DB: INSERT maintenance_job (job_type=HEALTH_CHECK, status=RUNNING, started_at, triggered_by_user_id)
+    DB-->>MAIN: job_id
+    MAIN->>MAIN: Execute checks (DB, storage, AI services)
+    MAIN->>DB: UPDATE maintenance_job SET status=COMPLETED, completed_at, result_json
+    DB-->>MAIN: Updated
     MAIN-->>BE: Health status
     BE-->>FE: 200 Health status
     FE-->>ADM: Display health status
+  end
+
+  %% NEW (FYP2): job history (A2)
+  alt View Maintenance Job History (A2)
+    ADM->>FE: Open Job History
+    FE->>BE: GET /admin/maintenance/jobs
+    BE->>DB: SELECT maintenance_job filtered by job_type or status
+    DB-->>BE: Job history
+    BE-->>FE: 200 Job list
+    FE-->>ADM: Display past jobs and their result details
   end
 
   alt Maintenance failure
@@ -2591,10 +2802,16 @@ sequenceDiagram
 
 1. Admin opens **System Maintenance** module and views maintenance actions.
     
-2. For backup, system executes a backup job, stores backup output, and logs completion.
+<mark>2. For each maintenance action (backup, health check, cleanup), the system creates a `maintenance_job` record at start (status `RUNNING`, `triggered_by_user_id`, `started_at`).</mark>
     
-3. Admin may view audit logs, where the system retrieves audit entries from **MySQL**.
+3. For backup, the system exports the database, stores the backup file, and logs completion.
     
-4. Admin may run health checks, where the system returns health status results.
+<mark>4. The system finalises the `maintenance_job` record on completion or failure (status `COMPLETED` or `FAILED`, `completed_at`, `result_json` or `message`), giving a full audit trail.</mark>
     
-5. Any maintenance failure is logged and displayed.
+5. Admin may view audit logs, where the system retrieves audit entries from **MySQL**.
+    
+6. Admin may run health checks, where the system returns health status results <mark>and stores the run as a `maintenance_job` for traceability</mark>.
+    
+<mark>7. Admin may open Maintenance Job History (A2) to filter past jobs by type or status and inspect their result details.</mark>
+    
+8. Any maintenance failure is logged and displayed.
