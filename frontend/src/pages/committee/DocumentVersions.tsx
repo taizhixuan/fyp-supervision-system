@@ -138,7 +138,7 @@ export function DocumentVersions() {
                         <p className="text-sm text-neutral-600 mt-2 italic">"{version.changeNotes}"</p>
                       )}
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="secondary" size="sm">
                       <Download className="h-4 w-4 mr-1" />
                       Download
                     </Button>
@@ -171,7 +171,7 @@ export function DocumentVersions() {
       {/* Actions */}
       <div className="flex justify-end gap-3">
         <Link to={ROUTES.COMMITTEE.DOCUMENT_DETAIL.replace(':id', String(document.documentId))}>
-          <Button variant="outline">
+          <Button variant="secondary">
             Edit Document
           </Button>
         </Link>

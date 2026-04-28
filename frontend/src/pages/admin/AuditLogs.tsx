@@ -126,11 +126,11 @@ export function AuditLogs() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => refetch()}>
+          <Button variant="secondary" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline" onClick={handleExport}>
+          <Button variant="secondary" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -377,7 +377,7 @@ export function AuditLogs() {
             </span>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
@@ -388,7 +388,7 @@ export function AuditLogs() {
                 Page {page}
               </span>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page * 20 >= data.total}

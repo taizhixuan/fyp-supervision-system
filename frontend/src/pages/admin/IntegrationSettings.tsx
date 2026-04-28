@@ -106,7 +106,7 @@ export function IntegrationSettings() {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
+          <Button variant="secondary" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh Status
           </Button>
@@ -209,7 +209,7 @@ export function IntegrationSettings() {
                               )}
                             </Button>
                             <Button
-                              variant="outline"
+                              variant="secondary"
                               size="sm"
                               onClick={() => setSelectedIntegration(
                                 selectedIntegration?.integrationId === integration.integrationId
@@ -429,7 +429,7 @@ export function IntegrationSettings() {
           </div>
         </div>
 
-        <Button variant="outline" className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-50">
+        <Button variant="secondary" className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-50">
           <Key className="h-4 w-4 mr-2" />
           Generate New API Key
         </Button>

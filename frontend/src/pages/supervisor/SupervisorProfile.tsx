@@ -187,7 +187,7 @@ export function SupervisorProfile() {
             </Button>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={handleCancelEditing} className="border-stone-600 text-white hover:bg-stone-700">
+              <Button variant="secondary" onClick={handleCancelEditing} className="border-stone-600 text-white hover:bg-stone-700">
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
@@ -522,7 +522,7 @@ export function SupervisorProfile() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         addToArray('researchAreas', newResearchArea)
@@ -590,7 +590,7 @@ export function SupervisorProfile() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         addToArray('expertise', newExpertise)
@@ -655,7 +655,7 @@ export function SupervisorProfile() {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         addToArray('preferredProjectTypes', newProjectType)

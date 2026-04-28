@@ -309,4 +309,19 @@ first.md
 Screen List.md
 /.claude
 
+# ======================================
+# AI Model Artifacts & Training Data
+# ======================================
+ai-recommendation/models/*.pkl
+ai-recommendation/models/*.json
+ai-recommendation/data/
+ai-proposal-analyzer/models/essay_scorer/
+ai-proposal-analyzer/data/*.tsv
+ai-chatbot/vector_store/
+
+# Python virtual environments
+ai-*/venv/
+__pycache__/
+*.pyc
+
 

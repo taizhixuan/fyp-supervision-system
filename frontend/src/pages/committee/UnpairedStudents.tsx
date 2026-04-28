@@ -156,7 +156,7 @@ export function UnpairedStudents() {
                       <p className="text-sm text-neutral-500">{student.studentId}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="secondary" size="sm">
                         <Mail className="h-4 w-4 mr-1" />
                         Email
                       </Button>
@@ -236,7 +236,7 @@ export function UnpairedStudents() {
             <span className="text-neutral-600">
               Showing {filteredStudents?.length ?? 0} of {data.total} unpaired students
             </span>
-            <Button variant="outline" size="sm">
+            <Button variant="secondary" size="sm">
               <Mail className="h-4 w-4 mr-2" />
               Send Bulk Reminder
             </Button>

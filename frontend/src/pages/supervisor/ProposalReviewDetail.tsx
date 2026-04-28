@@ -20,12 +20,12 @@ import {
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { useProposalForReview, useSubmitProposalFeedback } from '@/lib/hooks/useSupervisor'
+import { useProposalForReview, useSubmitSvProposalFeedback } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProposalStatus, ProposalFeedback } from '@/types'
+import type { SvProposalStatus, SvProposalFeedback } from '@/types'
 
-const statusConfig: Record<ProposalStatus, { label: string; color: string; bgColor: string }> = {
+const statusConfig: Record<SvProposalStatus, { label: string; color: string; bgColor: string }> = {
   NOT_SUBMITTED: { label: 'Not Submitted', color: 'text-neutral-500', bgColor: 'bg-neutral-100' },
   DRAFT: { label: 'Draft', color: 'text-neutral-500', bgColor: 'bg-neutral-100' },
   SUBMITTED: { label: 'Submitted', color: 'text-info-600', bgColor: 'bg-info-50' },
@@ -41,12 +41,12 @@ export function ProposalReviewDetail() {
   const [feedbackContent, setFeedbackContent] = useState('')
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [showFeedbackHistory, setShowFeedbackHistory] = useState(false)
-  const [actionType, setActionType] = useState<ProposalFeedback['feedbackType'] | null>(null)
+  const [actionType, setActionType] = useState<SvProposalFeedback['feedbackType'] | null>(null)
 
   const { data: proposal, isLoading } = useProposalForReview(Number(id))
-  const submitFeedback = useSubmitProposalFeedback()
+  const submitFeedback = useSubmitSvProposalFeedback()
 
-  const handleSubmitFeedback = async (type: ProposalFeedback['feedbackType']) => {
+  const handleSubmitFeedback = async (type: SvProposalFeedback['feedbackType']) => {
     if (!proposal || !feedbackContent.trim()) return
     try {
       await submitFeedback.mutateAsync({
@@ -115,7 +115,7 @@ export function ProposalReviewDetail() {
           {canReview && (
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setActionType('REVISION_REQUEST')}
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
@@ -390,7 +390,7 @@ export function ProposalReviewDetail() {
               />
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => handleSubmitFeedback('COMMENT')}
                   disabled={!feedbackContent.trim() || submitFeedback.isPending}
                 >
@@ -398,7 +398,7 @@ export function ProposalReviewDetail() {
                   Add Comment
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => handleSubmitFeedback('REVISION_REQUEST')}
                   disabled={!feedbackContent.trim() || submitFeedback.isPending}
                   className="text-warning-600 border-warning-300 hover:bg-warning-50"

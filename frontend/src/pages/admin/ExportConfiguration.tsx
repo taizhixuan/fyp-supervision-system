@@ -303,7 +303,7 @@ export function ExportConfigurationPage() {
 
                   <div className="flex items-center gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => handleExportNow(config)}
                     >
@@ -352,7 +352,7 @@ export function ExportConfigurationPage() {
             return (
               <Button
                 key={type}
-                variant="outline"
+                variant="secondary"
                 className={cn('flex-col h-auto py-4 border hover:scale-105 transition-all duration-200', config.colors)}
                 onClick={() => console.log('Quick export:', type)}
               >
@@ -541,7 +541,7 @@ export function ExportConfigurationPage() {
               <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => {
                     setShowCreateModal(false)
                     setEditingConfig(null)

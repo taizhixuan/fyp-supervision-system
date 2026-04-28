@@ -28,7 +28,7 @@ import {
   useFYPCycles,
 } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { DeadlineType, DeadlineStatus, Deadline } from '@/types'
+import type { AdminDeadlineType, DeadlineStatus, AdminDeadline } from '@/types'
 
 const deadlineSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -42,7 +42,7 @@ const deadlineSchema = z.object({
 
 type DeadlineFormData = z.infer<typeof deadlineSchema>
 
-const typeConfig: Record<DeadlineType, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
+const typeConfig: Record<AdminDeadlineType, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
   PROPOSAL_SUBMISSION: { label: 'Proposal', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: FileText },
   SUPERVISOR_SELECTION: { label: 'Supervisor Selection', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
   PROGRESS_REPORT: { label: 'Progress Report', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
@@ -60,10 +60,10 @@ const statusConfig: Record<DeadlineStatus, { label: string; color: string; bgCol
 
 export function DeadlineManagement() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState<DeadlineType | 'ALL'>('ALL')
+  const [typeFilter, setTypeFilter] = useState<AdminDeadlineType | 'ALL'>('ALL')
   const [statusFilter, setStatusFilter] = useState<DeadlineStatus | 'ALL'>('ALL')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null)
+  const [editingDeadline, setEditingDeadline] = useState<AdminDeadline | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   const { data, isLoading } = useDeadlines(
@@ -136,7 +136,7 @@ export function DeadlineManagement() {
     }
   }
 
-  const openEditModal = (deadline: Deadline) => {
+  const openEditModal = (deadline: AdminDeadline) => {
     setEditingDeadline(deadline)
     setValue('name', deadline.name)
     setValue('description', deadline.description || '')
@@ -156,7 +156,7 @@ export function DeadlineManagement() {
 
   const getCalendarData = () => {
     if (!filteredDeadlines) return {}
-    const calendar: Record<string, Deadline[]> = {}
+    const calendar: Record<string, AdminDeadline[]> = {}
     filteredDeadlines.forEach((deadline) => {
       const monthKey = new Date(deadline.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
       if (!calendar[monthKey]) {
@@ -250,7 +250,7 @@ export function DeadlineManagement() {
           </div>
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as DeadlineType | 'ALL')}
+            onChange={(e) => setTypeFilter(e.target.value as AdminDeadlineType | 'ALL')}
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Types</option>
@@ -527,7 +527,7 @@ export function DeadlineManagement() {
               <div className="flex justify-end gap-3 pt-4">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => {
                     setShowCreateModal(false)
                     setEditingDeadline(null)

@@ -19,9 +19,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useLogForReview, useReviewLog, useSignLog } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { LogStatus } from '@/types'
+import type { SvLogStatus } from '@/types'
 
-const statusConfig: Record<LogStatus, { label: string; color: string; bgColor: string }> = {
+const statusConfig: Record<SvLogStatus, { label: string; color: string; bgColor: string }> = {
   PENDING: { label: 'Pending Review', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   APPROVED: { label: 'Approved', color: 'text-success-600', bgColor: 'bg-success-50' },
   REVISION_REQUIRED: { label: 'Needs Revision', color: 'text-orange-600', bgColor: 'bg-orange-50' },
@@ -291,7 +291,7 @@ export function LogDetail() {
                   Approve Log
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={handleRequestRevision}
                   disabled={reviewMutation.isPending || !comment.trim()}
                   className="text-warning-600 border-warning-300 hover:bg-warning-50"
@@ -330,7 +330,7 @@ export function LogDetail() {
               </p>
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowSignModal(false)}>
+              <Button variant="secondary" onClick={() => setShowSignModal(false)}>
                 Cancel
               </Button>
               <Button onClick={handleSign} disabled={signMutation.isPending}>

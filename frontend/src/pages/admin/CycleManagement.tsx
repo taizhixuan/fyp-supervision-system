@@ -288,7 +288,7 @@ export function CycleManagement() {
                     {/* Status Actions */}
                     {cycle.status === 'DRAFT' && (
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleStatusChange(cycle, 'UPCOMING')}
                         disabled={updateMutation.isPending}
@@ -298,7 +298,7 @@ export function CycleManagement() {
                     )}
                     {cycle.status === 'UPCOMING' && (
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleStatusChange(cycle, 'ACTIVE')}
                         disabled={updateMutation.isPending}
@@ -319,7 +319,7 @@ export function CycleManagement() {
                           Pause
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => handleStatusChange(cycle, 'COMPLETED')}
                           disabled={updateMutation.isPending}
@@ -331,7 +331,7 @@ export function CycleManagement() {
                     )}
                     {cycle.status === 'PAUSED' && (
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleStatusChange(cycle, 'ACTIVE')}
                         disabled={updateMutation.isPending}

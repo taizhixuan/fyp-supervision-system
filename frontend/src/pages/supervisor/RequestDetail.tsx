@@ -126,7 +126,7 @@ export function RequestDetail() {
               </span>
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => setShowRejectModal(true)}
               disabled={respondMutation.isPending}
             >
@@ -299,7 +299,7 @@ export function RequestDetail() {
                   Accept Request
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setShowRejectModal(true)}
                   disabled={respondMutation.isPending}
                   className="flex-1 sm:flex-none"
@@ -335,7 +335,7 @@ export function RequestDetail() {
               placeholder="Enter rejection reason..."
             />
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowRejectModal(false)}>
+              <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
                 Cancel
               </Button>
               <Button

@@ -185,7 +185,7 @@ export function NotificationsCenter() {
         </div>
         {unreadCount?.count ? (
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={handleMarkAllRead}
             disabled={markAllReadMutation.isPending}
           >

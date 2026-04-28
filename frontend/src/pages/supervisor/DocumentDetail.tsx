@@ -18,9 +18,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSuperviseeDocument, useSubmitDocumentFeedback } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { DocumentType } from '@/types'
+import type { SvDocumentType } from '@/types'
 
-const typeConfig: Record<DocumentType, { label: string; color: string; bgColor: string }> = {
+const typeConfig: Record<SvDocumentType, { label: string; color: string; bgColor: string }> = {
   PROPOSAL: { label: 'Proposal', color: 'text-primary-600', bgColor: 'bg-primary-50' },
   REPORT: { label: 'Report', color: 'text-info-600', bgColor: 'bg-info-50' },
   PRESENTATION: { label: 'Presentation', color: 'text-accent-600', bgColor: 'bg-accent-50' },
@@ -156,7 +156,7 @@ export function DocumentDetail() {
                 <Eye className="h-4 w-4 mr-2" />
                 View Document
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button variant="secondary" className="w-full">
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>

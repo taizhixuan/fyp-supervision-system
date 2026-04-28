@@ -213,13 +213,13 @@ export function ReportsHistory() {
                     {/* Actions */}
                     <div className="flex items-center gap-2 mt-3">
                       {report.status === 'COMPLETED' && (
-                        <Button variant="outline" size="sm">
+                        <Button variant="secondary" size="sm">
                           <Download className="h-4 w-4 mr-1" />
                           Download
                         </Button>
                       )}
                       {report.status === 'COMPLETED' && report.previewUrl && (
-                        <Button variant="outline" size="sm">
+                        <Button variant="secondary" size="sm">
                           <FileText className="h-4 w-4 mr-1" />
                           Preview
                         </Button>

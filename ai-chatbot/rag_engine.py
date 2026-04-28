@@ -159,12 +159,12 @@ class RAGEngine:
     def _load_generator(self, model_name: str):
         """Load the local text generation model (Flan-T5)."""
         try:
-            from transformers import T5ForConditionalGeneration, T5Tokenizer
+            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
             import torch
 
             logger.info(f"Loading generation model: {model_name}")
-            self.gen_tokenizer = T5Tokenizer.from_pretrained(model_name)
-            self.gen_model = T5ForConditionalGeneration.from_pretrained(model_name)
+            self.gen_tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.gen_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
             self.gen_model.eval()
 
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

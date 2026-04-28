@@ -137,7 +137,7 @@ export function ProposalReviewDetail() {
                   {proposal.programme} Programme
                 </p>
               </div>
-              <Button variant="outline">
+              <Button variant="secondary">
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
@@ -402,7 +402,7 @@ export function ProposalReviewDetail() {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full mt-4">
+            <Button variant="secondary" className="w-full mt-4">
               <ExternalLink className="h-4 w-4 mr-2" />
               View Full Document
             </Button>
