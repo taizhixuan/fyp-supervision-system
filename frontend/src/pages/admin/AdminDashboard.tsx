@@ -292,7 +292,7 @@ export function AdminDashboard() {
               </div>
             </div>
 
-            {/* Database Size */}
+            {/* Meeting-Progress Size */}
             <div className="pt-3 border-t border-stone-200">
               <div className="flex items-center justify-between text-sm p-3 bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl">
                 <span className="flex items-center gap-2 text-stone-600 font-medium">

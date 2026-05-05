@@ -164,7 +164,7 @@ Temporary Items
 .nfs*
 
 # ======================================
-# Database
+# Meeting-Progress
 # ======================================
 # SQLite
 *.sqlite
@@ -331,3 +331,7 @@ __pycache__/
 /Project-info/reference-arial9.docx
 /Project-info/reference-default.docx
 /Project-info/Changes.md
+/Project-info/Meeting-Progress/
+/Project-info/postman/
+/Project-info/TODO/
+/Project-info/00_Chapter_5_Implementation.md
