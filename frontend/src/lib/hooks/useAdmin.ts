@@ -107,7 +107,7 @@ const MOCK_RECENT_ACTIVITY: RecentAdminActivity[] = [
     action: 'Backup triggered',
     performedBy: 'System',
     targetType: 'Maintenance',
-    targetName: 'Full Database Backup',
+    targetName: 'Full Meeting-Progress Backup',
     timestamp: '2025-01-20T02:00:00Z',
   },
   {

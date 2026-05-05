@@ -165,7 +165,7 @@ const MOCK_MEETING_LOGS: MeetingLog[] = [
     ],
     workDoneDetails: 'Finalized all use case diagrams with detailed descriptions. Completed the Entity-Relationship Diagram for the database. Drafted Chapter 1 (Introduction) covering problem statement, objectives, and scope.',
     workToBeDone: 'Review and refine Chapter 1 based on feedback. Start Chapter 2 (Literature Review). Begin prototype development.',
-    problemsAndSolutions: 'Database normalization was challenging - resolved after consulting additional resources on 3NF.',
+    problemsAndSolutions: 'Meeting-Progress normalization was challenging - resolved after consulting additional resources on 3NF.',
     supervisorComments: '',
     status: 'SUBMITTED',
     signatures: [],
