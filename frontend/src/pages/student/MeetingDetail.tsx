@@ -591,7 +591,7 @@ export function MeetingDetail() {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Reason for cancellation <span className="text-neutral-400">(optional)</span>
+              Reason for cancellation <span className="text-error-600">*</span>
             </label>
             <textarea
               className="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
@@ -599,7 +599,12 @@ export function MeetingDetail() {
               placeholder="Let your supervisor know why you're cancelling..."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
+              maxLength={500}
+              required
             />
+            <p className="mt-1 text-xs text-neutral-500 text-right">
+              {cancelReason.length}/500
+            </p>
           </div>
 
           <div className="flex gap-3">
@@ -610,6 +615,7 @@ export function MeetingDetail() {
               variant="danger"
               onClick={handleCancel}
               isLoading={cancelMeeting.isPending}
+              disabled={cancelReason.trim().length === 0}
               className="flex-1"
             >
               Cancel Meeting

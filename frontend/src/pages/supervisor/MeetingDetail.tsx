@@ -277,6 +277,17 @@ export function MeetingDetail() {
             </div>
           </Card>
 
+          {/* Cancellation Reason (only when CANCELLED) */}
+          {meeting.status === 'CANCELLED' && meeting.cancelReason && (
+            <Card className="p-6 border-l-4 border-l-error-500 bg-error-50/30">
+              <h3 className="font-semibold text-neutral-900 mb-2 flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-error-600" />
+                Cancellation Reason
+              </h3>
+              <p className="text-sm text-neutral-700 whitespace-pre-wrap">{meeting.cancelReason}</p>
+            </Card>
+          )}
+
           {/* Online Meeting Link Card */}
           {meeting.meetingUrl && (
             <Card className="p-6">

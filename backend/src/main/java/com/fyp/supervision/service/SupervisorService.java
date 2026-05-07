@@ -453,6 +453,7 @@ public class SupervisorService {
         dto.put("onlinePlatform", meeting.getPlatform());
         dto.put("agenda", meeting.getAgenda());
         dto.put("notes", meeting.getNotes());
+        dto.put("cancelReason", meeting.getCancelReason());
         dto.put("actionItems", List.of());
         dto.put("createdAt", meeting.getCreatedAt() != null ? meeting.getCreatedAt().toString() : "");
         dto.put("updatedAt", meeting.getUpdatedAt() != null ? meeting.getUpdatedAt().toString() : "");
