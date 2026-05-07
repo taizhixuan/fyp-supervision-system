@@ -307,7 +307,10 @@ sandbox/
 DEVELOPMENT_LOG.md
 first.md
 Screen List.md
-/.claude
+/.claude/*
+!/.claude/settings.json
+!/.claude/commands/
+!/.claude/agents/
 
 # ======================================
 # AI Model Artifacts & Training Data
