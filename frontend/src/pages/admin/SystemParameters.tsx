@@ -6,7 +6,6 @@ import {
   Check,
   X,
   Clock,
-  User,
   AlertTriangle,
   Info,
   Sparkles,

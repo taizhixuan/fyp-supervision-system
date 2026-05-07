@@ -2,18 +2,13 @@ import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  FileText,
-  GraduationCap,
-  Clock,
   CheckCircle,
   AlertCircle,
   Brain,
   History,
   MessageSquare,
-  Send,
   ThumbsUp,
   RotateCcw,
-  XCircle,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'

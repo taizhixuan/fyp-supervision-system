@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  FileText,
   Download,
   GraduationCap,
   User,
@@ -11,7 +10,6 @@ import {
   XCircle,
   RotateCcw,
   Sparkles,
-  AlertTriangle,
   Lightbulb,
   ThumbsUp,
   ThumbsDown,

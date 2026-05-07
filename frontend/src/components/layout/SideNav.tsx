@@ -16,7 +16,6 @@ import {
   Link2,
   UserCog,
   Bell,
-  BookOpen,
   Clock,
   Download,
   Shield,

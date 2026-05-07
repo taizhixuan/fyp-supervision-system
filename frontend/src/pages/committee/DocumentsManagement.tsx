@@ -2,16 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FolderOpen,
-  Plus,
   Search,
   FileText,
   Download,
   Edit,
   Trash2,
-  Eye,
   Upload,
   History,
-  Filter,
   Book,
   FileCheck,
   ClipboardList,

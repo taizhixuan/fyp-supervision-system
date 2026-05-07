@@ -5,16 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft,
-  Calendar,
-  Clock,
   Video,
   MapPin,
-  Plus,
   X,
   CheckCircle,
 } from 'lucide-react'
-import { Card, Button, Input, Badge, Spinner, AlertBanner } from '@/components/ui'
-import { useCreateMeeting, useSupervisorAvailableSlots } from '@/lib/hooks/useStudent'
+import { Card, Button, Input, Badge } from '@/components/ui'
+import { useCreateMeeting } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingPlatform } from '@/types'

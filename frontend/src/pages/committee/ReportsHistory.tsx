@@ -6,9 +6,7 @@ import {
   FileText,
   Download,
   Trash2,
-  Clock,
   Calendar,
-  Filter,
   Search,
   BarChart3,
   TrendingUp,
@@ -25,7 +23,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useGeneratedReports, useDeleteReport } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ReportType, GeneratedReport } from '@/types'
+import type { ReportType } from '@/types'
 
 const reportTypeConfig: Record<ReportType, { label: string; icon: typeof BarChart3; color: string }> = {
   PROGRESS_SUMMARY: { label: 'Progress Summary', icon: TrendingUp, color: 'text-info-600' },

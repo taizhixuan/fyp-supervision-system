@@ -6,7 +6,6 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
-  User,
   Edit,
   MessageSquare,
   Send,
@@ -14,7 +13,6 @@ import {
 import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useLogDetail } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
-import { cn } from '@/lib/utils/cn'
 import type { LogStatus } from '@/types'
 
 // Sample data

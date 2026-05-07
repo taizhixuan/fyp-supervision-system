@@ -3,20 +3,18 @@ import { Link } from 'react-router-dom'
 import {
   Sparkles,
   RefreshCw,
-  ChevronRight,
   Star,
   Target,
   Clock,
   TrendingUp,
   Users,
   Info,
-  Filter,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorRecommendations, useRefreshRecommendations } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { SupervisorRecommendation, MatchReason } from '@/types'
+import type { SupervisorRecommendation } from '@/types'
 
 // Sample data for design preview
 const SAMPLE_RECOMMENDATIONS: SupervisorRecommendation[] = [

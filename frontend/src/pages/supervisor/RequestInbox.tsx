@@ -7,14 +7,12 @@ import {
   XCircle,
   AlertCircle,
   Search,
-  Filter,
   ChevronRight,
   GraduationCap,
   BookOpen,
   Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisionRequests } from '@/lib/hooks/useSupervisor'

@@ -13,7 +13,6 @@ import {
   User,
   History,
   ExternalLink,
-  Share2,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, Modal } from '@/components/ui'
 import { useDocumentDetail, useDeleteDocument } from '@/lib/hooks/useStudent'

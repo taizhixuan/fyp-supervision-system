@@ -5,13 +5,10 @@ import {
   CheckCircle,
   AlertCircle,
   Calendar,
-  FileText,
   MessageSquare,
-  Users,
   Settings,
   Check,
   CheckCheck,
-  Trash2,
   Filter,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'

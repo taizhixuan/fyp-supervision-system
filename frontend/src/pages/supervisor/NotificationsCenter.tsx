@@ -3,14 +3,11 @@ import { Link } from 'react-router-dom'
 import {
   Bell,
   Check,
-  CheckCheck,
   Calendar,
   FileText,
   ClipboardList,
   FolderOpen,
   Settings,
-  Megaphone,
-  Mail,
   Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'

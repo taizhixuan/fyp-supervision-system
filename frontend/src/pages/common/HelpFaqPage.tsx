@@ -12,7 +12,7 @@ import {
   ExternalLink,
   ArrowLeft,
 } from 'lucide-react'
-import { Card, Button, Input, Badge, Spinner } from '@/components/ui'
+import { Card, Button, Input, Badge } from '@/components/ui'
 import { useResources } from '@/lib/hooks/useResources'
 import { useAuth } from '@/lib/auth/useAuth'
 import { cn } from '@/lib/utils/cn'

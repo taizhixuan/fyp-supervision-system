@@ -8,8 +8,6 @@ import {
   Plus,
   Filter,
   Download,
-  ChevronLeft,
-  ChevronRight,
   CalendarCheck,
   Users,
   CheckCircle,
@@ -18,7 +16,7 @@ import {
   ArrowRight,
   ClipboardList,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner, Modal } from '@/components/ui'
+import { Card, Button, Spinner } from '@/components/ui'
 import { useMeetingList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'

@@ -10,12 +10,11 @@ import {
   FileText,
   FileImage,
   FileCode,
-  X,
   CheckCircle,
   AlertCircle,
   Cloud,
 } from 'lucide-react'
-import { Card, Button, Input, Spinner } from '@/components/ui'
+import { Card, Button, Input } from '@/components/ui'
 import { useUploadDocument } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'

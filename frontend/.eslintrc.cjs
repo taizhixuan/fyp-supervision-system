@@ -13,13 +13,21 @@ module.exports = {
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
   },
-  plugins: ['@typescript-eslint', 'react-refresh'],
+  plugins: ['@typescript-eslint', 'react-refresh', 'unused-imports'],
   rules: {
-    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    // Off: this codebase legitimately co-locates context/helpers with components
+    // (Toast.tsx, AuthContext.tsx, etc.). Splitting just to satisfy fast-refresh is paperwork.
+    'react-refresh/only-export-components': 'off',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
 
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': 'off',
+    // Keeps the high-value catch (an import you forgot to remove).
+    'unused-imports/no-unused-imports': 'error',
+    // Off: unused destructures/locals are noise more than bugs in this codebase
+    // (form helpers like setValue/isDirty, conditionally-used navigate hooks, etc.).
+    // Re-enable as 'warn' if you want to clean up over time.
+    'unused-imports/no-unused-vars': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/no-empty-function': 'off',

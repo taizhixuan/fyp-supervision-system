@@ -8,7 +8,7 @@ import {
   Check,
   Clock,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner } from '@/components/ui'
+import { Card, Button } from '@/components/ui'
 import { useExportMeetings } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'

@@ -12,7 +12,7 @@ import {
   type UpdateProfileFormData,
   type ChangePasswordFormData,
 } from '@/lib/validators/auth'
-import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
+import { useSuccessToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/utils/cn'
 
 type Tab = 'profile' | 'security'

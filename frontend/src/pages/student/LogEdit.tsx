@@ -8,10 +8,9 @@ import {
   Save,
   Send,
   CheckCircle,
-  AlertCircle,
   MessageSquare,
 } from 'lucide-react'
-import { Card, Button, Spinner, AlertBanner } from '@/components/ui'
+import { Card, Button, Spinner } from '@/components/ui'
 import { useLogDetail, useUpdateLog, useMeetingList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
