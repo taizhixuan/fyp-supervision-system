@@ -155,10 +155,10 @@ export function ExportOverview() {
               className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
             >
               <option value="ALL">All Status</option>
-              <option value="NOT_STARTED">Not Started</option>
-              <option value="IN_PROGRESS">In Progress</option>
+              <option value="ACTIVE">Active</option>
               <option value="COMPLETED">Completed</option>
-              <option value="ON_HOLD">On Hold</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="DROPPED">Dropped</option>
             </select>
           </div>
 

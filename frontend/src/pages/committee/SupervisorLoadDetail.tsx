@@ -210,12 +210,13 @@ export function SupervisorLoadDetail() {
                           </span>
                           <span className={cn(
                             'px-2 py-0.5 rounded-full font-medium',
-                            student.status === 'IN_PROGRESS' ? 'bg-info-50 text-info-700' :
+                            student.status === 'ACTIVE' ? 'bg-info-50 text-info-700' :
                             student.status === 'COMPLETED' ? 'bg-success-50 text-success-700' :
-                            student.status === 'ON_HOLD' ? 'bg-warning-50 text-warning-700' :
+                            student.status === 'SUSPENDED' ? 'bg-warning-50 text-warning-700' :
+                            student.status === 'DROPPED' ? 'bg-error-50 text-error-700' :
                             'bg-neutral-100 text-neutral-600'
                           )}>
-                            {student.status.replace('_', ' ')}
+                            {student.status?.replace('_', ' ') || 'Unknown'}
                           </span>
                           {student.lastMeeting && (
                             <span className="flex items-center gap-1">
