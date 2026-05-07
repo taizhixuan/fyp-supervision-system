@@ -34,6 +34,11 @@ public class Project {
     @JoinColumn(name = "supervisor_user_id")
     private UserAccount supervisor;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id")
+    private SupervisorTopic topic;
+
     @Column(name = "project_title", nullable = false, length = 500)
     private String projectTitle;
 

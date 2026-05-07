@@ -21,6 +21,7 @@ import {
   Clock,
   Download,
   Shield,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
@@ -42,6 +43,11 @@ const studentNavItems: NavItem[] = [
     label: 'My Profile',
     href: ROUTES.STUDENT.PROFILE,
     icon: <User className="h-5 w-5" />,
+  },
+  {
+    label: 'Browse Topics',
+    href: ROUTES.STUDENT.TOPICS,
+    icon: <Lightbulb className="h-5 w-5" />,
   },
   {
     label: 'Supervisors',
@@ -80,6 +86,11 @@ const supervisorNavItems: NavItem[] = [
     label: 'My Profile',
     href: ROUTES.SUPERVISOR.PROFILE,
     icon: <User className="h-5 w-5" />,
+  },
+  {
+    label: 'My Topics',
+    href: ROUTES.SUPERVISOR.TOPICS,
+    icon: <Lightbulb className="h-5 w-5" />,
   },
   {
     label: 'Requests',
@@ -133,6 +144,11 @@ const committeeNavItems: NavItem[] = [
     label: 'Announcements',
     href: ROUTES.COMMITTEE.ANNOUNCEMENTS,
     icon: <Megaphone className="h-5 w-5" />,
+  },
+  {
+    label: 'Topic Review',
+    href: ROUTES.COMMITTEE.TOPICS,
+    icon: <Lightbulb className="h-5 w-5" />,
   },
   {
     label: 'Proposals',
