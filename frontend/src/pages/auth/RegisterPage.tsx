@@ -80,16 +80,29 @@ export function RegisterPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Role Selection - Inline */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
-                I am a: <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-baseline justify-between mb-1">
+                <label className="block text-sm font-semibold text-stone-800">
+                  Select your role <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-stone-500">Choose one option below</span>
+              </div>
+              <div
+                role="radiogroup"
+                aria-label="Select your role"
+                aria-required="true"
+                className={cn(
+                  'grid grid-cols-2 gap-2 p-1 rounded-xl border transition-colors',
+                  !selectedRole
+                    ? 'border-dashed border-amber-300 bg-amber-50/40'
+                    : 'border-transparent'
+                )}
+              >
                 <label
                   className={cn(
-                    'flex items-center justify-center gap-2 px-3 py-2.5 border-2 rounded-lg cursor-pointer transition-all',
+                    'relative flex items-center justify-center gap-2 px-3 py-3 border-2 rounded-lg cursor-pointer transition-all bg-white',
                     selectedRole === 'STUDENT'
-                      ? 'border-amber-500 bg-amber-50 text-amber-700'
-                      : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
+                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm ring-2 ring-amber-200'
+                      : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/50'
                   )}
                 >
                   <input
@@ -100,16 +113,21 @@ export function RegisterPage() {
                   />
                   <GraduationCap className={cn(
                     'h-5 w-5',
-                    selectedRole === 'STUDENT' ? 'text-amber-600' : 'text-stone-400'
+                    selectedRole === 'STUDENT' ? 'text-amber-600' : 'text-stone-500'
                   )} />
                   <span className="font-medium text-sm">Student</span>
+                  {selectedRole === 'STUDENT' && (
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                      ✓
+                    </span>
+                  )}
                 </label>
                 <label
                   className={cn(
-                    'flex items-center justify-center gap-2 px-3 py-2.5 border-2 rounded-lg cursor-pointer transition-all',
+                    'relative flex items-center justify-center gap-2 px-3 py-3 border-2 rounded-lg cursor-pointer transition-all bg-white',
                     selectedRole === 'SUPERVISOR'
-                      ? 'border-amber-500 bg-amber-50 text-amber-700'
-                      : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
+                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm ring-2 ring-amber-200'
+                      : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/50'
                   )}
                 >
                   <input
@@ -120,14 +138,23 @@ export function RegisterPage() {
                   />
                   <Briefcase className={cn(
                     'h-5 w-5',
-                    selectedRole === 'SUPERVISOR' ? 'text-amber-600' : 'text-stone-400'
+                    selectedRole === 'SUPERVISOR' ? 'text-amber-600' : 'text-stone-500'
                   )} />
                   <span className="font-medium text-sm">Supervisor</span>
+                  {selectedRole === 'SUPERVISOR' && (
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                      ✓
+                    </span>
+                  )}
                 </label>
               </div>
-              {errors.role && (
-                <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>
-              )}
+              {errors.role ? (
+                <p className="mt-1.5 text-xs text-red-500">{errors.role.message}</p>
+              ) : !selectedRole ? (
+                <p className="mt-1.5 text-xs text-stone-500">
+                  Please pick whether you're registering as a Student or a Supervisor.
+                </p>
+              ) : null}
             </div>
 
             {/* Full Name & MMU ID - Two columns */}
