@@ -72,12 +72,12 @@ function FormattedContent({ text }: { text: string }) {
         }
 
         // Bullet items (- or •  or ✅ or 📅)
-        if (/^[-•✅📅]\s/.test(line.trim())) {
+        if (/^[-•✅📅]\s/u.test(line.trim())) {
           return (
             <div key={i} className="flex gap-2 pl-1">
               <span className="flex-shrink-0">{line.trim()[0] === '-' ? '•' : line.trim().match(/^[^\s]+/)?.[0]}</span>
               <span>{parts.map((part, j) => {
-                const cleaned = j === 0 ? part.replace(/^[-•✅📅]\s*/, '') : part
+                const cleaned = j === 0 ? part.replace(/^[-•✅📅]\s*/u, '') : part
                 if (cleaned.startsWith('**') && cleaned.endsWith('**')) {
                   return <strong key={j} className="font-semibold">{cleaned.slice(2, -2)}</strong>
                 }
