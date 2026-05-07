@@ -23,9 +23,10 @@ public class StudentMeetingLogController {
     public ResponseEntity<?> getLogs(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String phase,
             Pageable pageable) {
         Long userId = Long.parseLong(user.getUsername());
-        return ResponseEntity.ok(studentService.getLogsDto(userId, status, pageable));
+        return ResponseEntity.ok(studentService.getLogsDto(userId, status, phase, pageable));
     }
 
     @GetMapping("/prefill")

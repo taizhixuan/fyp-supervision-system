@@ -46,4 +46,9 @@ public class CommitteeProjectController {
     public ResponseEntity<?> getSupervisorLoad(@PathVariable Long id) {
         return ResponseEntity.ok(committeeService.getSupervisorLoadDetailDto(id));
     }
+
+    @PostMapping("/{id}/advance-phase")
+    public ResponseEntity<?> advancePhase(@PathVariable Long id) {
+        return ResponseEntity.ok(committeeService.advanceProjectPhase(id));
+    }
 }

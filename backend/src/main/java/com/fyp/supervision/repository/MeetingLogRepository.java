@@ -18,6 +18,12 @@ public interface MeetingLogRepository extends JpaRepository<MeetingLog, Long> {
     List<MeetingLog> findBySupervisor_UserIdAndStatusOrderByCreatedAtDesc(Long supervisorUserId, MeetingLogStatus status);
     long countByStudent_UserId(Long studentUserId);
     long countByStudent_UserIdAndStatus(Long studentUserId, MeetingLogStatus status);
+    long countByStudent_UserIdAndFypPhase(Long studentUserId, String fypPhase);
     java.util.Optional<MeetingLog> findFirstByStudent_UserIdOrderByCreatedAtDesc(Long studentUserId);
+    java.util.Optional<MeetingLog> findFirstByStudent_UserIdAndFypPhaseOrderByCreatedAtDesc(Long studentUserId, String fypPhase);
+    Page<MeetingLog> findByStudent_UserIdAndFypPhaseOrderByCreatedAtDesc(Long studentUserId, String fypPhase, Pageable pageable);
+    Page<MeetingLog> findByStudent_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(Long studentUserId, MeetingLogStatus status, String fypPhase, Pageable pageable);
+    List<MeetingLog> findBySupervisor_UserIdAndFypPhaseOrderByCreatedAtDesc(Long supervisorUserId, String fypPhase);
+    List<MeetingLog> findBySupervisor_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(Long supervisorUserId, MeetingLogStatus status, String fypPhase);
     long countBySupervisor_UserIdAndStatus(Long supervisorUserId, MeetingLogStatus status);
 }

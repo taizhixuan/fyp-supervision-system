@@ -24,11 +24,23 @@ public class SupervisorMeetingLogController {
     private final StudentService studentService;
 
     @GetMapping
-    public ResponseEntity<?> getMeetingLogs(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
+    public ResponseEntity<?> getMeetingLogs(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String phase) {
         Long userId = Long.parseLong(user.getUsername());
-        List<MeetingLog> logs = (status != null && !status.isBlank())
-                ? meetingLogRepository.findBySupervisor_UserIdAndStatusOrderByCreatedAtDesc(userId, MeetingLogStatus.valueOf(status))
-                : meetingLogRepository.findBySupervisor_UserIdOrderByCreatedAtDesc(userId);
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasPhase = phase != null && !phase.isBlank();
+        List<MeetingLog> logs;
+        if (hasStatus && hasPhase) {
+            logs = meetingLogRepository.findBySupervisor_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(userId, MeetingLogStatus.valueOf(status), phase);
+        } else if (hasStatus) {
+            logs = meetingLogRepository.findBySupervisor_UserIdAndStatusOrderByCreatedAtDesc(userId, MeetingLogStatus.valueOf(status));
+        } else if (hasPhase) {
+            logs = meetingLogRepository.findBySupervisor_UserIdAndFypPhaseOrderByCreatedAtDesc(userId, phase);
+        } else {
+            logs = meetingLogRepository.findBySupervisor_UserIdOrderByCreatedAtDesc(userId);
+        }
         List<Map<String, Object>> dtos = logs.stream().map(studentService::buildMeetingLogDto).toList();
         return ResponseEntity.ok(Map.of("logs", dtos, "total", dtos.size()));
     }

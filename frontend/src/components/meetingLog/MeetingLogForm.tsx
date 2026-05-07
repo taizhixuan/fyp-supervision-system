@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,8 +6,8 @@ import { ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import { Card, Button, AlertBanner } from '@/components/ui'
 import { TaskCheckboxSection } from './TaskCheckboxSection'
 import { cn } from '@/lib/utils/cn'
-import type { MeetingLogTaskCode } from '@/types/meetingLog'
-import { getDefaultTasks, MEETING_LOG_TASKS } from '@/types/meetingLog'
+import type { MeetingLogTaskCode, FYPPhase } from '@/types/meetingLog'
+import { getDefaultTasks, getTaskLabel } from '@/types/meetingLog'
 
 // Form validation schema
 const meetingLogFormSchema = z.object({
@@ -76,7 +76,7 @@ export function MeetingLogForm({
       meetingMode: initialData?.meetingMode || 'PHYSICAL',
       projectTitle: initialData?.projectTitle || '',
       fypPhase: initialData?.fypPhase || 'FYP1',
-      tasks: initialData?.tasks || getDefaultTasks().map((t) => ({
+      tasks: initialData?.tasks || getDefaultTasks((initialData?.fypPhase as FYPPhase) || 'FYP1').map((t) => ({
         taskCode: t.taskCode,
         isSelected: t.isSelected,
         details: t.details || '',
@@ -111,6 +111,25 @@ export function MeetingLogForm({
   const watchedMode = watch('meetingMode')
   const watchedPhase = watch('fypPhase')
   const watchedTitle = watch('projectTitle')
+
+  // When user toggles FYP phase via Edit details, swap the task list to the
+  // phase's defaults. Skip on first render so prefill/initialData isn't wiped.
+  const lastPhaseRef = useRef<FYPPhase | null>(null)
+  useEffect(() => {
+    if (lastPhaseRef.current === null) {
+      lastPhaseRef.current = watchedPhase as FYPPhase
+      return
+    }
+    if (lastPhaseRef.current !== watchedPhase) {
+      lastPhaseRef.current = watchedPhase as FYPPhase
+      const defaults = getDefaultTasks(watchedPhase as FYPPhase).map((t) => ({
+        taskCode: t.taskCode,
+        isSelected: false,
+        details: '',
+      }))
+      setValue('tasks', defaults)
+    }
+  }, [watchedPhase, setValue])
 
   return (
     <form className={cn('space-y-6', className)}>
@@ -283,7 +302,7 @@ export function MeetingLogForm({
             <TaskCheckboxSection
               tasks={field.value.map((t) => ({
                 taskCode: t.taskCode as MeetingLogTaskCode,
-                label: MEETING_LOG_TASKS[t.taskCode as MeetingLogTaskCode],
+                label: getTaskLabel(t.taskCode as MeetingLogTaskCode, watchedPhase as FYPPhase),
                 isSelected: t.isSelected,
                 details: t.details,
               }))}

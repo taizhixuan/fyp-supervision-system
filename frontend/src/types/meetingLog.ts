@@ -1,15 +1,33 @@
 // MMU FCI Meeting Log Types
 
 /**
- * Task codes matching the official MMU Meeting Log format
+ * FYP1 task codes
  */
-export type MeetingLogTaskCode =
+export type MeetingLogTaskCodeFYP1 =
   | 'PLANNING'
   | 'LITERATURE_REVIEW'
   | 'REQUIREMENT_ANALYSIS'
   | 'DESIGN_METHODOLOGY'
   | 'PROTOTYPE_POC'
   | 'DRAFT_REPORT'
+
+/**
+ * FYP2 task codes
+ */
+export type MeetingLogTaskCodeFYP2 =
+  | 'BACKGROUND_STUDY'
+  | 'IMPLEMENTATION'
+  | 'TESTING'
+  | 'EVALUATION'
+  | 'COMMERCIALISATION_PROPOSAL'
+  | 'RESEARCH_PAPER'
+  | 'DRAFT_REPORT'
+  | 'FINAL_REPORT'
+
+/**
+ * Union of all task codes (any phase). DRAFT_REPORT exists in both phases.
+ */
+export type MeetingLogTaskCode = MeetingLogTaskCodeFYP1 | MeetingLogTaskCodeFYP2
 
 /**
  * Meeting log workflow status
@@ -175,9 +193,9 @@ export interface RequestCorrectionData {
 }
 
 /**
- * Standard task configuration - labels matching MMU format
+ * FYP1 task labels
  */
-export const MEETING_LOG_TASKS: Record<MeetingLogTaskCode, string> = {
+export const MEETING_LOG_TASKS_FYP1: Record<MeetingLogTaskCodeFYP1, string> = {
   PLANNING: 'Planning',
   LITERATURE_REVIEW: 'Literature Review',
   REQUIREMENT_ANALYSIS: 'Requirement Analysis',
@@ -187,12 +205,46 @@ export const MEETING_LOG_TASKS: Record<MeetingLogTaskCode, string> = {
 }
 
 /**
- * Get default tasks array with all tasks unselected
+ * FYP2 task labels
  */
-export function getDefaultTasks(): MeetingLogTask[] {
-  return (Object.keys(MEETING_LOG_TASKS) as MeetingLogTaskCode[]).map((code) => ({
+export const MEETING_LOG_TASKS_FYP2: Record<MeetingLogTaskCodeFYP2, string> = {
+  BACKGROUND_STUDY: 'Background Study',
+  IMPLEMENTATION: 'Implementation',
+  TESTING: 'Testing',
+  EVALUATION: 'Evaluation',
+  COMMERCIALISATION_PROPOSAL: 'Commercialisation Proposal',
+  RESEARCH_PAPER: 'Research Paper',
+  DRAFT_REPORT: 'Draft Report',
+  FINAL_REPORT: 'Final Report',
+}
+
+/**
+ * Combined map for label lookup regardless of phase. Note DRAFT_REPORT label
+ * differs slightly between phases — this map uses the FYP1 wording as the
+ * default; pass phase explicitly via `getTaskLabel` to disambiguate.
+ */
+export const MEETING_LOG_TASKS: Record<MeetingLogTaskCode, string> = {
+  ...MEETING_LOG_TASKS_FYP2,
+  ...MEETING_LOG_TASKS_FYP1,
+}
+
+export function getTaskLabel(code: MeetingLogTaskCode, phase: FYPPhase): string {
+  if (phase === 'FYP2') {
+    const map = MEETING_LOG_TASKS_FYP2 as Record<string, string>
+    return map[code] ?? MEETING_LOG_TASKS[code] ?? code
+  }
+  const map = MEETING_LOG_TASKS_FYP1 as Record<string, string>
+  return map[code] ?? MEETING_LOG_TASKS[code] ?? code
+}
+
+/**
+ * Get default tasks array (all unselected) for the given phase.
+ */
+export function getDefaultTasks(phase: FYPPhase = 'FYP1'): MeetingLogTask[] {
+  const map = phase === 'FYP2' ? MEETING_LOG_TASKS_FYP2 : MEETING_LOG_TASKS_FYP1
+  return (Object.keys(map) as MeetingLogTaskCode[]).map((code) => ({
     taskCode: code,
-    label: MEETING_LOG_TASKS[code],
+    label: (map as Record<string, string>)[code],
     isSelected: false,
     details: '',
   }))
