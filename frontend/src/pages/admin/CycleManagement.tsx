@@ -20,7 +20,14 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { useFYPCycles, useUpdateCycle } from '@/lib/hooks/useAdmin'
+import {
+  useFYPCycles,
+  useUpdateCycle,
+  useCycleTemplate,
+  useCreateCycleFromTemplate,
+} from '@/lib/hooks/useAdmin'
+import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { CycleStatus, FYPCycle } from '@/types'
@@ -53,11 +60,48 @@ const getTypeConfig = (key: string | undefined): TypeEntry => (key && typeConfig
 export function CycleManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'ALL'>('ALL')
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [tplForm, setTplForm] = useState({
+    cycleCode: '',
+    academicYear: '',
+    semester: 1,
+    startDate: '',
+    endDate: '',
+  })
 
   const { data, isLoading } = useFYPCycles(
     statusFilter !== 'ALL' ? statusFilter : undefined
   )
   const updateMutation = useUpdateCycle()
+  const { data: templateData } = useCycleTemplate('FYP1')
+  const fromTemplateMutation = useCreateCycleFromTemplate()
+  const successToast = useSuccessToast()
+  const errorToast = useErrorToast()
+
+  const handleCreateFromTemplate = async () => {
+    if (!tplForm.cycleCode || !tplForm.academicYear || !tplForm.startDate || !tplForm.endDate) {
+      errorToast('Missing fields', 'Please fill in all fields.')
+      return
+    }
+    try {
+      const result = await fromTemplateMutation.mutateAsync({
+        phase: 'FYP1',
+        cycleCode: tplForm.cycleCode,
+        academicYear: tplForm.academicYear,
+        semester: tplForm.semester,
+        startDate: tplForm.startDate,
+        endDate: tplForm.endDate,
+      })
+      successToast(
+        'Cycle created',
+        `${tplForm.cycleCode} created with ${result.deadlinesCreated} deadlines.`
+      )
+      setTemplateOpen(false)
+      setTplForm({ cycleCode: '', academicYear: '', semester: 1, startDate: '', endDate: '' })
+    } catch (e) {
+      errorToast('Create failed', (e as Error).message)
+    }
+  }
 
   const filteredCycles = data?.cycles.filter((cycle) => {
     if (!searchQuery) return true
@@ -116,14 +160,105 @@ export function CycleManagement() {
               </p>
             </div>
           </div>
-          <Link to={ROUTES.ADMIN.CYCLE_NEW}>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Cycle
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => setTemplateOpen(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white border-0"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Use FYP1 Template
             </Button>
-          </Link>
+            <Link to={ROUTES.ADMIN.CYCLE_NEW}>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Cycle
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* FYP1 template modal */}
+      <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} size="lg">
+        <ModalHeader>
+          <ModalTitle>Create FYP1 Cycle from Standard Template</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600 mb-4">
+            This creates a new FYP1 cycle plus the {templateData?.deadlines.length ?? 9} standard
+            deadlines from the official workflow, scheduled relative to your start date.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <Input
+              label="Cycle code"
+              value={tplForm.cycleCode}
+              onChange={(e) => setTplForm({ ...tplForm, cycleCode: e.target.value })}
+              placeholder="FYP1-2025-S1"
+            />
+            <Input
+              label="Academic year"
+              value={tplForm.academicYear}
+              onChange={(e) => setTplForm({ ...tplForm, academicYear: e.target.value })}
+              placeholder="2025/2026"
+            />
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Semester</label>
+              <select
+                value={tplForm.semester}
+                onChange={(e) => setTplForm({ ...tplForm, semester: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value={1}>Sem 1</option>
+                <option value={2}>Sem 2</option>
+                <option value={3}>Sem 3 (Short)</option>
+              </select>
+            </div>
+            <Input
+              type="date"
+              label="Start date"
+              value={tplForm.startDate}
+              onChange={(e) => setTplForm({ ...tplForm, startDate: e.target.value })}
+            />
+            <Input
+              type="date"
+              label="End date"
+              value={tplForm.endDate}
+              onChange={(e) => setTplForm({ ...tplForm, endDate: e.target.value })}
+            />
+          </div>
+          {templateData && (
+            <div className="border border-neutral-200 rounded-lg overflow-hidden">
+              <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-700">
+                Deadlines that will be auto-created
+              </div>
+              <ul className="divide-y divide-neutral-100">
+                {templateData.deadlines.map((d) => (
+                  <li key={d.title} className="px-3 py-2 text-sm flex items-center justify-between">
+                    <span className="text-neutral-800">{d.title}</span>
+                    <span className="text-xs text-neutral-500">
+                      Day {d.dayOffset >= 0 ? '+' : ''}
+                      {d.dayOffset} • {d.audience}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setTemplateOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateFromTemplate}
+            disabled={fromTemplateMutation.isPending}
+          >
+            {fromTemplateMutation.isPending ? <Spinner size="sm" className="mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            Create cycle &amp; deadlines
+          </Button>
+        </ModalFooter>
+      </Modal>
 
       {/* Current Active Cycle Banner */}
       {activeCycle && (

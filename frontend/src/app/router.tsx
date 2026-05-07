@@ -13,6 +13,7 @@ const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage').
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
 const AccountPendingPage = lazy(() => import('@/pages/auth/AccountPendingPage').then(m => ({ default: m.AccountPendingPage })))
 const AccountBlockedPage = lazy(() => import('@/pages/auth/AccountBlockedPage').then(m => ({ default: m.AccountBlockedPage })))
+const Fyp1ResultPendingPage = lazy(() => import('@/pages/auth/Fyp1ResultPendingPage').then(m => ({ default: m.Fyp1ResultPendingPage })))
 
 // Common pages - Lazy load
 const AccountSettingsPage = lazy(() => import('@/pages/common/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })))
@@ -104,6 +105,8 @@ const CommitteeNotificationsCenter = lazy(() => import('@/pages/committee/Notifi
 // Admin pages - All lazy loaded
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then(m => ({ default: m.UserManagement })))
+const PendingRegistrations = lazy(() => import('@/pages/admin/PendingRegistrations').then(m => ({ default: m.PendingRegistrations })))
+const Fyp1PassTracking = lazy(() => import('@/pages/admin/Fyp1PassTracking').then(m => ({ default: m.Fyp1PassTracking })))
 const CreateUser = lazy(() => import('@/pages/admin/CreateUser').then(m => ({ default: m.CreateUser })))
 const UserDetail = lazy(() => import('@/pages/admin/UserDetail').then(m => ({ default: m.UserDetail })))
 const SystemParameters = lazy(() => import('@/pages/admin/SystemParameters').then(m => ({ default: m.SystemParameters })))
@@ -150,6 +153,10 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ACCOUNT_BLOCKED,
     element: <AccountBlockedPage />,
+  },
+  {
+    path: ROUTES.FYP1_RESULT_PENDING,
+    element: <Fyp1ResultPendingPage />,
   },
 
   // Auth redirect
@@ -886,6 +893,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <UserManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN.PENDING_REGISTRATIONS,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <PendingRegistrations />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN.FYP1_PASS,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <Fyp1PassTracking />
           </ProtectedRoute>
         ),
       },

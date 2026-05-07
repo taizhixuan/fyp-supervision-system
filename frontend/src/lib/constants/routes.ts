@@ -9,6 +9,7 @@ export const ROUTES = {
   // Account status routes
   ACCOUNT_PENDING: '/account-pending',
   ACCOUNT_BLOCKED: '/account-blocked',
+  FYP1_RESULT_PENDING: '/fyp1-result-pending',
 
   // Auth redirect
   REDIRECT: '/redirect',
@@ -145,6 +146,10 @@ export const ROUTES = {
     USER_NEW: '/admin/users/new',
     USER_DETAIL: '/admin/users/:id',
     USER_EDIT: '/admin/users/:id/edit',
+    // Pending registrations queue (real-world flow: faculty admin gates signups)
+    PENDING_REGISTRATIONS: '/admin/registrations',
+    // FYP1 pass tracking (sourced from external eBwise/Clic results)
+    FYP1_PASS: '/admin/fyp1-pass',
     // System Parameters (UC31)
     PARAMETERS: '/admin/parameters',
     PARAMETER_EDIT: '/admin/parameters/:id',

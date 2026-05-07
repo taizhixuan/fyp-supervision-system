@@ -761,6 +761,178 @@ export const adminKeys = {
   healthChecks: () => [...adminKeys.all, 'healthChecks'] as const,
   auditLogs: () => [...adminKeys.all, 'auditLogs'] as const,
   notifications: () => [...adminKeys.all, 'notifications'] as const,
+  pendingRegistrations: () => [...adminKeys.all, 'pendingRegistrations'] as const,
+  fyp1Pass: () => [...adminKeys.all, 'fyp1Pass'] as const,
+  cycleTemplate: (phase: string) => [...adminKeys.all, 'cycleTemplate', phase] as const,
+}
+
+// ============================================
+// Pending Registrations (admin queue)
+// ============================================
+
+export interface PendingRegistration {
+  userId: string
+  mmuId: string
+  email: string
+  fullName: string
+  phone: string | null
+  role: 'STUDENT' | 'SUPERVISOR'
+  department: string
+  programme: string
+  registeredAt: string
+}
+
+export function usePendingRegistrations(role?: 'STUDENT' | 'SUPERVISOR' | 'ALL') {
+  return useQuery({
+    queryKey: [...adminKeys.pendingRegistrations(), role ?? 'ALL'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        registrations: PendingRegistration[]
+        total: number
+        studentCount: number
+        supervisorCount: number
+      }>('/admin/users/pending', { params: { role: role && role !== 'ALL' ? role : undefined } })
+      return data
+    },
+  })
+}
+
+export function useApproveRegistration() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data } = await apiClient.post(`/admin/users/${userId}/approve`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.pendingRegistrations() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() })
+    },
+  })
+}
+
+export function useRejectRegistration() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      const { data } = await apiClient.post(`/admin/users/${userId}/reject`, { reason })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.pendingRegistrations() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+    },
+  })
+}
+
+// ============================================
+// Cycle Template (FYP1 standard timeline)
+// ============================================
+
+export interface TemplateDeadline {
+  title: string
+  deadlineType: string
+  audience: string
+  dayOffset: number
+}
+
+export function useCycleTemplate(phase: string = 'FYP1') {
+  return useQuery({
+    queryKey: adminKeys.cycleTemplate(phase),
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ phase: string; deadlines: TemplateDeadline[] }>(
+        '/admin/cycles/template',
+        { params: { phase } }
+      )
+      return data
+    },
+  })
+}
+
+export function useCreateCycleFromTemplate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      phase: 'FYP1'
+      cycleCode: string
+      academicYear: string
+      semester: number
+      startDate: string
+      endDate: string
+    }) => {
+      const { data: resp } = await apiClient.post('/admin/cycles/from-template', data)
+      return resp
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.deadlines() })
+    },
+  })
+}
+
+// ============================================
+// FYP1 Pass tracking
+// ============================================
+
+export interface Fyp1PassRow {
+  projectId: number
+  projectTitle: string
+  studentId: string
+  studentUserId: number
+  studentName: string
+  studentEmail: string
+  supervisorName: string | null
+  stage: string
+  fyp1Passed: boolean | null
+}
+
+export function useFyp1PassList() {
+  return useQuery({
+    queryKey: adminKeys.fyp1Pass(),
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        projects: Fyp1PassRow[]
+        total: number
+        passedCount: number
+        failedCount: number
+        pendingCount: number
+      }>('/admin/projects/fyp1-pass')
+      return data
+    },
+  })
+}
+
+export function useSetFyp1Passed() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ projectId, passed }: { projectId: number; passed: boolean | null }) => {
+      const { data } = await apiClient.post(`/admin/projects/${projectId}/fyp1-passed`, { passed })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.fyp1Pass() })
+    },
+  })
+}
+
+export function useImportFyp1Passed() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await apiClient.post<{ updated: number; notFound: string[]; notFoundCount: number }>(
+        '/admin/projects/fyp1-passed/import',
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.fyp1Pass() })
+    },
+  })
 }
 
 // ============================================

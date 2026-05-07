@@ -49,6 +49,9 @@ public class Project {
     @Column(length = 50)
     private String stage;
 
+    @Column(name = "fyp1_passed")
+    private Boolean fyp1Passed;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStatus status;

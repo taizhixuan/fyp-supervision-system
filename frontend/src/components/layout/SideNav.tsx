@@ -15,6 +15,8 @@ import {
   Wrench,
   Link2,
   UserCog,
+  UserPlus,
+  Award,
   Bell,
   Clock,
   Download,
@@ -166,9 +168,19 @@ const adminNavItems: NavItem[] = [
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
+    label: 'Pending Registrations',
+    href: ROUTES.ADMIN.PENDING_REGISTRATIONS,
+    icon: <UserPlus className="h-5 w-5" />,
+  },
+  {
     label: 'Users',
     href: ROUTES.ADMIN.USERS,
     icon: <UserCog className="h-5 w-5" />,
+  },
+  {
+    label: 'FYP1 Pass Tracking',
+    href: ROUTES.ADMIN.FYP1_PASS,
+    icon: <Award className="h-5 w-5" />,
   },
   {
     label: 'Parameters',
