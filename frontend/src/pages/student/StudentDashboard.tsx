@@ -262,6 +262,13 @@ export function StudentDashboard() {
     nextSteps: dynamicRegistrationSteps,
   }
 
+  // Pairing-aware banner: REGISTERED means a Project exists (student is paired).
+  const isPaired = dashboard.registrationStatus.status === 'REGISTERED'
+  const pairedSupervisor = dashboard.registrationStatus.supervisor as
+    | { fullName?: string; department?: string; email?: string }
+    | undefined
+  const nextDeadline = upcomingDeadlines && upcomingDeadlines.length > 0 ? upcomingDeadlines[0] : null
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -311,6 +318,65 @@ export function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Pairing banner — different content depending on whether the student has a project yet */}
+      {isPaired ? (
+        <Card className="p-5 border-l-4 border-l-success-500 bg-gradient-to-r from-success-50 to-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-success-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">You are paired with</p>
+                <p className="font-semibold text-neutral-900">
+                  {pairedSupervisor?.fullName ?? 'your supervisor'}
+                </p>
+                {pairedSupervisor?.department && (
+                  <p className="text-xs text-neutral-500">{pairedSupervisor.department}</p>
+                )}
+              </div>
+            </div>
+            {nextDeadline && (
+              <div className="text-right">
+                <p className="text-xs text-neutral-500">Next deadline</p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {(nextDeadline as { title?: string }).title ?? '—'}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {new Date((nextDeadline as { dueDate: string }).dueDate).toLocaleDateString('en-MY', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-5 border-l-4 border-l-primary-500 bg-gradient-to-r from-primary-50 to-white">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Sparkles className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-neutral-900">You haven&apos;t picked a project yet</p>
+                <p className="text-sm text-neutral-600 mt-0.5">
+                  Browse approved project topics and confirm one to pair with a supervisor.
+                </p>
+              </div>
+            </div>
+            <Link to={ROUTES.STUDENT.TOPICS} className="shrink-0">
+              <Button>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Browse Topics
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

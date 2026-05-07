@@ -38,6 +38,7 @@ public class AuthService {
     private final FypCycleRepository fypCycleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final NotificationService notificationService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -86,6 +87,17 @@ public class AuthService {
                     .build();
             supervisorProfileRepository.save(profile);
         }
+
+        // Notify all system admins so they can approve from the registration queue.
+        userAccountRepository.findAll().stream()
+                .filter(u -> u.getRole() == UserRole.SYSTEM_ADMIN && u.getStatus() == UserStatus.ACTIVE)
+                .forEach(admin -> notificationService.createNotification(
+                        admin.getUserId(),
+                        "REGISTRATION_PENDING",
+                        "New " + role.name().toLowerCase() + " registration",
+                        request.getFullName() + " (" + request.getMmuId() + ") needs approval.",
+                        "/admin/registrations"
+                ));
 
         return "Registration successful. Your account is pending approval.";
     }

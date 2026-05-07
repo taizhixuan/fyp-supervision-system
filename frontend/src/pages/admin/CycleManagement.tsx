@@ -61,6 +61,7 @@ export function CycleManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'ALL'>('ALL')
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [tplPhase, setTplPhase] = useState<'FYP1' | 'FYP2'>('FYP1')
   const [tplForm, setTplForm] = useState({
     cycleCode: '',
     academicYear: '',
@@ -73,7 +74,7 @@ export function CycleManagement() {
     statusFilter !== 'ALL' ? statusFilter : undefined
   )
   const updateMutation = useUpdateCycle()
-  const { data: templateData } = useCycleTemplate('FYP1')
+  const { data: templateData } = useCycleTemplate(tplPhase)
   const fromTemplateMutation = useCreateCycleFromTemplate()
   const successToast = useSuccessToast()
   const errorToast = useErrorToast()
@@ -85,7 +86,7 @@ export function CycleManagement() {
     }
     try {
       const result = await fromTemplateMutation.mutateAsync({
-        phase: 'FYP1',
+        phase: tplPhase,
         cycleCode: tplForm.cycleCode,
         academicYear: tplForm.academicYear,
         semester: tplForm.semester,
@@ -167,7 +168,7 @@ export function CycleManagement() {
               className="bg-emerald-500 hover:bg-emerald-600 text-white border-0"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              Use FYP1 Template
+              Use Cycle Template
             </Button>
             <Link to={ROUTES.ADMIN.CYCLE_NEW}>
               <Button className="bg-amber-500 hover:bg-amber-600 text-white border-0">
@@ -179,22 +180,43 @@ export function CycleManagement() {
         </div>
       </div>
 
-      {/* FYP1 template modal */}
+      {/* Cycle template modal — supports FYP1 and FYP2 */}
       <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} size="lg">
         <ModalHeader>
-          <ModalTitle>Create FYP1 Cycle from Standard Template</ModalTitle>
+          <ModalTitle>Create {tplPhase} Cycle from Standard Template</ModalTitle>
         </ModalHeader>
         <ModalBody>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Phase</label>
+            <div className="flex gap-2">
+              {(['FYP1', 'FYP2'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setTplPhase(p)}
+                  className={cn(
+                    'px-4 py-2 rounded-md text-sm font-medium border transition-colors',
+                    tplPhase === p
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="text-sm text-neutral-600 mb-4">
-            This creates a new FYP1 cycle plus the {templateData?.deadlines.length ?? 9} standard
-            deadlines from the official workflow, scheduled relative to your start date.
+            This creates a new {tplPhase} cycle plus the{' '}
+            {templateData?.deadlines.length ?? 0} standard deadlines from the official workflow,
+            scheduled relative to your start date.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <Input
               label="Cycle code"
               value={tplForm.cycleCode}
               onChange={(e) => setTplForm({ ...tplForm, cycleCode: e.target.value })}
-              placeholder="FYP1-2025-S1"
+              placeholder={`${tplPhase}-2025-S1`}
             />
             <Input
               label="Academic year"
