@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import { Card, Button, AlertBanner } from '@/components/ui'
 import { TaskCheckboxSection } from './TaskCheckboxSection'
 import { cn } from '@/lib/utils/cn'
@@ -43,6 +45,8 @@ interface MeetingLogFormProps {
   disabled?: boolean
   showHeader?: boolean
   className?: string
+  /** When true, Meeting Details starts collapsed with an "Edit details" toggle. Default true. */
+  collapseDetails?: boolean
 }
 
 /**
@@ -54,7 +58,9 @@ export function MeetingLogForm({
   isLoading = false,
   disabled = false,
   className,
+  collapseDetails = true,
 }: MeetingLogFormProps) {
+  const [detailsOpen, setDetailsOpen] = useState(!collapseDetails || disabled)
   const {
     register,
     handleSubmit,
@@ -100,15 +106,56 @@ export function MeetingLogForm({
     await onSubmit(data, asDraft)
   }
 
+  const watchedNumber = watch('meetingNumber')
+  const watchedDate = watch('meetingDate')
+  const watchedMode = watch('meetingMode')
+  const watchedPhase = watch('fypPhase')
+  const watchedTitle = watch('projectTitle')
+
   return (
     <form className={cn('space-y-6', className)}>
       {/* Meeting Details */}
       <Card>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-          Meeting Details
-        </h2>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-neutral-900">Meeting Details</h2>
+            {!detailsOpen && (
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-neutral-700">
+                  Meeting #{watchedNumber || '?'}
+                  {watchedDate && ` · ${new Date(watchedDate).toLocaleDateString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`}
+                  {watchedMode && ` · ${watchedMode === 'PHYSICAL' ? 'Physical' : 'Online'}`}
+                  {watchedPhase && ` · ${watchedPhase === 'FYP1' ? 'FYP 1' : 'FYP 2'}`}
+                </p>
+                {watchedTitle && (
+                  <p className="text-sm text-neutral-500 truncate">Project: {watchedTitle}</p>
+                )}
+              </div>
+            )}
+          </div>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={() => setDetailsOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+            >
+              {detailsOpen ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit details
+                  <ChevronDown className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          )}
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4', !detailsOpen && 'hidden')}>
           {/* Meeting Number */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -204,7 +251,7 @@ export function MeetingLogForm({
         </div>
 
         {/* Project Title */}
-        <div className="mt-4">
+        <div className={cn('mt-4', !detailsOpen && 'hidden')}>
           <label className="block text-sm font-medium text-neutral-700 mb-2">
             Project Title <span className="text-error-500">*</span>
           </label>
