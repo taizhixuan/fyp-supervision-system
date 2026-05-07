@@ -69,10 +69,17 @@ public class StudentMeetingController {
     public ResponseEntity<Void> cancelMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody(required = false) Map<String, Object> data) {
         Meeting meeting = meetingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
-        meeting.setStatus(MeetingStatus.CANCELLED);
-        if (data != null && data.get("reason") != null) {
-            meeting.setCancelReason((String) data.get("reason"));
+
+        String reason = data != null && data.get("reason") != null ? ((String) data.get("reason")).trim() : "";
+        if (reason.isEmpty()) {
+            throw new BadRequestException("Cancellation reason is required.");
         }
+        if (reason.length() > 500) {
+            throw new BadRequestException("Cancellation reason must be 500 characters or fewer.");
+        }
+
+        meeting.setStatus(MeetingStatus.CANCELLED);
+        meeting.setCancelReason(reason);
         meetingRepository.save(meeting);
         return ResponseEntity.noContent().build();
     }

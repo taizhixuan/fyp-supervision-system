@@ -155,6 +155,7 @@ export interface SupervisorMeeting {
   onlinePlatform?: OnlinePlatform
   agenda?: string
   notes?: string
+  cancelReason?: string
   actionItems?: string[]
   createdAt: string
   updatedAt: string
