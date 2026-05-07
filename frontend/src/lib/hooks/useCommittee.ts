@@ -961,8 +961,10 @@ export function useProjectOverview(filters?: { cycle?: string; programme?: strin
         }
         return { projects: filtered, total: filtered.length }
       }
-      const { data } = await apiClient.get('/committee/projects', { params: filters })
-      return data
+      const { data } = await apiClient.get<{ content?: unknown[]; totalElements?: number }>('/committee/projects', { params: filters })
+      // Backend returns Spring Page shape: { content, totalElements, totalPages, number }
+      // Adapt to the component contract: { projects, total }
+      return { projects: (data.content || []) as ProjectOverview[], total: data.totalElements ?? 0 }
     },
   })
 }

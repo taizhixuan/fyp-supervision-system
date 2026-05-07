@@ -166,7 +166,8 @@ export interface CommitteeUploadDocumentData {
 }
 
 // Project & Pairing Types
-export type CommitteeProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED'
+// Matches backend enum ProjectStatus { ACTIVE, COMPLETED, SUSPENDED, DROPPED }.
+export type CommitteeProjectStatus = 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'DROPPED'
 export type PairingStatus = 'UNPAIRED' | 'PENDING_APPROVAL' | 'PAIRED'
 
 export interface ProjectOverview {

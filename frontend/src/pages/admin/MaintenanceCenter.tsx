@@ -294,22 +294,17 @@ export function MaintenanceCenter() {
                 key={backup.backupId}
                 className={cn(
                   'flex items-center justify-between p-4 border rounded-xl border-l-4',
-                  backup.status === 'COMPLETED' ? 'border-l-emerald-500 bg-emerald-50/30 border-emerald-200' :
-                  backup.status === 'IN_PROGRESS' ? 'border-l-sky-500 bg-sky-50/30 border-sky-200' :
+                  backup.status === 'AVAILABLE' ? 'border-l-emerald-500 bg-emerald-50/30 border-emerald-200' :
                   'border-l-rose-500 bg-rose-50/30 border-rose-200'
                 )}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     'p-2 rounded-xl',
-                    backup.status === 'COMPLETED' ? 'bg-emerald-100' :
-                    backup.status === 'IN_PROGRESS' ? 'bg-sky-100' :
-                    'bg-rose-100'
+                    backup.status === 'AVAILABLE' ? 'bg-emerald-100' : 'bg-rose-100'
                   )}>
-                    {backup.status === 'COMPLETED' ? (
+                    {backup.status === 'AVAILABLE' ? (
                       <CheckCircle className="h-5 w-5 text-emerald-600" />
-                    ) : backup.status === 'IN_PROGRESS' ? (
-                      <RefreshCw className="h-5 w-5 text-sky-600 animate-spin" />
                     ) : (
                       <XCircle className="h-5 w-5 text-rose-600" />
                     )}

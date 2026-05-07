@@ -20,19 +20,25 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { CommitteeProjectStatus, PairingStatus } from '@/types'
 
-const projectStatusConfig: Record<CommitteeProjectStatus, { label: string; color: string; bgColor: string }> = {
-  NOT_STARTED: { label: 'Not Started', color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  IN_PROGRESS: { label: 'In Progress', color: 'text-sky-600', bgColor: 'bg-sky-100' },
+type StatusEntry = { label: string; color: string; bgColor: string }
+const DEFAULT_PROJECT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
+const DEFAULT_PAIRING_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
+
+const projectStatusConfig: Record<string, StatusEntry> = {
+  ACTIVE: { label: 'Active', color: 'text-sky-600', bgColor: 'bg-sky-100' },
   COMPLETED: { label: 'Completed', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  ON_HOLD: { label: 'On Hold', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  CANCELLED: { label: 'Cancelled', color: 'text-rose-600', bgColor: 'bg-rose-100' },
+  SUSPENDED: { label: 'Suspended', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+  DROPPED: { label: 'Dropped', color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
-const pairingStatusConfig: Record<PairingStatus, { label: string; color: string; bgColor: string }> = {
+const pairingStatusConfig: Record<string, StatusEntry> = {
   UNPAIRED: { label: 'Unpaired', color: 'text-rose-600', bgColor: 'bg-rose-100' },
   PENDING_APPROVAL: { label: 'Pending', color: 'text-amber-600', bgColor: 'bg-amber-100' },
   PAIRED: { label: 'Paired', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
 }
+
+const getProjectStatusConfig = (key: string | undefined): StatusEntry => (key && projectStatusConfig[key]) || DEFAULT_PROJECT_STATUS
+const getPairingStatusConfig = (key: string | undefined): StatusEntry => (key && pairingStatusConfig[key]) || DEFAULT_PAIRING_STATUS
 
 const riskConfig = {
   LOW: { label: 'Low Risk', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
@@ -196,8 +202,8 @@ export function ProjectOverview() {
       <div className="flex flex-col gap-4">
         {filteredProjects && filteredProjects.length > 0 ? (
           filteredProjects.map((project) => {
-            const pairingStatus = pairingStatusConfig[project.pairingStatus]
-            const projectStatus = projectStatusConfig[project.projectStatus]
+            const pairingStatus = getPairingStatusConfig(project.pairingStatus)
+            const projectStatus = getProjectStatusConfig(project.projectStatus)
             const risk = riskConfig[project.riskLevel]
 
             return (
