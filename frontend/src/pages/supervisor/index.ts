@@ -6,6 +6,9 @@ export { SupervisorProfile } from './SupervisorProfile'
 export { RequestInbox } from './RequestInbox'
 export { RequestDetail } from './RequestDetail'
 
+// Project Topics (supervisor-led catalogue)
+export { MyTopics } from './MyTopics'
+
 // Supervisees
 export { SuperviseesList } from './SuperviseesList'
 export { SuperviseeDetail } from './SuperviseeDetail'

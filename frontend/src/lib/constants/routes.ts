@@ -29,6 +29,8 @@ export const ROUTES = {
   STUDENT: {
     DASHBOARD: '/student/dashboard',
     PROFILE: '/student/profile',
+    // Project Topics (browse approved supervisor-led catalogue)
+    TOPICS: '/student/topics',
     // Supervisor Discovery
     SUPERVISORS: '/student/supervisors',
     SUPERVISOR_DETAIL: '/student/supervisors/:id',
@@ -79,6 +81,8 @@ export const ROUTES = {
     // Dashboard & Profile
     DASHBOARD: '/supervisor/dashboard',
     PROFILE: '/supervisor/profile',
+    // Project Topics (supervisor-led catalogue)
+    TOPICS: '/supervisor/topics',
     // Requests
     REQUESTS: '/supervisor/requests',
     REQUEST_DETAIL: '/supervisor/requests/:id',
@@ -116,6 +120,8 @@ export const ROUTES = {
     ANNOUNCEMENTS: '/committee/announcements',
     ANNOUNCEMENT_NEW: '/committee/announcements/new',
     ANNOUNCEMENT_EDIT: '/committee/announcements/:id/edit',
+    // Topic Review (supervisor-led catalogue)
+    TOPICS: '/committee/topics',
     // Proposal Review
     PROPOSALS: '/committee/proposals',
     PROPOSAL_DETAIL: '/committee/proposals/:id',

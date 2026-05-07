@@ -8,6 +8,9 @@ export { SupervisorDetail } from './SupervisorDetail'
 export { AIRecommendations } from './AIRecommendations'
 export { CompareSupervisors } from './CompareSupervisors'
 
+// Project Topics (browse approved supervisor-led catalogue)
+export { BrowseTopics } from './BrowseTopics'
+
 // Supervision Requests
 export { CreateSupervisionRequest } from './CreateSupervisionRequest'
 export { MyRequests } from './MyRequests'
