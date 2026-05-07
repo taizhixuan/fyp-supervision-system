@@ -18,6 +18,7 @@ import {
   ChevronRight,
   RefreshCw,
   Sparkles,
+  UserPlus,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -78,6 +79,32 @@ export function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Pending registrations CTA — surfaces the queue without relying on the bell or sidebar */}
+      {(stats?.pendingApprovals ?? 0) > 0 && (
+        <Link to={ROUTES.ADMIN.PENDING_REGISTRATIONS} className="block">
+          <Card className="p-4 border-l-4 border-l-orange-500 bg-orange-50/80 hover:bg-orange-50 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <UserPlus className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-stone-900">
+                    {stats?.pendingApprovals} registration{stats?.pendingApprovals === 1 ? '' : 's'} awaiting review
+                  </h4>
+                  <p className="text-sm text-stone-600 mt-0.5">
+                    New signups are gated until you approve them in the registration queue.
+                  </p>
+                </div>
+              </div>
+              <Button variant="primary" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
+                Review queue
+              </Button>
+            </div>
+          </Card>
+        </Link>
+      )}
 
       {/* System Alerts */}
       {alerts && alerts.filter((a) => !a.isResolved).length > 0 && (
@@ -161,7 +188,7 @@ export function AdminDashboard() {
           </div>
         </Card>
 
-        <Link to={ROUTES.ADMIN.USERS}>
+        <Link to={ROUTES.ADMIN.PENDING_REGISTRATIONS}>
           <Card className="p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer border-l-4 border-l-orange-500 group">
             <div className="flex items-center justify-between">
               <div>
@@ -391,6 +418,12 @@ export function AdminDashboard() {
               <Button variant="secondary" className="w-full justify-start hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors">
                 <Users className="h-4 w-4 mr-2" />
                 Manage Users
+              </Button>
+            </Link>
+            <Link to={ROUTES.ADMIN.PENDING_REGISTRATIONS}>
+              <Button variant="secondary" className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-colors">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Registration Queue
               </Button>
             </Link>
             <Link to={ROUTES.ADMIN.PARAMETERS}>

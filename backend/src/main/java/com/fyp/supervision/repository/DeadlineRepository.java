@@ -12,4 +12,6 @@ public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
     List<Deadline> findByCycle_CycleIdOrderByDueDateAsc(Long cycleId);
     List<Deadline> findByDueDateAfterOrderByDueDateAsc(LocalDate date);
     List<Deadline> findByAudienceAndDueDateAfterOrderByDueDateAsc(String audience, LocalDate date);
+    List<Deadline> findByCycle_CycleTypeAndDueDateAfterOrderByDueDateAsc(String cycleType, LocalDate date);
+    List<Deadline> findByCycle_CycleTypeAndAudienceAndDueDateAfterOrderByDueDateAsc(String cycleType, String audience, LocalDate date);
 }
