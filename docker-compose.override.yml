@@ -1,0 +1,24 @@
+# Auto-loaded by Docker Compose on top of docker-compose.yml.
+# Runs the frontend in Vite dev mode with hot-reload, mounting your
+# host source so edits show up instantly without rebuilding the image.
+#
+# Delete this file (or rename it) to fall back to the production nginx build.
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+      VITE_USE_POLLING: "true"
+    depends_on:
+      - backend
+    networks:
+      - fyp-network
