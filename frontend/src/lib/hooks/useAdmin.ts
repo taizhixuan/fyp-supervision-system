@@ -854,7 +854,7 @@ export function useCreateCycleFromTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: {
-      phase: 'FYP1'
+      phase: 'FYP1' | 'FYP2'
       cycleCode: string
       academicYear: string
       semester: number

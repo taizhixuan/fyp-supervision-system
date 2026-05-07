@@ -42,6 +42,29 @@ public class AdminCycleController {
             { "Interim Report Submission",      "INTERIM_REPORT",      "STUDENT",     91 },
     };
 
+    /**
+     * FYP2 timeline derived from the official workflow image (Mar/Apr → Jul).
+     * Day 0 is start of FYP2 trimester (after Subject Registration in Clic).
+     * Marking and Clic submissions are tracked here as informational deadlines —
+     * the actual entry happens in eBwise/Clic, not in this system.
+     */
+    private static final Object[][] FYP2_TEMPLATE_DEADLINES = new Object[][] {
+            { "Subject Registration for FYP2 (Clic)", "SUBJECT_REG_CLIC", "STUDENT",       7 },
+            { "Meeting Logs Period Begins",            "MEETING_LOGS",     "STUDENT",      14 },
+            { "Plagiarism Checking",                   "PLAGIARISM",       "STUDENT",      91 },
+            { "Final Report Submission (Draft)",       "FINAL_REPORT",     "STUDENT",      98 },
+            { "Poster Presentation Slot Allocation",   "POSTER_SLOTS",     "COMMITTEE",    98 },
+            { "Poster Presentation & Evaluation",      "POSTER_EVAL",      "STUDENT",     105 },
+            { "Feedback on Amendments / Corrections",  "FEEDBACK",         "SUPERVISOR",  112 },
+            { "Final Soft Copy Report Submission",     "FINAL_SOFT_COPY",  "STUDENT",     112 },
+            { "Enter Final Marks in Clic",             "MARK_ENTRY",       "SUPERVISOR",  112 },
+    };
+
+    private static Object[][] templateFor(String phase) {
+        if ("FYP2".equalsIgnoreCase(phase)) return FYP2_TEMPLATE_DEADLINES;
+        return FYP1_TEMPLATE_DEADLINES;
+    }
+
     @GetMapping
     public ResponseEntity<?> getCycles() {
         return ResponseEntity.ok(adminService.getCycles());
@@ -80,11 +103,12 @@ public class AdminCycleController {
 
     @GetMapping("/template")
     public ResponseEntity<?> getTemplate(@RequestParam(defaultValue = "FYP1") String phase) {
-        if (!"FYP1".equalsIgnoreCase(phase)) {
+        if (!"FYP1".equalsIgnoreCase(phase) && !"FYP2".equalsIgnoreCase(phase)) {
             return ResponseEntity.ok(Map.of("phase", phase, "deadlines", List.of()));
         }
+        String normalized = phase.toUpperCase();
         List<Map<String, Object>> deadlines = new ArrayList<>();
-        for (Object[] row : FYP1_TEMPLATE_DEADLINES) {
+        for (Object[] row : templateFor(normalized)) {
             Map<String, Object> d = new LinkedHashMap<>();
             d.put("title", row[0]);
             d.put("deadlineType", row[1]);
@@ -92,20 +116,20 @@ public class AdminCycleController {
             d.put("dayOffset", row[3]);
             deadlines.add(d);
         }
-        return ResponseEntity.ok(Map.of("phase", "FYP1", "deadlines", deadlines));
+        return ResponseEntity.ok(Map.of("phase", normalized, "deadlines", deadlines));
     }
 
     @PostMapping("/from-template")
     public ResponseEntity<?> createFromTemplate(@RequestBody Map<String, Object> data) {
-        String phase = data.get("phase") != null ? data.get("phase").toString() : "FYP1";
-        if (!"FYP1".equalsIgnoreCase(phase)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Only FYP1 template is supported"));
+        String phase = data.get("phase") != null ? data.get("phase").toString().toUpperCase() : "FYP1";
+        if (!"FYP1".equals(phase) && !"FYP2".equals(phase)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Phase must be FYP1 or FYP2"));
         }
         LocalDate startDate = LocalDate.parse((String) data.get("startDate"));
         LocalDate endDate = LocalDate.parse((String) data.get("endDate"));
         FypCycle cycle = FypCycle.builder()
                 .cycleCode((String) data.get("cycleCode"))
-                .cycleType("FYP1")
+                .cycleType(phase)
                 .academicYear((String) data.get("academicYear"))
                 .semester(data.get("semester") != null ? ((Number) data.get("semester")).intValue() : null)
                 .startDate(startDate)
@@ -115,7 +139,7 @@ public class AdminCycleController {
         FypCycle savedCycle = cycleRepository.save(cycle);
 
         int created = 0;
-        for (Object[] row : FYP1_TEMPLATE_DEADLINES) {
+        for (Object[] row : templateFor(phase)) {
             int offset = ((Number) row[3]).intValue();
             LocalDate due = startDate.plusDays(offset);
             if (due.isAfter(endDate)) due = endDate;
@@ -125,14 +149,15 @@ public class AdminCycleController {
                     .deadlineType((String) row[1])
                     .audience((String) row[2])
                     .dueDate(due)
-                    .description("Auto-created from FYP1 standard template")
+                    .description("Auto-created from " + phase + " standard template")
                     .build();
             deadlineRepository.save(deadline);
             created++;
         }
         return ResponseEntity.ok(Map.of(
                 "cycleId", savedCycle.getCycleId(),
-                "deadlinesCreated", created
+                "deadlinesCreated", created,
+                "phase", phase
         ));
     }
 }
