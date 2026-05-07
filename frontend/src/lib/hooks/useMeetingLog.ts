@@ -20,9 +20,31 @@ export const meetingLogKeys = {
   list: (filters?: Record<string, unknown>) => [...meetingLogKeys.lists(), filters] as const,
   details: () => [...meetingLogKeys.all, 'detail'] as const,
   detail: (id: string) => [...meetingLogKeys.details(), id] as const,
+  prefill: (meetingId?: string) => [...meetingLogKeys.all, 'prefill', meetingId ?? null] as const,
   supervisorLists: () => [...meetingLogKeys.all, 'supervisor', 'list'] as const,
   supervisorList: (filters?: Record<string, unknown>) =>
     [...meetingLogKeys.supervisorLists(), filters] as const,
+}
+
+export interface MeetingLogPrefill {
+  meetingNumber: number
+  projectTitle: string
+  fypPhase: 'FYP1' | 'FYP2'
+  meetingId?: number
+  meetingDate?: string
+  meetingMode?: 'ONLINE' | 'PHYSICAL'
+}
+
+export function useMeetingLogPrefill(meetingId?: string) {
+  return useQuery({
+    queryKey: meetingLogKeys.prefill(meetingId),
+    queryFn: async () => {
+      const { data } = await apiClient.get<MeetingLogPrefill>('/student/meeting-logs/prefill', {
+        params: meetingId ? { meetingId } : undefined,
+      })
+      return data
+    },
+  })
 }
 
 // ==================== Mock Data ====================

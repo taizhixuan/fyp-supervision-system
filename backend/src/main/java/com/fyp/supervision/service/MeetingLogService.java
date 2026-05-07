@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -23,7 +24,48 @@ public class MeetingLogService {
     private final MeetingLogSignatureRepository signatureRepository;
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
+    private final MeetingRepository meetingRepository;
     private final NotificationService notificationService;
+
+    /**
+     * Returns auto-fill values for the meeting-log create form. When meetingId is provided,
+     * also returns date/mode derived from that confirmed meeting.
+     */
+    public Map<String, Object> getPrefillData(Long userId, Long meetingId) {
+        Project project = projectRepository.findByStudent_UserId(userId)
+                .orElseThrow(() -> new BadRequestException("No active project found."));
+
+        long existingLogs = meetingLogRepository.countByStudent_UserId(userId);
+        String fypPhase = meetingLogRepository.findFirstByStudent_UserIdOrderByCreatedAtDesc(userId)
+                .map(MeetingLog::getFypPhase)
+                .filter(p -> p != null && !p.isBlank())
+                .orElseGet(() -> {
+                    String stage = project.getStage();
+                    return (stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"))) ? "FYP2" : "FYP1";
+                });
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("meetingNumber", (int) existingLogs + 1);
+        result.put("projectTitle", project.getProjectTitle());
+        result.put("fypPhase", fypPhase);
+
+        if (meetingId != null) {
+            Meeting meeting = meetingRepository.findById(meetingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+            if (!meeting.getProject().getProjectId().equals(project.getProjectId())) {
+                throw new BadRequestException("Meeting does not belong to your project.");
+            }
+            LocalDateTime when = meeting.getConfirmedStartAt() != null ? meeting.getConfirmedStartAt() : meeting.getProposedStartAt();
+            result.put("meetingDate", when != null ? when.toLocalDate().toString() : null);
+            String platform = meeting.getPlatform();
+            // Map platform → meeting mode. Anything in-person/empty → PHYSICAL, else ONLINE.
+            boolean isOnline = platform != null && !platform.isBlank() && !platform.equalsIgnoreCase("IN_PERSON") && !platform.equalsIgnoreCase("PHYSICAL");
+            result.put("meetingMode", isOnline ? "ONLINE" : "PHYSICAL");
+            result.put("meetingId", meetingId);
+        }
+
+        return result;
+    }
 
     public Page<MeetingLog> getStudentLogs(Long userId, String status, Pageable pageable) {
         if (status != null && !status.isBlank()) {
@@ -43,10 +85,21 @@ public class MeetingLogService {
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No project found. You need an active project to create meeting logs."));
 
+        Meeting linkedMeeting = null;
+        if (data.get("meetingId") != null) {
+            Long meetingId = ((Number) data.get("meetingId")).longValue();
+            linkedMeeting = meetingRepository.findById(meetingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+            if (!linkedMeeting.getProject().getProjectId().equals(project.getProjectId())) {
+                throw new BadRequestException("Meeting does not belong to your project.");
+            }
+        }
+
         MeetingLog log = MeetingLog.builder()
                 .project(project)
                 .student(project.getStudent())
                 .supervisor(project.getSupervisor())
+                .meeting(linkedMeeting)
                 .meetingDate(data.get("meetingDate") != null ? LocalDate.parse(data.get("meetingDate").toString()) : LocalDate.now())
                 .meetingNumber(data.get("meetingNumber") != null ? ((Number) data.get("meetingNumber")).intValue() : 1)
                 .meetingMode(data.get("meetingMode") != null ? data.get("meetingMode").toString() : "PHYSICAL")

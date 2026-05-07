@@ -28,6 +28,14 @@ public class StudentMeetingLogController {
         return ResponseEntity.ok(studentService.getLogsDto(userId, status, pageable));
     }
 
+    @GetMapping("/prefill")
+    public ResponseEntity<?> getPrefill(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) Long meetingId) {
+        Long userId = Long.parseLong(user.getUsername());
+        return ResponseEntity.ok(meetingLogService.getPrefillData(userId, meetingId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getLog(@PathVariable Long id) {
         return ResponseEntity.ok(studentService.getLogDto(id));
