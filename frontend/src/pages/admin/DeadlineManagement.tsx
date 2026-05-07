@@ -41,21 +41,32 @@ const deadlineSchema = z.object({
 
 type DeadlineFormData = z.infer<typeof deadlineSchema>
 
-const typeConfig: Record<AdminDeadlineType, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
+type TypeEntry = { label: string; color: string; bgColor: string; icon: typeof Clock }
+type StatusEntry = { label: string; color: string; bgColor: string }
+
+const DEFAULT_TYPE: TypeEntry = { label: 'Other', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Clock }
+const DEFAULT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
+
+const typeConfig: Record<string, TypeEntry> = {
   PROPOSAL_SUBMISSION: { label: 'Proposal', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: FileText },
   SUPERVISOR_SELECTION: { label: 'Supervisor Selection', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
+  REGISTRATION: { label: 'Registration', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
   PROGRESS_REPORT: { label: 'Progress Report', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
   FINAL_REPORT: { label: 'Final Report', color: 'text-success-600', bgColor: 'bg-success-50', icon: FileText },
   PRESENTATION: { label: 'Presentation', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Calendar },
   CUSTOM: { label: 'Custom', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Clock },
 }
 
-const statusConfig: Record<DeadlineStatus, { label: string; color: string; bgColor: string }> = {
+const statusConfig: Record<string, StatusEntry> = {
   UPCOMING: { label: 'Upcoming', color: 'text-info-600', bgColor: 'bg-info-50' },
   ACTIVE: { label: 'Active', color: 'text-success-600', bgColor: 'bg-success-50' },
   PASSED: { label: 'Passed', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
+  PAST: { label: 'Past', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
   EXTENDED: { label: 'Extended', color: 'text-warning-600', bgColor: 'bg-warning-50' },
 }
+
+const getTypeConfig = (key: string | undefined): TypeEntry => (key && typeConfig[key]) || DEFAULT_TYPE
+const getStatusConfig = (key: string | undefined): StatusEntry => (key && statusConfig[key]) || DEFAULT_STATUS
 
 export function DeadlineManagement() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -276,8 +287,8 @@ export function DeadlineManagement() {
         <div className="space-y-3">
           {filteredDeadlines && filteredDeadlines.length > 0 ? (
             filteredDeadlines.map((deadline) => {
-              const type = typeConfig[deadline.type]
-              const status = statusConfig[deadline.status]
+              const type = getTypeConfig(deadline.type)
+              const status = getStatusConfig(deadline.status)
               const TypeIcon = type.icon
               const daysUntil = getDaysUntil(deadline.dueDate)
 
@@ -364,7 +375,7 @@ export function DeadlineManagement() {
               </h3>
               <div className="space-y-3">
                 {deadlines.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map((deadline) => {
-                  const type = typeConfig[deadline.type]
+                  const type = getTypeConfig(deadline.type)
                   const TypeIcon = type.icon
                   const daysUntil = getDaysUntil(deadline.dueDate)
 

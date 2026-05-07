@@ -23,10 +23,17 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useFYPCycles, useUpdateCycle } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { CycleStatus, CycleType, FYPCycle } from '@/types'
+import type { CycleStatus, FYPCycle } from '@/types'
 
-const statusConfig: Record<CycleStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+type StatusEntry = { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }
+type TypeEntry = { label: string; color: string; bgColor: string }
+
+const DEFAULT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-500', bgColor: 'bg-neutral-50', borderColor: 'border-neutral-200', icon: Clock }
+const DEFAULT_TYPE: TypeEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
+
+const statusConfig: Record<string, StatusEntry> = {
   DRAFT: { label: 'Draft', color: 'text-amber-700', bgColor: 'bg-amber-100', borderColor: 'border-amber-200', icon: Settings },
+  PLANNING: { label: 'Planning', color: 'text-amber-700', bgColor: 'bg-amber-100', borderColor: 'border-amber-200', icon: Settings },
   UPCOMING: { label: 'Upcoming', color: 'text-sky-700', bgColor: 'bg-sky-100', borderColor: 'border-sky-200', icon: Clock },
   ACTIVE: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-100', borderColor: 'border-emerald-200', icon: Play },
   PAUSED: { label: 'Paused', color: 'text-warning-600', bgColor: 'bg-warning-50', borderColor: 'border-warning-200', icon: Pause },
@@ -34,11 +41,14 @@ const statusConfig: Record<CycleStatus, { label: string; color: string; bgColor:
   ARCHIVED: { label: 'Archived', color: 'text-neutral-500', bgColor: 'bg-neutral-50', borderColor: 'border-neutral-200', icon: Archive },
 }
 
-const typeConfig: Record<CycleType, { label: string; color: string; bgColor: string }> = {
+const typeConfig: Record<string, TypeEntry> = {
   FYP1: { label: 'FYP 1', color: 'text-violet-700', bgColor: 'bg-violet-100' },
   FYP2: { label: 'FYP 2', color: 'text-teal-700', bgColor: 'bg-teal-100' },
   SHORT_SEM: { label: 'Short Semester', color: 'text-warning-600', bgColor: 'bg-warning-50' },
 }
+
+const getStatusConfig = (key: string | undefined): StatusEntry => (key && statusConfig[key]) || DEFAULT_STATUS
+const getTypeConfig = (key: string | undefined): TypeEntry => (key && typeConfig[key]) || DEFAULT_TYPE
 
 export function CycleManagement() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -128,7 +138,7 @@ export function CycleManagement() {
                   Active Cycle: {activeCycle.name}
                 </h3>
                 <p className="text-sm text-neutral-600">
-                  {activeCycle.academicYear} • {typeConfig[activeCycle.type].label}
+                  {activeCycle.academicYear} • {getTypeConfig(activeCycle.type).label}
                 </p>
               </div>
             </div>
@@ -216,8 +226,8 @@ export function CycleManagement() {
       <div className="space-y-4">
         {filteredCycles && filteredCycles.length > 0 ? (
           filteredCycles.map((cycle) => {
-            const status = statusConfig[cycle.status]
-            const type = typeConfig[cycle.type]
+            const status = getStatusConfig(cycle.status)
+            const type = getTypeConfig(cycle.type)
             const StatusIcon = status.icon
 
             return (

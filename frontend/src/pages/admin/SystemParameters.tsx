@@ -18,14 +18,35 @@ import { useSystemParameters, useUpdateParameter } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
 import type { ParameterCategory, AdminSystemParameter } from '@/types'
 
-const categoryConfig: Record<ParameterCategory, { label: string; color: string; bgColor: string; icon: typeof Settings }> = {
+type CategoryConfigEntry = { label: string; color: string; bgColor: string; icon: typeof Settings }
+
+const DEFAULT_CATEGORY: CategoryConfigEntry = { label: 'Other', color: 'text-neutral-600', bgColor: 'bg-neutral-100 border-neutral-200', icon: Settings }
+
+// Keys cover both the original UPPERCASE union and the lowercase categories the backend currently emits
+// (general, supervision, proposal, notification, security, ai, storage). Unknown keys fall back to DEFAULT_CATEGORY.
+const categoryConfig: Record<string, CategoryConfigEntry> = {
   GENERAL: { label: 'General', color: 'text-stone-700', bgColor: 'bg-stone-100 border-stone-200', icon: Settings },
   QUOTAS: { label: 'Quotas & Limits', color: 'text-sky-700', bgColor: 'bg-sky-100 border-sky-200', icon: AlertTriangle },
   MEETINGS: { label: 'Meetings', color: 'text-violet-700', bgColor: 'bg-violet-100 border-violet-200', icon: Clock },
   PROPOSALS: { label: 'Proposals', color: 'text-emerald-700', bgColor: 'bg-emerald-100 border-emerald-200', icon: Info },
   NOTIFICATIONS: { label: 'Notifications', color: 'text-amber-700', bgColor: 'bg-amber-100 border-amber-200', icon: Info },
   SECURITY: { label: 'Security', color: 'text-rose-700', bgColor: 'bg-rose-100 border-rose-200', icon: AlertTriangle },
+  general: { label: 'General', color: 'text-stone-700', bgColor: 'bg-stone-100 border-stone-200', icon: Settings },
+  supervision: { label: 'Supervision', color: 'text-violet-700', bgColor: 'bg-violet-100 border-violet-200', icon: Clock },
+  proposal: { label: 'Proposals', color: 'text-emerald-700', bgColor: 'bg-emerald-100 border-emerald-200', icon: Info },
+  notification: { label: 'Notifications', color: 'text-amber-700', bgColor: 'bg-amber-100 border-amber-200', icon: Info },
+  security: { label: 'Security', color: 'text-rose-700', bgColor: 'bg-rose-100 border-rose-200', icon: AlertTriangle },
+  ai: { label: 'AI Services', color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-100 border-fuchsia-200', icon: Sparkles },
+  storage: { label: 'Storage', color: 'text-sky-700', bgColor: 'bg-sky-100 border-sky-200', icon: AlertTriangle },
 }
+
+function getCategoryConfig(key: string | undefined): CategoryConfigEntry {
+  if (!key) return DEFAULT_CATEGORY
+  return categoryConfig[key] ?? DEFAULT_CATEGORY
+}
+
+// Categories rendered as filter chips, in display order. Backend currently emits lowercase keys.
+const CATEGORY_BUTTONS: string[] = ['general', 'supervision', 'proposal', 'notification', 'security', 'ai', 'storage']
 
 export function SystemParameters() {
   const [selectedCategory, setSelectedCategory] = useState<ParameterCategory | 'ALL'>('ALL')
@@ -158,7 +179,8 @@ export function SystemParameters() {
         >
           All
         </button>
-        {Object.entries(categoryConfig).map(([key, config]) => {
+        {CATEGORY_BUTTONS.map((key) => {
+          const config = getCategoryConfig(key)
           const Icon = config.icon
           return (
             <button
@@ -194,7 +216,7 @@ export function SystemParameters() {
 
       {selectedCategory === 'ALL' ? (
         Object.entries(groupedParams || {}).map(([category, params]) => {
-          const config = categoryConfig[category as ParameterCategory]
+          const config = getCategoryConfig(category)
           const Icon = config.icon
           return (
             <Card key={category} className="p-6 border-stone-200 hover:shadow-lg transition-shadow duration-200">
