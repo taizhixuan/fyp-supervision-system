@@ -86,8 +86,11 @@ public class MeetingLogService {
                 .orElseThrow(() -> new BadRequestException("No project found. You need an active project to create meeting logs."));
 
         Meeting linkedMeeting = null;
-        if (data.get("meetingId") != null) {
-            Long meetingId = ((Number) data.get("meetingId")).longValue();
+        Object meetingIdRaw = data.get("meetingId");
+        if (meetingIdRaw != null && !meetingIdRaw.toString().isBlank()) {
+            Long meetingId = meetingIdRaw instanceof Number
+                    ? ((Number) meetingIdRaw).longValue()
+                    : Long.parseLong(meetingIdRaw.toString());
             linkedMeeting = meetingRepository.findById(meetingId)
                     .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
             if (!linkedMeeting.getProject().getProjectId().equals(project.getProjectId())) {
