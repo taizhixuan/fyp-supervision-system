@@ -13,7 +13,7 @@ const DEMO_ACCOUNTS = [
   { role: 'Student', identifier: '1201234567', password: 'Test@123', Icon: GraduationCap },
   { role: 'Supervisor', identifier: 'sarah.lee@mmu.edu.my', password: 'Test@123', Icon: Users },
   { role: 'Committee', identifier: 'ahmad.razak@mmu.edu.my', password: 'Test@123', Icon: ClipboardList },
-  { role: 'Admin', identifier: 'admin@mmu.edu.my', password: 'Test@123', Icon: Shield },
+  { role: 'Admin', identifier: 'admin@mmu.edu.my', password: 'Admin@123', Icon: Shield },
 ]
 
 export function LoginPage() {
@@ -166,7 +166,7 @@ export function LoginPage() {
                 ))}
               </div>
               <p className="mt-3 text-xs text-amber-600 text-center">
-                Click to auto-fill credentials. Password: Test@123
+                Click to auto-fill credentials. Password: Test@123 (Admin: Admin@123)
               </p>
             </div>
           )}

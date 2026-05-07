@@ -109,13 +109,10 @@ export interface UserActivityLog {
 // System Parameters Types (UC31)
 // ============================================
 
-export type ParameterCategory =
-  | 'GENERAL'
-  | 'QUOTAS'
-  | 'MEETINGS'
-  | 'PROPOSALS'
-  | 'NOTIFICATIONS'
-  | 'SECURITY'
+// Free-form lowercase string. Backend system_parameter.category values:
+// 'general', 'supervision', 'proposal', 'notification', 'security', 'ai', 'storage'.
+// New categories may be added without a frontend type change.
+export type ParameterCategory = string
 
 export type ParameterType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON' | 'DATE'
 
@@ -142,7 +139,8 @@ export interface UpdateParameterRequest {
 // FYP Cycle Management Types (UC31)
 // ============================================
 
-export type CycleStatus = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+// Matches backend enum CycleStatus { PLANNING, ACTIVE, COMPLETED, ARCHIVED }.
+export type CycleStatus = 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
 export type CycleType = 'FYP1' | 'FYP2'
 
 export interface FYPCycle {
@@ -183,15 +181,12 @@ export interface UpdateCycleRequest {
 // Deadline Management Types (UC31)
 // ============================================
 
-export type AdminDeadlineType =
-  | 'PROPOSAL_SUBMISSION'
-  | 'SUPERVISOR_SELECTION'
-  | 'PROGRESS_REPORT'
-  | 'FINAL_REPORT'
-  | 'PRESENTATION'
-  | 'CUSTOM'
+// Free-form string from backend deadline.deadline_type column. Known values include
+// 'REGISTRATION', 'PROPOSAL_SUBMISSION', 'PROGRESS_REPORT', 'FINAL_REPORT', 'PRESENTATION', 'CUSTOM'.
+export type AdminDeadlineType = string
 
-export type DeadlineStatus = 'UPCOMING' | 'ACTIVE' | 'PASSED' | 'EXTENDED'
+// Backend AdminService computes this dynamically: 'UPCOMING' | 'ACTIVE' | 'PAST'.
+export type DeadlineStatus = 'UPCOMING' | 'ACTIVE' | 'PAST' | 'EXTENDED'
 
 export interface AdminDeadline {
   deadlineId: number

@@ -185,7 +185,7 @@ export function DeadlineManagement() {
     )
   }
 
-  const activeCycles = cyclesData?.cycles.filter((c) => c.status === 'ACTIVE' || c.status === 'UPCOMING') || []
+  const activeCycles = cyclesData?.cycles.filter((c) => c.status === 'ACTIVE' || c.status === 'PLANNING') || []
 
   return (
     <div className="space-y-6">
