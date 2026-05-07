@@ -573,39 +573,107 @@ public class StudentService {
 
     public Map<String, Object> buildMeetingLogDto(MeetingLog log) {
         Map<String, Object> dto = new LinkedHashMap<>();
+
+        // Identity
         dto.put("logId", log.getLogId().toString());
         dto.put("meetingId", log.getMeeting() != null ? log.getMeeting().getMeetingId().toString() : null);
-        dto.put("studentId", log.getStudent().getMmuId());
-        dto.put("supervisorId", log.getSupervisor().getUserId().toString());
-        dto.put("discussionSummary", log.getDiscussionSummary());
-        dto.put("actionItems", parseJsonArray(log.getActionItems()));
-        dto.put("nextMeetingPlan", log.getWorkToBeDone());
-        dto.put("status", mapMeetingLogStatus(log.getStatus()));
-        dto.put("createdAt", log.getCreatedAt() != null ? log.getCreatedAt().toString() : "");
-        dto.put("updatedAt", log.getUpdatedAt() != null ? log.getUpdatedAt().toString() : "");
-        dto.put("weekNumber", log.getMeetingNumber());
-        dto.put("dateRange", log.getMeetingDate() != null ? log.getMeetingDate().toString() : "");
-        dto.put("activitiesCompleted", log.getWorkDoneDetails());
-        dto.put("challengesFaced", log.getProblemsAndSolutions());
-        dto.put("plannedActivities", log.getWorkToBeDone());
-        dto.put("progressPercentage", null);
-        dto.put("supervisorFeedback", log.getSupervisorComments());
+        dto.put("projectId", log.getProject() != null ? log.getProject().getProjectId().toString() : null);
 
-        // Signatures
+        // Header metadata
+        dto.put("meetingDate", log.getMeetingDate() != null ? log.getMeetingDate().toString() : "");
+        dto.put("meetingNumber", log.getMeetingNumber() != null ? log.getMeetingNumber() : 1);
+        dto.put("meetingMode", log.getMeetingMode() != null ? log.getMeetingMode() : "PHYSICAL");
+        dto.put("projectTitle", log.getProject() != null && log.getProject().getProjectTitle() != null ? log.getProject().getProjectTitle() : "");
+        dto.put("fypPhase", log.getFypPhase() != null ? log.getFypPhase() : "FYP1");
+
+        // Participants
+        UserAccount student = log.getStudent();
+        Map<String, Object> studentDto = new LinkedHashMap<>();
+        studentDto.put("studentId", student.getMmuId());
+        studentDto.put("fullName", student.getFullName());
+        studentDto.put("matricNo", student.getMmuId());
+        studentDto.put("programme", studentProfileRepository.findById(student.getUserId())
+                .map(StudentProfile::getProgramme).orElse(""));
+        dto.put("student", studentDto);
+
+        UserAccount supervisor = log.getSupervisor();
+        Map<String, Object> supervisorDto = new LinkedHashMap<>();
+        supervisorDto.put("supervisorId", supervisor.getMmuId());
+        supervisorDto.put("fullName", supervisor.getFullName());
+        supervisorDto.put("title", supervisorProfileRepository.findById(supervisor.getUserId())
+                .map(SupervisorProfile::getPosition).orElse(null));
+        dto.put("supervisor", supervisorDto);
+
+        // Section 1: Tasks (parse JSON, add labels)
+        dto.put("tasks", parseTasks(log.getTasksJson()));
+        dto.put("workDoneDetails", log.getWorkDoneDetails() != null ? log.getWorkDoneDetails() : "");
+
+        // Sections 2 & 3
+        dto.put("workToBeDone", log.getWorkToBeDone() != null ? log.getWorkToBeDone() : "");
+        dto.put("problemsAndSolutions", log.getProblemsAndSolutions() != null ? log.getProblemsAndSolutions() : "");
+
+        // Section 4
+        dto.put("supervisorComments", log.getSupervisorComments() != null ? log.getSupervisorComments() : "");
+
+        // Workflow
+        dto.put("status", mapMeetingLogStatus(log.getStatus()));
+        dto.put("correctionReason", log.getCorrectionReason());
+
+        // Signatures (always emit array, never null — frontend reads .length)
+        List<Map<String, Object>> sigDtos = new ArrayList<>();
         List<MeetingLogSignature> signatures = log.getSignatures();
-        MeetingLogSignature studentSig = null;
-        MeetingLogSignature supervisorSig = null;
         if (signatures != null) {
             for (MeetingLogSignature sig : signatures) {
-                if ("STUDENT".equals(sig.getSignerRole())) studentSig = sig;
-                if ("SUPERVISOR".equals(sig.getSignerRole())) supervisorSig = sig;
+                Map<String, Object> sigDto = new LinkedHashMap<>();
+                sigDto.put("signatureId", sig.getSignatureId() != null ? sig.getSignatureId().toString() : null);
+                sigDto.put("signerUserId", sig.getSigner() != null ? sig.getSigner().getUserId().toString() : null);
+                sigDto.put("signerName", sig.getSigner() != null ? sig.getSigner().getFullName() : null);
+                sigDto.put("signerRole", sig.getSignerRole());
+                sigDto.put("signatureImageUrl", sig.getSignatureImageUrl());
+                sigDto.put("signatureSha256", sig.getSignatureSha256());
+                sigDto.put("signedAt", sig.getSignedAt() != null ? sig.getSignedAt().toString() : null);
+                sigDtos.add(sigDto);
             }
         }
-        dto.put("studentSignedAt", studentSig != null ? studentSig.getSignedAt().toString() : null);
-        dto.put("supervisorSignedAt", supervisorSig != null ? supervisorSig.getSignedAt().toString() : null);
+        dto.put("signatures", sigDtos);
+
+        // Timestamps
+        dto.put("createdAt", log.getCreatedAt() != null ? log.getCreatedAt().toString() : "");
+        dto.put("updatedAt", log.getUpdatedAt() != null ? log.getUpdatedAt().toString() : "");
+        dto.put("submittedAt", log.getSubmittedAt() != null ? log.getSubmittedAt().toString() : null);
         dto.put("lockedAt", log.getLockedAt() != null ? log.getLockedAt().toString() : null);
 
         return dto;
+    }
+
+    private static final Map<String, String> MEETING_LOG_TASK_LABELS = Map.of(
+            "PLANNING", "Planning",
+            "LITERATURE_REVIEW", "Literature Review",
+            "REQUIREMENT_ANALYSIS", "Requirement Analysis",
+            "DESIGN_METHODOLOGY", "Design & Methodology",
+            "PROTOTYPE_POC", "Prototype / Proof of Concept",
+            "DRAFT_REPORT", "Draft Report / Report Writing"
+    );
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseTasks(String tasksJson) {
+        if (tasksJson == null || tasksJson.isBlank()) return List.of();
+        try {
+            List<Map<String, Object>> raw = new com.fasterxml.jackson.databind.ObjectMapper().readValue(tasksJson, List.class);
+            List<Map<String, Object>> out = new ArrayList<>();
+            for (Map<String, Object> t : raw) {
+                String code = t.get("taskCode") != null ? t.get("taskCode").toString() : "";
+                Map<String, Object> task = new LinkedHashMap<>();
+                task.put("taskCode", code);
+                task.put("label", MEETING_LOG_TASK_LABELS.getOrDefault(code, code));
+                task.put("isSelected", Boolean.TRUE.equals(t.get("isSelected")));
+                task.put("details", t.get("details"));
+                out.add(task);
+            }
+            return out;
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     public Map<String, Object> buildDocumentDto(ProjectDocument doc) {
