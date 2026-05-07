@@ -57,7 +57,8 @@ export interface RequestAttachment {
 }
 
 // Supervisee (student under supervision)
-export type ProjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD' | 'TERMINATED'
+// Matches backend enum ProjectStatus { ACTIVE, COMPLETED, SUSPENDED, DROPPED }.
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'DROPPED'
 export type SvProposalStatus = 'NOT_SUBMITTED' | 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'REVISION_REQUIRED' | 'APPROVED' | 'REJECTED'
 
 export interface Supervisee {

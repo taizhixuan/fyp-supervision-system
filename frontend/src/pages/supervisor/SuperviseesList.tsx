@@ -17,27 +17,34 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisees } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProjectStatus } from '@/types'
 
-const statusConfig: Record<ProjectStatus, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  NOT_STARTED: { label: 'Not Started', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400' },
-  IN_PROGRESS: { label: 'In Progress', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500' },
+type StatusEntry = { label: string; color: string; bgColor: string; borderColor: string }
+type RiskEntry = { label: string; color: string; bgColor: string; dotColor: string }
+
+const DEFAULT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100', borderColor: 'border-l-neutral-400' }
+const DEFAULT_RISK: RiskEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-50', dotColor: 'bg-neutral-400' }
+
+const statusConfig: Record<string, StatusEntry> = {
+  ACTIVE: { label: 'Active', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500' },
   COMPLETED: { label: 'Completed', color: 'text-emerald-600', bgColor: 'bg-emerald-100', borderColor: 'border-l-emerald-500' },
-  ON_HOLD: { label: 'On Hold', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500' },
-  TERMINATED: { label: 'Terminated', color: 'text-rose-600', bgColor: 'bg-rose-100', borderColor: 'border-l-rose-500' },
+  SUSPENDED: { label: 'Suspended', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500' },
+  DROPPED: { label: 'Dropped', color: 'text-rose-600', bgColor: 'bg-rose-100', borderColor: 'border-l-rose-500' },
 }
 
-const riskConfig = {
+const riskConfig: Record<string, RiskEntry> = {
   LOW: { label: 'Low Risk', color: 'text-emerald-600', bgColor: 'bg-emerald-50', dotColor: 'bg-emerald-500' },
   MEDIUM: { label: 'Medium Risk', color: 'text-amber-600', bgColor: 'bg-amber-50', dotColor: 'bg-amber-500' },
   HIGH: { label: 'High Risk', color: 'text-orange-600', bgColor: 'bg-orange-50', dotColor: 'bg-orange-500' },
   CRITICAL: { label: 'Critical', color: 'text-rose-600', bgColor: 'bg-rose-50', dotColor: 'bg-rose-500' },
 }
 
+const getStatusConfig = (key: string | undefined): StatusEntry => (key && statusConfig[key]) || DEFAULT_STATUS
+const getRiskConfig = (key: string | undefined): RiskEntry => (key && riskConfig[key]) || DEFAULT_RISK
+
 const filterOptions = [
   { value: 'all', label: 'All Students' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
-  { value: 'ON_HOLD', label: 'On Hold' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'SUSPENDED', label: 'Suspended' },
   { value: 'at-risk', label: 'At Risk' },
 ]
 
@@ -169,8 +176,8 @@ export function SuperviseesList() {
       <div className="flex flex-col gap-4">
         {filteredSupervisees && filteredSupervisees.length > 0 ? (
           filteredSupervisees.map((supervisee) => {
-            const status = statusConfig[supervisee.projectStatus]
-            const risk = riskConfig[supervisee.riskLevel]
+            const status = getStatusConfig(supervisee.projectStatus)
+            const risk = getRiskConfig(supervisee.riskLevel)
             return (
               <Link
                 key={supervisee.superviseeId}
@@ -296,15 +303,15 @@ export function SuperviseesList() {
             </div>
             <div className="text-center p-3 rounded-xl bg-sky-50">
               <p className="text-2xl font-bold text-sky-600">
-                {data.supervisees.filter((s) => s.projectStatus === 'IN_PROGRESS').length}
+                {data.supervisees.filter((s) => s.projectStatus === 'ACTIVE').length}
               </p>
-              <p className="text-sm text-sky-700 font-medium">In Progress</p>
+              <p className="text-sm text-sky-700 font-medium">Active</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-amber-50">
               <p className="text-2xl font-bold text-amber-600">
-                {data.supervisees.filter((s) => s.projectStatus === 'ON_HOLD').length}
+                {data.supervisees.filter((s) => s.projectStatus === 'SUSPENDED').length}
               </p>
-              <p className="text-sm text-amber-700 font-medium">On Hold</p>
+              <p className="text-sm text-amber-700 font-medium">Suspended</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-emerald-50">
               <p className="text-2xl font-bold text-emerald-600">

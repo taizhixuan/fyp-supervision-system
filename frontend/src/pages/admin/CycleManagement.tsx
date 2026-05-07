@@ -91,7 +91,7 @@ export function CycleManagement() {
   const stats = {
     total: data?.cycles.length ?? 0,
     active: data?.cycles.filter((c) => c.status === 'ACTIVE').length ?? 0,
-    upcoming: data?.cycles.filter((c) => c.status === 'UPCOMING').length ?? 0,
+    upcoming: data?.cycles.filter((c) => c.status === 'PLANNING').length ?? 0,
     completed: data?.cycles.filter((c) => c.status === 'COMPLETED').length ?? 0,
   }
 
@@ -174,9 +174,9 @@ export function CycleManagement() {
         <Card
           className={cn(
             'p-4 cursor-pointer transition-colors',
-            statusFilter === 'UPCOMING' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+            statusFilter === 'PLANNING' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
           )}
-          onClick={() => setStatusFilter(statusFilter === 'UPCOMING' ? 'ALL' : 'UPCOMING')}
+          onClick={() => setStatusFilter(statusFilter === 'PLANNING' ? 'ALL' : 'PLANNING')}
         >
           <p className="text-sm text-neutral-500">Upcoming</p>
           <p className="text-2xl font-bold text-info-600">{stats.upcoming}</p>
@@ -295,18 +295,8 @@ export function CycleManagement() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {/* Status Actions */}
-                    {cycle.status === 'DRAFT' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleStatusChange(cycle, 'UPCOMING')}
-                        disabled={updateMutation.isPending}
-                      >
-                        Publish
-                      </Button>
-                    )}
-                    {cycle.status === 'UPCOMING' && (
+                    {/* Status Actions — workflow: PLANNING → ACTIVE → COMPLETED → ARCHIVED */}
+                    {cycle.status === 'PLANNING' && (
                       <Button
                         variant="secondary"
                         size="sm"
@@ -318,36 +308,25 @@ export function CycleManagement() {
                       </Button>
                     )}
                     {cycle.status === 'ACTIVE' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleStatusChange(cycle, 'PAUSED')}
-                          disabled={updateMutation.isPending}
-                        >
-                          <Pause className="h-4 w-4 mr-1" />
-                          Pause
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleStatusChange(cycle, 'COMPLETED')}
-                          disabled={updateMutation.isPending}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Complete
-                        </Button>
-                      </>
-                    )}
-                    {cycle.status === 'PAUSED' && (
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleStatusChange(cycle, 'ACTIVE')}
+                        onClick={() => handleStatusChange(cycle, 'COMPLETED')}
                         disabled={updateMutation.isPending}
                       >
-                        <Play className="h-4 w-4 mr-1" />
-                        Resume
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Complete
+                      </Button>
+                    )}
+                    {cycle.status === 'COMPLETED' && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleStatusChange(cycle, 'ARCHIVED')}
+                        disabled={updateMutation.isPending}
+                      >
+                        <Archive className="h-4 w-4 mr-1" />
+                        Archive
                       </Button>
                     )}
 
