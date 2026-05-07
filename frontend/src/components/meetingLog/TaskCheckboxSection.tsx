@@ -1,7 +1,6 @@
 import { CheckCircle, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingLogTask, MeetingLogTaskCode } from '@/types/meetingLog'
-import { MEETING_LOG_TASKS } from '@/types/meetingLog'
 
 interface TaskCheckboxSectionProps {
   tasks: MeetingLogTask[]
@@ -22,10 +21,6 @@ export function TaskCheckboxSection({
   showDetails = true,
   className,
 }: TaskCheckboxSectionProps) {
-  // Ensure all 6 tasks are present
-  const allTaskCodes = Object.keys(MEETING_LOG_TASKS) as MeetingLogTaskCode[]
-  const taskMap = new Map(tasks.map((t) => [t.taskCode, t]))
-
   return (
     <div className={cn('space-y-3', className)}>
       <div className="flex items-center justify-between">
@@ -36,20 +31,18 @@ export function TaskCheckboxSection({
       </div>
 
       <div className="space-y-2">
-        {allTaskCodes.map((code) => {
-          const task = taskMap.get(code)
-          const isSelected = task?.isSelected ?? false
-          const details = task?.details ?? ''
-
+        {tasks.map((task) => {
+          const isSelected = task.isSelected
+          const details = task.details ?? ''
           return (
             <TaskCheckboxItem
-              key={code}
-              taskCode={code}
-              label={MEETING_LOG_TASKS[code]}
+              key={task.taskCode}
+              taskCode={task.taskCode}
+              label={task.label}
               isSelected={isSelected}
               details={details}
-              onSelect={(selected) => onTaskChange(code, selected, details)}
-              onDetailsChange={(newDetails) => onTaskChange(code, isSelected, newDetails)}
+              onSelect={(selected) => onTaskChange(task.taskCode, selected, details)}
+              onDetailsChange={(newDetails) => onTaskChange(task.taskCode, isSelected, newDetails)}
               disabled={disabled}
               showDetails={showDetails && isSelected}
             />
@@ -155,18 +148,13 @@ interface TaskCheckboxDisplayProps {
  * Used in log detail view and PDF generation
  */
 export function TaskCheckboxDisplay({ tasks, className }: TaskCheckboxDisplayProps) {
-  const allTaskCodes = Object.keys(MEETING_LOG_TASKS) as MeetingLogTaskCode[]
-  const taskMap = new Map(tasks.map((t) => [t.taskCode, t]))
-
   return (
     <div className={cn('space-y-2', className)}>
-      {allTaskCodes.map((code) => {
-        const task = taskMap.get(code)
-        const isSelected = task?.isSelected ?? false
-        const details = task?.details
-
+      {tasks.map((task) => {
+        const isSelected = task.isSelected
+        const details = task.details
         return (
-          <div key={code} className="flex items-start gap-2">
+          <div key={task.taskCode} className="flex items-start gap-2">
             <span
               className={cn(
                 'flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5',
@@ -188,7 +176,7 @@ export function TaskCheckboxDisplay({ tasks, className }: TaskCheckboxDisplayPro
                   isSelected ? 'text-neutral-900' : 'text-neutral-400 line-through'
                 )}
               >
-                {MEETING_LOG_TASKS[code]}
+                {task.label}
               </span>
               {isSelected && details && (
                 <p className="mt-1 text-sm text-neutral-600">{details}</p>
@@ -226,7 +214,7 @@ export function TaskSummaryBadges({ tasks, className }: TaskSummaryBadgesProps) 
           key={task.taskCode}
           className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full"
         >
-          {MEETING_LOG_TASKS[task.taskCode]}
+          {task.label}
         </span>
       ))}
     </div>

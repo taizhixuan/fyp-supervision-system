@@ -35,8 +35,9 @@ const statusFilterOptions: { value: string; label: string }[] = [
 export function MeetingLogList() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [phaseFilter, setPhaseFilter] = useState<string>('all')
 
-  const { data, isLoading } = useMeetingLogList()
+  const { data, isLoading } = useMeetingLogList(phaseFilter !== 'all' ? { phase: phaseFilter } : undefined)
   const logs = data?.logs || []
 
   const filteredLogs = logs.filter((log) => {
@@ -193,6 +194,29 @@ export function MeetingLogList() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-neutral-200">
+          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Phase</span>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'FYP1', label: 'FYP 1' },
+              { value: 'FYP2', label: 'FYP 2' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setPhaseFilter(option.value)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                  phaseFilter === option.value
+                    ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
+                    : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
       </Card>

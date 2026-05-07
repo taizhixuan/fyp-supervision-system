@@ -35,14 +35,12 @@ public class MeetingLogService {
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No active project found."));
 
-        long existingLogs = meetingLogRepository.countByStudent_UserId(userId);
-        String fypPhase = meetingLogRepository.findFirstByStudent_UserIdOrderByCreatedAtDesc(userId)
-                .map(MeetingLog::getFypPhase)
-                .filter(p -> p != null && !p.isBlank())
-                .orElseGet(() -> {
-                    String stage = project.getStage();
-                    return (stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"))) ? "FYP2" : "FYP1";
-                });
+        // Phase comes from project.stage (Model A: single project advances FYP1→FYP2).
+        String stage = project.getStage();
+        String fypPhase = (stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"))) ? "FYP2" : "FYP1";
+
+        // Count logs scoped to current phase so meeting numbering resets at FYP2 boundary.
+        long existingLogs = meetingLogRepository.countByStudent_UserIdAndFypPhase(userId, fypPhase);
 
         Map<String, Object> result = new HashMap<>();
         result.put("meetingNumber", (int) existingLogs + 1);
@@ -67,12 +65,26 @@ public class MeetingLogService {
         return result;
     }
 
-    public Page<MeetingLog> getStudentLogs(Long userId, String status, Pageable pageable) {
-        if (status != null && !status.isBlank()) {
+    public Page<MeetingLog> getStudentLogs(Long userId, String status, String phase, Pageable pageable) {
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasPhase = phase != null && !phase.isBlank();
+        if (hasStatus && hasPhase) {
+            return meetingLogRepository.findByStudent_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(
+                    userId, MeetingLogStatus.valueOf(status), phase, pageable);
+        }
+        if (hasStatus) {
             return meetingLogRepository.findByStudent_UserIdAndStatusOrderByCreatedAtDesc(
                     userId, MeetingLogStatus.valueOf(status), pageable);
         }
+        if (hasPhase) {
+            return meetingLogRepository.findByStudent_UserIdAndFypPhaseOrderByCreatedAtDesc(userId, phase, pageable);
+        }
         return meetingLogRepository.findByStudent_UserIdOrderByCreatedAtDesc(userId, pageable);
+    }
+
+    /** Backwards-compat overload (no phase filter). */
+    public Page<MeetingLog> getStudentLogs(Long userId, String status, Pageable pageable) {
+        return getStudentLogs(userId, status, null, pageable);
     }
 
     public MeetingLog getLog(Long logId) {

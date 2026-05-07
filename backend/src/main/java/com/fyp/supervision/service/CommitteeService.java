@@ -208,6 +208,24 @@ public class CommitteeService {
         return buildProjectDetailDto(project);
     }
 
+    /**
+     * Flips Project.stage from FYP1 to FYP2. Idempotent — calling twice is a no-op.
+     * Meeting numbering automatically restarts because counts are scoped per (student, fyp_phase).
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public Map<String, Object> advanceProjectPhase(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        String stage = project.getStage();
+        boolean alreadyFyp2 = stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"));
+        if (alreadyFyp2) {
+            return Map.of("projectId", projectId, "stage", "FYP2", "changed", false);
+        }
+        project.setStage("FYP2");
+        projectRepository.save(project);
+        return Map.of("projectId", projectId, "stage", "FYP2", "changed", true);
+    }
+
     public Map<String, Object> buildProjectOverviewDto(Project project) {
         UserAccount student = project.getStudent();
         UserAccount supervisor = project.getSupervisor();

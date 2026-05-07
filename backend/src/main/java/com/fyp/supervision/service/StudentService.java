@@ -338,10 +338,16 @@ public class StudentService {
 
     // ========================= Meeting Logs =========================
 
-    public Map<String, Object> getLogsDto(Long userId, String status, Pageable pageable) {
+    public Map<String, Object> getLogsDto(Long userId, String status, String phase, Pageable pageable) {
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasPhase = phase != null && !phase.isBlank();
         Page<MeetingLog> page;
-        if (status != null && !status.isBlank()) {
+        if (hasStatus && hasPhase) {
+            page = meetingLogRepository.findByStudent_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(userId, MeetingLogStatus.valueOf(status), phase, pageable);
+        } else if (hasStatus) {
             page = meetingLogRepository.findByStudent_UserIdAndStatusOrderByCreatedAtDesc(userId, MeetingLogStatus.valueOf(status), pageable);
+        } else if (hasPhase) {
+            page = meetingLogRepository.findByStudent_UserIdAndFypPhaseOrderByCreatedAtDesc(userId, phase, pageable);
         } else {
             page = meetingLogRepository.findByStudent_UserIdOrderByCreatedAtDesc(userId, pageable);
         }
@@ -356,6 +362,11 @@ public class StudentService {
         return result;
     }
 
+    /** Backwards-compat overload (no phase filter). */
+    public Map<String, Object> getLogsDto(Long userId, String status, Pageable pageable) {
+        return getLogsDto(userId, status, null, pageable);
+    }
+
     public Map<String, Object> getLogDto(Long logId) {
         MeetingLog log = meetingLogRepository.findById(logId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting log not found"));
@@ -365,7 +376,18 @@ public class StudentService {
     // ========================= Documents =========================
 
     public Map<String, Object> getDocumentsDto(Long userId, String type, String phase, Pageable pageable) {
-        Page<ProjectDocument> page = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId, pageable);
+        boolean hasType = type != null && !type.isBlank();
+        boolean hasPhase = phase != null && !phase.isBlank();
+        Page<ProjectDocument> page;
+        if (hasType && hasPhase) {
+            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeAndPhaseOrderByUploadedAtDesc(userId, type, phase, pageable);
+        } else if (hasType) {
+            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(userId, type, pageable);
+        } else if (hasPhase) {
+            page = projectDocumentRepository.findByProject_Student_UserIdAndPhaseOrderByUploadedAtDesc(userId, phase, pageable);
+        } else {
+            page = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId, pageable);
+        }
 
         List<Map<String, Object>> documents = page.getContent().stream()
                 .map(this::buildDocumentDto)
@@ -604,8 +626,8 @@ public class StudentService {
                 .map(SupervisorProfile::getPosition).orElse(null));
         dto.put("supervisor", supervisorDto);
 
-        // Section 1: Tasks (parse JSON, add labels)
-        dto.put("tasks", parseTasks(log.getTasksJson()));
+        // Section 1: Tasks (parse JSON, add labels — labels depend on phase)
+        dto.put("tasks", parseTasks(log.getTasksJson(), log.getFypPhase()));
         dto.put("workDoneDetails", log.getWorkDoneDetails() != null ? log.getWorkDoneDetails() : "");
 
         // Sections 2 & 3
@@ -646,7 +668,7 @@ public class StudentService {
         return dto;
     }
 
-    private static final Map<String, String> MEETING_LOG_TASK_LABELS = Map.of(
+    private static final Map<String, String> MEETING_LOG_TASK_LABELS_FYP1 = Map.of(
             "PLANNING", "Planning",
             "LITERATURE_REVIEW", "Literature Review",
             "REQUIREMENT_ANALYSIS", "Requirement Analysis",
@@ -655,8 +677,28 @@ public class StudentService {
             "DRAFT_REPORT", "Draft Report / Report Writing"
     );
 
+    private static final Map<String, String> MEETING_LOG_TASK_LABELS_FYP2 = Map.ofEntries(
+            Map.entry("BACKGROUND_STUDY", "Background Study"),
+            Map.entry("IMPLEMENTATION", "Implementation"),
+            Map.entry("TESTING", "Testing"),
+            Map.entry("EVALUATION", "Evaluation"),
+            Map.entry("COMMERCIALISATION_PROPOSAL", "Commercialisation Proposal"),
+            Map.entry("RESEARCH_PAPER", "Research Paper"),
+            Map.entry("DRAFT_REPORT", "Draft Report"),
+            Map.entry("FINAL_REPORT", "Final Report")
+    );
+
+    private String labelForTask(String code, String phase) {
+        Map<String, String> labels = "FYP2".equalsIgnoreCase(phase) ? MEETING_LOG_TASK_LABELS_FYP2 : MEETING_LOG_TASK_LABELS_FYP1;
+        String label = labels.get(code);
+        if (label != null) return label;
+        // Fallback: try the other phase's map (handles edge case where phase string is missing/wrong on existing rows).
+        Map<String, String> other = labels == MEETING_LOG_TASK_LABELS_FYP1 ? MEETING_LOG_TASK_LABELS_FYP2 : MEETING_LOG_TASK_LABELS_FYP1;
+        return other.getOrDefault(code, code);
+    }
+
     @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> parseTasks(String tasksJson) {
+    private List<Map<String, Object>> parseTasks(String tasksJson, String phase) {
         if (tasksJson == null || tasksJson.isBlank()) return List.of();
         try {
             List<Map<String, Object>> raw = new com.fasterxml.jackson.databind.ObjectMapper().readValue(tasksJson, List.class);
@@ -665,7 +707,7 @@ public class StudentService {
                 String code = t.get("taskCode") != null ? t.get("taskCode").toString() : "";
                 Map<String, Object> task = new LinkedHashMap<>();
                 task.put("taskCode", code);
-                task.put("label", MEETING_LOG_TASK_LABELS.getOrDefault(code, code));
+                task.put("label", labelForTask(code, phase));
                 task.put("isSelected", Boolean.TRUE.equals(t.get("isSelected")));
                 task.put("details", t.get("details"));
                 out.add(task);
