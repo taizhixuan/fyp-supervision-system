@@ -33,6 +33,7 @@ public class StudentService {
     private final MeetingLogSignatureRepository meetingLogSignatureRepository;
     private final ProjectDocumentRepository projectDocumentRepository;
     private final DeadlineRepository deadlineRepository;
+    private final FypCycleRepository fypCycleRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
 
@@ -99,8 +100,14 @@ public class StudentService {
         List<ProjectDocument> docs = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId);
         dashboard.put("recentDocuments", docs.stream().limit(5).map(this::buildDocumentDto).toList());
 
-        // Upcoming deadlines
-        List<Deadline> deadlines = deadlineRepository.findByDueDateAfterOrderByDueDateAsc(LocalDate.now());
+        // Upcoming deadlines — scope to the student's current phase (FYP1/FYP2)
+        String stage = projectOpt.map(Project::getStage).filter(s -> s != null && !s.isBlank()).orElse("FYP1");
+        String normalisedStage = stage.replace(" ", "").toUpperCase();
+        List<Deadline> deadlines = deadlineRepository
+                .findByCycle_CycleTypeAndDueDateAfterOrderByDueDateAsc(normalisedStage, LocalDate.now());
+        if (deadlines.isEmpty()) {
+            deadlines = deadlineRepository.findByDueDateAfterOrderByDueDateAsc(LocalDate.now());
+        }
         dashboard.put("upcomingDeadlines", deadlines.stream().limit(10).map(this::buildDeadlineDto).toList());
 
         // Proposal status
@@ -408,7 +415,17 @@ public class StudentService {
     // ========================= Deadlines =========================
 
     public Map<String, Object> getDeadlinesDto(Long userId) {
-        List<Deadline> deadlines = deadlineRepository.findByAudienceAndDueDateAfterOrderByDueDateAsc("STUDENT", LocalDate.now());
+        Optional<Project> projectOpt = projectRepository.findByStudent_UserId(userId);
+        String stage = projectOpt.map(Project::getStage).filter(s -> s != null && !s.isBlank()).orElse("FYP1");
+        String normalisedStage = stage.replace(" ", "").toUpperCase();
+        List<Deadline> deadlines = deadlineRepository
+                .findByCycle_CycleTypeAndAudienceAndDueDateAfterOrderByDueDateAsc(normalisedStage, "STUDENT", LocalDate.now());
+        if (deadlines.isEmpty()) {
+            deadlines = deadlineRepository.findByCycle_CycleTypeAndDueDateAfterOrderByDueDateAsc(normalisedStage, LocalDate.now());
+        }
+        if (deadlines.isEmpty()) {
+            deadlines = deadlineRepository.findByAudienceAndDueDateAfterOrderByDueDateAsc("STUDENT", LocalDate.now());
+        }
         if (deadlines.isEmpty()) {
             deadlines = deadlineRepository.findByDueDateAfterOrderByDueDateAsc(LocalDate.now());
         }
@@ -759,9 +776,21 @@ public class StudentService {
         Map<String, Object> reg = new LinkedHashMap<>();
         reg.put("registrationId", userId.toString());
         reg.put("studentId", user.getMmuId());
-        reg.put("academicYear", "2024/2025");
-        reg.put("semester", 1);
-        reg.put("cycle", "FYP1");
+
+        String stage = projectOpt.map(Project::getStage).filter(s -> s != null && !s.isBlank()).orElse("FYP1");
+        String normalisedStage = stage.replace(" ", "").toUpperCase();
+        FypCycle phaseCycle = projectOpt.map(Project::getCycle).orElse(null);
+        if (phaseCycle == null || phaseCycle.getCycleType() == null
+                || !phaseCycle.getCycleType().equalsIgnoreCase(normalisedStage)) {
+            phaseCycle = fypCycleRepository.findAll().stream()
+                    .filter(c -> c.getCycleType() != null && c.getCycleType().equalsIgnoreCase(normalisedStage))
+                    .findFirst()
+                    .orElse(phaseCycle);
+        }
+
+        reg.put("academicYear", phaseCycle != null ? phaseCycle.getAcademicYear() : null);
+        reg.put("semester", phaseCycle != null ? phaseCycle.getSemester() : null);
+        reg.put("cycle", normalisedStage);
 
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
