@@ -6,13 +6,12 @@ import {
   MinusCircle,
   Star,
   Users,
-  Clock,
-  Mail,
-  MapPin,
   Send,
 } from 'lucide-react'
+import { useQueries } from '@tanstack/react-query'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
-import { useSupervisorDetail } from '@/lib/hooks/useStudent'
+import { studentKeys } from '@/lib/hooks/useStudent'
+import { apiClient } from '@/lib/api/client'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisorDetail } from '@/types'
@@ -171,11 +170,16 @@ export function CompareSupervisors() {
   const [searchParams] = useSearchParams()
   const ids = searchParams.get('ids')?.split(',').filter(Boolean) || []
 
-  // Fetch supervisor details for each ID.
-  // FIXME: violates rules-of-hooks — refactor to useQueries from @tanstack/react-query
-  // (TanStack v5) so the hook count is stable across renders. Tracked for cleanup.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const supervisorQueries = ids.map((id) => useSupervisorDetail(id))
+  const supervisorQueries = useQueries({
+    queries: ids.map((id) => ({
+      queryKey: studentKeys.supervisorDetail(id),
+      queryFn: async () => {
+        const { data } = await apiClient.get<SupervisorDetail>(`/supervisors/${id}`)
+        return data
+      },
+      enabled: !!id,
+    })),
+  })
 
   // Use sample data if no API data available
   const supervisors: SupervisorDetail[] = ids.map((id, index) => {

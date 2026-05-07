@@ -8,7 +8,6 @@ import {
   FileText,
   MessageSquare,
   User,
-  Calendar,
   Edit,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'

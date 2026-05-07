@@ -8,8 +8,6 @@ import {
   Trash2,
   Eye,
   Clock,
-  AlertTriangle,
-  ChevronRight,
   Users,
   Sparkles,
 } from 'lucide-react'

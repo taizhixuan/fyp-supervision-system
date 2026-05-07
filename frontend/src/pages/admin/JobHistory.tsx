@@ -7,16 +7,13 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   RefreshCw,
   HardDrive,
   Trash2,
   Database,
   Mail,
   FileText,
-  Play,
   Pause,
-  Filter,
   Calendar,
   ChevronDown,
   ChevronUp,
@@ -28,7 +25,6 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useMaintenanceJobs } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { MaintenanceJob } from '@/types'
 
 const jobTypeConfig: Record<string, { label: string; icon: typeof HardDrive; color: string }> = {
   BACKUP: { label: 'Backup', icon: HardDrive, color: 'text-primary-600' },

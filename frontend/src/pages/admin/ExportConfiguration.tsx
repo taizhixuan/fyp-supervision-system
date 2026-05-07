@@ -11,12 +11,9 @@ import {
   FileJson,
   Calendar,
   Clock,
-  Play,
-  Pause,
   CheckCircle,
   X,
   Edit,
-  Trash2,
   Settings,
   Database,
   Users,
@@ -30,7 +27,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useExportConfigurations } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { ExportConfiguration, ExportSchedule } from '@/types'
+import type { ExportConfiguration } from '@/types'
 
 const exportSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

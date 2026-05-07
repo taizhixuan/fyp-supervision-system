@@ -15,7 +15,6 @@ import {
   CalendarDays,
   ListTodo,
   Target,
-  TrendingUp,
   AlertTriangle,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'

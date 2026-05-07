@@ -13,7 +13,6 @@ import type {
   SupervisorNotification,
   RequestStatus,
   SvProposalFeedback,
-  DocumentFeedback,
   ProfileAuditEntry,
 } from '@/types'
 

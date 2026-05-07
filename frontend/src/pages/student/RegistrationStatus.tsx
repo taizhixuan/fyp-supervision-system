@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
   CheckCircle,
-  Clock,
-  AlertCircle,
   Users,
   FileText,
   ClipboardCheck,

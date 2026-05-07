@@ -11,13 +11,12 @@ import {
   Search,
   ChevronRight,
   ClipboardList,
-  TrendingUp,
   Edit3,
   MessageSquare,
   AlertTriangle,
   BookOpen,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner, Input } from '@/components/ui'
+import { Card, Button, Spinner } from '@/components/ui'
 import { useLogList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'

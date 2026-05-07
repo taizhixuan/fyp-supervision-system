@@ -9,7 +9,6 @@ import {
   Award,
   Calendar,
   Star,
-  ExternalLink,
   Send,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'

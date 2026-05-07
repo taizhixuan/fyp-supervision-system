@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   FileText,
   Search,
-  Filter,
   Clock,
   CheckCircle,
   XCircle,
@@ -14,7 +13,6 @@ import {
   User,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useCommitteeProposals } from '@/lib/hooks/useCommittee'

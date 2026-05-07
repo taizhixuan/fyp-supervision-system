@@ -12,11 +12,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Play,
   Shield,
   Calendar,
   FileText,
-  ChevronRight,
   History,
   Sparkles,
 } from 'lucide-react'

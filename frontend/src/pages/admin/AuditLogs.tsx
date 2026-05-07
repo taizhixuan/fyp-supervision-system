@@ -2,10 +2,7 @@ import { useState } from 'react'
 import {
   FileText,
   Search,
-  Filter,
   Download,
-  Calendar,
-  User,
   Shield,
   Clock,
   ChevronDown,
@@ -29,7 +26,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAuditLogs } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { AuditLog, AuditAction, AuditEntityType } from '@/types'
+import type { AuditAction, AuditEntityType } from '@/types'
 
 const actionConfig: Record<AuditAction, { label: string; icon: typeof Eye; color: string }> = {
   CREATE: { label: 'Create', icon: Plus, color: 'text-success-600' },

@@ -9,7 +9,6 @@ import {
   Users,
   CheckCircle,
   XCircle,
-  AlertCircle,
   GraduationCap,
   Mail,
   FileText,

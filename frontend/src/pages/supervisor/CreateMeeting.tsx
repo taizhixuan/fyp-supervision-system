@@ -6,7 +6,6 @@ import { z } from 'zod'
 import {
   ArrowLeft,
   Calendar,
-  Clock,
   MapPin,
   Video,
   Users,
@@ -29,7 +28,6 @@ import {
   ONLINE_PLATFORMS,
   detectPlatformFromUrl,
   getPlatformInfo,
-  type OnlinePlatform,
 } from '@/lib/utils/meetingPlatform'
 
 const meetingSchema = z.object({

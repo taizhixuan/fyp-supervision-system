@@ -5,7 +5,6 @@ import {
   Mail,
   GraduationCap,
   AlertTriangle,
-  CheckCircle,
   Clock,
   TrendingUp,
   FolderKanban,

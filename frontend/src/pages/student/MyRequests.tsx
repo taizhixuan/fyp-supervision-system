@@ -6,8 +6,6 @@ import {
   XCircle,
   AlertCircle,
   Send,
-  ChevronRight,
-  User,
   Calendar,
   MessageSquare,
   RotateCcw,
