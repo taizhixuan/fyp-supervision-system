@@ -171,8 +171,10 @@ export function CompareSupervisors() {
   const [searchParams] = useSearchParams()
   const ids = searchParams.get('ids')?.split(',').filter(Boolean) || []
 
-  // Fetch supervisor details for each ID
-  // In production, this would be optimized with a batch query
+  // Fetch supervisor details for each ID.
+  // FIXME: violates rules-of-hooks — refactor to useQueries from @tanstack/react-query
+  // (TanStack v5) so the hook count is stable across renders. Tracked for cleanup.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const supervisorQueries = ids.map((id) => useSupervisorDetail(id))
 
   // Use sample data if no API data available
