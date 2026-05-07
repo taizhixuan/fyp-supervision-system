@@ -33,6 +33,18 @@ export function RedirectPage() {
       return
     }
 
+    // FYP1 result gate — only applies to students with a project where the result was entered.
+    // null  = not yet decided, keep going (most students before/during FYP1)
+    // true  = passed, AuthService already auto-flipped phase to FYP2 if a cycle is active
+    // false = failed, block at the gate page until committee resolves
+    if (user.role === 'STUDENT') {
+      const passed = localStorage.getItem('student_fyp1_passed')
+      if (passed === 'false') {
+        navigate(ROUTES.FYP1_RESULT_PENDING, { replace: true })
+        return
+      }
+    }
+
     // Get role-based dashboard route
     const dashboardRoute = ROLE_ROUTES[user.role]
     if (dashboardRoute) {

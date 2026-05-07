@@ -26,4 +26,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p WHERE p.cycle.cycleId = :cycleId")
     Page<Project> findAllByCycleId(@Param("cycleId") Long cycleId, Pageable pageable);
+
+    @Query("SELECT p FROM Project p WHERE (p.stage IS NULL OR p.stage = 'FYP1' OR p.stage = 'FYP 1') AND p.student IS NOT NULL ORDER BY p.updatedAt DESC")
+    List<Project> findFyp1Projects();
 }

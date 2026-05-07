@@ -1,5 +1,7 @@
 export { AdminDashboard } from './AdminDashboard'
 export { UserManagement } from './UserManagement'
+export { PendingRegistrations } from './PendingRegistrations'
+export { Fyp1PassTracking } from './Fyp1PassTracking'
 export { CreateUser } from './CreateUser'
 export { UserDetail } from './UserDetail'
 export { SystemParameters } from './SystemParameters'

@@ -155,6 +155,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await authApi.login(data)
       tokenStorage.set(response.accessToken)
+      // Stash phase + pass info from login response. RedirectPage reads these.
+      // Only set for STUDENT (server only sends these for students with a project).
+      if (response.user.role === 'STUDENT') {
+        localStorage.setItem('student_current_phase', response.currentPhase ?? '')
+        if (response.fyp1Passed === true) localStorage.setItem('student_fyp1_passed', 'true')
+        else if (response.fyp1Passed === false) localStorage.setItem('student_fyp1_passed', 'false')
+        else localStorage.setItem('student_fyp1_passed', 'null')
+      } else {
+        localStorage.removeItem('student_current_phase')
+        localStorage.removeItem('student_fyp1_passed')
+      }
       setUser(response.user)
     } catch (error) {
       throw new Error(getApiErrorMessage(error))
@@ -184,6 +195,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Ignore logout errors
     } finally {
       tokenStorage.remove()
+      localStorage.removeItem('student_current_phase')
+      localStorage.removeItem('student_fyp1_passed')
       setUser(null)
     }
   }, [])

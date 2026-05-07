@@ -24,6 +24,10 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string
   user: User
+  /** Set for STUDENT role with a project: 'FYP1' or 'FYP2'. */
+  currentPhase?: 'FYP1' | 'FYP2'
+  /** true (passed FYP1), false (failed FYP1), null (result not yet decided). STUDENT only. */
+  fyp1Passed?: boolean | null
 }
 
 export interface RegisterRequest {

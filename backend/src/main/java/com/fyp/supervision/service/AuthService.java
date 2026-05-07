@@ -2,14 +2,19 @@ package com.fyp.supervision.service;
 
 import com.fyp.supervision.dto.auth.*;
 import com.fyp.supervision.dto.common.UserDto;
+import com.fyp.supervision.entity.FypCycle;
+import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.SupervisorProfile;
 import com.fyp.supervision.entity.UserAccount;
+import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.enums.UserStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ConflictException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.repository.FypCycleRepository;
+import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
@@ -29,6 +34,8 @@ public class AuthService {
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final SupervisorProfileRepository supervisorProfileRepository;
+    private final ProjectRepository projectRepository;
+    private final FypCycleRepository fypCycleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -107,7 +114,35 @@ public class AuthService {
         userAccountRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
-        return new LoginResponse(token, UserDto.fromEntity(user));
+
+        String currentPhase = null;
+        Boolean fyp1Passed = null;
+        if (user.getRole() == UserRole.STUDENT) {
+            Project project = projectRepository.findByStudent_UserId(user.getUserId()).orElse(null);
+            if (project != null) {
+                fyp1Passed = project.getFyp1Passed();
+                String stage = project.getStage();
+                boolean alreadyFyp2 = stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"));
+                // Auto-advance: if passed and an active FYP2 cycle exists, flip the project to FYP2.
+                if (!alreadyFyp2 && Boolean.TRUE.equals(fyp1Passed)) {
+                    boolean fyp2CycleActive = fypCycleRepository.findAll().stream()
+                            .anyMatch(c -> c.getStatus() == CycleStatus.ACTIVE
+                                    && c.getCycleType() != null
+                                    && c.getCycleType().equalsIgnoreCase("FYP2"));
+                    if (fyp2CycleActive) {
+                        project.setStage("FYP2");
+                        projectRepository.save(project);
+                        currentPhase = "FYP2";
+                    } else {
+                        currentPhase = "FYP1";
+                    }
+                } else {
+                    currentPhase = alreadyFyp2 ? "FYP2" : "FYP1";
+                }
+            }
+        }
+
+        return new LoginResponse(token, UserDto.fromEntity(user), currentPhase, fyp1Passed);
     }
 
     public UserDto getCurrentUser(Long userId) {
