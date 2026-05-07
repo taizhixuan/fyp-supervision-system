@@ -46,16 +46,6 @@ export function SupervisorDashboard() {
       href: ROUTES.SUPERVISOR.SUPERVISEES,
     },
     {
-      label: 'Pending Requests',
-      value: stats?.pendingRequests ?? 0,
-      icon: ClipboardList,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
-      borderColor: 'border-l-amber-500',
-      href: ROUTES.SUPERVISOR.REQUESTS,
-      urgent: (stats?.pendingRequests ?? 0) > 0,
-    },
-    {
       label: 'Upcoming Meetings',
       value: stats?.upcomingMeetings ?? 0,
       icon: Calendar,
@@ -359,12 +349,12 @@ export function SupervisorDashboard() {
           </div>
         </div>
         <div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to={ROUTES.SUPERVISOR.REQUESTS} className="group">
+          <Link to={ROUTES.SUPERVISOR.TOPICS} className="group">
             <div className="p-4 rounded-xl border-2 border-stone-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all flex flex-col items-center gap-3 text-center">
               <div className="p-3 bg-amber-100 rounded-xl group-hover:scale-110 transition-transform">
                 <ClipboardList className="h-6 w-6 text-amber-600" />
               </div>
-              <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700">Review Requests</span>
+              <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700">My Topics</span>
             </div>
           </Link>
           <Link to={ROUTES.SUPERVISOR.LOGS} className="group">

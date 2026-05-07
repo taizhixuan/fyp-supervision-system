@@ -50,11 +50,6 @@ const studentNavItems: NavItem[] = [
     icon: <Lightbulb className="h-5 w-5" />,
   },
   {
-    label: 'Supervisors',
-    href: ROUTES.STUDENT.SUPERVISORS,
-    icon: <Users className="h-5 w-5" />,
-  },
-  {
     label: 'Proposal',
     href: ROUTES.STUDENT.PROPOSAL,
     icon: <FileText className="h-5 w-5" />,
@@ -91,11 +86,6 @@ const supervisorNavItems: NavItem[] = [
     label: 'My Topics',
     href: ROUTES.SUPERVISOR.TOPICS,
     icon: <Lightbulb className="h-5 w-5" />,
-  },
-  {
-    label: 'Requests',
-    href: ROUTES.SUPERVISOR.REQUESTS,
-    icon: <ClipboardList className="h-5 w-5" />,
   },
   {
     label: 'Supervisees',

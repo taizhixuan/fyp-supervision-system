@@ -827,12 +827,12 @@ export function StudentDashboard() {
       <div>
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Link to={ROUTES.STUDENT.SUPERVISORS}>
+          <Link to={ROUTES.STUDENT.TOPICS}>
             <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-primary-300 hover:shadow-md transition-all group cursor-pointer">
               <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-600 transition-colors">
                 <Users className="h-6 w-6 text-primary-600 group-hover:text-white transition-colors" />
               </div>
-              <p className="font-medium text-neutral-900 text-sm">Find Supervisor</p>
+              <p className="font-medium text-neutral-900 text-sm">Browse Topics</p>
             </div>
           </Link>
           <Link to={ROUTES.STUDENT.PROPOSAL}>

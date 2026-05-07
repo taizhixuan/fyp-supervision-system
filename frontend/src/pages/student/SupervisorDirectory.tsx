@@ -418,15 +418,11 @@ export function SupervisorDirectory() {
                           View Profile
                         </Button>
                       </Link>
-                      {supervisor.isAcceptingStudents && (
-                        <Link
-                          to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${supervisor.supervisorId}`}
-                        >
-                          <Button variant="primary" size="sm">
-                            Request
-                          </Button>
-                        </Link>
-                      )}
+                      <Link to={ROUTES.STUDENT.TOPICS}>
+                        <Button variant="primary" size="sm">
+                          Browse Topics
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
