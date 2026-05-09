@@ -116,6 +116,9 @@ public class AuthService {
                     .user(user)
                     .specialisation(request.getSpecialisation())
                     .intakeYear(request.getIntakeYear())
+                    .programme(programmeForSpecialisation(request.getSpecialisation()))
+                    .faculty(facultyForSpecialisation(request.getSpecialisation()))
+                    .expectedGraduation(expectedGraduationFor(request.getIntakeYear()))
                     .build();
             studentProfileRepository.save(profile);
         } else {
@@ -304,6 +307,28 @@ public class AuthService {
 
         record.setUsedAt(LocalDateTime.now());
         passwordResetTokenRepository.save(record);
+    }
+
+    /**
+     * Maps a specialisation to its parent programme. Information Systems sits under
+     * Bachelor of Information Technology (Honours); the other four specialisations
+     * sit under Bachelor of Computer Science (Hons.). All FCI.
+     */
+    static String programmeForSpecialisation(String specialisation) {
+        if (specialisation == null) return null;
+        if ("Information Systems".equalsIgnoreCase(specialisation.trim())) {
+            return "Bachelor of Information Technology (Honours)";
+        }
+        return "Bachelor of Computer Science (Hons.)";
+    }
+
+    static String facultyForSpecialisation(String specialisation) {
+        return specialisation == null ? null : "FCI";
+    }
+
+    /** intakeYear + 3 → expected graduation year as a string. */
+    static String expectedGraduationFor(Integer intakeYear) {
+        return intakeYear == null ? null : String.valueOf(intakeYear + 3);
     }
 
     private static String sha256Hex(String input) {

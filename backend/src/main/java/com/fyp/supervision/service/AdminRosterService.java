@@ -80,15 +80,23 @@ public class AdminRosterService {
             String faculty = column(columns, 5);
             Integer intakeYear = parseInt(column(columns, 6));
 
+            // Derive programme/faculty from specialisation when CSV omits them.
+            String resolvedProgramme = !programme.isEmpty()
+                    ? programme
+                    : AuthService.programmeForSpecialisation(specialisation);
+            String resolvedFaculty = !faculty.isEmpty()
+                    ? faculty
+                    : AuthService.facultyForSpecialisation(specialisation);
+
             ApprovedStudentRoster row = studentRosterRepository.findByMmuId(mmuId)
                     .orElseGet(ApprovedStudentRoster::new);
             boolean isNew = row.getRosterId() == null;
             row.setMmuId(mmuId);
             row.setEmail(email);
             if (!fullName.isEmpty()) row.setFullName(fullName);
-            if (!programme.isEmpty()) row.setProgramme(programme);
+            if (resolvedProgramme != null) row.setProgramme(resolvedProgramme);
             if (!specialisation.isEmpty()) row.setSpecialisation(specialisation);
-            if (!faculty.isEmpty()) row.setFaculty(faculty);
+            if (resolvedFaculty != null) row.setFaculty(resolvedFaculty);
             if (intakeYear != null) row.setIntakeYear(intakeYear);
             if (isNew) row.setUploadedBy(uploadedBy);
             studentRosterRepository.save(row);

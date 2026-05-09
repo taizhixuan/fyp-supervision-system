@@ -14,6 +14,10 @@ import {
   type RegisterFormData,
 } from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
+import {
+  programmeForSpecialisation,
+  expectedGraduationYear,
+} from '@/lib/constants/programmes'
 import { cn } from '@/lib/utils/cn'
 
 export function RegisterPage() {
@@ -43,6 +47,12 @@ export function RegisterPage() {
   })
 
   const selectedRole = watch('role')
+  const selectedSpecialisation = watch('specialisation')
+  const selectedIntakeYear = watch('intakeYear')
+  const derivedProgramme = programmeForSpecialisation(selectedSpecialisation)
+  const derivedGraduationYear = expectedGraduationYear(
+    typeof selectedIntakeYear === 'number' ? selectedIntakeYear : undefined
+  )
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null)
@@ -319,6 +329,35 @@ export function RegisterPage() {
                     <p className="mt-1 text-xs text-red-500">{errors.intakeYear.message}</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Auto-derived programme / faculty / expected graduation */}
+            {selectedRole === 'STUDENT' && (derivedProgramme || derivedGraduationYear) && (
+              <div className="rounded-lg border border-primary-100 bg-primary-50/60 px-3 py-2.5 text-xs text-stone-700">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-primary-700">
+                  We&apos;ll set these for you
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {derivedProgramme && (
+                    <li>
+                      <span className="text-stone-500">Programme:</span>{' '}
+                      <span className="font-medium">{derivedProgramme.programme}</span>
+                    </li>
+                  )}
+                  {derivedProgramme && (
+                    <li>
+                      <span className="text-stone-500">Faculty:</span>{' '}
+                      <span className="font-medium">{derivedProgramme.faculty}</span>
+                    </li>
+                  )}
+                  {derivedGraduationYear && (
+                    <li>
+                      <span className="text-stone-500">Expected graduation:</span>{' '}
+                      <span className="font-medium">{derivedGraduationYear}</span>
+                    </li>
+                  )}
+                </ul>
               </div>
             )}
 
