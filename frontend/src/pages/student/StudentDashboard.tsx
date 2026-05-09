@@ -23,72 +23,41 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus } from '@/types'
 
-// Helper function to generate registration steps based on proposal status
-const getRegistrationSteps = (proposalStatus?: ProposalStatus) => {
-  const baseSteps = [
-    { step: 1, title: 'Find Supervisor', description: 'Select a supervisor', status: 'COMPLETED' as const, completedAt: '2024-09-15' },
-    { step: 2, title: 'Submit Proposal', description: 'Submit your proposal', status: 'CURRENT' as const, dueDate: '2024-10-30' },
-    { step: 3, title: 'Committee Review', description: 'Wait for review', status: 'PENDING' as const },
-    { step: 4, title: 'Registered', description: 'FYP registration complete', status: 'PENDING' as const },
+// Build the 4-step strip from the backend-derived registration status.
+// Spec UC4 → UC6 → UC7 → UC9 maps cleanly: Find Supervisor → Submit Proposal → Committee Review → Registered.
+const getRegistrationSteps = (status: RegistrationStatus) => {
+  const titles = [
+    { step: 1, title: 'Find Supervisor', description: 'Browse directory and send a request' },
+    { step: 2, title: 'Submit Proposal', description: 'Submit your proposal' },
+    { step: 3, title: 'Committee Review', description: 'Wait for committee review' },
+    { step: 4, title: 'Registered', description: 'FYP registration complete' },
   ]
-
-  if (!proposalStatus) return baseSteps
-
-  switch (proposalStatus) {
-    case 'DRAFT':
-      return baseSteps
-    case 'SUBMITTED':
+  const COMPLETED = 'COMPLETED' as const
+  const CURRENT = 'CURRENT' as const
+  const PENDING = 'PENDING' as const
+  let activeIdx = 0
+  switch (status) {
+    case 'NOT_STARTED':
+    case 'SUPERVISOR_PENDING':
+      activeIdx = 0
+      break
+    case 'PROPOSAL_PENDING':
+      activeIdx = 1
+      break
     case 'UNDER_REVIEW':
-      return [
-        { ...baseSteps[0] },
-        { ...baseSteps[1], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
-        { ...baseSteps[2], status: 'CURRENT' as const },
-        { ...baseSteps[3] },
-      ]
-    case 'REVISION_REQUIRED':
-      return [
-        { ...baseSteps[0] },
-        { step: 2, title: 'Revise Proposal', description: 'Address feedback', status: 'CURRENT' as const },
-        { ...baseSteps[2], status: 'PENDING' as const },
-        { ...baseSteps[3] },
-      ]
-    case 'APPROVED':
-      return [
-        { ...baseSteps[0] },
-        { ...baseSteps[1], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
-        { ...baseSteps[2], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
-        { ...baseSteps[3], status: 'COMPLETED' as const, completedAt: new Date().toISOString() },
-      ]
-    case 'REJECTED':
-      return [
-        { ...baseSteps[0] },
-        { step: 2, title: 'Resubmit Proposal', description: 'Start a new proposal', status: 'CURRENT' as const },
-        { ...baseSteps[2], status: 'PENDING' as const },
-        { ...baseSteps[3] },
-      ]
-    default:
-      return baseSteps
+      activeIdx = 2
+      break
+    case 'REGISTERED':
+      activeIdx = 4
+      break
+    case 'DEFERRED':
+      activeIdx = 0
+      break
   }
-}
-
-// Helper function to get registration status based on proposal status
-const getRegistrationStatus = (proposalStatus?: ProposalStatus): RegistrationStatus => {
-  if (!proposalStatus) return 'PROPOSAL_PENDING'
-  switch (proposalStatus) {
-    case 'DRAFT':
-      return 'PROPOSAL_PENDING'
-    case 'SUBMITTED':
-    case 'UNDER_REVIEW':
-      return 'UNDER_REVIEW'
-    case 'REVISION_REQUIRED':
-      return 'PROPOSAL_PENDING'
-    case 'APPROVED':
-      return 'REGISTERED'
-    case 'REJECTED':
-      return 'PROPOSAL_PENDING'
-    default:
-      return 'PROPOSAL_PENDING'
-  }
+  return titles.map((t, i) => ({
+    ...t,
+    status: i < activeIdx ? COMPLETED : i === activeIdx ? CURRENT : PENDING,
+  }))
 }
 
 // Sample data for design preview
@@ -115,7 +84,7 @@ const SAMPLE_DASHBOARD = {
     semester: 1,
     cycle: 'FYP1',
     status: 'PROPOSAL_PENDING' as RegistrationStatus,
-    nextSteps: getRegistrationSteps('DRAFT'),
+    nextSteps: getRegistrationSteps('PROPOSAL_PENDING'),
     timeline: [],
   },
   upcomingMeetings: [
@@ -253,17 +222,19 @@ export function StudentDashboard() {
 
   const { profile, upcomingMeetings, pendingLogs, recentDocuments, upcomingDeadlines, proposalStatus, quickStats } = dashboard
 
-  // Dynamic registration status based on proposal
-  const dynamicRegistrationSteps = getRegistrationSteps(proposalStatus?.status)
-  const dynamicRegistrationStatus = getRegistrationStatus(proposalStatus?.status)
+  // Trust the backend-derived registration status. It already accounts for
+  // project existence (supervisor accepted) AND proposal lifecycle.
+  const backendStatus = dashboard.registrationStatus.status
   const registrationStatus = {
     ...dashboard.registrationStatus,
-    status: dynamicRegistrationStatus,
-    nextSteps: dynamicRegistrationSteps,
+    nextSteps: getRegistrationSteps(backendStatus),
   }
 
-  // Pairing-aware banner: REGISTERED means a Project exists (student is paired).
-  const isPaired = dashboard.registrationStatus.status === 'REGISTERED'
+  // Supervisor paired = project exists ⇒ status is one of these three.
+  const isPaired =
+    backendStatus === 'PROPOSAL_PENDING' ||
+    backendStatus === 'UNDER_REVIEW' ||
+    backendStatus === 'REGISTERED'
   const pairedSupervisor = dashboard.registrationStatus.supervisor as
     | { fullName?: string; department?: string; email?: string }
     | undefined
@@ -362,16 +333,16 @@ export function StudentDashboard() {
                 <Sparkles className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <p className="font-semibold text-neutral-900">You haven&apos;t picked a project yet</p>
+                <p className="font-semibold text-neutral-900">You haven&apos;t paired with a supervisor yet</p>
                 <p className="text-sm text-neutral-600 mt-0.5">
-                  Browse approved project topics and confirm one to pair with a supervisor.
+                  Browse the supervisor directory or check the AI recommendations to start your FYP.
                 </p>
               </div>
             </div>
-            <Link to={ROUTES.STUDENT.TOPICS} className="shrink-0">
+            <Link to={ROUTES.STUDENT.SUPERVISORS} className="shrink-0">
               <Button>
                 <Sparkles className="h-4 w-4 mr-2" />
-                Browse Topics
+                Find Supervisor
               </Button>
             </Link>
           </div>
@@ -893,12 +864,12 @@ export function StudentDashboard() {
       <div>
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Link to={ROUTES.STUDENT.TOPICS}>
+          <Link to={ROUTES.STUDENT.SUPERVISORS}>
             <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-primary-300 hover:shadow-md transition-all group cursor-pointer">
               <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-600 transition-colors">
                 <Users className="h-6 w-6 text-primary-600 group-hover:text-white transition-colors" />
               </div>
-              <p className="font-medium text-neutral-900 text-sm">Browse Topics</p>
+              <p className="font-medium text-neutral-900 text-sm">Find Supervisor</p>
             </div>
           </Link>
           <Link to={ROUTES.STUDENT.PROPOSAL}>

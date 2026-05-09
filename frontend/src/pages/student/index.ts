@@ -8,9 +8,6 @@ export { SupervisorDetail } from './SupervisorDetail'
 export { AIRecommendations } from './AIRecommendations'
 export { CompareSupervisors } from './CompareSupervisors'
 
-// Project Topics (browse approved supervisor-led catalogue)
-export { BrowseTopics } from './BrowseTopics'
-
 // Supervision Requests
 export { CreateSupervisionRequest } from './CreateSupervisionRequest'
 export { MyRequests } from './MyRequests'
@@ -46,6 +43,9 @@ export { DocumentHistory } from './DocumentHistory'
 export { ResourcesHub } from './ResourcesHub'
 export { ResourceDetail } from './ResourceDetail'
 export { DeadlineCalendar } from './DeadlineCalendar'
+
+// Announcements
+export { AnnouncementsList } from './AnnouncementsList'
 
 // Notifications
 export { NotificationCenter } from './NotificationCenter'

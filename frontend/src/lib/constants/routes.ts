@@ -68,6 +68,8 @@ export const ROUTES = {
     RESOURCES: '/student/resources',
     RESOURCE_DETAIL: '/student/resources/:id',
     DEADLINES: '/student/deadlines',
+    // Announcements (UC14)
+    ANNOUNCEMENTS: '/student/announcements',
     // Notifications
     NOTIFICATIONS: '/student/notifications',
     NOTIFICATION_SETTINGS: '/student/notifications/settings',

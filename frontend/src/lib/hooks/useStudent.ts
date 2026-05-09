@@ -1049,6 +1049,30 @@ export function useMarkAllRead() {
   })
 }
 
+// ==================== Announcements (UC14) ====================
+export interface StudentAnnouncement {
+  announcementId: number
+  scope: string
+  title: string
+  content: string
+  priority: string
+  publishAt: string
+  createdAt: string
+}
+
+export function useStudentAnnouncements() {
+  return useQuery({
+    queryKey: ['announcements', 'student'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        announcements: StudentAnnouncement[]
+        total: number
+      }>('/announcements')
+      return data
+    },
+  })
+}
+
 // ==================== Resources ====================
 export function useResources(category?: string) {
   return useQuery({
