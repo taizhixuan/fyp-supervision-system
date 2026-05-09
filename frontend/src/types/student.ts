@@ -112,6 +112,26 @@ export interface CreateSupervisionRequestData {
 // Proposal Types
 export type ProposalStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'REVISION_REQUIRED' | 'APPROVED' | 'REJECTED'
 
+export interface ProposalSupervisorBlock {
+  userId: string
+  fullName: string
+  email?: string
+  phone?: string | null
+  position?: string | null
+  department?: string | null
+  faculty?: string | null
+}
+
+export interface ProposalStudentBlock {
+  userId: string
+  studentId: string
+  fullName: string
+  email?: string
+  phone?: string | null
+  specialisation?: string | null
+  intakeYear?: number | null
+}
+
 export interface Proposal {
   proposalId: string
   studentId: string
@@ -124,6 +144,27 @@ export interface Proposal {
   expectedOutcomes: string[]
   timeline?: string
   references?: string[]
+  // MMU FCI template fields
+  projectStatus?: string
+  projectType?: string | null
+  specialisation?: string | null
+  projectCategory?: string | null
+  projectFocus?: string | null
+  numberOfStudents?: 'One' | 'Two' | string
+  industryCollaboration?: boolean
+  industryCompanyName?: string | null
+  industryContactName?: string | null
+  industryContactPhone?: string | null
+  coSupervisorName?: string | null
+  student1Subtitle?: string | null
+  student1WorkDistribution?: string | null
+  student2MmuId?: string | null
+  student2Subtitle?: string | null
+  student2WorkDistribution?: string | null
+  // Autofilled blocks
+  supervisor?: ProposalSupervisorBlock | null
+  student1?: ProposalStudentBlock | null
+  student2?: ProposalStudentBlock | null
   status: ProposalStatus
   version: number
   submittedAt?: string

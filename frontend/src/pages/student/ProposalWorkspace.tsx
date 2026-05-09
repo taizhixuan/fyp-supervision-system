@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +20,9 @@ import {
   ArrowRight,
   Clock,
   User,
+  Building2,
+  Users,
+  Briefcase,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal } from '@/components/ui'
 import {
@@ -30,20 +33,115 @@ import {
   useUploadProposalFile,
 } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
+import {
+  PROJECT_STATUS_OPTIONS,
+  PROJECT_TYPE_OPTIONS,
+  NUMBER_OF_STUDENTS_OPTIONS,
+  SPECIALISATIONS,
+  categoriesFor,
+  focusesFor,
+} from '@/lib/constants/proposalTemplate'
 import { cn } from '@/lib/utils/cn'
 import type { ProposalStatus } from '@/types'
 
-// Validation schema
-const proposalSchema = z.object({
-  title: z.string().min(10, 'Title must be at least 10 characters').max(200, 'Title too long'),
-  problemStatement: z.string().min(100, 'Problem statement must be at least 100 characters'),
-  objectives: z.array(z.object({ value: z.string().min(10, 'Objective too short') })).min(2, 'At least 2 objectives required'),
-  scope: z.string().min(50, 'Scope must be at least 50 characters'),
-  methodology: z.string().min(100, 'Methodology must be at least 100 characters'),
-  expectedOutcomes: z.array(z.object({ value: z.string().min(10, 'Outcome too short') })).min(1, 'At least 1 outcome required'),
-  timeline: z.string().optional(),
-  references: z.array(z.object({ value: z.string() })).optional(),
-})
+// Validation schema (mirrors MMU FCI FYP Proposal Form template)
+const proposalSchema = z
+  .object({
+    // Project Identity
+    title: z
+      .string()
+      .min(10, 'Title must be at least 10 characters')
+      .max(200, 'Title too long'),
+    projectStatus: z.enum(PROJECT_STATUS_OPTIONS, {
+      required_error: 'Please choose a project status',
+    }),
+    projectType: z.enum(PROJECT_TYPE_OPTIONS, {
+      required_error: 'Please choose a project type',
+    }),
+    specialisation: z.enum(SPECIALISATIONS, {
+      required_error: 'Please choose a specialisation',
+    }),
+    projectCategory: z.string().min(1, 'Please choose a category'),
+    projectFocus: z.string().min(1, 'Please choose a focus / contribution'),
+    // Industry Collaboration
+    industryCollaboration: z.boolean(),
+    industryCompanyName: z.string().optional().or(z.literal('')),
+    industryContactName: z.string().optional().or(z.literal('')),
+    industryContactPhone: z.string().optional().or(z.literal('')),
+    // Description / Free-text
+    problemStatement: z
+      .string()
+      .min(100, 'Problem statement must be at least 100 characters'),
+    objectives: z
+      .array(z.object({ value: z.string().min(10, 'Objective too short') }))
+      .min(2, 'At least 2 objectives required'),
+    scope: z.string().min(50, 'Scope must be at least 50 characters'),
+    methodology: z
+      .string()
+      .min(100, 'Methodology must be at least 100 characters'),
+    expectedOutcomes: z
+      .array(z.object({ value: z.string().min(10, 'Outcome too short') }))
+      .min(1, 'At least 1 outcome required'),
+    timeline: z.string().optional(),
+    references: z.array(z.object({ value: z.string() })).optional(),
+    // Co-Supervisor (free text — co-supervisor isn't a system user)
+    coSupervisorName: z.string().optional().or(z.literal('')),
+    // Number of Students + Student 2 block
+    numberOfStudents: z.enum(NUMBER_OF_STUDENTS_OPTIONS),
+    student1Subtitle: z.string().optional().or(z.literal('')),
+    student1WorkDistribution: z.string().optional().or(z.literal('')),
+    student2MmuId: z.string().optional().or(z.literal('')),
+    student2Subtitle: z.string().optional().or(z.literal('')),
+    student2WorkDistribution: z.string().optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    // Industry collaboration → company name required
+    if (data.industryCollaboration && !data.industryCompanyName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['industryCompanyName'],
+        message: 'Company name is required when industry collaboration is enabled',
+      })
+    }
+    // Two-student project → required fields
+    if (data.numberOfStudents === 'Two') {
+      if (!data.student2MmuId || !/^\d{10}$/.test(data.student2MmuId.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student2MmuId'],
+          message: 'Enter a valid 10-digit MMU ID for Student 2',
+        })
+      }
+      if (!data.student1Subtitle) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student1Subtitle'],
+          message: 'Subtitle for Student 1 is required for two-student projects',
+        })
+      }
+      if (!data.student1WorkDistribution) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student1WorkDistribution'],
+          message: 'Work distribution for Student 1 is required for two-student projects',
+        })
+      }
+      if (!data.student2Subtitle) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student2Subtitle'],
+          message: 'Subtitle for Student 2 is required for two-student projects',
+        })
+      }
+      if (!data.student2WorkDistribution) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['student2WorkDistribution'],
+          message: 'Work distribution for Student 2 is required for two-student projects',
+        })
+      }
+    }
+  })
 
 type ProposalFormData = z.infer<typeof proposalSchema>
 
@@ -77,11 +175,22 @@ export function ProposalWorkspace() {
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { errors, isDirty },
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
     defaultValues: {
       title: '',
+      projectStatus: 'Student-Proposed',
+      projectType: 'Application-Based',
+      specialisation: undefined as unknown as ProposalFormData['specialisation'],
+      projectCategory: '',
+      projectFocus: '',
+      industryCollaboration: false,
+      industryCompanyName: '',
+      industryContactName: '',
+      industryContactPhone: '',
       problemStatement: '',
       objectives: [{ value: '' }, { value: '' }],
       scope: '',
@@ -89,14 +198,46 @@ export function ProposalWorkspace() {
       expectedOutcomes: [{ value: '' }],
       timeline: '',
       references: [],
+      coSupervisorName: '',
+      numberOfStudents: 'One',
+      student1Subtitle: '',
+      student1WorkDistribution: '',
+      student2MmuId: '',
+      student2Subtitle: '',
+      student2WorkDistribution: '',
     },
   })
 
   // Hydrate the form once the existing proposal has been fetched.
   useEffect(() => {
     if (!proposal) return
+    const numberOfStudents =
+      proposal.numberOfStudents === 'Two' ? 'Two' : 'One'
     reset({
       title: proposal.title || '',
+      projectStatus:
+        (PROJECT_STATUS_OPTIONS as readonly string[]).includes(
+          proposal.projectStatus ?? ''
+        )
+          ? (proposal.projectStatus as (typeof PROJECT_STATUS_OPTIONS)[number])
+          : 'Student-Proposed',
+      projectType:
+        (PROJECT_TYPE_OPTIONS as readonly string[]).includes(
+          proposal.projectType ?? ''
+        )
+          ? (proposal.projectType as (typeof PROJECT_TYPE_OPTIONS)[number])
+          : 'Application-Based',
+      specialisation: ((SPECIALISATIONS as readonly string[]).includes(
+        proposal.specialisation ?? ''
+      )
+        ? proposal.specialisation
+        : undefined) as ProposalFormData['specialisation'],
+      projectCategory: proposal.projectCategory || '',
+      projectFocus: proposal.projectFocus || '',
+      industryCollaboration: !!proposal.industryCollaboration,
+      industryCompanyName: proposal.industryCompanyName || '',
+      industryContactName: proposal.industryContactName || '',
+      industryContactPhone: proposal.industryContactPhone || '',
       problemStatement: proposal.problemStatement || '',
       objectives: proposal.objectives?.length
         ? proposal.objectives.map((o) => ({ value: o }))
@@ -108,8 +249,35 @@ export function ProposalWorkspace() {
         : [{ value: '' }],
       timeline: proposal.timeline || '',
       references: proposal.references?.map((r) => ({ value: r })) || [],
+      coSupervisorName: proposal.coSupervisorName || '',
+      numberOfStudents,
+      student1Subtitle: proposal.student1Subtitle || '',
+      student1WorkDistribution: proposal.student1WorkDistribution || '',
+      student2MmuId: proposal.student2MmuId || '',
+      student2Subtitle: proposal.student2Subtitle || '',
+      student2WorkDistribution: proposal.student2WorkDistribution || '',
     })
   }, [proposal, reset])
+
+  // Watched fields drive the cascading dropdowns + conditional sections.
+  const watchedSpec = watch('specialisation')
+  const watchedIndustry = watch('industryCollaboration')
+  const watchedNumStudents = watch('numberOfStudents')
+  const watchedCategory = watch('projectCategory')
+  const watchedFocus = watch('projectFocus')
+
+  const categoryOptions = useMemo(() => categoriesFor(watchedSpec), [watchedSpec])
+  const focusOptions = useMemo(() => focusesFor(watchedSpec), [watchedSpec])
+
+  // When specialisation changes, clear category/focus if they no longer apply.
+  useEffect(() => {
+    if (watchedCategory && !categoryOptions.includes(watchedCategory)) {
+      setValue('projectCategory', '', { shouldValidate: false })
+    }
+    if (watchedFocus && !focusOptions.includes(watchedFocus)) {
+      setValue('projectFocus', '', { shouldValidate: false })
+    }
+  }, [categoryOptions, focusOptions, watchedCategory, watchedFocus, setValue])
 
   const { fields: objectiveFields, append: appendObjective, remove: removeObjective } = useFieldArray({
     control,
@@ -133,6 +301,15 @@ export function ProposalWorkspace() {
       objectives: data.objectives.map((o) => o.value),
       expectedOutcomes: data.expectedOutcomes.map((o) => o.value),
       references: data.references?.map((r) => r.value).filter(Boolean),
+      // Industry block — null out collapsed fields so backend stores clean state.
+      industryCompanyName: data.industryCollaboration ? data.industryCompanyName || null : null,
+      industryContactName: data.industryCollaboration ? data.industryContactName || null : null,
+      industryContactPhone: data.industryCollaboration ? data.industryContactPhone || null : null,
+      // Student-2 block similarly collapsed when single-student.
+      student2MmuId: data.numberOfStudents === 'Two' ? data.student2MmuId || null : null,
+      student2Subtitle: data.numberOfStudents === 'Two' ? data.student2Subtitle || null : null,
+      student2WorkDistribution:
+        data.numberOfStudents === 'Two' ? data.student2WorkDistribution || null : null,
     }
 
     try {
@@ -296,9 +473,13 @@ export function ProposalWorkspace() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSave)} className="space-y-6">
-        {/* Basic Information */}
+        {/* Project Identity (template fields) */}
         <Card>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">Project Identity</h2>
+          <p className="text-sm text-neutral-500 mb-4">
+            Aligned with the MMU FCI FYP Proposal Form. Specialisation defaults to your profile;
+            category and focus options come from the official template.
+          </p>
 
           <div className="space-y-4">
             <Input
@@ -309,7 +490,181 @@ export function ProposalWorkspace() {
               required
               {...register('title')}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Project Status <span className="text-error-500">*</span>
+                </label>
+                <select
+                  disabled={!canEdit}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg border bg-white text-sm transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                    errors.projectStatus ? 'border-error-500' : 'border-neutral-300',
+                    !canEdit && 'bg-neutral-50'
+                  )}
+                  {...register('projectStatus')}
+                >
+                  {PROJECT_STATUS_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.projectStatus && (
+                  <p className="mt-1 text-xs text-error-600">{errors.projectStatus.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Project Type <span className="text-error-500">*</span>
+                </label>
+                <select
+                  disabled={!canEdit}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg border bg-white text-sm transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                    errors.projectType ? 'border-error-500' : 'border-neutral-300',
+                    !canEdit && 'bg-neutral-50'
+                  )}
+                  {...register('projectType')}
+                >
+                  {PROJECT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.projectType && (
+                  <p className="mt-1 text-xs text-error-600">{errors.projectType.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Specialisation <span className="text-error-500">*</span>
+                </label>
+                <select
+                  disabled={!canEdit}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg border bg-white text-sm transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                    errors.specialisation ? 'border-error-500' : 'border-neutral-300',
+                    !canEdit && 'bg-neutral-50'
+                  )}
+                  defaultValue=""
+                  {...register('specialisation')}
+                >
+                  <option value="" disabled>Select specialisation</option>
+                  {SPECIALISATIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.specialisation && (
+                  <p className="mt-1 text-xs text-error-600">{errors.specialisation.message}</p>
+                )}
+                <p className="mt-1 text-xs text-neutral-500">
+                  Should match your student specialisation.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Project Category <span className="text-error-500">*</span>
+                </label>
+                <select
+                  disabled={!canEdit || !watchedSpec}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg border bg-white text-sm transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                    errors.projectCategory ? 'border-error-500' : 'border-neutral-300',
+                    (!canEdit || !watchedSpec) && 'bg-neutral-50'
+                  )}
+                  {...register('projectCategory')}
+                >
+                  <option value="">{watchedSpec ? 'Select category' : 'Choose specialisation first'}</option>
+                  {categoryOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.projectCategory && (
+                  <p className="mt-1 text-xs text-error-600">{errors.projectCategory.message}</p>
+                )}
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Project Focus / Contribution <span className="text-error-500">*</span>
+                </label>
+                <select
+                  disabled={!canEdit || !watchedSpec}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg border bg-white text-sm transition-colors',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                    errors.projectFocus ? 'border-error-500' : 'border-neutral-300',
+                    (!canEdit || !watchedSpec) && 'bg-neutral-50'
+                  )}
+                  {...register('projectFocus')}
+                >
+                  <option value="">{watchedSpec ? 'Select focus / contribution' : 'Choose specialisation first'}</option>
+                  {focusOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.projectFocus && (
+                  <p className="mt-1 text-xs text-error-600">{errors.projectFocus.message}</p>
+                )}
+              </div>
+            </div>
           </div>
+        </Card>
+
+        {/* Industry Collaboration */}
+        <Card>
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-neutral-900">Industry Collaboration</h2>
+              <p className="text-sm text-neutral-500">
+                Toggle on if your project is sponsored by or in collaboration with an industry partner.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                disabled={!canEdit}
+                {...register('industryCollaboration')}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600" />
+            </label>
+          </div>
+
+          {watchedIndustry && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-neutral-100">
+              <Input
+                label="Company Name"
+                placeholder="Acme Sdn. Bhd."
+                disabled={!canEdit}
+                error={errors.industryCompanyName?.message}
+                {...register('industryCompanyName')}
+              />
+              <Input
+                label="Contact Name"
+                placeholder="Industry contact person"
+                disabled={!canEdit}
+                error={errors.industryContactName?.message}
+                {...register('industryContactName')}
+              />
+              <Input
+                label="Contact Phone"
+                placeholder="+60 12-345 6789"
+                disabled={!canEdit}
+                error={errors.industryContactPhone?.message}
+                {...register('industryContactPhone')}
+              />
+            </div>
+          )}
         </Card>
 
         {/* Problem Statement */}
@@ -476,6 +831,196 @@ export function ProposalWorkspace() {
               </div>
             ))}
           </div>
+        </Card>
+
+        {/* Supervisor block (autofilled, read-only) */}
+        <Card>
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <Briefcase className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-neutral-900">Supervisor</h2>
+              <p className="text-sm text-neutral-500">
+                Filled from your paired supervisor. Add a co-supervisor name if applicable.
+              </p>
+            </div>
+          </div>
+          {proposal?.supervisor ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 p-4 rounded-lg bg-neutral-50 border border-neutral-100">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Supervisor Name</p>
+                <p className="font-medium text-neutral-900">{proposal.supervisor.fullName}</p>
+              </div>
+              {proposal.supervisor.position && (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Position</p>
+                  <p className="font-medium text-neutral-900">{proposal.supervisor.position}</p>
+                </div>
+              )}
+              {proposal.supervisor.email && (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Email</p>
+                  <p className="font-medium text-neutral-900">{proposal.supervisor.email}</p>
+                </div>
+              )}
+              {proposal.supervisor.department && (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Department</p>
+                  <p className="font-medium text-neutral-900">{proposal.supervisor.department}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <AlertBanner
+              variant="warning"
+              description="No supervisor paired yet. Find a supervisor first to enable proposal submission."
+              className="mb-4"
+            />
+          )}
+          <Input
+            label="Co-Supervisor Name (optional)"
+            placeholder="Dr. Co-Supervisor Name"
+            disabled={!canEdit}
+            {...register('coSupervisorName')}
+          />
+        </Card>
+
+        {/* Number of Students + work distribution */}
+        <Card>
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <Users className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-neutral-900">Number of Students</h2>
+              <p className="text-sm text-neutral-500">
+                Select Two if this is a two-student project; you'll fill in subtitles and work distribution.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex bg-neutral-100 rounded-lg p-1 max-w-xs mb-4">
+            {NUMBER_OF_STUDENTS_OPTIONS.map((opt) => {
+              const checked = watchedNumStudents === opt
+              return (
+                <label
+                  key={opt}
+                  className={cn(
+                    'flex-1 px-4 py-2 rounded text-sm font-medium text-center transition-colors',
+                    canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60',
+                    checked ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-600 hover:bg-neutral-200'
+                  )}
+                >
+                  <input
+                    type="radio"
+                    value={opt}
+                    disabled={!canEdit}
+                    {...register('numberOfStudents')}
+                    className="sr-only"
+                  />
+                  {opt}
+                </label>
+              )
+            })}
+          </div>
+
+          {/* Student 1 (autofilled) + work distribution if two-student */}
+          {proposal?.student1 && (
+            <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-100 mb-4">
+              <p className="text-xs uppercase tracking-wide text-neutral-500 mb-2">Student 1 — You</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div><span className="text-neutral-500">Name:</span> <span className="font-medium text-neutral-900">{proposal.student1.fullName}</span></div>
+                <div><span className="text-neutral-500">Student ID:</span> <span className="font-medium text-neutral-900">{proposal.student1.studentId}</span></div>
+                <div><span className="text-neutral-500">Specialisation:</span> <span className="font-medium text-neutral-900">{proposal.student1.specialisation || '—'}</span></div>
+                <div><span className="text-neutral-500">Email:</span> <span className="font-medium text-neutral-900">{proposal.student1.email}</span></div>
+                {proposal.student1.phone && <div><span className="text-neutral-500">Phone:</span> <span className="font-medium text-neutral-900">{proposal.student1.phone}</span></div>}
+              </div>
+            </div>
+          )}
+
+          {watchedNumStudents === 'Two' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  label="Student 1 Subtitle"
+                  placeholder="e.g. Front-end module"
+                  disabled={!canEdit}
+                  error={errors.student1Subtitle?.message}
+                  {...register('student1Subtitle')}
+                />
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    Student 1 Work Distribution
+                  </label>
+                  <textarea
+                    rows={3}
+                    disabled={!canEdit}
+                    placeholder="What this student is responsible for"
+                    className={cn(
+                      'w-full px-3 py-2 rounded-lg border bg-white text-sm transition-colors resize-none',
+                      'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                      errors.student1WorkDistribution ? 'border-error-500' : 'border-neutral-300',
+                      !canEdit && 'bg-neutral-50'
+                    )}
+                    {...register('student1WorkDistribution')}
+                  />
+                  {errors.student1WorkDistribution && (
+                    <p className="mt-1 text-xs text-error-600">{errors.student1WorkDistribution.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-neutral-100 space-y-3">
+                <p className="text-sm font-medium text-neutral-700">Student 2</p>
+                <Input
+                  label="Student 2 MMU ID"
+                  placeholder="10-digit MMU ID"
+                  disabled={!canEdit}
+                  error={errors.student2MmuId?.message}
+                  {...register('student2MmuId')}
+                />
+                {proposal?.student2 ? (
+                  <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-100 text-sm">
+                    <span className="text-neutral-500">Resolved:</span>{' '}
+                    <span className="font-medium text-neutral-900">{proposal.student2.fullName}</span>
+                    {proposal.student2.specialisation && (
+                      <span className="text-neutral-500"> — {proposal.student2.specialisation}</span>
+                    )}
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="Student 2 Subtitle"
+                    placeholder="e.g. Back-end module"
+                    disabled={!canEdit}
+                    error={errors.student2Subtitle?.message}
+                    {...register('student2Subtitle')}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                      Student 2 Work Distribution
+                    </label>
+                    <textarea
+                      rows={3}
+                      disabled={!canEdit}
+                      placeholder="What this student is responsible for"
+                      className={cn(
+                        'w-full px-3 py-2 rounded-lg border bg-white text-sm transition-colors resize-none',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+                        errors.student2WorkDistribution ? 'border-error-500' : 'border-neutral-300',
+                        !canEdit && 'bg-neutral-50'
+                      )}
+                      {...register('student2WorkDistribution')}
+                    />
+                    {errors.student2WorkDistribution && (
+                      <p className="mt-1 text-xs text-error-600">{errors.student2WorkDistribution.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Timeline */}
