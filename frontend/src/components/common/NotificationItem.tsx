@@ -1,13 +1,6 @@
-import {
-  Megaphone,
-  Calendar,
-  FileText,
-  Settings,
-  Mail,
-  Bell,
-} from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { formatRelativeTime } from '@/lib/hooks/useNotifications'
+import { getNotificationIcon } from './NotificationDrawer'
 import type { Notification } from '@/types'
 
 interface NotificationItemProps {
@@ -64,14 +57,3 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
   )
 }
 
-function getNotificationIcon(type: string) {
-  const iconMap: Record<string, { Icon: typeof Bell; colorClass: string }> = {
-    ANNOUNCEMENT: { Icon: Megaphone, colorClass: 'text-primary-500 bg-primary-50' },
-    MEETING: { Icon: Calendar, colorClass: 'text-info-500 bg-info-50' },
-    PROPOSAL: { Icon: FileText, colorClass: 'text-warning-500 bg-warning-50' },
-    SYSTEM: { Icon: Settings, colorClass: 'text-neutral-500 bg-neutral-100' },
-    REQUEST: { Icon: Mail, colorClass: 'text-accent-500 bg-accent-50' },
-  }
-
-  return iconMap[type] || { Icon: Bell, colorClass: 'text-neutral-500 bg-neutral-100' }
-}

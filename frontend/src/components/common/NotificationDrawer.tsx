@@ -6,6 +6,11 @@ import {
   Settings,
   Mail,
   Bell,
+  CalendarClock,
+  UserCheck,
+  UserPlus,
+  GraduationCap,
+  Lightbulb,
 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerFooter } from '@/components/ui/Drawer'
 import { Button, Spinner } from '@/components/ui'
@@ -111,6 +116,14 @@ export function getNotificationIcon(type: string) {
     PROPOSAL: { Icon: FileText, colorClass: 'text-warning-500 bg-warning-50' },
     SYSTEM: { Icon: Settings, colorClass: 'text-neutral-500 bg-neutral-100' },
     REQUEST: { Icon: Mail, colorClass: 'text-accent-500 bg-accent-50' },
+    DEADLINE: { Icon: CalendarClock, colorClass: 'text-warning-500 bg-warning-50' },
+    REGISTRATION_PENDING: { Icon: UserPlus, colorClass: 'text-info-500 bg-info-50' },
+    ACCOUNT_APPROVED: { Icon: UserCheck, colorClass: 'text-success-500 bg-success-50' },
+    ACCOUNT_REJECTED: { Icon: UserCheck, colorClass: 'text-accent-500 bg-accent-50' },
+    FYP1_RESULT: { Icon: GraduationCap, colorClass: 'text-primary-500 bg-primary-50' },
+    TOPIC: { Icon: Lightbulb, colorClass: 'text-warning-500 bg-warning-50' },
+    TOPIC_REVIEW: { Icon: Lightbulb, colorClass: 'text-warning-500 bg-warning-50' },
+    TOPIC_CONFIRMED: { Icon: Lightbulb, colorClass: 'text-success-500 bg-success-50' },
   }
 
   return iconMap[type] || { Icon: Bell, colorClass: 'text-neutral-500 bg-neutral-100' }

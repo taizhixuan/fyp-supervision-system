@@ -210,7 +210,12 @@ export function NotificationSettings() {
                 <Smartphone className="h-5 w-5 text-success-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-neutral-900">Push Notifications</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold text-neutral-900">Push Notifications</h2>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
+                    Coming soon
+                  </span>
+                </div>
                 <p className="text-sm text-neutral-500">Receive push notifications on your device</p>
               </div>
             </div>

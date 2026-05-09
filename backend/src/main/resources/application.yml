@@ -37,6 +37,18 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 app:
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
@@ -47,6 +59,10 @@ app:
     recommendation-url: ${AI_RECOMMENDATION_URL:http://localhost:5001}
     analyzer-url: ${AI_ANALYZER_URL:http://localhost:5002}
     chatbot-url: ${AI_CHATBOT_URL:http://localhost:5003}
+  email:
+    enabled: ${APP_EMAIL_ENABLED:false}
+    from: ${APP_EMAIL_FROM:fyp-noreply@mmu.edu.my}
+    app-base-url: ${APP_BASE_URL:http://localhost:3000}
 
 logging:
   level:
