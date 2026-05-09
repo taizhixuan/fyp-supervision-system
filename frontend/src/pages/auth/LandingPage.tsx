@@ -121,22 +121,6 @@ export function LandingPage() {
                   </Button>
                 </Link>
               </div>
-
-              {/* Stats */}
-              <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-                <div className="text-center">
-                  <div className="text-3xl sm:text-4xl font-bold text-white">500+</div>
-                  <div className="text-sm text-blue-200/60 mt-1">Students</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl sm:text-4xl font-bold text-white">50+</div>
-                  <div className="text-sm text-blue-200/60 mt-1">Supervisors</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl sm:text-4xl font-bold text-white">100+</div>
-                  <div className="text-sm text-blue-200/60 mt-1">Projects</div>
-                </div>
-              </div>
             </div>
           </div>
 
