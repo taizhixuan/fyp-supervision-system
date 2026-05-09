@@ -13,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,48 +33,42 @@ public class StudentChatController {
         Long userId = Long.parseLong(user.getUsername());
         ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
                 .orElse(null);
+        Map<String, Object> body = new HashMap<>();
         if (session == null) {
-            return ResponseEntity.ok(Map.of("sessionId", "", "messages", List.of(), "createdAt", "", "updatedAt", ""));
+            body.put("sessionId", null);
+            body.put("messages", List.of());
+            body.put("createdAt", null);
+            body.put("updatedAt", null);
+            return ResponseEntity.ok(body);
         }
         List<ChatMessage> messages = chatMessageRepository.findBySession_SessionIdOrderBySentAtAsc(session.getSessionId());
-        List<Map<String, Object>> messageDtos = new ArrayList<>();
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        for (ChatMessage msg : messages) {
-            Map<String, Object> dto = new HashMap<>();
-            dto.put("messageId", msg.getMessageId().toString());
-            dto.put("role", msg.getSender());
-            dto.put("content", msg.getContent());
-            dto.put("timestamp", msg.getSentAt() != null ? msg.getSentAt().toString() : "");
-            try {
-                Object refs = mapper.readValue(msg.getReferencesJson() != null ? msg.getReferencesJson() : "[]", List.class);
-                dto.put("references", refs);
-            } catch (Exception e) {
-                dto.put("references", List.of());
-            }
-            messageDtos.add(dto);
-        }
-        return ResponseEntity.ok(Map.of(
-                "sessionId", session.getSessionId().toString(),
-                "messages", messageDtos,
-                "createdAt", session.getStartedAt().toString(),
-                "updatedAt", session.getStartedAt().toString()
-        ));
+        List<Map<String, Object>> messageDtos = messages.stream()
+                .map(msg -> toMessageDto(msg, mapper))
+                .collect(Collectors.toList());
+        LocalDateTime lastTs = messages.isEmpty()
+                ? session.getStartedAt()
+                : messages.get(messages.size() - 1).getSentAt();
+        body.put("sessionId", session.getSessionId().toString());
+        body.put("messages", messageDtos);
+        body.put("createdAt", session.getStartedAt() != null ? session.getStartedAt().toString() : null);
+        body.put("updatedAt", lastTs != null ? lastTs.toString() : null);
+        return ResponseEntity.ok(body);
     }
 
-    @SuppressWarnings("unchecked")
     @PostMapping
-    public ResponseEntity<?> sendMessage(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
+    public synchronized ResponseEntity<?> sendMessage(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         UserAccount account = userAccountRepository.findById(userId).orElseThrow();
 
-        // Get or create session
-        ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
-                .orElseGet(() -> {
-                    ChatSession newSession = ChatSession.builder().user(account).build();
-                    return chatSessionRepository.save(newSession);
-                });
+        String messageText = data.get("message") != null ? data.get("message").toString().trim() : "";
+        if (messageText.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Message cannot be empty"));
+        }
 
-        String messageText = (String) data.get("message");
+        // Get or create session (synchronized prevents double-session race for the same user)
+        ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
+                .orElseGet(() -> chatSessionRepository.save(ChatSession.builder().user(account).build()));
 
         // Save user message
         ChatMessage userMsg = ChatMessage.builder()
@@ -82,9 +78,10 @@ public class StudentChatController {
                 .build();
         chatMessageRepository.save(userMsg);
 
-        // Build session history for AI
+        // Build session history for AI (excluding the just-saved current message — it's passed separately)
         List<ChatMessage> history = chatMessageRepository.findBySession_SessionIdOrderBySentAtAsc(session.getSessionId());
         List<Map<String, String>> sessionHistory = history.stream()
+                .filter(m -> !m.getMessageId().equals(userMsg.getMessageId()))
                 .map(msg -> Map.of("sender", msg.getSender().toUpperCase(), "content", msg.getContent()))
                 .collect(Collectors.toList());
 
@@ -96,11 +93,19 @@ public class StudentChatController {
         Map<String, Object> aiResult = aiServiceClient.chat(payload);
 
         String reply = (String) aiResult.getOrDefault("reply", "Sorry, I couldn't generate a response.");
+        BigDecimal confidence = null;
+        Object rawConfidence = aiResult.get("confidence");
+        if (rawConfidence instanceof Number) {
+            confidence = BigDecimal.valueOf(((Number) rawConfidence).doubleValue())
+                    .setScale(4, RoundingMode.HALF_UP);
+        }
+
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         String referencesJson = "[]";
         try {
             Object refs = aiResult.get("references");
             if (refs != null) {
-                referencesJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(refs);
+                referencesJson = mapper.writeValueAsString(refs);
             }
         } catch (Exception ignored) {}
 
@@ -109,24 +114,12 @@ public class StudentChatController {
                 .session(session)
                 .sender("assistant")
                 .content(reply)
+                .confidenceScore(confidence)
                 .referencesJson(referencesJson)
                 .build();
         chatMessageRepository.save(aiMsg);
 
-        // Return DTO matching frontend ChatMessage type
-        Map<String, Object> msgDto = new HashMap<>();
-        msgDto.put("messageId", aiMsg.getMessageId().toString());
-        msgDto.put("role", aiMsg.getSender());
-        msgDto.put("content", aiMsg.getContent());
-        msgDto.put("timestamp", aiMsg.getSentAt() != null ? aiMsg.getSentAt().toString() : "");
-        try {
-            Object refs = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
-                    aiMsg.getReferencesJson() != null ? aiMsg.getReferencesJson() : "[]", List.class);
-            msgDto.put("references", refs);
-        } catch (Exception e) {
-            msgDto.put("references", List.of());
-        }
-        return ResponseEntity.ok(msgDto);
+        return ResponseEntity.ok(toMessageDto(aiMsg, mapper));
     }
 
     @DeleteMapping
@@ -139,5 +132,27 @@ public class StudentChatController {
             chatSessionRepository.save(session);
         }
         return ResponseEntity.noContent().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toMessageDto(ChatMessage msg, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("messageId", msg.getMessageId().toString());
+        dto.put("role", "user".equalsIgnoreCase(msg.getSender()) ? "user" : "assistant");
+        dto.put("content", msg.getContent());
+        dto.put("timestamp", msg.getSentAt() != null ? msg.getSentAt().toString() : null);
+        if (msg.getConfidenceScore() != null) {
+            dto.put("confidence", msg.getConfidenceScore().doubleValue());
+        }
+        try {
+            Object refs = mapper.readValue(
+                    msg.getReferencesJson() != null && !msg.getReferencesJson().isBlank()
+                            ? msg.getReferencesJson() : "[]",
+                    List.class);
+            dto.put("references", refs);
+        } catch (Exception e) {
+            dto.put("references", List.of());
+        }
+        return dto;
     }
 }

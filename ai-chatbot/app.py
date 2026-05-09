@@ -81,7 +81,7 @@ def chat():
 
         message = data.get("message", "")
         session_history = data.get("sessionHistory", [])
-        context = data.get("context")
+        extra_context = data.get("context")
 
         if not message:
             return jsonify({"error": "message is required"}), 400
@@ -92,6 +92,7 @@ def chat():
             session_history=session_history,
             openai_client=openai_client,
             top_k=5,
+            extra_context=extra_context,
         )
 
         return jsonify({
@@ -107,4 +108,5 @@ def chat():
 
 if __name__ == "__main__":
     port = int(os.environ.get("FLASK_PORT", 5003))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=port, debug=debug)
