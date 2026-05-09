@@ -36,4 +36,25 @@ export const notificationsApi = {
     const response = await api.put('/notifications/mark-all-read')
     return response.data
   },
+
+  getVapidPublicKey: async (): Promise<{ publicKey: string | null }> => {
+    const response = await api.get('/notifications/push/vapid-public-key')
+    return response.data
+  },
+
+  subscribePush: async (subscription: PushSubscriptionJSON): Promise<{ message: string }> => {
+    const response = await api.post('/notifications/push/subscribe', {
+      endpoint: subscription.endpoint,
+      keys: subscription.keys,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+    })
+    return response.data
+  },
+
+  unsubscribePush: async (endpoint: string): Promise<{ message: string }> => {
+    const response = await api.delete('/notifications/push/subscribe', {
+      params: { endpoint },
+    })
+    return response.data
+  },
 }

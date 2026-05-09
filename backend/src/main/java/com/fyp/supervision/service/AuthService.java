@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fyp.supervision.dto.auth.*;
 import com.fyp.supervision.dto.common.UserDto;
 import com.fyp.supervision.entity.FypCycle;
+import com.fyp.supervision.entity.PasswordResetToken;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.SupervisorProfile;
@@ -14,31 +15,44 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ConflictException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.FypCycleRepository;
+import com.fyp.supervision.repository.PasswordResetTokenRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final long RESET_TOKEN_TTL_MINUTES = 60;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final SupervisorProfileRepository supervisorProfileRepository;
     private final ProjectRepository projectRepository;
     private final FypCycleRepository fypCycleRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -198,19 +212,80 @@ public class AuthService {
         return UserDto.fromEntity(user);
     }
 
+    @Transactional
     public String forgotPassword(ForgotPasswordRequest request) {
-        // Always return success to prevent email enumeration
-        // In production, send a reset email if the user exists
-        return "If an account with that email exists, a password reset link has been sent.";
-    }
+        String genericResponse = "If an account with that email exists, a password reset link has been sent.";
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return genericResponse;
+        }
+        String email = request.getEmail().toLowerCase().trim();
 
-    public void resetPassword(ResetPasswordRequest request) {
-        // Token-based password reset - not fully implemented in MVP
-        throw new BadRequestException("Password reset via token is not yet implemented. Please contact the administrator.");
+        userAccountRepository.findByEmail(email).ifPresent(user -> {
+            passwordResetTokenRepository.deleteAllByUserId(user.getUserId());
+
+            byte[] randomBytes = new byte[32];
+            SECURE_RANDOM.nextBytes(randomBytes);
+            String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+            PasswordResetToken record = PasswordResetToken.builder()
+                    .user(user)
+                    .tokenHash(sha256Hex(rawToken))
+                    .expiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_TTL_MINUTES))
+                    .build();
+            passwordResetTokenRepository.save(record);
+
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getFullName(), rawToken);
+        });
+
+        return genericResponse;
     }
 
     public boolean verifyResetToken(String token) {
-        // Not fully implemented in MVP
-        return false;
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+        return passwordResetTokenRepository.findByTokenHash(sha256Hex(token))
+                .map(record -> record.getUsedAt() == null
+                        && record.getExpiresAt() != null
+                        && record.getExpiresAt().isAfter(LocalDateTime.now()))
+                .orElse(false);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (request.getToken() == null || request.getToken().isBlank()) {
+            throw new BadRequestException("Reset token is required.");
+        }
+        PasswordResetToken record = passwordResetTokenRepository
+                .findByTokenHash(sha256Hex(request.getToken()))
+                .orElseThrow(() -> new BadRequestException("This reset link is invalid or has expired."));
+
+        if (record.getUsedAt() != null) {
+            throw new BadRequestException("This reset link has already been used.");
+        }
+        if (record.getExpiresAt() == null || record.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("This reset link has expired. Please request a new one.");
+        }
+
+        UserAccount user = record.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userAccountRepository.save(user);
+
+        record.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(record);
+    }
+
+    private static String sha256Hex(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }

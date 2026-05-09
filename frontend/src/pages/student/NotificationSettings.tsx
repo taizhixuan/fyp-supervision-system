@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -17,6 +17,15 @@ import { Card, Button, Spinner } from '@/components/ui'
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import type { NotificationPreferences } from '@/types'
+import { notificationsApi } from '@/lib/api/notifications'
+import {
+  isPushSupported,
+  getPermission,
+  subscribePush,
+  unsubscribePush,
+  getCurrentEndpoint,
+} from '@/lib/push'
+import { getApiErrorMessage } from '@/lib/api/client'
 
 // Sample data
 const SAMPLE_PREFERENCES: NotificationPreferences = {
@@ -91,9 +100,31 @@ export function NotificationSettings() {
 
   const [preferences, setPreferences] = useState<NotificationPreferences>(SAMPLE_PREFERENCES)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [pushSupported] = useState<boolean>(() => isPushSupported())
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushError, setPushError] = useState<string | null>(null)
 
   // Use sample data
   const displayPrefs = data || preferences
+
+  const pushAvailable = pushSupported && !!vapidPublicKey
+
+  useEffect(() => {
+    let cancelled = false
+    if (!pushSupported) return
+    notificationsApi
+      .getVapidPublicKey()
+      .then((res) => {
+        if (!cancelled) setVapidPublicKey(res.publicKey)
+      })
+      .catch(() => {
+        if (!cancelled) setVapidPublicKey(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pushSupported])
 
   const handleToggle = (
     channel: 'email' | 'push' | 'inApp',
@@ -107,6 +138,42 @@ export function NotificationSettings() {
         [setting]: value,
       },
     }))
+  }
+
+  const handlePushChannelToggle = async (value: boolean) => {
+    setPushError(null)
+    if (!pushAvailable) {
+      return
+    }
+    setPushBusy(true)
+    try {
+      if (value) {
+        const permission = await getPermission()
+        if (permission !== 'granted') {
+          setPushError('Browser permission for notifications was not granted.')
+          setPushBusy(false)
+          return
+        }
+        const sub = await subscribePush(vapidPublicKey!)
+        await notificationsApi.subscribePush(sub)
+        handleToggle('push', 'enabled', true)
+      } else {
+        const endpoint = await getCurrentEndpoint()
+        await unsubscribePush()
+        if (endpoint) {
+          try {
+            await notificationsApi.unsubscribePush(endpoint)
+          } catch {
+            // already gone server-side is fine
+          }
+        }
+        handleToggle('push', 'enabled', false)
+      }
+    } catch (err) {
+      setPushError(getApiErrorMessage(err) || 'Failed to update push subscription.')
+    } finally {
+      setPushBusy(false)
+    }
   }
 
   const handleQuietToggle = (setting: string, value: any) => {
@@ -210,27 +277,33 @@ export function NotificationSettings() {
                 <Smartphone className="h-5 w-5 text-success-600" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-neutral-900">Push Notifications</h2>
-                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
-                    Coming soon
-                  </span>
-                </div>
-                <p className="text-sm text-neutral-500">Receive push notifications on your device</p>
+                <h2 className="font-semibold text-neutral-900">Push Notifications</h2>
+                <p className="text-sm text-neutral-500">
+                  {pushAvailable
+                    ? 'Receive browser push notifications on this device'
+                    : !pushSupported
+                      ? 'Your browser does not support push notifications'
+                      : 'Push notifications are not configured on the server'}
+                </p>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className={`relative inline-flex items-center ${pushAvailable && !pushBusy ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
               <input
                 type="checkbox"
                 checked={preferences.push.enabled}
-                onChange={(e) => handleToggle('push', 'enabled', e.target.checked)}
+                onChange={(e) => handlePushChannelToggle(e.target.checked)}
+                disabled={!pushAvailable || pushBusy}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
 
-          {preferences.push.enabled && (
+          {pushError && (
+            <p className="text-sm text-red-600 mb-3">{pushError}</p>
+          )}
+
+          {preferences.push.enabled && pushAvailable && (
             <div className="space-y-3 pl-13 border-t border-neutral-100 pt-4">
               {notificationCategories.map((category) => (
                 <SettingRow
@@ -335,7 +408,7 @@ export function NotificationSettings() {
                 </div>
               </div>
               <p className="text-xs text-neutral-500 mt-2">
-                Push and in-app notifications will be muted during quiet hours
+                All notifications (in-app, email, and push) will be muted during quiet hours
               </p>
             </div>
           )}
