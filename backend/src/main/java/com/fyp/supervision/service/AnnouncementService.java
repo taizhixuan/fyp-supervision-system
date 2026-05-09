@@ -11,6 +11,7 @@ import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.enums.CycleStatus;
+import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
@@ -77,6 +78,39 @@ public class AnnouncementService {
     public List<Map<String, Object>> listAllPublished(Pageable pageable) {
         return announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable)
                 .getContent().stream().map(this::buildDto).toList();
+    }
+
+    /**
+     * Inbox+outbox view for a supervisor: returns announcements they created (SENT) plus
+     * announcements created by committee or admin (RECEIVED) — what a supervisor would
+     * naturally expect to see in their announcements page. Each DTO carries a
+     * {@code direction} field so the frontend can show a "Sent" / "From committee" badge
+     * and hide Edit/Delete on received ones.
+     *
+     * <p>Other supervisors' announcements are excluded — those are scoped to a different
+     * supervisor's supervisees and are not relevant here.
+     */
+    public List<Map<String, Object>> listForSupervisor(Long supervisorUserId, Pageable pageable) {
+        return announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable)
+                .getContent().stream()
+                .filter(a -> isVisibleToSupervisor(a, supervisorUserId))
+                .map(a -> {
+                    Map<String, Object> dto = buildDto(a);
+                    boolean isOwn = a.getCreatedBy() != null
+                            && Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId);
+                    dto.put("direction", isOwn ? "SENT" : "RECEIVED");
+                    return dto;
+                })
+                .toList();
+    }
+
+    private boolean isVisibleToSupervisor(Announcement a, Long supervisorUserId) {
+        if (a.getCreatedBy() == null) return false;
+        // Their own announcements (any audience).
+        if (Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId)) return true;
+        // Anything published by committee/admin counts as inbox.
+        UserRole authorRole = a.getCreatedBy().getRole();
+        return authorRole == UserRole.FYP_COMMITTEE || authorRole == UserRole.SYSTEM_ADMIN;
     }
 
     public Map<String, Object> get(Long announcementId) {
