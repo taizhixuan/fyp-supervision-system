@@ -121,6 +121,20 @@ export function getNotificationIcon(type: Notification['type']) {
       return { icon: 'Settings', color: 'text-neutral-500' }
     case 'REQUEST':
       return { icon: 'Mail', color: 'text-accent-500' }
+    case 'DEADLINE':
+      return { icon: 'CalendarClock', color: 'text-warning-500' }
+    case 'REGISTRATION_PENDING':
+      return { icon: 'UserPlus', color: 'text-info-500' }
+    case 'ACCOUNT_APPROVED':
+      return { icon: 'UserCheck', color: 'text-success-500' }
+    case 'ACCOUNT_REJECTED':
+      return { icon: 'UserCheck', color: 'text-accent-500' }
+    case 'FYP1_RESULT':
+      return { icon: 'GraduationCap', color: 'text-primary-500' }
+    case 'TOPIC':
+    case 'TOPIC_REVIEW':
+    case 'TOPIC_CONFIRMED':
+      return { icon: 'Lightbulb', color: 'text-warning-500' }
     default:
       return { icon: 'Bell', color: 'text-neutral-500' }
   }

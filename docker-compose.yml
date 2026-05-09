@@ -33,6 +33,14 @@ services:
       AI_RECOMMENDATION_URL: http://ai-recommendation:5001
       AI_ANALYZER_URL: http://ai-proposal-analyzer:5002
       AI_CHATBOT_URL: http://ai-chatbot:5003
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      APP_EMAIL_ENABLED: ${APP_EMAIL_ENABLED:-false}
+      APP_EMAIL_FROM: ${APP_EMAIL_FROM:-fyp-noreply@mmu.edu.my}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      TZ: ${TZ:-Asia/Kuala_Lumpur}
     depends_on:
       db:
         condition: service_healthy

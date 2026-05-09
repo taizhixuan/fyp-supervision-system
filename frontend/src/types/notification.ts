@@ -4,11 +4,19 @@ export type NotificationType =
   | 'PROPOSAL'
   | 'SYSTEM'
   | 'REQUEST'
+  | 'DEADLINE'
+  | 'REGISTRATION_PENDING'
+  | 'ACCOUNT_APPROVED'
+  | 'ACCOUNT_REJECTED'
+  | 'FYP1_RESULT'
+  | 'TOPIC'
+  | 'TOPIC_REVIEW'
+  | 'TOPIC_CONFIRMED'
 
 export interface Notification {
   notificationId: number
   userId: number
-  type: NotificationType
+  type: NotificationType | string
   title: string
   message: string
   targetRoute?: string
