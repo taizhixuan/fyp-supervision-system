@@ -309,7 +309,10 @@ export function SideNav({
   const navItems = getNavItemsForRole(userRole)
   const studentGate = useStudentRegistrationGate()
   const showPreSupervisorLocks = userRole === 'STUDENT' && !studentGate.supervisorAssigned
-  const showPostRegistrationLocks = userRole === 'STUDENT' && studentGate.isRegistered
+  // Discovery routes lock either when the student is already registered OR when their
+  // enrolled cycle has ended (read-only mode — no point browsing supervisors).
+  const showPostRegistrationLocks =
+    userRole === 'STUDENT' && (studentGate.isRegistered || studentGate.cycleActive === false)
 
   const commonNavItems: NavItem[] = [
     {

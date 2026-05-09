@@ -100,7 +100,31 @@ public class CycleLifecycleService {
         List<UserAccount> students = userAccountRepository.findByRoleAndStatus(UserRole.STUDENT, UserStatus.ACTIVE);
         int count = 0;
         for (UserAccount student : students) {
-            if (projectRepository.findByStudent_UserId(student.getUserId()).isPresent()) continue;
+            var existing = projectRepository.findByStudent_UserId(student.getUserId());
+            if (existing.isPresent()) {
+                // Re-attach stale placeholders pointing to a finished cycle. A placeholder
+                // is identified by no supervisor — actual paired projects are left alone
+                // (those students may be repeating or in transition; admin handles them).
+                Project p = existing.get();
+                FypCycle oldCycle = p.getCycle();
+                boolean stalePlaceholder = p.getSupervisor() == null
+                        && oldCycle != null
+                        && (oldCycle.getStatus() == CycleStatus.COMPLETED
+                                || oldCycle.getStatus() == CycleStatus.ARCHIVED);
+                if (stalePlaceholder) {
+                    p.setCycle(cycle);
+                    p.setStage("FYP1");
+                    p.setRegisteredAt(LocalDateTime.now());
+                    try {
+                        projectRepository.save(p);
+                        count++;
+                    } catch (Exception e) {
+                        log.warn("Failed to re-attach stale placeholder for student {}: {}",
+                                student.getUserId(), e.getMessage());
+                    }
+                }
+                continue;
+            }
             if (savePlaceholder(cycle, student).isPresent()) count++;
         }
         return count;

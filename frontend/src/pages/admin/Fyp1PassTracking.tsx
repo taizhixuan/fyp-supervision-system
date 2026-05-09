@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
-import { Award, Upload, Check, X, Clock, Search, Download } from 'lucide-react'
+import { Award, Upload, Check, X, Clock, Search, Download, AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
+import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal'
 import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import {
   useFyp1PassList,
@@ -25,8 +26,21 @@ export function Fyp1PassTracking() {
   const [filter, setFilter] = useState<Filter>('ALL')
   const [search, setSearch] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // When admin clicks PASS for a student under the 6-log minimum, hold the action in
+  // this state and show a confirm modal. Soft-warning per the plan: admin can override.
+  const [pendingPass, setPendingPass] = useState<Fyp1PassRow | null>(null)
 
   const handleSet = async (project: Fyp1PassRow, passed: boolean | null) => {
+    // Soft warning: if admin marks PASS but student is below the 6-log minimum, ask for
+    // confirmation. Other transitions (FAIL / reset to PENDING) skip the gate.
+    if (passed === true && project.meetsMeetingLogMinimum === false) {
+      setPendingPass(project)
+      return
+    }
+    await commitSet(project, passed)
+  }
+
+  const commitSet = async (project: Fyp1PassRow, passed: boolean | null) => {
     try {
       await setMutation.mutateAsync({ projectId: project.projectId, passed })
       const label = passed === true ? 'passed' : passed === false ? 'failed' : 'reset to pending'
@@ -196,7 +210,29 @@ export function Fyp1PassTracking() {
               {filtered.map((p) => (
                 <tr key={p.projectId} className="hover:bg-neutral-50">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-neutral-900">{p.studentName}</div>
+                    <div className="font-medium text-neutral-900 flex items-center gap-2">
+                      {p.studentName}
+                      {p.meetingLogsRequired != null && (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium',
+                            p.meetsMeetingLogMinimum
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700',
+                          )}
+                          title={p.meetsMeetingLogMinimum
+                            ? `${p.meetingLogsCompleted}/${p.meetingLogsRequired} required FYP1 logs`
+                            : `Below the ${p.meetingLogsRequired}-log FYP1 minimum`}
+                        >
+                          {p.meetsMeetingLogMinimum ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <AlertTriangle className="h-3 w-3" />
+                          )}
+                          {p.meetingLogsCompleted ?? 0}/{p.meetingLogsRequired} logs
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-neutral-500">{p.studentId}</div>
                   </td>
                   <td className="px-4 py-3 max-w-xs">
@@ -254,6 +290,49 @@ export function Fyp1PassTracking() {
           </table>
         </Card>
       )}
+
+      {/* Soft-warning confirm modal — admin can still pass a student who is under the
+          6-log FYP1 minimum, but has to consciously confirm. */}
+      <Modal isOpen={!!pendingPass} onClose={() => setPendingPass(null)} size="sm">
+        <ModalHeader>
+          <ModalTitle>Mark passed below minimum?</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          {pendingPass && (
+            <div className="space-y-3 text-sm text-neutral-700">
+              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-amber-900">
+                    {pendingPass.studentName} has only {pendingPass.meetingLogsCompleted ?? 0} of {pendingPass.meetingLogsRequired} required FYP1 meeting logs.
+                  </p>
+                  <p className="text-amber-800 mt-1">
+                    The FCI minimum for FYP1 supervision is {pendingPass.meetingLogsRequired} completed logs.
+                    Mark this student as passed anyway?
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setPendingPass(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={async () => {
+              if (pendingPass) {
+                await commitSet(pendingPass, true)
+                setPendingPass(null)
+              }
+            }}
+            isLoading={setMutation.isPending}
+          >
+            Pass anyway
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   )
 }

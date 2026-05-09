@@ -26,4 +26,5 @@ public interface MeetingLogRepository extends JpaRepository<MeetingLog, Long> {
     List<MeetingLog> findBySupervisor_UserIdAndFypPhaseOrderByCreatedAtDesc(Long supervisorUserId, String fypPhase);
     List<MeetingLog> findBySupervisor_UserIdAndStatusAndFypPhaseOrderByCreatedAtDesc(Long supervisorUserId, MeetingLogStatus status, String fypPhase);
     long countBySupervisor_UserIdAndStatus(Long supervisorUserId, MeetingLogStatus status);
+    long countByStudent_UserIdAndStatusAndFypPhase(Long studentUserId, MeetingLogStatus status, String fypPhase);
 }

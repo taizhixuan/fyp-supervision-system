@@ -6,6 +6,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.MeetingLogComplianceService;
 import com.fyp.supervision.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class AdminProjectController {
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userRepository;
     private final NotificationService notificationService;
+    private final MeetingLogComplianceService meetingLogComplianceService;
 
     @GetMapping("/fyp1-pass")
     public ResponseEntity<?> getFyp1Projects() {
@@ -47,6 +49,15 @@ public class AdminProjectController {
             dto.put("supervisorName", supervisor != null ? supervisor.getFullName() : null);
             dto.put("stage", p.getStage() != null ? p.getStage() : "FYP1");
             dto.put("fyp1Passed", p.getFyp1Passed());
+            // Compliance signal — soft warning, not enforced server-side. Surfaces "X/6
+            // logs" badge on the admin pass-tracking page so reviewers see at a glance
+            // whether a student met the FYP1 supervision-log minimum.
+            int completed = student != null
+                    ? meetingLogComplianceService.completedLogCount(student.getUserId(), "FYP1") : 0;
+            int required = meetingLogComplianceService.requiredLogCount("FYP1");
+            dto.put("meetingLogsCompleted", completed);
+            dto.put("meetingLogsRequired", required);
+            dto.put("meetsMeetingLogMinimum", completed >= required);
             dtos.add(dto);
             if (Boolean.TRUE.equals(p.getFyp1Passed())) passed++;
             else if (Boolean.FALSE.equals(p.getFyp1Passed())) failed++;

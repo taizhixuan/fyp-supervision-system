@@ -22,6 +22,7 @@ import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { trimesterProgress } from '@/lib/utils/trimester'
 import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus } from '@/types'
 
 // Build the 4-step strip from the backend-derived registration status.
@@ -241,6 +242,37 @@ export function StudentDashboard() {
     | undefined
   const nextDeadline = upcomingDeadlines && upcomingDeadlines.length > 0 ? upcomingDeadlines[0] : null
 
+  // Trimester window + log compliance + FYP1 result — drives the new dashboard widgets.
+  const reg = dashboard.registrationStatus
+  const trimester = trimesterProgress(reg.trimesterStartDate, reg.trimesterEndDate)
+  const logsDone = reg.meetingLogsCompleted ?? 0
+  const logsRequired = reg.meetingLogsRequired ?? 0
+  const logsRatio = logsRequired > 0 ? Math.min(1, logsDone / logsRequired) : 0
+  const logsRemaining = Math.max(0, logsRequired - logsDone)
+  const currentPhase = (reg.cycle ?? 'FYP1').toUpperCase()
+  const isFyp2 = currentPhase === 'FYP2'
+  const fyp1Passed = reg.fyp1Passed
+  // Three-step phase strip. Step 1 done when FYP1 passed; step 2 active in FYP2; step 3 done when REGISTERED + cycle ended.
+  const phaseSteps = [
+    {
+      key: 'FYP1',
+      label: 'FYP 1',
+      status: (fyp1Passed === true) ? 'done' : (currentPhase === 'FYP1' ? 'current' : 'pending'),
+    },
+    {
+      key: 'FYP2',
+      label: 'FYP 2',
+      status: backendStatus === 'REGISTERED' && reg.cycleActive === false
+        ? 'done'
+        : (isFyp2 ? 'current' : 'pending'),
+    },
+    {
+      key: 'COMPLETE',
+      label: 'Complete',
+      status: backendStatus === 'REGISTERED' && reg.cycleActive === false ? 'current' : 'pending',
+    },
+  ] as const
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -259,6 +291,22 @@ export function StudentDashboard() {
               </h1>
               <p className="text-primary-100 mt-0.5">
                 {registrationStatus.cycle} • {registrationStatus.academicYear}
+                {trimester && trimester.hasStarted && !trimester.hasEnded && (
+                  <>
+                    {' • '}Week {trimester.currentWeek} of {trimester.totalWeeks}
+                    {trimester.weeksRemaining > 0 && (
+                      <span className="text-primary-200">
+                        {' · '}{trimester.weeksRemaining} {trimester.weeksRemaining === 1 ? 'week' : 'weeks'} left
+                      </span>
+                    )}
+                  </>
+                )}
+                {trimester && !trimester.hasStarted && (
+                  <span>{' • '}Trimester starts soon</span>
+                )}
+                {trimester && trimester.hasEnded && (
+                  <span>{' • '}Trimester ended</span>
+                )}
               </p>
             </div>
           </div>
@@ -290,6 +338,68 @@ export function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* FYP phase progression strip — FYP1 → FYP2 → Complete. Reflects whether
+          admin has marked FYP1 passed and whether the cycle has ended. */}
+      <Card>
+        <div className="flex items-center justify-between gap-4">
+          {phaseSteps.map((step, idx) => (
+            <div key={step.key} className="flex items-center gap-3 flex-1">
+              <div
+                className={cn(
+                  'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold',
+                  step.status === 'done' && 'bg-success-500 text-white',
+                  step.status === 'current' && 'bg-primary-600 text-white shadow-md shadow-primary-500/30',
+                  step.status === 'pending' && 'bg-neutral-200 text-neutral-500',
+                )}
+              >
+                {step.status === 'done' ? <CheckCircle className="h-5 w-5" /> : idx + 1}
+              </div>
+              <div className="min-w-0">
+                <p className={cn(
+                  'text-sm font-semibold',
+                  step.status === 'pending' ? 'text-neutral-500' : 'text-neutral-900',
+                )}>
+                  {step.label}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {step.status === 'done' && 'Complete'}
+                  {step.status === 'current' && 'In progress'}
+                  {step.status === 'pending' && 'Upcoming'}
+                </p>
+              </div>
+              {idx < phaseSteps.length - 1 && (
+                <div className={cn(
+                  'flex-1 h-0.5 rounded-full hidden sm:block',
+                  step.status === 'done' ? 'bg-success-300' : 'bg-neutral-200',
+                )} />
+              )}
+            </div>
+          ))}
+        </div>
+        {fyp1Passed === true && (
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 text-success-700 text-sm">
+            <CheckCircle className="h-4 w-4" />
+            <span className="font-medium">FYP1 Passed</span>
+            {reg.fyp1ResultDecidedAt && (
+              <span className="text-xs text-success-600">
+                · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+        {fyp1Passed === false && (
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error-50 text-error-700 text-sm">
+            <AlertCircle className="h-4 w-4" />
+            <span className="font-medium">FYP1 Failed</span>
+            {reg.fyp1ResultDecidedAt && (
+              <span className="text-xs text-error-600">
+                · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+      </Card>
 
       {/* Cycle-ended banner — backend signals when the FYP cycle has been
           COMPLETED/ARCHIVED so write actions across the app are disabled. */}
@@ -386,11 +496,27 @@ export function StudentDashboard() {
             <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-success-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{quickStats.completedLogs}</p>
-              <p className="text-xs text-neutral-500">Completed Logs</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-2xl font-bold text-neutral-900">
+                {logsDone}<span className="text-base font-medium text-neutral-500"> of {logsRequired || 6}</span>
+              </p>
+              <p className="text-xs text-neutral-500">{currentPhase} meeting logs</p>
             </div>
           </div>
+          <div className="mt-3 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all',
+                logsDone >= (logsRequired || 6) ? 'bg-success-500' : 'bg-warning-500',
+              )}
+              style={{ width: `${Math.round(logsRatio * 100)}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-neutral-500 mt-1">
+            {logsDone >= (logsRequired || 6)
+              ? 'Minimum met ✓'
+              : `${logsRemaining} more to meet ${currentPhase} minimum`}
+          </p>
         </Card>
         <Card className="border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
@@ -436,8 +562,9 @@ export function StudentDashboard() {
         </div>
       )}
 
-      {/* Registration Progress — hidden once registration is complete (proposal APPROVED). */}
-      {backendStatus !== 'REGISTERED' && (
+      {/* Registration Progress — hidden once registration is complete (proposal APPROVED)
+          or once the FYP cycle has ended (no more progress to make). */}
+      {backendStatus !== 'REGISTERED' && reg.cycleActive !== false && (
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
