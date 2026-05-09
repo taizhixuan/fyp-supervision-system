@@ -223,6 +223,11 @@ const adminNavItems: NavItem[] = [
     href: ROUTES.ADMIN.AUDIT_LOGS,
     icon: <Shield className="h-5 w-5" />,
   },
+  {
+    label: 'Notifications',
+    href: ROUTES.ADMIN.NOTIFICATIONS,
+    icon: <Bell className="h-5 w-5" />,
+  },
 ]
 
 const getNavItemsForRole = (role: UserRole): NavItem[] => {

@@ -178,6 +178,8 @@ export const ROUTES = {
     JOB_HISTORY: '/admin/maintenance/jobs',
     // Audit Logs
     AUDIT_LOGS: '/admin/audit-logs',
+    // Notifications
+    NOTIFICATIONS: '/admin/notifications',
     // Settings (legacy)
     SETTINGS: '/admin/settings',
   },

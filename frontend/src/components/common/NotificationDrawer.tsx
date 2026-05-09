@@ -41,6 +41,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
       case 'STUDENT': return ROUTES.STUDENT.NOTIFICATIONS
       case 'SUPERVISOR': return ROUTES.SUPERVISOR.NOTIFICATIONS
       case 'FYP_COMMITTEE': return ROUTES.COMMITTEE.NOTIFICATIONS
+      case 'SYSTEM_ADMIN': return ROUTES.ADMIN.NOTIFICATIONS
       default: return null
     }
   })()
