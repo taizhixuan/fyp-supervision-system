@@ -235,8 +235,8 @@ class RAGEngine:
                     max_new_tokens=max_length,
                     num_beams=4,
                     early_stopping=True,
-                    temperature=0.7,
                     do_sample=False,
+                    no_repeat_ngram_size=3,
                 )
 
             response = self.gen_tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -292,6 +292,7 @@ class RAGEngine:
         session_history: List[Dict] = None,
         openai_client=None,
         top_k: int = 5,
+        extra_context: Optional[str] = None,
     ) -> Dict:
         """
         Full RAG pipeline: retrieve context, generate response.
@@ -318,6 +319,9 @@ class RAGEngine:
             }
             if source not in sources:
                 sources.append(source)
+
+        if extra_context:
+            context_parts.insert(0, str(extra_context))
 
         context = "\n\n---\n\n".join(context_parts) if context_parts else ""
 
@@ -419,30 +423,25 @@ class RAGEngine:
         references = []
         seen_titles = set()
 
-        # Add sources that were used as references
+        # Map source filename → frontend reference type
+        def _classify(filename: str, title: str) -> str:
+            name = (filename or "").lower()
+            if "faq" in name or "faq" in title.lower():
+                return "FAQ"
+            if "deadline" in name or "timeline" in name or "schedule" in name:
+                return "DEADLINE"
+            if "handbook" in name or "guide" in name or "procedure" in name or "overview" in name:
+                return "HANDBOOK"
+            return "RESOURCE"
+
         for source in sources[:5]:
             title = source.get("title", "")
+            filename = source.get("filename", "")
             if title and title not in seen_titles:
                 references.append({
                     "title": title,
-                    "type": "knowledge_base",
+                    "type": _classify(filename, title),
                 })
-                seen_titles.add(title)
-
-        # Also check for topic keywords in the reply
-        topic_keywords = {
-            "proposal": "FYP Proposal Guidelines",
-            "meeting log": "Meeting Log Documentation",
-            "literature review": "Literature Review Guide",
-            "methodology": "Research Methodology",
-            "timeline": "Project Timeline Guide",
-            "presentation": "Presentation Guide",
-        }
-
-        reply_lower = reply.lower()
-        for keyword, title in topic_keywords.items():
-            if keyword in reply_lower and title not in seen_titles:
-                references.append({"title": title, "type": "topic"})
                 seen_titles.add(title)
 
         return references[:5]
