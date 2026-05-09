@@ -794,7 +794,22 @@ public class StudentService {
 
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
-            reg.put("status", "REGISTERED");
+            // Project exists ⇒ supervisor accepted. Status now driven by proposal lifecycle.
+            ProposalStatus proposalStatus = proposalRepository.findByStudent_UserId(userId)
+                    .map(Proposal::getStatus)
+                    .orElse(null);
+            String status;
+            if (proposalStatus == null
+                    || proposalStatus == ProposalStatus.DRAFT
+                    || proposalStatus == ProposalStatus.REVISION_REQUIRED) {
+                status = "PROPOSAL_PENDING";
+            } else if (proposalStatus == ProposalStatus.APPROVED) {
+                status = "REGISTERED";
+            } else {
+                // SUBMITTED, UNDER_REVIEW, REJECTED
+                status = "UNDER_REVIEW";
+            }
+            reg.put("status", status);
             reg.put("supervisorId", project.getSupervisor() != null ? project.getSupervisor().getUserId().toString() : null);
             if (project.getSupervisor() != null) {
                 SupervisorProfile sp = supervisorProfileRepository.findById(project.getSupervisor().getUserId()).orElse(null);

@@ -23,9 +23,11 @@ import {
   Sparkles,
   Send,
   Inbox,
+  Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
+import { useStudentRegistrationGate } from '@/lib/hooks/useStudentRegistrationGate'
 import type { UserRole } from '@/types'
 
 interface NavItem {
@@ -33,6 +35,14 @@ interface NavItem {
   href: string
   icon: React.ReactNode
 }
+
+// Routes the StudentFeatureGate locks until a supervisor is assigned (UC10/UC11/UC12).
+const STUDENT_GATED_HREFS: ReadonlySet<string> = new Set<string>([
+  ROUTES.STUDENT.PROPOSAL,
+  ROUTES.STUDENT.MEETINGS,
+  ROUTES.STUDENT.MEETING_LOGS,
+  ROUTES.STUDENT.DOCUMENTS,
+])
 
 const studentNavItems: NavItem[] = [
   {
@@ -79,6 +89,11 @@ const studentNavItems: NavItem[] = [
     label: 'Documents',
     href: ROUTES.STUDENT.DOCUMENTS,
     icon: <FolderOpen className="h-5 w-5" />,
+  },
+  {
+    label: 'Announcements',
+    href: ROUTES.STUDENT.ANNOUNCEMENTS,
+    icon: <Megaphone className="h-5 w-5" />,
   },
 ]
 
@@ -267,6 +282,8 @@ export function SideNav({
   onToggleCollapse,
 }: SideNavProps) {
   const navItems = getNavItemsForRole(userRole)
+  const studentGate = useStudentRegistrationGate()
+  const showLocks = userRole === 'STUDENT' && !studentGate.supervisorAssigned
 
   const commonNavItems: NavItem[] = [
     {
@@ -332,26 +349,35 @@ export function SideNav({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <NavLink
-                  to={item.href}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                    )
-                  }
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && <span>{item.label}</span>}
-                </NavLink>
-              </li>
-            ))}
+            {navItems.map((item) => {
+              const locked = showLocks && STUDENT_GATED_HREFS.has(item.href)
+              return (
+                <li key={item.href}>
+                  <NavLink
+                    to={item.href}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
+                        locked && 'opacity-50'
+                      )
+                    }
+                    title={isCollapsed ? item.label : locked ? `${item.label} (locked — pair with a supervisor first)` : undefined}
+                  >
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    {!isCollapsed && (
+                      <span className="flex-1 flex items-center justify-between">
+                        <span>{item.label}</span>
+                        {locked && <Lock className="h-3.5 w-3.5 text-neutral-400" />}
+                      </span>
+                    )}
+                  </NavLink>
+                </li>
+              )
+            })}
           </ul>
 
           {/* Separator */}

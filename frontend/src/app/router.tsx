@@ -58,6 +58,7 @@ const ResourceDetail = lazy(() => import('@/pages/student/ResourceDetail').then(
 const DeadlineCalendar = lazy(() => import('@/pages/student/DeadlineCalendar').then(m => ({ default: m.DeadlineCalendar })))
 const NotificationCenter = lazy(() => import('@/pages/student/NotificationCenter').then(m => ({ default: m.NotificationCenter })))
 const NotificationSettings = lazy(() => import('@/pages/student/NotificationSettings').then(m => ({ default: m.NotificationSettings })))
+const StudentAnnouncementsList = lazy(() => import('@/pages/student/AnnouncementsList').then(m => ({ default: m.AnnouncementsList })))
 const Chatbot = lazy(() => import('@/pages/student/Chatbot').then(m => ({ default: m.Chatbot })))
 
 // Supervisor pages - All lazy loaded
@@ -121,6 +122,7 @@ const AdminNotificationCenter = lazy(() => import('@/pages/admin/AdminNotificati
 // Layout components
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/lib/auth/ProtectedRoute'
+import { StudentFeatureGate } from '@/components/common/StudentFeatureGate'
 
 export const router = createBrowserRouter([
   // Public routes (no authentication required)
@@ -276,7 +278,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.PROPOSAL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <ProposalWorkspace />
+            <StudentFeatureGate><ProposalWorkspace /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -284,7 +286,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.PROPOSAL_HISTORY,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <ProposalHistory />
+            <StudentFeatureGate><ProposalHistory /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -292,7 +294,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.PROPOSAL_ANALYSIS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <ProposalAnalysis />
+            <StudentFeatureGate><ProposalAnalysis /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -300,7 +302,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.PROPOSAL_STATUS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <ProposalStatus />
+            <StudentFeatureGate><ProposalStatus /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -320,7 +322,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETINGS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingList />
+            <StudentFeatureGate><MeetingList /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -328,7 +330,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingRequest />
+            <StudentFeatureGate><MeetingRequest /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -336,7 +338,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_DETAIL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingDetail />
+            <StudentFeatureGate><MeetingDetail /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -344,7 +346,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_EXPORT,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingExport />
+            <StudentFeatureGate><MeetingExport /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -354,7 +356,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.LOGS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <LogList />
+            <StudentFeatureGate><LogList /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -362,7 +364,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.LOG_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <LogCreate />
+            <StudentFeatureGate><LogCreate /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -370,7 +372,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.LOG_DETAIL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <LogDetail />
+            <StudentFeatureGate><LogDetail /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -378,7 +380,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.LOG_EDIT,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <LogEdit />
+            <StudentFeatureGate><LogEdit /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -388,7 +390,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOGS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingLogList />
+            <StudentFeatureGate><MeetingLogList /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -396,7 +398,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOG_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingLogCreate />
+            <StudentFeatureGate><MeetingLogCreate /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -404,7 +406,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOG_DETAIL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingLogDetail />
+            <StudentFeatureGate><MeetingLogDetail /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -412,7 +414,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOG_EDIT,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MeetingLogEdit />
+            <StudentFeatureGate><MeetingLogEdit /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -422,7 +424,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.DOCUMENTS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <DocumentList />
+            <StudentFeatureGate><DocumentList /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -430,7 +432,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.DOCUMENT_UPLOAD,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <DocumentUpload />
+            <StudentFeatureGate><DocumentUpload /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -438,7 +440,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.DOCUMENT_DETAIL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <DocumentDetail />
+            <StudentFeatureGate><DocumentDetail /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -446,7 +448,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.DOCUMENT_HISTORY,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <DocumentHistory />
+            <StudentFeatureGate><DocumentHistory /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -491,6 +493,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
             <NotificationSettings />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Announcements (UC14)
+      {
+        path: ROUTES.STUDENT.ANNOUNCEMENTS,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <StudentAnnouncementsList />
           </ProtectedRoute>
         ),
       },

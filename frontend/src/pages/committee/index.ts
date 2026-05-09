@@ -9,9 +9,6 @@ export { CreateAnnouncement } from './CreateAnnouncement'
 export { ProposalReviewQueue } from './ProposalReviewQueue'
 export { ProposalReviewDetail } from './ProposalReviewDetail'
 
-// Topic Review (supervisor-led catalogue)
-export { TopicReviewQueue } from './TopicReviewQueue'
-
 // General Documents (UC27)
 export { DocumentsManagement } from './DocumentsManagement'
 export { DocumentUpload } from './DocumentUpload'

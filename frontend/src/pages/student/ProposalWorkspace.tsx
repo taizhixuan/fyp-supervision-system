@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -56,38 +56,6 @@ const statusColors: Record<ProposalStatus, string> = {
   REJECTED: 'bg-error-100 text-error-700',
 }
 
-// Sample proposal data
-const SAMPLE_PROPOSAL = {
-  proposalId: '1',
-  studentId: '1',
-  supervisorId: '1',
-  title: 'AI-Powered Student Supervision System',
-  problemStatement: 'The current FYP supervision process at MMU relies heavily on manual coordination between students and supervisors. This leads to inefficiencies in scheduling meetings, tracking progress, and managing documentation. Students often face difficulties finding suitable supervisors, and the matching process does not consider compatibility factors effectively.',
-  objectives: [
-    'To develop an automated system for matching students with suitable supervisors using AI',
-    'To implement a comprehensive project tracking and documentation management module',
-    'To create an intelligent chatbot for answering student queries about FYP processes',
-  ],
-  scope: 'The system will be developed as a web application targeting MMU undergraduate students and supervisors. It will cover the supervision matching, meeting scheduling, progress tracking, and document management aspects of the FYP process.',
-  methodology: 'The project will follow Agile development methodology with 2-week sprints. The frontend will be built using React with TypeScript, while the backend will use Node.js with Express. Machine learning models will be implemented using Python and TensorFlow for the recommendation system.',
-  expectedOutcomes: [
-    'A fully functional web-based FYP supervision system',
-    'AI-powered supervisor recommendation module',
-    'Comprehensive project documentation',
-  ],
-  timeline: 'Phase 1 (Week 1-4): Requirements and Design\nPhase 2 (Week 5-10): Core Development\nPhase 3 (Week 11-12): Testing and Documentation',
-  references: [
-    'Smith, J. (2023). AI in Education: A Comprehensive Review. IEEE Access.',
-    'Johnson, M. et al. (2022). Intelligent Tutoring Systems. ACM Computing Surveys.',
-  ],
-  status: 'DRAFT' as ProposalStatus,
-  version: 1,
-  fileUrl: undefined,
-  fileName: undefined,
-  createdAt: '2025-01-01',
-  updatedAt: '2025-01-15',
-}
-
 type SubmitModalState = 'confirm' | 'submitting' | 'success'
 
 export function ProposalWorkspace() {
@@ -102,28 +70,46 @@ export function ProposalWorkspace() {
   const submitProposal = useSubmitProposal()
   const uploadFile = useUploadProposalFile()
 
-  // Use sample data if no API data
-  const currentProposal = proposal || SAMPLE_PROPOSAL
   const isNewProposal = !proposal
 
   const {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors, isDirty },
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
     defaultValues: {
-      title: currentProposal.title || '',
-      problemStatement: currentProposal.problemStatement || '',
-      objectives: currentProposal.objectives?.map((o) => ({ value: o })) || [{ value: '' }, { value: '' }],
-      scope: currentProposal.scope || '',
-      methodology: currentProposal.methodology || '',
-      expectedOutcomes: currentProposal.expectedOutcomes?.map((o) => ({ value: o })) || [{ value: '' }],
-      timeline: currentProposal.timeline || '',
-      references: currentProposal.references?.map((r) => ({ value: r })) || [],
+      title: '',
+      problemStatement: '',
+      objectives: [{ value: '' }, { value: '' }],
+      scope: '',
+      methodology: '',
+      expectedOutcomes: [{ value: '' }],
+      timeline: '',
+      references: [],
     },
   })
+
+  // Hydrate the form once the existing proposal has been fetched.
+  useEffect(() => {
+    if (!proposal) return
+    reset({
+      title: proposal.title || '',
+      problemStatement: proposal.problemStatement || '',
+      objectives: proposal.objectives?.length
+        ? proposal.objectives.map((o) => ({ value: o }))
+        : [{ value: '' }, { value: '' }],
+      scope: proposal.scope || '',
+      methodology: proposal.methodology || '',
+      expectedOutcomes: proposal.expectedOutcomes?.length
+        ? proposal.expectedOutcomes.map((o) => ({ value: o }))
+        : [{ value: '' }],
+      timeline: proposal.timeline || '',
+      references: proposal.references?.map((r) => ({ value: r })) || [],
+    })
+  }, [proposal, reset])
 
   const { fields: objectiveFields, append: appendObjective, remove: removeObjective } = useFieldArray({
     control,
@@ -195,8 +181,13 @@ export function ProposalWorkspace() {
     }
   }
 
-  const canEdit = ['DRAFT', 'REVISION_REQUIRED'].includes(currentProposal.status)
-  const canSubmit = currentProposal.status === 'DRAFT' || currentProposal.status === 'REVISION_REQUIRED'
+  // Treat a not-yet-saved proposal as a fresh DRAFT for display + edit gating.
+  const proposalStatus: ProposalStatus = proposal?.status ?? 'DRAFT'
+  const proposalVersion = proposal?.version ?? 1
+  const proposalFileUrl = proposal?.fileUrl
+  const proposalFileName = proposal?.fileName
+  const canEdit = ['DRAFT', 'REVISION_REQUIRED'].includes(proposalStatus)
+  const canSubmit = proposalStatus === 'DRAFT' || proposalStatus === 'REVISION_REQUIRED'
 
   if (isLoading) {
     return (
@@ -217,10 +208,10 @@ export function ProposalWorkspace() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={cn(statusColors[currentProposal.status], 'px-3 py-1.5')}>
-            {currentProposal.status.replace(/_/g, ' ')}
+          <Badge className={cn(statusColors[proposalStatus], 'px-3 py-1.5')}>
+            {proposalStatus.replace(/_/g, ' ')}
           </Badge>
-          <span className="text-sm text-neutral-500">v{currentProposal.version}</span>
+          <span className="text-sm text-neutral-500">v{proposalVersion}</span>
         </div>
       </div>
 
@@ -274,7 +265,7 @@ export function ProposalWorkspace() {
       </Card>
 
       {/* Revision Required Alert */}
-      {currentProposal.status === 'REVISION_REQUIRED' && (
+      {proposalStatus === 'REVISION_REQUIRED' && (
         <div className="bg-warning-50 border border-warning-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
@@ -514,17 +505,17 @@ export function ProposalWorkspace() {
             Upload your proposal document (PDF, DOC, DOCX - Max 10MB)
           </p>
 
-          {currentProposal.fileUrl ? (
+          {proposalFileUrl ? (
             <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="h-8 w-8 text-primary-600" />
                 <div>
-                  <p className="font-medium text-neutral-900">{currentProposal.fileName}</p>
+                  <p className="font-medium text-neutral-900">{proposalFileName}</p>
                   <p className="text-sm text-neutral-500">Uploaded document</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <a href={currentProposal.fileUrl} target="_blank" rel="noopener noreferrer">
+                <a href={proposalFileUrl} target="_blank" rel="noopener noreferrer">
                   <Button variant="secondary" size="sm">Download</Button>
                 </a>
                 {canEdit && (

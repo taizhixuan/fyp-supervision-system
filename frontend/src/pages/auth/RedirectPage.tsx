@@ -61,7 +61,6 @@ export function RedirectPage() {
     // Role-based dashboard route
     const dashboardRoute = ROLE_ROUTES[user.role]
     const fromPath = (location.state as { from?: string } | null)?.from
-    // eslint-disable-next-line no-console
     console.log('[RedirectPage]', {
       role: user.role,
       status: user.status,
