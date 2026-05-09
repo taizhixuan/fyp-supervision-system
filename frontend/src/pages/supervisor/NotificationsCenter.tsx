@@ -18,6 +18,8 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisorNotificationType } from '@/types'
 
+const defaultNotificationConfig = { icon: Bell, color: 'text-stone-600', bgColor: 'bg-stone-100' }
+
 const notificationConfig: Record<SupervisorNotificationType, { icon: typeof Bell; color: string; bgColor: string }> = {
   NEW_REQUEST: { icon: ClipboardList, color: 'text-amber-600', bgColor: 'bg-amber-50' },
   MEETING_REQUEST: { icon: Calendar, color: 'text-sky-600', bgColor: 'bg-sky-50' },
@@ -175,7 +177,7 @@ export function NotificationsCenter() {
         <div className="divide-y divide-stone-100">
           {filteredNotifications && filteredNotifications.length > 0 ? (
             filteredNotifications.map((notification) => {
-              const config = notificationConfig[notification.type]
+              const config = notificationConfig[notification.type] ?? defaultNotificationConfig
               const Icon = config.icon
               const link = getNotificationLink(notification)
 

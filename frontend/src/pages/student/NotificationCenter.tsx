@@ -22,11 +22,13 @@ interface Notification {
   notificationId: number
   title: string
   message: string
-  type: NotificationType
+  type: NotificationType | string
   isRead: boolean
   actionUrl?: string
   createdAt: string
 }
+
+const DEFAULT_TYPE_CONFIG = { label: 'Notification', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Bell }
 
 // Sample data
 const SAMPLE_NOTIFICATIONS: Notification[] = [
@@ -139,7 +141,7 @@ export function NotificationCenter() {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
-  const handleMarkRead = async (id: string) => {
+  const handleMarkRead = async (id: number) => {
     try {
       await markRead.mutateAsync(id)
     } catch (err) {
@@ -268,7 +270,7 @@ function NotificationCard({
   notification: Notification
   onMarkRead: () => void
 }) {
-  const config = typeConfig[notification.type]
+  const config = typeConfig[notification.type as NotificationType] ?? DEFAULT_TYPE_CONFIG
   const Icon = config.icon
 
   const content = (
