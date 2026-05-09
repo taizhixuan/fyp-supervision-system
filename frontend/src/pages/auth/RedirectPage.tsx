@@ -60,6 +60,15 @@ export function RedirectPage() {
 
     // Role-based dashboard route
     const dashboardRoute = ROLE_ROUTES[user.role]
+    const fromPath = (location.state as { from?: string } | null)?.from
+    // eslint-disable-next-line no-console
+    console.log('[RedirectPage]', {
+      role: user.role,
+      status: user.status,
+      dashboardRoute,
+      fromPath,
+      fromAllowed: fromPath ? isPathAllowedForRole(fromPath, user.role) : null,
+    })
     if (!dashboardRoute) {
       navigate(ROUTES.ACCESS_DENIED, { replace: true })
       return
@@ -67,7 +76,6 @@ export function RedirectPage() {
 
     // Honour deep-link `from` only if it's compatible with the user's role —
     // otherwise a student who deep-linked /admin/* would land on /access-denied.
-    const fromPath = (location.state as { from?: string } | null)?.from
     if (fromPath && fromPath !== ROUTES.LOGIN && isPathAllowedForRole(fromPath, user.role)) {
       navigate(fromPath, { replace: true })
     } else {
