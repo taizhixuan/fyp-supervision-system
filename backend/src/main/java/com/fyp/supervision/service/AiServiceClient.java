@@ -51,6 +51,12 @@ public class AiServiceClient {
         }
     }
 
+    /**
+     * Calls the Flask proposal analyzer. Throws {@link AiServiceUnavailableException}
+     * when the service is unreachable or returns a non-2xx response, so the
+     * caller can return 503 instead of persisting an all-zero
+     * {@code ProposalCheckResult} into the student's analysis history.
+     */
     @SuppressWarnings("unchecked")
     public Map<String, Object> analyzeProposal(Map<String, Object> payload) {
         try {
@@ -58,10 +64,13 @@ public class AiServiceClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
             }
+            throw new AiServiceUnavailableException(
+                    "Proposal analyzer returned non-2xx status: " + response.getStatusCode());
         } catch (RestClientException e) {
             log.warn("AI proposal analyzer service unavailable: {}", e.getMessage());
+            throw new AiServiceUnavailableException(
+                    "Proposal analyzer service unavailable: " + e.getMessage(), e);
         }
-        return Map.of("error", "AI analysis service is currently unavailable.");
     }
 
     /**

@@ -119,7 +119,6 @@ export interface AIProposalAnalysis {
   strengths: string[]
   weaknesses: string[]
   suggestions: string[]
-  plagiarismScore: number
   analyzedAt: string
 }
 

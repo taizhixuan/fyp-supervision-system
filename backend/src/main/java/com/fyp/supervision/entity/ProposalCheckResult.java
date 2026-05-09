@@ -65,9 +65,6 @@ public class ProposalCheckResult {
     @Column(columnDefinition = "TEXT")
     private String weaknesses;
 
-    @Column(name = "plagiarism_score")
-    private Integer plagiarismScore;
-
     @Column(name = "checked_at", nullable = false)
     private LocalDateTime checkedAt;
 

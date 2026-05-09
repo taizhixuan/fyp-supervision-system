@@ -197,7 +197,6 @@ const MOCK_PROPOSALS: ProposalForCommitteeReview[] = [
       strengths: ['Clear objectives', 'Well-defined scope', 'Relevant technology stack'],
       weaknesses: ['Limited literature review', 'Timeline may be tight'],
       suggestions: ['Consider adding more background research', 'Define success metrics clearly'],
-      plagiarismScore: 8,
       analyzedAt: '2025-01-18T15:00:00Z',
     },
     reviewHistory: [],
@@ -226,7 +225,6 @@ const MOCK_PROPOSALS: ProposalForCommitteeReview[] = [
       strengths: ['Innovative approach', 'Strong technical foundation', 'Clear implementation plan'],
       weaknesses: ['Budget considerations not detailed'],
       suggestions: ['Add cost-benefit analysis'],
-      plagiarismScore: 5,
       analyzedAt: '2025-01-17T11:00:00Z',
     },
     reviewHistory: [],
@@ -255,7 +253,6 @@ const MOCK_PROPOSALS: ProposalForCommitteeReview[] = [
       strengths: ['Highly innovative concept', 'Strong security focus'],
       weaknesses: ['Scope may be too ambitious', 'Technical complexity underestimated'],
       suggestions: ['Narrow down the scope', 'Provide more implementation details'],
-      plagiarismScore: 3,
       analyzedAt: '2025-01-15T10:00:00Z',
     },
     reviewHistory: [

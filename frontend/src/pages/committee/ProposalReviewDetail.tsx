@@ -267,19 +267,6 @@ export function ProposalReviewDetail() {
                 ))}
               </div>
 
-              {/* Plagiarism Score */}
-              <div className="p-3 bg-neutral-50 rounded-lg mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">Plagiarism Detection</span>
-                  <span className={cn(
-                    'font-semibold',
-                    proposal.aiAnalysis.plagiarismScore <= 15 ? 'text-success-600' : 'text-error-600'
-                  )}>
-                    {proposal.aiAnalysis.plagiarismScore}% similarity
-                  </span>
-                </div>
-              </div>
-
               {/* Strengths & Weaknesses */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>

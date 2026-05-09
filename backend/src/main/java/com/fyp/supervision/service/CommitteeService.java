@@ -125,7 +125,6 @@ public class CommitteeService {
             aiAnalysis.put("strengths", parseJsonArray(check.getStrengths()));
             aiAnalysis.put("weaknesses", parseJsonArray(check.getWeaknesses()));
             aiAnalysis.put("suggestions", parseJsonArray(check.getSuggestedImprovements()));
-            aiAnalysis.put("plagiarismScore", check.getPlagiarismScore() != null ? check.getPlagiarismScore() : 0);
             aiAnalysis.put("analyzedAt", check.getCheckedAt() != null ? check.getCheckedAt().toString() : "");
         }
 
