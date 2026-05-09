@@ -157,8 +157,8 @@ export function MeetingLogEdit() {
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-          <Edit3 className="h-6 w-6 text-amber-600" />
+        <div className="w-12 h-12 bg-warning-100 rounded-xl flex items-center justify-center">
+          <Edit3 className="h-6 w-6 text-warning-600" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-neutral-900">Edit Meeting Log</h1>

@@ -94,16 +94,16 @@ export function MeetingLogList() {
 
       {/* Alert for pending actions */}
       {awaitingSignatureCount > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-gradient-to-r from-info-50 to-info-100 border border-info-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25">
+            <div className="w-12 h-12 bg-info-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-info-500/25">
               <PenLine className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-blue-900">
+              <p className="font-semibold text-info-900">
                 {awaitingSignatureCount} log{awaitingSignatureCount > 1 ? 's' : ''} awaiting your signature
               </p>
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-info-700">
                 Your supervisor has signed. Please review and add your signature to finalize.
               </p>
             </div>
@@ -124,35 +124,35 @@ export function MeetingLogList() {
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-5 w-5 text-warning-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">{submittedCount}</div>
+              <div className="text-2xl font-bold text-warning-600">{submittedCount}</div>
               <p className="text-sm text-neutral-600">Pending Review</p>
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-info-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <PenLine className="h-5 w-5 text-blue-600" />
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+              <PenLine className="h-5 w-5 text-info-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-blue-600">{awaitingSignatureCount}</div>
+              <div className="text-2xl font-bold text-info-600">{awaitingSignatureCount}</div>
               <p className="text-sm text-neutral-600">Needs Signature</p>
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-success-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Lock className="h-5 w-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+              <Lock className="h-5 w-5 text-success-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-600">{completedCount}</div>
+              <div className="text-2xl font-bold text-success-600">{completedCount}</div>
               <p className="text-sm text-neutral-600">Completed</p>
             </div>
           </div>
@@ -274,10 +274,10 @@ function MeetingLogCard({ log }: MeetingLogCardProps) {
       <Card
         className={cn(
           'transition-all duration-200 hover:shadow-lg group p-5',
-          log.status === 'CORRECTION_REQUIRED' && 'border-l-4 border-l-rose-500 bg-rose-50/30',
-          log.status === 'LOCKED' && 'border-l-4 border-l-emerald-500',
-          log.status === 'SUPERVISOR_SIGNED' && 'border-l-4 border-l-blue-500',
-          log.status === 'SUBMITTED' && 'border-l-4 border-l-amber-500',
+          log.status === 'CORRECTION_REQUIRED' && 'border-l-4 border-l-error-500 bg-error-50/30',
+          log.status === 'LOCKED' && 'border-l-4 border-l-success-500',
+          log.status === 'SUPERVISOR_SIGNED' && 'border-l-4 border-l-info-500',
+          log.status === 'SUBMITTED' && 'border-l-4 border-l-warning-500',
           log.status === 'DRAFT' && 'border-l-4 border-l-stone-300 hover:border-l-primary-400'
         )}
       >
@@ -312,8 +312,8 @@ function MeetingLogCard({ log }: MeetingLogCardProps) {
                     className={cn(
                       'px-2 py-0.5 rounded-full text-xs font-medium',
                       log.meetingMode === 'PHYSICAL'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-blue-100 text-blue-700'
+                        ? 'bg-success-100 text-success-700'
+                        : 'bg-info-100 text-info-700'
                     )}
                   >
                     {log.meetingMode === 'PHYSICAL' ? 'Physical' : 'Online'}
@@ -357,7 +357,7 @@ function MeetingLogCard({ log }: MeetingLogCardProps) {
                 {/* Signatures indicator */}
                 {hasSignatures && (
                   <div className="flex items-center gap-1 text-xs text-neutral-500">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    <CheckCircle className="h-3.5 w-3.5 text-success-500" />
                     <span>
                       {log.signatures.length} signature{log.signatures.length > 1 ? 's' : ''}
                     </span>
@@ -383,20 +383,20 @@ function MeetingLogCard({ log }: MeetingLogCardProps) {
 
             {/* Correction Required Alert */}
             {log.status === 'CORRECTION_REQUIRED' && log.correctionReason && (
-              <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="mt-4 p-3 bg-error-50 border border-error-100 rounded-xl flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-error-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-rose-700 mb-1">Correction Required</p>
-                  <p className="text-sm text-rose-600 line-clamp-2">{log.correctionReason}</p>
+                  <p className="text-xs font-semibold text-error-700 mb-1">Correction Required</p>
+                  <p className="text-sm text-error-600 line-clamp-2">{log.correctionReason}</p>
                 </div>
               </div>
             )}
 
             {/* Awaiting Signature Alert */}
             {log.status === 'SUPERVISOR_SIGNED' && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2">
-                <PenLine className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-blue-700">
+              <div className="mt-4 p-3 bg-info-50 border border-info-100 rounded-xl flex items-center gap-2">
+                <PenLine className="h-4 w-4 text-info-600 flex-shrink-0" />
+                <p className="text-sm font-medium text-info-700">
                   Supervisor has signed - Please add your signature to finalize
                 </p>
               </div>

@@ -89,9 +89,9 @@ const SAMPLE_LOGS: SupervisionLog[] = [
 
 const statusConfig: Record<LogStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; icon: typeof Clock; color: string; bgColor: string }> = {
   DRAFT: { label: 'Draft', variant: 'default', icon: Edit3, color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  PENDING: { label: 'Pending Review', variant: 'warning', icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  APPROVED: { label: 'Approved', variant: 'success', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', icon: AlertCircle, color: 'text-rose-600', bgColor: 'bg-rose-100' },
+  PENDING: { label: 'Pending Review', variant: 'warning', icon: Clock, color: 'text-warning-600', bgColor: 'bg-warning-100' },
+  APPROVED: { label: 'Approved', variant: 'success', icon: CheckCircle, color: 'text-success-600', bgColor: 'bg-success-100' },
+  REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', icon: AlertCircle, color: 'text-error-600', bgColor: 'bg-error-100' },
 }
 
 export function LogList() {
@@ -127,26 +127,26 @@ export function LogList() {
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
               <ClipboardList className="h-7 w-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Supervision Logs</h1>
-              <p className="text-stone-300 mt-0.5">Track your weekly progress and activities</p>
+              <p className="text-primary-200 mt-0.5">Track your weekly progress and activities</p>
             </div>
           </div>
           <Link to={ROUTES.STUDENT.LOG_NEW}>
             <Button
               variant="primary"
               leftIcon={<Plus className="h-4 w-4" />}
-              className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/25"
+              className="bg-white text-primary-900 hover:bg-primary-50 border-0 shadow-lg"
             >
               New Log Entry
             </Button>
@@ -156,16 +156,16 @@ export function LogList() {
 
       {/* Alert for pending submission */}
       {draftCount > 0 && (
-        <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-gradient-to-r from-warning-50 to-warning-100 border border-warning-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/25">
+            <div className="w-12 h-12 bg-warning-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-warning-500/25">
               <AlertTriangle className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-amber-900">
+              <p className="font-semibold text-warning-900">
                 You have {draftCount} draft log{draftCount > 1 ? 's' : ''} pending submission
               </p>
-              <p className="text-sm text-amber-700">
+              <p className="text-sm text-warning-700">
                 Remember to submit your weekly log before the deadline
               </p>
             </div>
@@ -186,24 +186,24 @@ export function LogList() {
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-success-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-success-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-600">{approvedCount}</div>
+              <div className="text-2xl font-bold text-success-600">{approvedCount}</div>
               <p className="text-sm text-neutral-600">Approved</p>
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-5 w-5 text-warning-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
+              <div className="text-2xl font-bold text-warning-600">{pendingCount}</div>
               <p className="text-sm text-neutral-600">Pending</p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export function LogList() {
               placeholder="Search logs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
             />
           </div>
           <div className="flex items-center gap-3">
@@ -250,7 +250,7 @@ export function LogList() {
                     className={cn(
                       'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
                       statusFilter === status
-                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                        ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25'
                         : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
                     )}
                   >
@@ -293,7 +293,7 @@ export function LogList() {
               : 'No logs match the selected filter'}
           </p>
           <Link to={ROUTES.STUDENT.LOG_NEW}>
-            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 border-0">
+            <Button variant="primary">
               Create First Log
             </Button>
           </Link>
@@ -311,16 +311,16 @@ function LogCard({ log }: { log: SupervisionLog }) {
     <Link to={ROUTES.STUDENT.LOG_DETAIL.replace(':id', log.logId)}>
       <Card className={cn(
         'transition-all duration-200 hover:shadow-lg group p-5',
-        log.status === 'REVISION_REQUIRED' && 'border-l-4 border-l-rose-500 bg-rose-50/30',
-        log.status === 'APPROVED' && 'border-l-4 border-l-emerald-500',
-        log.status === 'PENDING' && 'border-l-4 border-l-amber-500',
-        log.status === 'DRAFT' && 'border-l-4 border-l-stone-300 hover:border-l-amber-400'
+        log.status === 'REVISION_REQUIRED' && 'border-l-4 border-l-error-500 bg-error-50/30',
+        log.status === 'APPROVED' && 'border-l-4 border-l-success-500',
+        log.status === 'PENDING' && 'border-l-4 border-l-warning-500',
+        log.status === 'DRAFT' && 'border-l-4 border-l-stone-300 hover:border-l-primary-400'
       )}>
         <div className="flex items-start gap-5">
           {/* Week Badge */}
           <div className="flex-shrink-0">
-            <div className="w-20 bg-gradient-to-br from-stone-800 to-stone-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
-              <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">Week</p>
+            <div className="w-20 bg-gradient-to-br from-primary-800 to-primary-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
+              <p className="text-[10px] text-primary-300 font-semibold uppercase tracking-wider">Week</p>
               <p className="text-3xl font-bold text-white">{log.weekNumber}</p>
             </div>
           </div>
@@ -329,7 +329,7 @@ function LogCard({ log }: { log: SupervisionLog }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">
+                <h3 className="font-bold text-stone-800 group-hover:text-primary-700 transition-colors">
                   Week {log.weekNumber} Progress Log
                 </h3>
                 <p className="text-sm text-stone-500 flex items-center gap-1.5 mt-0.5">
@@ -364,18 +364,18 @@ function LogCard({ log }: { log: SupervisionLog }) {
                   <div
                     className={cn(
                       'h-full rounded-full transition-all',
-                      log.progressPercentage >= 75 ? 'bg-emerald-500' :
-                      log.progressPercentage >= 50 ? 'bg-amber-500' :
-                      log.progressPercentage >= 25 ? 'bg-sky-500' : 'bg-stone-400'
+                      log.progressPercentage >= 75 ? 'bg-success-500' :
+                      log.progressPercentage >= 50 ? 'bg-warning-500' :
+                      log.progressPercentage >= 25 ? 'bg-info-500' : 'bg-stone-400'
                     )}
                     style={{ width: `${log.progressPercentage}%` }}
                   />
                 </div>
                 <span className={cn(
                   'text-sm font-bold px-2 py-0.5 rounded',
-                  log.progressPercentage >= 75 ? 'bg-emerald-100 text-emerald-700' :
-                  log.progressPercentage >= 50 ? 'bg-amber-100 text-amber-700' :
-                  log.progressPercentage >= 25 ? 'bg-sky-100 text-sky-700' : 'bg-stone-100 text-stone-600'
+                  log.progressPercentage >= 75 ? 'bg-success-100 text-success-700' :
+                  log.progressPercentage >= 50 ? 'bg-warning-100 text-warning-700' :
+                  log.progressPercentage >= 25 ? 'bg-info-100 text-info-700' : 'bg-stone-100 text-stone-600'
                 )}>
                   {log.progressPercentage}%
                 </span>
@@ -388,18 +388,18 @@ function LogCard({ log }: { log: SupervisionLog }) {
                 </span>
               )}
 
-              <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
-                <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-amber-600 transition-colors" />
+              <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-primary-100 flex items-center justify-center transition-colors">
+                <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-primary-600 transition-colors" />
               </div>
             </div>
 
             {/* Supervisor Feedback Preview */}
             {log.supervisorFeedback && log.status === 'APPROVED' && (
-              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2">
-                <MessageSquare className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div className="mt-4 p-3 bg-success-50 border border-success-100 rounded-xl flex items-start gap-2">
+                <MessageSquare className="h-4 w-4 text-success-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-emerald-700 mb-1">Supervisor Feedback</p>
-                  <p className="text-sm text-emerald-600">
+                  <p className="text-xs font-semibold text-success-700 mb-1">Supervisor Feedback</p>
+                  <p className="text-sm text-success-600">
                     {log.supervisorFeedback.slice(0, 100)}
                     {log.supervisorFeedback.length > 100 && '...'}
                   </p>
@@ -408,9 +408,9 @@ function LogCard({ log }: { log: SupervisionLog }) {
             )}
 
             {log.status === 'REVISION_REQUIRED' && (
-              <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-rose-700">
+              <div className="mt-4 p-3 bg-error-50 border border-error-100 rounded-xl flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-error-600 flex-shrink-0" />
+                <p className="text-sm font-medium text-error-700">
                   Revision required - Check supervisor feedback
                 </p>
               </div>

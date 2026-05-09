@@ -74,40 +74,40 @@ const statusConfig: Record<MeetingStatus, {
     variant: 'warning',
     description: 'Waiting for supervisor confirmation',
     icon: <Clock className="h-5 w-5" />,
-    bgGradient: 'from-amber-500 to-orange-500',
-    iconBg: 'bg-amber-100 text-amber-600'
+    bgGradient: 'from-warning-500 to-warning-600',
+    iconBg: 'bg-warning-100 text-warning-600'
   },
   CONFIRMED: {
     label: 'Confirmed',
     variant: 'success',
     description: 'Meeting confirmed by supervisor',
     icon: <CheckCircle className="h-5 w-5" />,
-    bgGradient: 'from-emerald-500 to-teal-500',
-    iconBg: 'bg-emerald-100 text-emerald-600'
+    bgGradient: 'from-success-500 to-success-600',
+    iconBg: 'bg-success-100 text-success-600'
   },
   RESCHEDULED: {
     label: 'Rescheduled',
     variant: 'warning',
     description: 'Meeting has been rescheduled',
     icon: <RefreshCw className="h-5 w-5" />,
-    bgGradient: 'from-blue-500 to-indigo-500',
-    iconBg: 'bg-blue-100 text-blue-600'
+    bgGradient: 'from-info-500 to-info-600',
+    iconBg: 'bg-info-100 text-info-600'
   },
   CANCELLED: {
     label: 'Cancelled',
     variant: 'error',
     description: 'Meeting was cancelled',
     icon: <X className="h-5 w-5" />,
-    bgGradient: 'from-red-500 to-rose-500',
-    iconBg: 'bg-red-100 text-red-600'
+    bgGradient: 'from-error-500 to-error-600',
+    iconBg: 'bg-error-100 text-error-600'
   },
   COMPLETED: {
     label: 'Completed',
     variant: 'default',
     description: 'Meeting has been completed',
     icon: <Check className="h-5 w-5" />,
-    bgGradient: 'from-slate-500 to-slate-600',
-    iconBg: 'bg-slate-100 text-slate-600'
+    bgGradient: 'from-neutral-500 to-neutral-600',
+    iconBg: 'bg-neutral-100 text-neutral-600'
   },
 }
 
@@ -337,8 +337,8 @@ export function MeetingDetail() {
           {/* Agenda Card */}
           <Card>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-primary-600" />
               </div>
               <h2 className="text-lg font-semibold text-neutral-900">Meeting Agenda</h2>
             </div>
@@ -358,8 +358,8 @@ export function MeetingDetail() {
           {displayMeeting.status === 'COMPLETED' && (
             <Card>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-purple-600" />
+                <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-primary-600" />
                 </div>
                 <h2 className="text-lg font-semibold text-neutral-900">Meeting Notes</h2>
               </div>
@@ -368,8 +368,8 @@ export function MeetingDetail() {
                   <p className="text-neutral-700 whitespace-pre-wrap leading-relaxed">{displayMeeting.notes}</p>
                 </div>
               ) : (
-                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 text-center border border-purple-100">
-                  <Sparkles className="h-10 w-10 text-purple-400 mx-auto mb-3" />
+                <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 text-center border border-primary-100">
+                  <Sparkles className="h-10 w-10 text-primary-400 mx-auto mb-3" />
                   <p className="text-neutral-600 mb-3">No notes added yet for this meeting</p>
                   <Link to={`${ROUTES.STUDENT.LOG_NEW}?meetingId=${displayMeeting.meetingId}`}>
                     <Button variant="secondary" size="sm" leftIcon={<FileText className="h-4 w-4" />}>
@@ -384,11 +384,11 @@ export function MeetingDetail() {
           {/* Status Info Card */}
           <Card className={cn(
             'border-l-4',
-            displayMeeting.status === 'PENDING' && 'border-l-amber-500 bg-amber-50/50',
-            displayMeeting.status === 'CONFIRMED' && 'border-l-emerald-500 bg-emerald-50/50',
-            displayMeeting.status === 'CANCELLED' && 'border-l-red-500 bg-red-50/50',
-            displayMeeting.status === 'COMPLETED' && 'border-l-slate-500 bg-slate-50/50',
-            displayMeeting.status === 'RESCHEDULED' && 'border-l-blue-500 bg-blue-50/50'
+            displayMeeting.status === 'PENDING' && 'border-l-warning-500 bg-warning-50/50',
+            displayMeeting.status === 'CONFIRMED' && 'border-l-success-500 bg-success-50/50',
+            displayMeeting.status === 'CANCELLED' && 'border-l-error-500 bg-error-50/50',
+            displayMeeting.status === 'COMPLETED' && 'border-l-neutral-500 bg-neutral-50/50',
+            displayMeeting.status === 'RESCHEDULED' && 'border-l-info-500 bg-info-50/50'
           )}>
             <div className="flex items-start gap-4">
               <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', status.iconBg)}>
@@ -499,11 +499,11 @@ export function MeetingDetail() {
                 <div className="flex items-start gap-3 relative">
                   <div className={cn(
                     'w-4 h-4 rounded-full border-2 bg-white z-10',
-                    displayMeeting.status === 'CONFIRMED' && 'border-emerald-500',
-                    displayMeeting.status === 'PENDING' && 'border-amber-500',
-                    displayMeeting.status === 'CANCELLED' && 'border-red-500',
-                    displayMeeting.status === 'COMPLETED' && 'border-slate-500',
-                    displayMeeting.status === 'RESCHEDULED' && 'border-blue-500'
+                    displayMeeting.status === 'CONFIRMED' && 'border-success-500',
+                    displayMeeting.status === 'PENDING' && 'border-warning-500',
+                    displayMeeting.status === 'CANCELLED' && 'border-error-500',
+                    displayMeeting.status === 'COMPLETED' && 'border-neutral-500',
+                    displayMeeting.status === 'RESCHEDULED' && 'border-info-500'
                   )} />
                   <div className="flex-1 -mt-0.5">
                     <p className="text-sm font-medium text-neutral-900">
@@ -543,14 +543,14 @@ export function MeetingDetail() {
 
           {/* Reminder Card */}
           {isUpcoming && displayMeeting.status === 'CONFIRMED' && countdown && countdown.days <= 1 && (
-            <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+            <Card className="bg-gradient-to-br from-warning-50 to-warning-100 border-warning-200">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                  <Bell className="h-5 w-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-lg bg-warning-100 flex items-center justify-center flex-shrink-0">
+                  <Bell className="h-5 w-5 text-warning-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-amber-900">Meeting Soon!</h4>
-                  <p className="text-sm text-amber-700 mt-0.5">
+                  <h4 className="font-semibold text-warning-900">Meeting Soon!</h4>
+                  <p className="text-sm text-warning-700 mt-0.5">
                     Don't forget to prepare for your meeting {countdown.hours > 0 ? `in ${countdown.hours}h ${countdown.minutes}m` : `in ${countdown.minutes} minutes`}
                   </p>
                 </div>
@@ -568,8 +568,8 @@ export function MeetingDetail() {
       >
         <div className="p-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <XCircle className="h-8 w-8 text-red-600" />
+            <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <XCircle className="h-8 w-8 text-error-600" />
             </div>
             <h2 className="text-xl font-bold text-neutral-900">Cancel Meeting?</h2>
             <p className="text-neutral-600 mt-1">Your supervisor will be notified of this cancellation</p>

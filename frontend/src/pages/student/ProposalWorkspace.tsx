@@ -38,8 +38,11 @@ import {
   PROJECT_TYPE_OPTIONS,
   NUMBER_OF_STUDENTS_OPTIONS,
   SPECIALISATIONS,
+  PROJECT_CATEGORIES_BY_SPEC,
+  PROJECT_FOCUS_BY_SPEC,
   categoriesFor,
   focusesFor,
+  type Specialisation,
 } from '@/lib/constants/proposalTemplate'
 import { cn } from '@/lib/utils/cn'
 import type { ProposalStatus } from '@/types'
@@ -95,6 +98,25 @@ const proposalSchema = z
     student2WorkDistribution: z.string().optional().or(z.literal('')),
   })
   .superRefine((data, ctx) => {
+    // Cross-field: category and focus must belong to chosen specialisation.
+    if (data.specialisation) {
+      const cats = PROJECT_CATEGORIES_BY_SPEC[data.specialisation as Specialisation] ?? []
+      const focuses = PROJECT_FOCUS_BY_SPEC[data.specialisation as Specialisation] ?? []
+      if (data.projectCategory && !cats.includes(data.projectCategory)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['projectCategory'],
+          message: `Not a valid category for ${data.specialisation}`,
+        })
+      }
+      if (data.projectFocus && !focuses.includes(data.projectFocus)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['projectFocus'],
+          message: `Not a valid focus for ${data.specialisation}`,
+        })
+      }
+    }
     // Industry collaboration → company name required
     if (data.industryCollaboration && !data.industryCompanyName) {
       ctx.addIssue({
@@ -1120,14 +1142,14 @@ export function ProposalWorkspace() {
             </div>
 
             {/* Warning Notice */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div className="bg-warning-50 border border-warning-200 rounded-xl p-4 mb-6">
               <div className="flex gap-3">
-                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-4 w-4 text-warning-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-amber-800 text-sm">Important Notice</p>
-                  <p className="text-amber-700 text-sm mt-0.5">
+                  <p className="font-medium text-warning-800 text-sm">Important Notice</p>
+                  <p className="text-warning-700 text-sm mt-0.5">
                     Once submitted, you cannot edit your proposal until feedback is received from your supervisor.
                   </p>
                 </div>
@@ -1223,16 +1245,16 @@ export function ProposalWorkspace() {
                 <CheckCircle className="h-12 w-12 text-white" />
               </div>
               {/* Confetti-like decorations */}
-              <div className="absolute top-0 left-1/4 w-3 h-3 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="absolute top-0 left-1/4 w-3 h-3 bg-warning-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <div className="absolute top-2 right-1/4 w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '100ms' }} />
               <div className="absolute bottom-0 left-1/3 w-2.5 h-2.5 bg-success-300 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
               <div className="absolute bottom-2 right-1/3 w-2 h-2 bg-error-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             </div>
 
             <div className="flex items-center justify-center gap-2 mb-2">
-              <PartyPopper className="h-5 w-5 text-amber-500" />
+              <PartyPopper className="h-5 w-5 text-warning-500" />
               <h2 className="text-2xl font-bold text-neutral-900">Congratulations!</h2>
-              <PartyPopper className="h-5 w-5 text-amber-500 scale-x-[-1]" />
+              <PartyPopper className="h-5 w-5 text-warning-500 scale-x-[-1]" />
             </div>
             <p className="text-neutral-600 mb-6">Your proposal has been submitted successfully!</p>
 

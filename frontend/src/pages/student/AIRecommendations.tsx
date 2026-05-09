@@ -174,7 +174,7 @@ export function AIRecommendations() {
                     : index === 1
                     ? 'bg-neutral-700 text-white'
                     : index === 2
-                    ? 'bg-amber-600 text-white'
+                    ? 'bg-warning-600 text-white'
                     : 'bg-neutral-200 text-neutral-700'
                 )}
               >

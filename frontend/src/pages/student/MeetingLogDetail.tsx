@@ -121,12 +121,12 @@ export function MeetingLogDetail() {
       )}
 
       {log.status === 'SUPERVISOR_SIGNED' && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-info-50 border-info-200">
           <div className="flex items-start gap-3">
-            <PenLine className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <PenLine className="h-5 w-5 text-info-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-blue-900">Awaiting Your Signature</p>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="font-medium text-info-900">Awaiting Your Signature</p>
+              <p className="text-sm text-info-700 mt-1">
                 Your supervisor has reviewed and signed this log. Please add your signature to finalize.
               </p>
               <Button
@@ -171,12 +171,12 @@ export function MeetingLogDetail() {
       )}
 
       {log.status === 'SUBMITTED' && (
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="bg-warning-50 border-warning-200">
           <div className="flex items-start gap-3">
-            <Clock className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <Clock className="h-5 w-5 text-warning-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-amber-900">Pending Review</p>
-              <p className="text-sm text-amber-700 mt-1">
+              <p className="font-medium text-warning-900">Pending Review</p>
+              <p className="text-sm text-warning-700 mt-1">
                 This log has been submitted and is waiting for supervisor review.
                 {log.submittedAt && ` Submitted on ${new Date(log.submittedAt).toLocaleDateString('en-MY')}.`}
               </p>
