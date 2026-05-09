@@ -29,6 +29,12 @@ public class AiServiceClient {
         this.restTemplate = new RestTemplate();
     }
 
+    /**
+     * Calls the Flask recommender. Throws {@link AiServiceUnavailableException}
+     * when the service is unreachable or returns a non-2xx response, so the
+     * caller can return 503 instead of a fake empty list that hides a real
+     * outage from the user.
+     */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getRecommendations(Map<String, Object> payload) {
         try {
@@ -36,10 +42,13 @@ public class AiServiceClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
             }
+            throw new AiServiceUnavailableException(
+                    "Recommendation service returned non-2xx status: " + response.getStatusCode());
         } catch (RestClientException e) {
             log.warn("AI recommendation service unavailable: {}", e.getMessage());
+            throw new AiServiceUnavailableException(
+                    "Recommendation service unavailable: " + e.getMessage(), e);
         }
-        return Map.of("recommendations", java.util.List.of(), "generatedAt", java.time.LocalDateTime.now().toString());
     }
 
     @SuppressWarnings("unchecked")

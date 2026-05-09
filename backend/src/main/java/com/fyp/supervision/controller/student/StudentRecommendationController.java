@@ -3,11 +3,14 @@ package com.fyp.supervision.controller.student;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.SupervisorProfile;
 import com.fyp.supervision.entity.UserAccount;
+import com.fyp.supervision.exception.AiServiceUnavailableException;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/student/recommendations")
 @RequiredArgsConstructor
@@ -27,12 +31,24 @@ public class StudentRecommendationController {
 
     @GetMapping
     public ResponseEntity<?> getRecommendations(@AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(fetchRecommendations(Long.parseLong(user.getUsername())));
+        return runAndWrap(Long.parseLong(user.getUsername()));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshRecommendations(@AuthenticationPrincipal UserDetails user) {
-        return ResponseEntity.ok(fetchRecommendations(Long.parseLong(user.getUsername())));
+        return runAndWrap(Long.parseLong(user.getUsername()));
+    }
+
+    private ResponseEntity<?> runAndWrap(Long userId) {
+        try {
+            return ResponseEntity.ok(fetchRecommendations(userId));
+        } catch (AiServiceUnavailableException e) {
+            log.warn("Recommendation service unavailable for user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                    "message", "The recommendation service is temporarily unavailable. Please try again shortly.",
+                    "error", "AI_SERVICE_UNAVAILABLE"
+            ));
+        }
     }
 
     private Map<String, Object> fetchRecommendations(Long userId) {
