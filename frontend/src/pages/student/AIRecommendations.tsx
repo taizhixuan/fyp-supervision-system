@@ -10,6 +10,7 @@ import {
   GraduationCap,
   KeyRound,
   Network,
+  Wrench,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorRecommendations, useRefreshRecommendations } from '@/lib/hooks/useStudent'
@@ -35,7 +36,8 @@ const componentMeta: Array<{
   Icon: typeof Target
 }> = [
   { key: 'semantic', label: 'Topic alignment', Icon: Network },
-  { key: 'keyword', label: 'Keyword overlap', Icon: KeyRound },
+  { key: 'interest', label: 'Interest overlap', Icon: KeyRound },
+  { key: 'skill', label: 'Skill match', Icon: Wrench },
   { key: 'programme', label: 'Programme', Icon: GraduationCap },
   { key: 'availability', label: 'Availability', Icon: Users },
 ]
@@ -111,7 +113,7 @@ export function AIRecommendations() {
       <AlertBanner
         variant="info"
         title="How AI Recommendations Work"
-        description="Each supervisor is scored on four signals: topic alignment between your interests and their research areas (semantic similarity), direct keyword overlap, programme/department match, and current supervision availability. Supervisors who are full or unavailable are filtered out."
+        description="Each supervisor is scored on five signals: topic alignment between your interests and their research areas (semantic similarity), direct interest overlap, skill match against their expertise, programme/department alignment, and current supervision availability. Supervisor profiles also include the titles of recent projects they've supervised. Supervisors who are full or unavailable are filtered out."
         dismissible
       />
 
@@ -271,7 +273,7 @@ export function AIRecommendations() {
                     <h4 className="text-sm font-medium text-neutral-700 mb-3">
                       Score breakdown
                     </h4>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                       {componentMeta.map(({ key, label, Icon }) => {
                         const value = rec.components?.[key] ?? 0
                         const pct = Math.round(value * 100)

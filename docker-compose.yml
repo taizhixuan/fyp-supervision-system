@@ -55,7 +55,15 @@ services:
       - "5001:5001"
     environment:
       FLASK_PORT: "5001"
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Embedding model. Default is BAAI/bge-base-en-v1.5 (110 MB, 768-dim).
+      # Override to all-MiniLM-L6-v2 for a smaller, faster fallback.
+      REC_EMBED_MODEL: ${REC_EMBED_MODEL:-BAAI/bge-base-en-v1.5}
+      # Optional weight overrides (defaults are sane).
+      REC_W_SEMANTIC: ${REC_W_SEMANTIC:-}
+      REC_W_INTEREST: ${REC_W_INTEREST:-}
+      REC_W_SKILL: ${REC_W_SKILL:-}
+      REC_W_PROGRAMME: ${REC_W_PROGRAMME:-}
+      REC_W_AVAILABILITY: ${REC_W_AVAILABILITY:-}
     volumes:
       - recommendation_models:/app/models
     networks:

@@ -10,6 +10,7 @@ import {
   Calendar,
   Star,
   Send,
+  FolderGit2,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorDetail } from '@/lib/hooks/useStudent'
@@ -250,6 +251,42 @@ export function SupervisorDetail() {
                   </Badge>
                 ))}
               </div>
+            </Card>
+          )}
+
+          {/* Recent Supervised Projects */}
+          {displaySupervisor.pastProjects && displaySupervisor.pastProjects.length > 0 && (
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  Recent Supervised Projects
+                </h2>
+                <span className="text-xs text-neutral-500">
+                  Used by AI matching
+                </span>
+              </div>
+              <ul className="space-y-3">
+                {displaySupervisor.pastProjects.map((project, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <FolderGit2 className="h-5 w-5 text-primary-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-neutral-800">{project.title}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                        {project.year && <span>{project.year}</span>}
+                        {project.year && project.status && <span>·</span>}
+                        {project.status && (
+                          <Badge
+                            variant={project.status === 'COMPLETED' ? 'success' : 'default'}
+                            size="sm"
+                          >
+                            {project.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </Card>
           )}
 

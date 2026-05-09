@@ -600,7 +600,33 @@ public class StudentService {
         dto.put("rating", null);
         long totalSupervised = projectRepository.countBySupervisor_UserId(sp.getUserId());
         dto.put("totalSupervised", totalSupervised);
+        dto.put("pastProjects", recentSupervisedProjects(sp.getUserId()));
         return dto;
+    }
+
+    /**
+     * Up to 6 most-recent projects this supervisor has supervised, sorted by
+     * updatedAt descending. Surfaced on the supervisor detail page so students
+     * can see what the supervisor actually works on — same signal the AI
+     * recommender uses on the embedding side.
+     */
+    private List<Map<String, Object>> recentSupervisedProjects(Long supervisorUserId) {
+        if (supervisorUserId == null) return List.of();
+        List<Project> projects = projectRepository.findBySupervisor_UserId(supervisorUserId);
+        return projects.stream()
+                .filter(p -> p != null && p.getProjectTitle() != null && !p.getProjectTitle().isBlank())
+                .sorted(Comparator.comparing(
+                        Project::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(6)
+                .map(p -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("title", p.getProjectTitle().trim());
+                    entry.put("status", p.getStatus() != null ? p.getStatus().name() : null);
+                    entry.put("year", p.getUpdatedAt() != null ? p.getUpdatedAt().getYear() : null);
+                    return entry;
+                })
+                .toList();
     }
 
     private Map<String, Object> buildSupervisionRequestDto(SupervisorRequest req) {
