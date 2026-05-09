@@ -39,6 +39,12 @@ public class ChatMessage {
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt;
 
+    @Column(length = 8)
+    private String feedback;
+
+    @Column(name = "feedback_at")
+    private LocalDateTime feedbackAt;
+
     @PrePersist
     protected void onCreate() {
         sentAt = LocalDateTime.now();

@@ -29,6 +29,7 @@ import {
   useChatSession,
   useSendChatMessage,
   useClearChatSession,
+  useSetChatFeedback,
 } from '@/lib/hooks/useStudent'
 import { cn } from '@/lib/utils/cn'
 import type { ChatMessage, ChatReference } from '@/types'
@@ -374,18 +375,27 @@ function ConfidenceBadge({ value }: { value: number }) {
 function MessageBubble({
   message,
   onCopy,
+  onFeedback,
+  feedbackPending,
 }: {
   message: ChatMessage
   onCopy: () => void
+  onFeedback: (next: 'UP' | 'DOWN' | null) => void
+  feedbackPending: boolean
 }) {
   const isUser = message.role === 'user'
-  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null)
+  const feedback = message.feedback ?? null
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
     onCopy()
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleThumb = (next: 'UP' | 'DOWN') => {
+    if (feedbackPending) return
+    onFeedback(feedback === next ? null : next)
   }
 
   return (
@@ -448,24 +458,28 @@ function MessageBubble({
                 {copied ? <Check className="h-3 w-3 text-success-500" /> : <Copy className="h-3 w-3" />}
               </button>
               <button
-                onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
+                onClick={() => handleThumb('UP')}
+                disabled={feedbackPending}
                 className={cn(
                   'p-1 rounded-md transition-colors',
-                  feedback === 'up'
+                  feedback === 'UP'
                     ? 'text-success-600 bg-success-50'
                     : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100',
+                  feedbackPending && 'opacity-50 cursor-not-allowed',
                 )}
                 title="Helpful"
               >
                 <ThumbsUp className="h-3 w-3" />
               </button>
               <button
-                onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
+                onClick={() => handleThumb('DOWN')}
+                disabled={feedbackPending}
                 className={cn(
                   'p-1 rounded-md transition-colors',
-                  feedback === 'down'
+                  feedback === 'DOWN'
                     ? 'text-error-600 bg-error-50'
                     : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100',
+                  feedbackPending && 'opacity-50 cursor-not-allowed',
                 )}
                 title="Not helpful"
               >
@@ -496,8 +510,19 @@ export function Chatbot() {
   const sessionQuery = useChatSession()
   const sendMutation = useSendChatMessage()
   const clearMutation = useClearChatSession()
+  const feedbackMutation = useSetChatFeedback()
 
   const isTyping = sendMutation.isPending
+
+  const handleFeedback = (messageId: string, next: 'UP' | 'DOWN' | null) => {
+    if (feedbackMutation.isPending) return
+    feedbackMutation.mutate({ messageId, feedback: next }, {
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Could not save feedback.'
+        errorToast(msg)
+      },
+    })
+  }
 
   const serverMessages = useMemo<ChatMessage[]>(
     () => sessionQuery.data?.messages ?? [],
@@ -677,6 +702,8 @@ export function Chatbot() {
                   key={message.messageId}
                   message={message}
                   onCopy={() => copyToClipboard(message.content)}
+                  onFeedback={(next) => handleFeedback(message.messageId, next)}
+                  feedbackPending={feedbackMutation.isPending}
                 />
               ))}
 

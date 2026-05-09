@@ -99,7 +99,10 @@ else:
 # ============================================================================
 logger.info("Initializing RAG engine...")
 
-USE_LOCAL_GEN = os.environ.get("USE_LOCAL_GEN", "true").lower() == "true"
+# Flan-T5 local generator is OFF by default — it's the long-standing quality
+# bottleneck. Set USE_LOCAL_GEN=true only for offline demos where no remote
+# LLM key is available; otherwise the extractive fallback is more honest.
+USE_LOCAL_GEN = os.environ.get("USE_LOCAL_GEN", "false").lower() == "true"
 
 rag_engine = RAGEngine(
     vector_store_dir="vector_store",

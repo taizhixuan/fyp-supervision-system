@@ -498,6 +498,7 @@ export interface ChatMessage {
   timestamp: string
   references?: ChatReference[]
   confidence?: number
+  feedback?: 'UP' | 'DOWN' | null
 }
 
 export interface ChatReference {

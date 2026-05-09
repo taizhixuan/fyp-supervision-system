@@ -1,5 +1,6 @@
 package com.fyp.supervision.service;
 
+import com.fyp.supervision.exception.AiServiceUnavailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -54,6 +55,12 @@ public class AiServiceClient {
         return Map.of("error", "AI analysis service is currently unavailable.");
     }
 
+    /**
+     * Calls the Flask chatbot. Throws {@link AiServiceUnavailableException}
+     * when the service is unreachable or returns a non-2xx response, so the
+     * caller can return 503 instead of persisting a placeholder assistant
+     * message into the chat history.
+     */
     @SuppressWarnings("unchecked")
     public Map<String, Object> chat(Map<String, Object> payload) {
         try {
@@ -61,14 +68,13 @@ public class AiServiceClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
             }
+            throw new AiServiceUnavailableException(
+                    "Chatbot returned non-2xx status: " + response.getStatusCode());
         } catch (RestClientException e) {
             log.warn("AI chatbot service unavailable: {}", e.getMessage());
+            throw new AiServiceUnavailableException(
+                    "Chatbot service unavailable: " + e.getMessage(), e);
         }
-        return Map.of(
-            "reply", "The AI assistant is currently unavailable. Please try again later.",
-            "references", java.util.List.of(),
-            "confidence", 0.0
-        );
     }
 
     public boolean isRecommendationServiceHealthy() {
