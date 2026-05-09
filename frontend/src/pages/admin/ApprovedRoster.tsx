@@ -19,8 +19,8 @@ import {
 type Tab = 'STUDENT' | 'SUPERVISOR'
 
 const STUDENT_TEMPLATE =
-  'mmuId,email,fullName,programme,faculty,intakeYear\n' +
-  '1201234567,alice@student.mmu.edu.my,Alice Tan,Bachelor of Computer Science,FCI,2023\n'
+  'mmuId,email,fullName,programme,specialisation,faculty,intakeYear\n' +
+  '1201234567,alice@student.mmu.edu.my,Alice Tan,Bachelor of Computer Science,Software Engineering,FCI,2023\n'
 
 const SUPERVISOR_TEMPLATE =
   'mmuId,email,fullName,department,faculty,position\n' +
@@ -50,7 +50,7 @@ export function ApprovedRoster() {
   const supervisorRows = supervisorQuery.data ?? []
 
   const filteredStudents = filterRows(studentRows, search, (r) =>
-    [r.mmuId, r.email, r.fullName ?? '', r.programme ?? ''].join(' ')
+    [r.mmuId, r.email, r.fullName ?? '', r.programme ?? '', r.specialisation ?? ''].join(' ')
   )
   const filteredSupervisors = filterRows(supervisorRows, search, (r) =>
     [r.mmuId, r.email, r.fullName ?? '', r.department ?? ''].join(' ')
@@ -168,7 +168,7 @@ export function ApprovedRoster() {
         </div>
         <p className="mt-3 text-xs text-neutral-500">
           {isStudent
-            ? 'Columns: mmuId, email, fullName, programme, faculty, intakeYear. Email must end with @student.mmu.edu.my.'
+            ? 'Columns: mmuId, email, fullName, programme, specialisation, faculty, intakeYear. Email must end with @student.mmu.edu.my.'
             : 'Columns: mmuId, email, fullName, department, faculty, position. Email must end with @mmu.edu.my.'}
         </p>
       </Card>
@@ -205,7 +205,7 @@ export function ApprovedRoster() {
       ) : isStudent ? (
         <RosterTable
           empty="No students on the approved roster yet. Upload a CSV to begin."
-          headers={['MMU ID', 'Email', 'Name', 'Programme', 'Faculty', 'Intake', '']}
+          headers={['MMU ID', 'Email', 'Name', 'Programme', 'Specialisation', 'Faculty', 'Intake', '']}
           rows={filteredStudents.map((r) => ({
             id: r.rosterId,
             label: `${r.fullName ?? r.mmuId}`,
@@ -214,6 +214,7 @@ export function ApprovedRoster() {
               r.email,
               r.fullName ?? '—',
               r.programme ?? '—',
+              r.specialisation ?? '—',
               r.faculty ?? '—',
               r.intakeYear ?? '—',
             ],

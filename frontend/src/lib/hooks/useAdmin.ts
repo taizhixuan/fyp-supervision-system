@@ -947,6 +947,7 @@ export interface ApprovedStudentRosterEntry {
   email: string
   fullName: string | null
   programme: string | null
+  specialisation: string | null
   faculty: string | null
   intakeYear: number | null
   uploadedAt: string | null
