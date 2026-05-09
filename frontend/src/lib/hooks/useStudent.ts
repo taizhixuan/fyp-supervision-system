@@ -980,6 +980,24 @@ export function useSendChatMessage() {
       const { data } = await apiClient.post<ChatMessage>('/student/chat', { message })
       return data
     },
+    onSettled: () => {
+      // Invalidate on both success and failure: on 503 the server still
+      // persists the user message, so refetching shows the canonical state.
+      queryClient.invalidateQueries({ queryKey: studentKeys.chatSession() })
+    },
+  })
+}
+
+export function useSetChatFeedback() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: { messageId: string; feedback: 'UP' | 'DOWN' | null }) => {
+      const { data } = await apiClient.post<ChatMessage>(
+        `/student/chat/feedback/${params.messageId}`,
+        { feedback: params.feedback },
+      )
+      return data
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentKeys.chatSession() })
     },
