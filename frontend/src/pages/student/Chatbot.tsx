@@ -21,6 +21,8 @@ import {
   Square,
   ExternalLink,
   HelpCircle,
+  Wand2,
+  ArrowRight,
 } from 'lucide-react'
 import { Button, Spinner, useErrorToast } from '@/components/ui'
 import {
@@ -42,11 +44,60 @@ const SUGGESTED_QUESTIONS = [
   { icon: BookOpen, text: 'How do I structure a literature review?', color: 'from-amber-500 to-orange-600' },
 ]
 
-const CAPABILITIES = [
-  { icon: BookOpen, label: 'FYP Guidelines' },
-  { icon: GraduationCap, label: 'Proposal Help' },
-  { icon: MessageSquare, label: 'Supervision Tips' },
-  { icon: HelpCircle, label: 'Methodology' },
+// Topic decks for the welcome view — each category surfaces 2 example prompts.
+const PROMPT_DECKS: {
+  key: string
+  label: string
+  icon: typeof BookOpen
+  accent: string
+  prompts: string[]
+}[] = [
+  {
+    key: 'proposal',
+    label: 'Proposal',
+    icon: GraduationCap,
+    accent: 'from-sky-500 to-blue-600',
+    prompts: [
+      'How do I write a strong problem statement for my proposal?',
+      'What sections does an MMU FCI FYP proposal need?',
+    ],
+  },
+  {
+    key: 'methodology',
+    label: 'Methodology',
+    icon: Lightbulb,
+    accent: 'from-violet-500 to-purple-600',
+    prompts: [
+      'When should I use Agile vs Waterfall for my FYP?',
+      'How do I justify my chosen methodology in chapter 3?',
+    ],
+  },
+  {
+    key: 'writing',
+    label: 'Writing',
+    icon: BookOpen,
+    accent: 'from-amber-500 to-orange-600',
+    prompts: [
+      'How do I structure my literature review chapter?',
+      'What citation style does FCI expect?',
+    ],
+  },
+  {
+    key: 'supervision',
+    label: 'Supervision',
+    icon: MessageSquare,
+    accent: 'from-emerald-500 to-green-600',
+    prompts: [
+      'What should I include in my weekly supervision log?',
+      'How often should I meet my supervisor in FYP1?',
+    ],
+  },
+]
+
+const CAPABILITY_HIGHLIGHTS: { icon: typeof BookOpen; label: string; sub: string }[] = [
+  { icon: BookOpen, label: '15 topics', sub: 'FYP knowledge base' },
+  { icon: Sparkles, label: 'RAG-powered', sub: 'Context-aware answers' },
+  { icon: GraduationCap, label: 'MMU FCI', sub: 'Tuned for your faculty' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -170,58 +221,125 @@ function TypingIndicator() {
 // ---------------------------------------------------------------------------
 
 function WelcomeView({ onSuggestionClick }: { onSuggestionClick: (text: string) => void }) {
+  const [activeDeck, setActiveDeck] = useState(PROMPT_DECKS[0].key)
+  const deck = PROMPT_DECKS.find((d) => d.key === activeDeck) ?? PROMPT_DECKS[0]
+  const ActiveIcon = deck.icon
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-      <div className="relative mb-6">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-800 flex items-center justify-center shadow-xl shadow-primary-500/20">
-          <Sparkles className="h-10 w-10 text-white" />
+    <div className="flex-1 overflow-y-auto scrollbar-thin">
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        {/* Hero */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="relative mb-5">
+            {/* Pulsing ring */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary-500 to-primary-700 opacity-40 blur-xl animate-pulse" />
+            <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 flex items-center justify-center shadow-xl shadow-primary-500/30 ring-1 ring-white/20">
+              <Sparkles className="h-10 w-10 text-white" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success-500 rounded-full border-2 border-white shadow-md" />
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight mb-2">
+            How can I help with your FYP?
+          </h2>
+          <p className="text-neutral-500 text-sm max-w-md">
+            Ask anything about guidelines, proposal writing, methodology, supervision, or report structure.
+          </p>
         </div>
-        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success-500 rounded-full border-2 border-white" />
-      </div>
 
-      <h2 className="text-xl font-bold text-neutral-900 mb-1">FYP Assistant</h2>
-      <p className="text-neutral-500 text-sm mb-6 text-center max-w-sm">
-        I can help you with guidelines, proposal writing, methodology, and everything about your Final Year Project.
-      </p>
+        {/* Capability highlight cards */}
+        <div className="grid grid-cols-3 gap-3 mb-8 max-w-xl mx-auto">
+          {CAPABILITY_HIGHLIGHTS.map((cap) => {
+            const Icon = cap.icon
+            return (
+              <div
+                key={cap.label}
+                className="bg-white border border-neutral-200 rounded-xl p-3 text-center hover:border-primary-200 hover:shadow-sm transition-all"
+              >
+                <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-semibold text-neutral-900">{cap.label}</p>
+                <p className="text-[10px] text-neutral-500 mt-0.5 leading-tight">{cap.sub}</p>
+              </div>
+            )
+          })}
+        </div>
 
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {CAPABILITIES.map((cap) => {
-          const Icon = cap.icon
-          return (
-            <span
-              key={cap.label}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-600 rounded-full text-xs font-medium"
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {cap.label}
-            </span>
-          )
-        })}
-      </div>
+        {/* Deck tabs */}
+        <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Wand2 className="h-4 w-4 text-neutral-500" />
+            <p className="text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+              Example prompts
+            </p>
+          </div>
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg">
+            {PROMPT_DECKS.map((d) => {
+              const Icon = d.icon
+              const active = d.key === activeDeck
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => setActiveDeck(d.key)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all',
+                    active
+                      ? 'bg-white text-primary-700 shadow-sm'
+                      : 'text-neutral-500 hover:text-neutral-700',
+                  )}
+                >
+                  <Icon className="h-3 w-3" />
+                  {d.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-      <div className="w-full max-w-lg grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {SUGGESTED_QUESTIONS.map((q) => {
-          const Icon = q.icon
-          return (
+        {/* Active deck prompts */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          {deck.prompts.map((prompt) => (
             <button
-              key={q.text}
-              onClick={() => onSuggestionClick(q.text)}
-              className="group flex items-start gap-3 p-4 bg-white border border-neutral-200 rounded-xl text-left hover:border-primary-300 hover:shadow-md hover:shadow-primary-500/5 transition-all duration-200"
+              key={prompt}
+              type="button"
+              onClick={() => onSuggestionClick(prompt)}
+              className="group relative overflow-hidden flex items-start gap-3 p-4 bg-white border border-neutral-200 rounded-xl text-left hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/10 transition-all duration-200"
             >
               <div
                 className={cn(
-                  'w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center flex-shrink-0 shadow-sm',
-                  q.color,
+                  'w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform',
+                  deck.accent,
                 )}
               >
-                <Icon className="h-4 w-4 text-white" />
+                <ActiveIcon className="h-5 w-5 text-white" />
               </div>
-              <span className="text-sm text-neutral-700 group-hover:text-neutral-900 leading-snug pt-1">
-                {q.text}
-              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-neutral-800 group-hover:text-neutral-900 leading-snug">
+                  {prompt}
+                </p>
+                <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Send <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
             </button>
-          )
-        })}
+          ))}
+        </div>
+
+        {/* Pro tip */}
+        <div className="rounded-xl bg-gradient-to-br from-primary-50 via-white to-violet-50 border border-primary-100 p-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-white border border-primary-200 flex items-center justify-center flex-shrink-0">
+            <Lightbulb className="h-4 w-4 text-primary-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-primary-900 mb-0.5">Pro tip</p>
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              Be specific. "How do I justify a quantitative methodology for an IoT prototype?" beats
+              "Tell me about methodology" — the assistant gives sharper answers when you give it more context.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -486,21 +604,35 @@ export function Chatbot() {
     <div className="h-[calc(100vh-180px)] flex flex-col">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 p-5 text-white shadow-xl mb-4">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-primary-400/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-56 h-56 bg-violet-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+        {/* Subtle grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          style={{
+            backgroundImage:
+              'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
 
         <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
-              <Sparkles className="h-6 w-6 text-primary-200" />
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 rounded-xl bg-primary-400/30 blur-md" />
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-white flex items-center gap-2">
                 <span className="truncate">FYP Assistant</span>
                 <StatusPill loading={sessionQuery.isLoading} />
               </h1>
-              <p className="text-primary-200 text-sm mt-0.5 truncate">
-                Ask anything about your Final Year Project
+              <p className="text-primary-200 text-sm mt-0.5 truncate flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-primary-300" />
+                Powered by RAG over the FYP knowledge base
               </p>
             </div>
           </div>
@@ -509,7 +641,8 @@ export function Chatbot() {
             <button
               onClick={startNewChat}
               disabled={clearMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-primary-100 text-sm transition-colors flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex-shrink-0 ring-1 ring-white/10"
+              type="button"
             >
               {clearMutation.isPending ? (
                 <Spinner size="sm" />
