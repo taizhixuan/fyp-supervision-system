@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import {
-  Megaphone,
   HelpCircle,
   ArrowRight,
   Users,
@@ -10,31 +9,8 @@ import {
   GraduationCap,
   ClipboardList,
 } from 'lucide-react'
-import { Button, Card, Spinner } from '@/components/ui'
+import { Button } from '@/components/ui'
 import { ROUTES } from '@/lib/constants/routes'
-import { useLatestAnnouncements } from '@/lib/hooks/useResources'
-
-// Sample announcements for design preview
-const SAMPLE_ANNOUNCEMENTS = [
-  {
-    announcementId: 'sample-1',
-    title: 'FYP 1 Proposal Submission Deadline Extended',
-    content: 'The deadline for FYP 1 proposal submission has been extended to March 15, 2025. Please ensure all required documents are submitted through the system before the deadline.',
-    publishAt: '2025-01-15T10:00:00Z',
-  },
-  {
-    announcementId: 'sample-2',
-    title: 'FYP 2 Oral Presentation Schedule Released',
-    content: 'The schedule for FYP 2 oral presentations has been published. Please check the system for your assigned date, time, and venue. Ensure your presentation slides are uploaded at least 3 days before your session.',
-    publishAt: '2025-01-10T09:00:00Z',
-  },
-  {
-    announcementId: 'sample-3',
-    title: 'Supervision Log Submission Reminder',
-    content: 'Students are reminded to submit their supervision logs within 48 hours after each meeting with their supervisor. Logs must be reviewed and signed by your supervisor before the end of each trimester.',
-    publishAt: '2025-01-05T14:00:00Z',
-  },
-]
 
 const FEATURES = [
   {
@@ -60,10 +36,6 @@ const FEATURES = [
 ]
 
 export function LandingPage() {
-  const { data, isLoading } = useLatestAnnouncements(3)
-  // Use sample announcements if no real data available (for design preview)
-  const announcements = data?.announcements?.length ? data.announcements : SAMPLE_ANNOUNCEMENTS
-
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col">
       {/* Header */}
@@ -206,76 +178,6 @@ export function LandingPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Announcements Section */}
-        <section className="py-16 sm:py-20 px-4 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-12">
-              <div className="w-12 h-12 bg-blue-50 text-[#1e3a5f] rounded-xl flex items-center justify-center">
-                <Megaphone className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
-                  Latest Announcements
-                </h2>
-                <p className="text-stone-600 text-sm mt-1">Stay updated with FYP committee notices</p>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Spinner size="lg" label="Loading announcements..." />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {announcements.map((announcement, index) => (
-                  <Card
-                    key={announcement.announcementId}
-                    hover
-                    className="h-full group relative overflow-hidden"
-                  >
-                    {/* Accent bar */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1e3a5f] to-blue-500" />
-
-                    <div className="flex flex-col h-full pt-2">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-50 text-[#1e3a5f] rounded-lg flex items-center justify-center text-sm font-bold">
-                          {index + 1}
-                        </div>
-                        <h3 className="font-semibold text-stone-800 line-clamp-2 group-hover:text-[#1e3a5f] transition-colors">
-                          {announcement.title}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-stone-600 mb-4 line-clamp-3 flex-1 leading-relaxed">
-                        {announcement.content}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-stone-400">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {new Date(announcement.publishAt).toLocaleDateString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {announcements.length > 0 && (
-              <div className="text-center mt-10">
-                <Link
-                  to="/announcements"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-sm text-[#1e3a5f] hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 rounded-full transition-all duration-200"
-                >
-                  View All Announcements
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
           </div>
         </section>
 
