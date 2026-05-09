@@ -6,6 +6,7 @@ import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.service.AnnouncementService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +28,11 @@ public class SupervisorAnnouncementController {
     @GetMapping
     public ResponseEntity<?> getAnnouncements(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
-        List<Map<String, Object>> announcements = supervisorService.getAnnouncementDtos(userId);
+        // Inbox + outbox: own announcements + ones broadcast by committee/admin.
+        // Each DTO carries a `direction` field ("SENT" or "RECEIVED") so the page can
+        // mark ownership and hide Edit/Delete for received items.
+        List<Map<String, Object>> announcements = announcementService.listForSupervisor(
+                userId, PageRequest.of(0, 100));
         return ResponseEntity.ok(Map.of("announcements", announcements, "total", announcements.size()));
     }
 

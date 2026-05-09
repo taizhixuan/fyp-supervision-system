@@ -258,6 +258,10 @@ export interface SupervisorAnnouncement {
   updatedAt: string
   attachments?: SupervisorAnnouncementAttachment[]
   links?: SupervisorAnnouncementLink[]
+  /** "SENT" — supervisor created it; "RECEIVED" — broadcast by committee/admin. */
+  direction?: 'SENT' | 'RECEIVED'
+  /** Display name of the author (for received items). */
+  createdBy?: string
 }
 
 export interface CreateSupervisorAnnouncementData {

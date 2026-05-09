@@ -10,6 +10,8 @@ import {
   Clock,
   Users,
   Sparkles,
+  Inbox,
+  Send,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -116,6 +118,10 @@ export function AnnouncementsList() {
             const visibility = visibilityConfig[announcement.visibility]
             const VisibilityIcon = visibility.icon
             const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date()
+            // Backend returns "RECEIVED" for committee/admin announcements (read-only),
+            // "SENT" for ones the supervisor authored. Default to SENT for back-compat.
+            const direction = announcement.direction ?? 'SENT'
+            const isReceived = direction === 'RECEIVED'
 
             return (
               <Card
@@ -143,7 +149,14 @@ export function AnnouncementsList() {
                         <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">
                           {announcement.title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className={cn(
+                            'inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold',
+                            isReceived ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
+                          )}>
+                            {isReceived ? <Inbox className="h-3 w-3" /> : <Send className="h-3 w-3" />}
+                            {isReceived ? `From ${announcement.createdBy ?? 'committee'}` : 'Sent by you'}
+                          </span>
                           <span className={cn(
                             'px-2.5 py-1 rounded-xl text-xs font-semibold',
                             priority.bgColor,
@@ -160,22 +173,25 @@ export function AnnouncementsList() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENT_EDIT.replace(':id', String(announcement.announcementId))}>
-                          <Button variant="ghost" size="sm" className="hover:bg-amber-100 hover:text-amber-700">
-                            <Edit className="h-4 w-4" />
+                      {/* Edit/Delete only for items the supervisor owns. */}
+                      {!isReceived && (
+                        <div className="flex items-center gap-1">
+                          <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENT_EDIT.replace(':id', String(announcement.announcementId))}>
+                            <Button variant="ghost" size="sm" className="hover:bg-amber-100 hover:text-amber-700">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(announcement.announcementId)}
+                            disabled={deleteMutation.isPending}
+                            className="hover:bg-rose-100 hover:text-rose-700"
+                          >
+                            <Trash2 className="h-4 w-4 text-rose-500" />
                           </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(announcement.announcementId)}
-                          disabled={deleteMutation.isPending}
-                          className="hover:bg-rose-100 hover:text-rose-700"
-                        >
-                          <Trash2 className="h-4 w-4 text-rose-500" />
-                        </Button>
-                      </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Content Preview */}
