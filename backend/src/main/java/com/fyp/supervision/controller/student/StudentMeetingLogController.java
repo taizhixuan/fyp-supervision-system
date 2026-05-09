@@ -40,8 +40,9 @@ public class StudentMeetingLogController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLog(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.getLogDto(id));
+    public ResponseEntity<?> getLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        return ResponseEntity.ok(studentService.getLogDto(userId, id));
     }
 
     @PostMapping

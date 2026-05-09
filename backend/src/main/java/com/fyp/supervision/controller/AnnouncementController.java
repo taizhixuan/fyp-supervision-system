@@ -8,6 +8,7 @@ import com.fyp.supervision.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -41,17 +42,26 @@ public class AnnouncementController {
         return ResponseEntity.ok(Map.of("announcements", dtos));
     }
 
+    // The wire is 1-indexed both ways: callers send `page=1&limit=20` to match
+    // the convention used by SupervisorDirectoryController. Don't bind Spring's
+    // Pageable here — its resolver expects zero-indexed `page` + `size` and
+    // would silently misread the request, returning an empty content slice
+    // with a non-zero total.
     @GetMapping
     public ResponseEntity<?> getAnnouncements(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String scope,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int limit) {
+        int safePage = Math.max(1, page);
+        int safeLimit = Math.min(Math.max(1, limit), 100);
+        Pageable pageable = PageRequest.of(safePage - 1, safeLimit);
         if (isStudent(user)) {
-            Page<Map<String, Object>> page = announcementService.listForStudent(
+            Page<Map<String, Object>> pg = announcementService.listForStudent(
                     Long.parseLong(user.getUsername()), pageable);
             return ResponseEntity.ok(Map.of(
-                    "announcements", page.getContent(),
-                    "total", page.getTotalElements()));
+                    "announcements", pg.getContent(),
+                    "total", pg.getTotalElements()));
         }
         List<Map<String, Object>> dtos = announcementService.listAllPublished(pageable);
         return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));

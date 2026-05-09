@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.*;
 import com.fyp.supervision.exception.BadRequestException;
+import com.fyp.supervision.exception.ForbiddenException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.proposal.ProposalTemplateOptions;
 import com.fyp.supervision.repository.*;
@@ -440,9 +441,14 @@ public class StudentService {
         return result;
     }
 
-    public Map<String, Object> getMeetingDto(Long meetingId) {
+    public Map<String, Object> getMeetingDto(Long userId, Long meetingId) {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        Long ownerId = meeting.getProject() != null && meeting.getProject().getStudent() != null
+                ? meeting.getProject().getStudent().getUserId() : null;
+        if (ownerId == null || !ownerId.equals(userId)) {
+            throw new ForbiddenException("You can only access your own meetings.");
+        }
         return buildMeetingDto(meeting);
     }
 
@@ -477,9 +483,13 @@ public class StudentService {
         return getLogsDto(userId, status, null, pageable);
     }
 
-    public Map<String, Object> getLogDto(Long logId) {
+    public Map<String, Object> getLogDto(Long userId, Long logId) {
         MeetingLog log = meetingLogRepository.findById(logId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting log not found"));
+        Long ownerId = log.getStudent() != null ? log.getStudent().getUserId() : null;
+        if (ownerId == null || !ownerId.equals(userId)) {
+            throw new ForbiddenException("You can only access your own meeting logs.");
+        }
         return buildMeetingLogDto(log);
     }
 

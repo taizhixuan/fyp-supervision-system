@@ -38,8 +38,9 @@ public class StudentMeetingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMeeting(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.getMeetingDto(id));
+    public ResponseEntity<?> getMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        return ResponseEntity.ok(studentService.getMeetingDto(userId, id));
     }
 
     @PostMapping
