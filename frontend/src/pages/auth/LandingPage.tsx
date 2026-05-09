@@ -89,9 +89,9 @@ export function LandingPage() {
                 <span>MMU Faculty of Computing and Informatics</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight leading-[1.15]">
                 FYP Supervision
-                <span className="block mt-2 bg-gradient-to-r from-blue-200 to-sky-300 bg-clip-text text-transparent">
+                <span className="block mt-2 pb-2 bg-gradient-to-r from-blue-200 to-sky-300 bg-clip-text text-transparent leading-[1.15]">
                   Management System
                 </span>
               </h1>
