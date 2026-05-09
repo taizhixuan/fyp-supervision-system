@@ -219,7 +219,7 @@ export function LandingPage() {
                       AI-Powered Course Recommender
                     </div>
                     <div className="text-[11px] text-blue-200/55 mb-4">
-                      FYP 1 · Chapter 3 review
+                      FYP 1 · 3 of 5 milestones
                     </div>
                     <div className="flex items-center gap-1.5">
                       {[true, true, true, false, false].map((done, i) => (
