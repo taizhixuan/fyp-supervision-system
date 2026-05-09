@@ -76,6 +76,15 @@ public class AdminCycleController {
         return FYP1_TEMPLATE_DEADLINES;
     }
 
+    /** Trivial marker to confirm the backend is running this build. */
+    @GetMapping("/_meta")
+    public ResponseEntity<?> meta() {
+        return ResponseEntity.ok(Map.of(
+                "module", "AdminCycleController",
+                "build", "cycle-direct-update-2026-05-10"
+        ));
+    }
+
     @GetMapping
     public ResponseEntity<?> getCycles(
             @RequestParam(required = false) String status,
@@ -150,11 +159,13 @@ public class AdminCycleController {
         if (cycle.getEndDate().isBefore(cycle.getStartDate())) {
             throw new BadRequestException("endDate must be on or after startDate.");
         }
+        cycleRepository.save(cycle);
         if (data.containsKey("status")) {
             CycleStatus next = parseStatus(stringField(data, "status"));
-            applyStatusTransition(cycle, next);
+            validateTransition(cycle, next);
+            cycleLifecycleService.setCycleStatus(cycle.getCycleId(), next);
+            return ResponseEntity.ok(Map.of("cycleId", cycle.getCycleId(), "status", next.name()));
         }
-        cycleRepository.save(cycle);
         return ResponseEntity.ok(Map.of(
                 "cycleId", cycle.getCycleId(),
                 "status", cycle.getStatus().name()
@@ -162,83 +173,51 @@ public class AdminCycleController {
     }
 
     @PostMapping("/{id}/activate")
-    @Transactional
     public ResponseEntity<?> activateCycle(@PathVariable Long id) {
         log.info("Activate cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        try {
-            applyStatusTransition(cycle, CycleStatus.ACTIVE);
-            cycleRepository.save(cycle);
-        } catch (BadRequestException | ConflictException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            log.error("Activate cycle {} failed during status update", id, ex);
-            throw new BadRequestException("Activate failed: " + ex.getMessage());
-        }
+        validateTransition(cycle, CycleStatus.ACTIVE);
+        // Direct UPDATE — bypasses entity merge/flush so no commit-time surprises.
+        cycleLifecycleService.activateCycleAtomically(cycle.getCycleId(), cycle.getCycleType());
 
-        // Backfill goes through the service (proxy-routed) using REQUIRES_NEW —
-        // a backfill failure cannot poison this outer activate transaction.
         int attached = 0;
         try {
-            attached = cycleLifecycleService.backfillFyp1Placeholders(cycle);
+            FypCycle refreshed = cycleRepository.findById(id).orElse(null);
+            if (refreshed != null) {
+                attached = cycleLifecycleService.backfillFyp1Placeholders(refreshed);
+            }
         } catch (Exception ex) {
             log.warn("Backfill after activating cycle {} failed", id, ex);
         }
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("cycleId", cycle.getCycleId());
-        body.put("status", cycle.getStatus().name());
+        body.put("cycleId", id);
+        body.put("status", CycleStatus.ACTIVE.name());
         body.put("studentsAttached", attached);
         return ResponseEntity.ok(body);
     }
 
     @PostMapping("/{id}/complete")
-    @Transactional
     public ResponseEntity<?> completeCycle(@PathVariable Long id) {
         log.info("Complete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        try {
-            applyStatusTransition(cycle, CycleStatus.COMPLETED);
-            cycleRepository.save(cycle);
-        } catch (BadRequestException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            log.error("Complete cycle {} failed", id, ex);
-            throw new BadRequestException("Complete failed: " + ex.getMessage());
-        }
-        // Don't call buildCycleDto here — it issues additional queries (projects, deadlines)
-        // which, if they fail, would mark this transaction rollback-only and turn this
-        // status update into a 500. The frontend invalidates and re-fetches the list.
-        return ResponseEntity.ok(Map.of(
-                "cycleId", cycle.getCycleId(),
-                "status", cycle.getStatus().name()
-        ));
+        validateTransition(cycle, CycleStatus.COMPLETED);
+        cycleLifecycleService.setCycleStatus(id, CycleStatus.COMPLETED);
+        return ResponseEntity.ok(Map.of("cycleId", id, "status", CycleStatus.COMPLETED.name()));
     }
 
     @PostMapping("/{id}/archive")
-    @Transactional
     public ResponseEntity<?> archiveCycle(@PathVariable Long id) {
         log.info("Archive cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        try {
-            applyStatusTransition(cycle, CycleStatus.ARCHIVED);
-            cycleRepository.save(cycle);
-        } catch (BadRequestException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            log.error("Archive cycle {} failed", id, ex);
-            throw new BadRequestException("Archive failed: " + ex.getMessage());
-        }
-        return ResponseEntity.ok(Map.of(
-                "cycleId", cycle.getCycleId(),
-                "status", cycle.getStatus().name()
-        ));
+        validateTransition(cycle, CycleStatus.ARCHIVED);
+        cycleLifecycleService.setCycleStatus(id, CycleStatus.ARCHIVED);
+        return ResponseEntity.ok(Map.of("cycleId", id, "status", CycleStatus.ARCHIVED.name()));
     }
 
     @DeleteMapping("/{id}")
-    @Transactional
     public ResponseEntity<?> deleteCycle(@PathVariable Long id) {
         log.info("Delete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
@@ -247,32 +226,39 @@ public class AdminCycleController {
             throw new BadRequestException(
                     "Only PLANNING or ARCHIVED cycles can be deleted. Complete and archive the cycle first.");
         }
-
-        // Count-only query: avoids loading any Project entity, which could itself fail
-        // and mark this transaction rollback-only.
-        long projectCount = projectRepository.countByCycle_CycleId(cycle.getCycleId());
+        long projectCount = projectRepository.countByCycle_CycleId(id);
         if (projectCount > 0) {
             throw new BadRequestException(
                     "Cannot delete a cycle that has " + projectCount
                             + " project(s) attached. Detach or archive them first.");
         }
-
         try {
-            // Bulk delete avoids loading each deadline; per-deadline delete is fragile if
-            // any single row trips a constraint. ON DELETE CASCADE on deadline_reminder_log
-            // handles the FK from there.
-            int removed = deadlineRepository.deleteAllByCycleId(cycle.getCycleId());
-            log.info("Removed {} deadlines for cycle {}", removed, id);
-            cycleRepository.delete(cycle);
+            cycleLifecycleService.deleteCycleAtomically(id);
         } catch (DataIntegrityViolationException ex) {
             log.warn("Delete cycle {} blocked by integrity constraint", id, ex);
             throw new BadRequestException(
                     "Cannot delete cycle: it is still referenced by other records.");
-        } catch (Exception ex) {
-            log.error("Delete cycle {} failed", id, ex);
-            throw new BadRequestException("Delete failed: " + ex.getMessage());
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Pre-flight validation only — does not mutate. The actual write happens via the
+     * direct UPDATE in {@code CycleLifecycleService}, which avoids JPA dirty-checking
+     * and commit-time flush failures.
+     */
+    private void validateTransition(FypCycle cycle, CycleStatus next) {
+        CycleStatus current = cycle.getStatus();
+        if (current == next) return;
+        boolean allowed = switch (current) {
+            case PLANNING -> next == CycleStatus.ACTIVE || next == CycleStatus.COMPLETED || next == CycleStatus.ARCHIVED;
+            case ACTIVE -> next == CycleStatus.COMPLETED || next == CycleStatus.PLANNING;
+            case COMPLETED -> next == CycleStatus.ARCHIVED || next == CycleStatus.ACTIVE;
+            case ARCHIVED -> false;
+        };
+        if (!allowed) {
+            throw new BadRequestException("Cannot transition cycle from " + current + " to " + next + ".");
+        }
     }
 
     @GetMapping("/template")
@@ -348,35 +334,6 @@ public class AdminCycleController {
                 "deadlinesCreated", created,
                 "phase", phase
         ));
-    }
-
-    /**
-     * Enforce one-active-per-type and a sensible state machine:
-     *   PLANNING → ACTIVE → COMPLETED → ARCHIVED. PLANNING ↔ ACTIVE is allowed; everything
-     *   else is one-way to keep the timeline auditable.
-     */
-    private void applyStatusTransition(FypCycle cycle, CycleStatus next) {
-        CycleStatus current = cycle.getStatus();
-        if (current == next) return;
-        boolean allowed = switch (current) {
-            case PLANNING -> next == CycleStatus.ACTIVE || next == CycleStatus.COMPLETED || next == CycleStatus.ARCHIVED;
-            case ACTIVE -> next == CycleStatus.COMPLETED || next == CycleStatus.PLANNING;
-            case COMPLETED -> next == CycleStatus.ARCHIVED || next == CycleStatus.ACTIVE;
-            case ARCHIVED -> false;
-        };
-        if (!allowed) {
-            throw new BadRequestException("Cannot transition cycle from " + current + " to " + next + ".");
-        }
-        if (next == CycleStatus.ACTIVE) {
-            cycleRepository.findFirstByCycleTypeAndStatusOrderByStartDateDesc(cycle.getCycleType(), CycleStatus.ACTIVE)
-                    .ifPresent(other -> {
-                        if (!other.getCycleId().equals(cycle.getCycleId())) {
-                            other.setStatus(CycleStatus.COMPLETED);
-                            cycleRepository.save(other);
-                        }
-                    });
-        }
-        cycle.setStatus(next);
     }
 
     private static String stringField(Map<String, Object> data, String key) {
