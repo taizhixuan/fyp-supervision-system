@@ -71,10 +71,10 @@ const SAMPLE_MEETINGS: Meeting[] = [
 ]
 
 const statusConfig: Record<MeetingStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; color: string; bgColor: string; icon: typeof Clock }> = {
-  PENDING: { label: 'Pending', variant: 'warning', color: 'text-amber-600', bgColor: 'bg-amber-100', icon: Clock },
-  CONFIRMED: { label: 'Confirmed', variant: 'success', color: 'text-emerald-600', bgColor: 'bg-emerald-100', icon: CheckCircle },
-  RESCHEDULED: { label: 'Rescheduled', variant: 'warning', color: 'text-orange-600', bgColor: 'bg-orange-100', icon: Calendar },
-  CANCELLED: { label: 'Cancelled', variant: 'error', color: 'text-rose-600', bgColor: 'bg-rose-100', icon: AlertCircle },
+  PENDING: { label: 'Pending', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Clock },
+  CONFIRMED: { label: 'Confirmed', variant: 'success', color: 'text-success-600', bgColor: 'bg-success-100', icon: CheckCircle },
+  RESCHEDULED: { label: 'Rescheduled', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Calendar },
+  CANCELLED: { label: 'Cancelled', variant: 'error', color: 'text-error-600', bgColor: 'bg-error-100', icon: AlertCircle },
   COMPLETED: { label: 'Completed', variant: 'default', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: CheckCircle },
 }
 
@@ -119,19 +119,19 @@ export function MeetingList() {
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
               <CalendarCheck className="h-7 w-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Meetings</h1>
-              <p className="text-stone-300 mt-0.5">Schedule and manage supervisor meetings</p>
+              <p className="text-primary-200 mt-0.5">Schedule and manage supervisor meetings</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -148,7 +148,7 @@ export function MeetingList() {
               <Button
                 variant="primary"
                 leftIcon={<Plus className="h-4 w-4" />}
-                className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/25"
+                className="bg-white text-primary-900 hover:bg-primary-50 border-0 shadow-lg"
               >
                 Request Meeting
               </Button>
@@ -159,37 +159,37 @@ export function MeetingList() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="relative overflow-hidden border-l-4 border-l-sky-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-info-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-sky-600" />
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-info-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-sky-600">{upcomingMeetings.length}</div>
+              <div className="text-2xl font-bold text-info-600">{upcomingMeetings.length}</div>
               <p className="text-sm text-neutral-600">Upcoming</p>
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-success-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-success-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-2xl font-bold text-success-600">
                 {meetings.filter((m) => m.status === 'CONFIRMED').length}
               </div>
               <p className="text-sm text-neutral-600">Confirmed</p>
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+              <Clock className="h-5 w-5 text-warning-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-2xl font-bold text-warning-600">
                 {meetings.filter((m) => m.status === 'PENDING').length}
               </div>
               <p className="text-sm text-neutral-600">Pending</p>
@@ -210,7 +210,7 @@ export function MeetingList() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
+      <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -249,7 +249,7 @@ export function MeetingList() {
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
                   statusFilter === status
-                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                    ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25'
                     : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
                 )}
               >
@@ -264,11 +264,11 @@ export function MeetingList() {
       {upcomingMeetings.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-4 w-4 text-sky-600" />
+            <div className="w-8 h-8 bg-info-100 rounded-lg flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-info-600" />
             </div>
             <h2 className="text-lg font-bold text-stone-800">Upcoming Meetings</h2>
-            <span className="px-2.5 py-0.5 bg-sky-100 text-sky-700 text-sm font-semibold rounded-full">
+            <span className="px-2.5 py-0.5 bg-info-100 text-info-700 text-sm font-semibold rounded-full">
               {upcomingMeetings.length}
             </span>
           </div>
@@ -312,7 +312,7 @@ export function MeetingList() {
               : 'No meetings match the selected filter'}
           </p>
           <Link to={ROUTES.STUDENT.MEETING_NEW}>
-            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 border-0">
+            <Button variant="primary">
               Request Meeting
             </Button>
           </Link>
@@ -333,23 +333,23 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
     <Link to={ROUTES.STUDENT.MEETING_DETAIL.replace(':id', meeting.meetingId)}>
       <Card className={cn(
         'transition-all duration-200 hover:shadow-lg group p-5',
-        isUpcoming && meeting.status === 'CONFIRMED' && 'border-l-4 border-l-emerald-500',
-        isUpcoming && meeting.status === 'PENDING' && 'border-l-4 border-l-amber-500',
-        meeting.status === 'CANCELLED' && 'border-l-4 border-l-rose-500 opacity-70',
+        isUpcoming && meeting.status === 'CONFIRMED' && 'border-l-4 border-l-success-500',
+        isUpcoming && meeting.status === 'PENDING' && 'border-l-4 border-l-warning-500',
+        meeting.status === 'CANCELLED' && 'border-l-4 border-l-error-500 opacity-70',
         meeting.status === 'COMPLETED' && 'border-l-4 border-l-stone-300',
         !isUpcoming && meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' && 'border-l-4 border-l-stone-300'
       )}>
         <div className="flex flex-col sm:flex-row gap-5">
           {/* Date Box */}
           <div className="flex-shrink-0">
-            <div className="w-20 bg-gradient-to-br from-stone-800 to-stone-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
-              <p className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider">
+            <div className="w-20 bg-gradient-to-br from-primary-800 to-primary-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
+              <p className="text-[10px] text-primary-300 font-semibold uppercase tracking-wider">
                 {meetingDate.toLocaleDateString('en-MY', { month: 'short' })}
               </p>
               <p className="text-3xl font-bold text-white">
                 {meetingDate.getDate()}
               </p>
-              <p className="text-[10px] text-amber-400 font-semibold">
+              <p className="text-[10px] text-primary-200 font-semibold">
                 {meetingDate.toLocaleDateString('en-MY', { weekday: 'short' })}
               </p>
             </div>
@@ -359,7 +359,7 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">
+                <h3 className="font-bold text-stone-800 group-hover:text-primary-700 transition-colors">
                   {meeting.title}
                 </h3>
                 <p className="text-sm text-stone-500 flex items-center gap-1.5 mt-0.5">
@@ -387,8 +387,8 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
               <span className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium',
                 meeting.platform === 'IN_PERSON'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-sky-100 text-sky-700'
+                  ? 'bg-success-100 text-success-700'
+                  : 'bg-info-100 text-info-700'
               )}>
                 <PlatformIcon className="h-4 w-4" />
                 {meeting.platform === 'IN_PERSON' ? meeting.location : meeting.platform.replace('_', ' ')}
@@ -410,8 +410,8 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
 
           {/* Arrow */}
           <div className="hidden sm:flex items-center">
-            <div className="w-10 h-10 rounded-xl bg-stone-100 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
-              <ArrowRight className="h-5 w-5 text-stone-400 group-hover:text-amber-600 transition-colors" />
+            <div className="w-10 h-10 rounded-xl bg-stone-100 group-hover:bg-primary-100 flex items-center justify-center transition-colors">
+              <ArrowRight className="h-5 w-5 text-stone-400 group-hover:text-primary-600 transition-colors" />
             </div>
           </div>
         </div>

@@ -202,19 +202,19 @@ export function ResourcesHub() {
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
               <Library className="h-7 w-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Resources Hub</h1>
-              <p className="text-stone-300 mt-0.5">Guidelines, templates, and helpful materials</p>
+              <p className="text-primary-200 mt-0.5">Guidelines, templates, and helpful materials</p>
             </div>
           </div>
           <Link to={ROUTES.STUDENT.DEADLINES}>
@@ -231,16 +231,16 @@ export function ResourcesHub() {
         {/* Quick Stats */}
         <div className="relative mt-6 pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-amber-400">{resources.length}</div>
-            <div className="text-sm text-stone-400">Total Resources</div>
+            <div className="text-2xl font-bold text-primary-200">{resources.length}</div>
+            <div className="text-sm text-primary-300">Total Resources</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-400">{featuredResources.length}</div>
-            <div className="text-sm text-stone-400">Featured</div>
+            <div className="text-2xl font-bold text-success-400">{featuredResources.length}</div>
+            <div className="text-sm text-primary-300">Featured</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-sky-400">{Object.keys(categoryConfig).length}</div>
-            <div className="text-sm text-stone-400">Categories</div>
+            <div className="text-2xl font-bold text-info-400">{Object.keys(categoryConfig).length}</div>
+            <div className="text-sm text-primary-300">Categories</div>
           </div>
         </div>
       </div>
@@ -249,11 +249,11 @@ export function ResourcesHub() {
       {featuredResources.length > 0 && (
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-amber-600" />
+            <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-warning-600" />
             </div>
             <h2 className="text-lg font-bold text-stone-800">Featured Resources</h2>
-            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-700 text-sm font-semibold rounded-full">
+            <span className="px-2.5 py-0.5 bg-warning-100 text-warning-700 text-sm font-semibold rounded-full">
               {featuredResources.length}
             </span>
           </div>
@@ -277,7 +277,7 @@ export function ResourcesHub() {
               placeholder="Search resources..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
             />
           </div>
           <div className="flex flex-wrap gap-3">
@@ -286,7 +286,7 @@ export function ResourcesHub() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 font-medium transition-all"
+                className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
               >
                 <option value="all">All Types</option>
                 {Object.entries(typeConfig).map(([key, config]) => (
@@ -297,7 +297,7 @@ export function ResourcesHub() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 font-medium transition-all"
+              className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
             >
               <option value="all">All Categories</option>
               {Object.entries(categoryConfig).map(([key, label]) => (
@@ -347,9 +347,9 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
 
   return (
     <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
-      <Card className="h-full group hover:shadow-lg transition-all duration-300 border-l-4 border-l-amber-400 overflow-hidden relative">
+      <Card className="h-full group hover:shadow-lg transition-all duration-300 border-l-4 border-l-warning-400 overflow-hidden relative">
         {/* Background Glow */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
+        <div className="absolute top-0 right-0 w-24 h-24 bg-warning-500/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
 
         <div className="relative">
           {/* Header with Icon */}
@@ -362,10 +362,10 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500 flex-shrink-0" />
+                <Star className="h-4 w-4 text-warning-500 fill-warning-500 flex-shrink-0" />
                 <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
               </div>
-              <h3 className="font-bold text-stone-800 line-clamp-1 mt-1 group-hover:text-amber-700 transition-colors">
+              <h3 className="font-bold text-stone-800 line-clamp-1 mt-1 group-hover:text-primary-700 transition-colors">
                 {resource.title}
               </h3>
             </div>
@@ -388,7 +388,7 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
                 {resource.viewCount.toLocaleString()} views
               </span>
             </div>
-            <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </Card>
@@ -402,7 +402,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
 
   return (
     <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
-      <Card className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-stone-200 hover:border-l-amber-400 p-5">
+      <Card className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-stone-200 hover:border-l-primary-400 p-5">
         <div className="flex items-center gap-4">
           {/* Icon */}
           <div className={cn(
@@ -416,11 +416,11 @@ function ResourceRow({ resource }: { resource: Resource }) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">
+              <h3 className="font-semibold text-stone-800 group-hover:text-primary-700 transition-colors">
                 {resource.title}
               </h3>
               {resource.isFeatured && (
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
               )}
             </div>
             <p className="text-sm text-stone-500 line-clamp-1">{resource.description}</p>
@@ -455,8 +455,8 @@ function ResourceRow({ resource }: { resource: Resource }) {
             </span>
           </div>
 
-          <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
-            <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-amber-600 transition-colors" />
+          <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-primary-100 flex items-center justify-center transition-colors">
+            <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-primary-600 transition-colors" />
           </div>
         </div>
       </Card>

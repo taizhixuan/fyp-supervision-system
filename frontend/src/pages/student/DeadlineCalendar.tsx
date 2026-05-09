@@ -208,19 +208,19 @@ export function DeadlineCalendar() {
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
               <CalendarDays className="h-7 w-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Deadlines & Calendar</h1>
-              <p className="text-stone-300 mt-0.5">Track important dates and submissions</p>
+              <p className="text-primary-200 mt-0.5">Track important dates and submissions</p>
             </div>
           </div>
           <Link to={ROUTES.STUDENT.RESOURCES}>
@@ -291,13 +291,13 @@ export function DeadlineCalendar() {
             </div>
           </div>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-primary-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Target className="h-5 w-5 text-amber-600" />
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Target className="h-5 w-5 text-primary-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">{deadlines.length}</div>
+              <div className="text-2xl font-bold text-primary-600">{deadlines.length}</div>
               <p className="text-sm text-neutral-600">Total</p>
             </div>
           </div>
@@ -314,7 +314,7 @@ export function DeadlineCalendar() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-stone-700 font-medium transition-all"
+              className="px-4 py-2.5 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
             >
               <option value="all">All Types</option>
               {Object.entries(typeConfig).map(([key, config]) => (
@@ -355,7 +355,7 @@ export function DeadlineCalendar() {
         /* Calendar View - Modern Design */
         <Card className="overflow-hidden p-0 border-0 shadow-lg">
           {/* Calendar Header */}
-          <div className="bg-gradient-to-r from-stone-800 to-stone-900 px-6 py-5">
+          <div className="bg-gradient-to-r from-primary-800 to-primary-900 px-6 py-5">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => navigateMonth(-1)}
@@ -367,7 +367,7 @@ export function DeadlineCalendar() {
                 <h2 className="text-2xl font-bold text-white">
                   {currentDate.toLocaleDateString('en-MY', { month: 'long' })}
                 </h2>
-                <p className="text-stone-400 text-sm">{currentDate.getFullYear()}</p>
+                <p className="text-primary-300 text-sm">{currentDate.getFullYear()}</p>
               </div>
               <button
                 onClick={() => navigateMonth(1)}
@@ -380,7 +380,7 @@ export function DeadlineCalendar() {
             <div className="flex justify-center mt-4">
               <button
                 onClick={() => setCurrentDate(new Date())}
-                className="px-4 py-1.5 text-sm font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 rounded-full transition-all duration-200"
+                className="px-4 py-1.5 text-sm font-medium text-primary-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200"
               >
                 Today
               </button>
@@ -420,7 +420,7 @@ export function DeadlineCalendar() {
                       'relative min-h-[100px] p-2 rounded-xl transition-all duration-200 group cursor-pointer',
                       !isCurrentMonth && 'bg-stone-50/50',
                       isCurrentMonth && !isToday && 'bg-white hover:bg-stone-50 hover:shadow-md',
-                      isToday && 'bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-500/30',
+                      isToday && 'bg-gradient-to-br from-primary-700 to-primary-900 shadow-lg shadow-primary-900/30',
                       hasDeadlines && !isToday && 'ring-1 ring-inset ring-stone-200'
                     )}
                   >
@@ -431,7 +431,7 @@ export function DeadlineCalendar() {
                         !isCurrentMonth && 'text-stone-300',
                         isCurrentMonth && !isToday && isWeekend && 'text-rose-400',
                         isCurrentMonth && !isToday && !isWeekend && 'text-stone-700 group-hover:bg-stone-200',
-                        isToday && 'bg-white text-amber-600 shadow-sm'
+                        isToday && 'bg-white text-primary-700 shadow-sm'
                       )}>
                         {date.getDate()}
                       </span>
@@ -439,13 +439,13 @@ export function DeadlineCalendar() {
                       {hasDeadlines && !isToday && (
                         <span className={cn(
                           'w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center',
-                          hasUrgent ? 'bg-error-500 text-white' : 'bg-amber-500 text-white'
+                          hasUrgent ? 'bg-error-500 text-white' : 'bg-warning-500 text-white'
                         )}>
                           {dateDeadlines.length}
                         </span>
                       )}
                       {hasDeadlines && isToday && (
-                        <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white text-amber-600">
+                        <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white text-primary-700">
                           {dateDeadlines.length}
                         </span>
                       )}
@@ -541,11 +541,11 @@ export function DeadlineCalendar() {
           {upcomingDeadlines.length > 0 && (
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-amber-600" />
+                <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-warning-600" />
                 </div>
                 <h2 className="text-lg font-bold text-stone-800">Upcoming Deadlines</h2>
-                <span className="px-2.5 py-0.5 bg-amber-100 text-amber-700 text-sm font-semibold rounded-full">
+                <span className="px-2.5 py-0.5 bg-warning-100 text-warning-700 text-sm font-semibold rounded-full">
                   {upcomingDeadlines.length}
                 </span>
               </div>
@@ -607,8 +607,8 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
       'transition-all duration-200 hover:shadow-md group',
       deadline.isCompleted && 'opacity-70 bg-stone-50',
       isOverdue && 'border-l-4 border-l-error-500 bg-error-50/30',
-      isUrgent && !isOverdue && 'border-l-4 border-l-amber-500 bg-amber-50/30',
-      !deadline.isCompleted && !isOverdue && !isUrgent && 'border-l-4 border-l-stone-300 hover:border-l-amber-400'
+      isUrgent && !isOverdue && 'border-l-4 border-l-warning-500 bg-warning-50/30',
+      !deadline.isCompleted && !isOverdue && !isUrgent && 'border-l-4 border-l-stone-300 hover:border-l-primary-400'
     )}>
       <div className="flex items-start gap-4">
         {/* Icon */}
@@ -619,7 +619,7 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
             : isOverdue
             ? 'bg-error-100 ring-2 ring-error-200'
             : isUrgent
-            ? 'bg-amber-100 ring-2 ring-amber-200'
+            ? 'bg-warning-100 ring-2 ring-warning-200'
             : config.color.replace('text-', 'ring-').replace('-700', '-200') + ' ring-2'
         )}>
           {deadline.isCompleted ? (
@@ -628,7 +628,7 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
             <Icon className={cn(
               'h-6 w-6',
               isOverdue && 'text-error-600',
-              isUrgent && !isOverdue && 'text-amber-600'
+              isUrgent && !isOverdue && 'text-warning-600'
             )} />
           )}
         </div>
@@ -661,7 +661,7 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
           <div className={cn(
             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm',
             isOverdue && 'bg-error-100 text-error-700',
-            isUrgent && !isOverdue && 'bg-amber-100 text-amber-700',
+            isUrgent && !isOverdue && 'bg-warning-100 text-warning-700',
             deadline.isCompleted && 'bg-success-100 text-success-700',
             !isOverdue && !isUrgent && !deadline.isCompleted && 'bg-stone-100 text-stone-700'
           )}>
