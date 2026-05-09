@@ -251,7 +251,9 @@ public class AdminCycleController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCycle(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCycle(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserDetails admin,
+                                         HttpServletRequest httpRequest) {
         log.info("Delete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
@@ -265,6 +267,9 @@ public class AdminCycleController {
                     "Cannot delete a cycle that has " + projectCount
                             + " project(s) attached. Detach or archive them first.");
         }
+        // Snapshot the cycle identity before delete for the audit row.
+        String snapshot = cycle.getCycleType() + " " + cycle.getAcademicYear()
+                + " (" + cycle.getCycleCode() + ", " + cycle.getStatus() + ")";
         try {
             cycleLifecycleService.deleteCycleAtomically(id);
         } catch (DataIntegrityViolationException ex) {
@@ -272,6 +277,8 @@ public class AdminCycleController {
             throw new BadRequestException(
                     "Cannot delete cycle: it is still referenced by other records.");
         }
+        auditService.record(adminFromPrincipal(admin), "CYCLE_DELETED", "FYP_CYCLE",
+                String.valueOf(id), snapshot, httpRequest);
         return ResponseEntity.noContent().build();
     }
 

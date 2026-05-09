@@ -7,8 +7,10 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProposalRepository;
 import com.fyp.supervision.repository.ProposalReviewRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.CommitteeService;
 import com.fyp.supervision.service.NotificationService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ public class CommitteeProposalController {
     private final UserAccountRepository userAccountRepository;
     private final NotificationService notificationService;
     private final CommitteeService committeeService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<?> getProposals(@RequestParam(required = false) String status, Pageable pageable) {
@@ -41,7 +44,10 @@ public class CommitteeProposalController {
     }
 
     @PostMapping("/{id}/review")
-    public ResponseEntity<?> reviewProposal(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> reviewProposal(@AuthenticationPrincipal UserDetails user,
+                                            @PathVariable Long id,
+                                            HttpServletRequest httpRequest,
+                                            @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         Proposal proposal = proposalRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
 
@@ -71,6 +77,14 @@ public class CommitteeProposalController {
                 "Your proposal has been reviewed by the FYP committee.",
                 "/student/proposal"
         );
+
+        // Audit row tagged by decision so admins can filter "PROPOSAL_REVIEWED_APPROVED"
+        // separately from REJECTED / REVISION_REQUIRED in the audit page.
+        String studentLabel = proposal.getStudent() != null ? proposal.getStudent().getEmail() : ("proposal " + id);
+        String safeDecision = decision == null ? "UNKNOWN" : decision;
+        auditService.record(userAccountRepository.findById(userId).orElse(null),
+                "PROPOSAL_REVIEWED_" + safeDecision, "PROPOSAL", String.valueOf(id),
+                "student=" + studentLabel + " decision=" + safeDecision, httpRequest);
 
         return ResponseEntity.ok(Map.of("success", true));
     }
