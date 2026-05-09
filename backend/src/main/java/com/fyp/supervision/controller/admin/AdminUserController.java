@@ -92,13 +92,24 @@ public class AdminUserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserDetails admin,
+                                           HttpServletRequest httpRequest) {
+        // Snapshot identity BEFORE delete — after the row is gone we can't look it up.
+        UserAccount target = userRepository.findById(id).orElse(null);
+        String snapshot = target != null
+                ? target.getRole() + " " + target.getEmail() + " (" + target.getMmuId() + ")"
+                : "unknown user " + id;
         userRepository.deleteById(id);
+        auditService.record(adminFromPrincipal(admin), "USER_DELETED", "USER_ACCOUNT",
+                String.valueOf(id), snapshot, httpRequest);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/bulk-status")
-    public ResponseEntity<?> bulkStatusUpdate(@RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> bulkStatusUpdate(@RequestBody Map<String, Object> data,
+                                              @AuthenticationPrincipal UserDetails admin,
+                                              HttpServletRequest httpRequest) {
         @SuppressWarnings("unchecked")
         List<Number> userIds = (List<Number>) data.get("userIds");
         UserStatus status = UserStatus.valueOf((String) data.get("status"));
@@ -106,6 +117,14 @@ public class AdminUserController {
         List<UserAccount> users = userRepository.findByUserIdIn(ids);
         users.forEach(u -> u.setStatus(status));
         userRepository.saveAll(users);
+        UserAccount adminUser = adminFromPrincipal(admin);
+        // One audit row per user — easier to filter by a single user later than parsing
+        // a list out of one combined row.
+        for (UserAccount u : users) {
+            auditService.record(adminUser, "USER_STATUS_CHANGED", "USER_ACCOUNT",
+                    String.valueOf(u.getUserId()),
+                    "set status=" + status + " for " + u.getEmail(), httpRequest);
+        }
         return ResponseEntity.ok(Map.of("updated", users.size()));
     }
 
