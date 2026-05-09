@@ -29,6 +29,13 @@ public class AdminGradeController {
         return ResponseEntity.ok(Map.of("grades", grades, "total", grades.size()));
     }
 
+    /** Admin inbox — defaults to SUBMITTED rows awaiting finalisation. */
+    @GetMapping
+    public ResponseEntity<?> list(@RequestParam(defaultValue = "SUBMITTED") String status) {
+        List<Map<String, Object>> grades = gradingService.listByStatus(status);
+        return ResponseEntity.ok(Map.of("grades", grades, "total", grades.size()));
+    }
+
     /**
      * Lock a SUBMITTED grade. After this the student can see it on their dashboard and
      * the grader can no longer edit it.

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   AlertTriangle,
   AlertCircle,
+  Award,
   Video,
   MapPin,
   ChevronRight,
@@ -23,6 +24,7 @@ import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { trimesterProgress } from '@/lib/utils/trimester'
+import { useStudentFinalisedGrades } from '@/lib/hooks/useGrading'
 import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus } from '@/types'
 
 // Build the 4-step strip from the backend-derived registration status.
@@ -485,6 +487,9 @@ export function StudentDashboard() {
           </div>
         </Card>
       )}
+
+      {/* Final-report grades — shown only when admin has finalised at least one. */}
+      <FinalGradesCard />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1055,5 +1060,52 @@ export function StudentDashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+// ----- Final-report grades card -----
+// Defined inline to avoid creating yet another file for one read-only widget.
+
+function FinalGradesCard() {
+  const { data, isLoading } = useStudentFinalisedGrades()
+  if (isLoading) return null
+  const grades = data?.grades ?? []
+  if (grades.length === 0) return null
+  return (
+    <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+          <Award className="h-5 w-5 text-amber-600" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-neutral-900">Your FYP Grades</h2>
+          <p className="text-sm text-neutral-500">Released by the FYP committee.</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {grades.map((g) => (
+          <div key={g.gradeId} className="rounded-xl bg-white border border-amber-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Badge variant="default" size="sm">{g.phase}</Badge>
+              <span className="text-xs text-neutral-500">
+                {g.finalisedAt ? `Released ${new Date(g.finalisedAt).toLocaleDateString('en-MY')}` : ''}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-bold text-neutral-900">
+                {g.totalScore != null ? Number(g.totalScore).toFixed(1) : '—'}
+              </span>
+              {g.letterGrade && (
+                <span className="text-xl font-semibold text-amber-700">{g.letterGrade}</span>
+              )}
+            </div>
+            {g.remarks && (
+              <p className="mt-2 text-sm text-neutral-600 italic">"{g.remarks}"</p>
+            )}
+            <p className="mt-2 text-xs text-neutral-500">Graded by {g.graderName}</p>
+          </div>
+        ))}
+      </div>
+    </Card>
   )
 }

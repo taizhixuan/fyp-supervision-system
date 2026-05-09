@@ -149,6 +149,11 @@ const supervisorNavItems: NavItem[] = [
     icon: <FolderOpen className="h-5 w-5" />,
   },
   {
+    label: 'Grades',
+    href: ROUTES.SUPERVISOR.GRADES,
+    icon: <Award className="h-5 w-5" />,
+  },
+  {
     label: 'Announcements',
     href: ROUTES.SUPERVISOR.ANNOUNCEMENTS,
     icon: <Megaphone className="h-5 w-5" />,
@@ -232,6 +237,11 @@ const adminNavItems: NavItem[] = [
   {
     label: 'FYP1 Pass Tracking',
     href: ROUTES.ADMIN.FYP1_PASS,
+    icon: <Award className="h-5 w-5" />,
+  },
+  {
+    label: 'Final Grades',
+    href: ROUTES.ADMIN.GRADES,
     icon: <Award className="h-5 w-5" />,
   },
   {
