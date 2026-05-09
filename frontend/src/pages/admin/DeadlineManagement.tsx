@@ -11,6 +11,7 @@ import {
   CheckCircle,
   X,
   Edit,
+  Trash2,
   FileText,
   Users,
   ClipboardList,
@@ -20,23 +21,28 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import {
   useDeadlines,
   useCreateDeadline,
   useUpdateDeadline,
+  useDeleteDeadline,
   useFYPCycles,
 } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { AdminDeadlineType, DeadlineStatus, AdminDeadline } from '@/types'
+import type { AdminDeadlineType, DeadlineStatus, AdminDeadline, UserRole } from '@/types'
+
+const TARGET_ROLE_OPTIONS: UserRole[] = ['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE']
 
 const deadlineSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  title: z.string().min(2, 'Title must be at least 2 characters'),
   description: z.string().optional(),
-  type: z.enum(['PROPOSAL_SUBMISSION', 'SUPERVISOR_SELECTION', 'PROGRESS_REPORT', 'FINAL_REPORT', 'PRESENTATION', 'CUSTOM'] as const),
-  cycleId: z.string().min(1, 'Please select a cycle'),
+  type: z.string().min(1, 'Type is required'),
+  cycleId: z.coerce.number().int().positive('Please select a cycle'),
   dueDate: z.string().min(1, 'Due date is required'),
-  reminderDays: z.number().min(0).max(30),
-  isActive: z.boolean(),
+  reminderDays: z.coerce.number().int().min(0).max(30),
+  audience: z.enum(['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE', 'ALL']),
+  isExtendable: z.boolean(),
 })
 
 type DeadlineFormData = z.infer<typeof deadlineSchema>
@@ -48,19 +54,32 @@ const DEFAULT_TYPE: TypeEntry = { label: 'Other', color: 'text-neutral-600', bgC
 const DEFAULT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
 
 const typeConfig: Record<string, TypeEntry> = {
-  PROPOSAL_SUBMISSION: { label: 'Proposal', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: FileText },
+  ANNOUNCEMENT: { label: 'Announcement', color: 'text-info-600', bgColor: 'bg-info-50', icon: FileText },
+  BRIEFING: { label: 'Briefing', color: 'text-info-600', bgColor: 'bg-info-50', icon: Users },
+  PROPOSAL_SUBMISSION: { label: 'Proposal Submission', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: FileText },
+  PROPOSAL_ACCEPTANCE: { label: 'Proposal Acceptance', color: 'text-primary-600', bgColor: 'bg-primary-50', icon: CheckCircle },
+  STUDENT_CONFIRMATION: { label: 'Student Confirmation', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
+  SUBJECT_REG_FORM: { label: 'Subject Reg Form', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: ClipboardList },
+  SUBJECT_REG_CLIC: { label: 'Subject Reg Clic', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: ClipboardList },
   SUPERVISOR_SELECTION: { label: 'Supervisor Selection', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
-  REGISTRATION: { label: 'Registration', color: 'text-accent-600', bgColor: 'bg-accent-50', icon: Users },
+  MODERATOR_ASSIGNMENT: { label: 'Moderator Assignment', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Users },
   PROGRESS_REPORT: { label: 'Progress Report', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
+  INTERIM_REPORT: { label: 'Interim Report', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
   FINAL_REPORT: { label: 'Final Report', color: 'text-success-600', bgColor: 'bg-success-50', icon: FileText },
+  FINAL_SOFT_COPY: { label: 'Final Soft Copy', color: 'text-success-600', bgColor: 'bg-success-50', icon: FileText },
   PRESENTATION: { label: 'Presentation', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Calendar },
+  POSTER_SLOTS: { label: 'Poster Slots', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Calendar },
+  POSTER_EVAL: { label: 'Poster Evaluation', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Calendar },
+  PLAGIARISM: { label: 'Plagiarism Check', color: 'text-error-600', bgColor: 'bg-error-50', icon: AlertTriangle },
+  FEEDBACK: { label: 'Feedback', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: ClipboardList },
+  MARK_ENTRY: { label: 'Mark Entry', color: 'text-success-600', bgColor: 'bg-success-50', icon: ClipboardList },
+  MEETING_LOGS: { label: 'Meeting Logs', color: 'text-info-600', bgColor: 'bg-info-50', icon: ClipboardList },
   CUSTOM: { label: 'Custom', color: 'text-neutral-600', bgColor: 'bg-neutral-100', icon: Clock },
 }
 
 const statusConfig: Record<string, StatusEntry> = {
   UPCOMING: { label: 'Upcoming', color: 'text-info-600', bgColor: 'bg-info-50' },
   ACTIVE: { label: 'Active', color: 'text-success-600', bgColor: 'bg-success-50' },
-  PASSED: { label: 'Passed', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
   PAST: { label: 'Past', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
   EXTENDED: { label: 'Extended', color: 'text-warning-600', bgColor: 'bg-warning-50' },
 }
@@ -68,20 +87,24 @@ const statusConfig: Record<string, StatusEntry> = {
 const getTypeConfig = (key: string | undefined): TypeEntry => (key && typeConfig[key]) || DEFAULT_TYPE
 const getStatusConfig = (key: string | undefined): StatusEntry => (key && statusConfig[key]) || DEFAULT_STATUS
 
+const TYPE_OPTIONS: AdminDeadlineType[] = Object.keys(typeConfig)
+
 export function DeadlineManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<AdminDeadlineType | 'ALL'>('ALL')
   const [statusFilter, setStatusFilter] = useState<DeadlineStatus | 'ALL'>('ALL')
+  const [cycleFilter, setCycleFilter] = useState<number | undefined>(undefined)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingDeadline, setEditingDeadline] = useState<AdminDeadline | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
-  const { data, isLoading } = useDeadlines(
-    typeFilter !== 'ALL' ? typeFilter : undefined
-  )
+  const { data, isLoading } = useDeadlines(cycleFilter)
   const { data: cyclesData } = useFYPCycles()
   const createMutation = useCreateDeadline()
   const updateMutation = useUpdateDeadline()
+  const deleteMutation = useDeleteDeadline()
+  const successToast = useSuccessToast()
+  const errorToast = useErrorToast()
 
   const {
     register,
@@ -93,35 +116,45 @@ export function DeadlineManagement() {
     resolver: zodResolver(deadlineSchema),
     defaultValues: {
       reminderDays: 7,
-      isActive: true,
+      audience: 'STUDENT',
+      isExtendable: false,
+      type: 'CUSTOM',
     },
   })
 
   const filteredDeadlines = data?.deadlines.filter((deadline) => {
+    if (typeFilter !== 'ALL' && deadline.type !== typeFilter) return false
     if (statusFilter !== 'ALL' && deadline.status !== statusFilter) return false
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
-      deadline.name.toLowerCase().includes(query) ||
-      deadline.description?.toLowerCase().includes(query)
+      (deadline.title || '').toLowerCase().includes(query) ||
+      (deadline.description || '').toLowerCase().includes(query)
     )
   })
+
+  const closeModals = () => {
+    setShowCreateModal(false)
+    setEditingDeadline(null)
+    reset()
+  }
 
   const handleCreate = async (formData: DeadlineFormData) => {
     try {
       await createMutation.mutateAsync({
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
         cycleId: formData.cycleId,
-        dueDate: new Date(formData.dueDate).toISOString(),
-        reminderDays: formData.reminderDays,
-        isActive: formData.isActive,
+        title: formData.title,
+        type: formData.type,
+        description: formData.description,
+        dueDate: formData.dueDate,
+        reminderDays: [formData.reminderDays],
+        targetRoles: formData.audience === 'ALL' ? ['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE'] : [formData.audience],
+        isExtendable: formData.isExtendable,
       })
-      setShowCreateModal(false)
-      reset()
-    } catch (error) {
-      console.error('Failed to create deadline:', error)
+      successToast('Deadline created', formData.title)
+      closeModals()
+    } catch (e) {
+      errorToast('Create failed', (e as Error).message)
     }
   }
 
@@ -131,30 +164,41 @@ export function DeadlineManagement() {
       await updateMutation.mutateAsync({
         deadlineId: editingDeadline.deadlineId,
         data: {
-          name: formData.name,
+          title: formData.title,
           description: formData.description,
-          type: formData.type,
-          dueDate: new Date(formData.dueDate).toISOString(),
-          reminderDays: formData.reminderDays,
-          isActive: formData.isActive,
+          dueDate: formData.dueDate,
+          reminderDays: [formData.reminderDays],
+          targetRoles: formData.audience === 'ALL' ? ['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE'] : [formData.audience],
+          isExtendable: formData.isExtendable,
         },
       })
-      setEditingDeadline(null)
-      reset()
-    } catch (error) {
-      console.error('Failed to update deadline:', error)
+      successToast('Deadline updated', formData.title)
+      closeModals()
+    } catch (e) {
+      errorToast('Update failed', (e as Error).message)
+    }
+  }
+
+  const handleDelete = async (deadline: AdminDeadline) => {
+    if (!window.confirm(`Delete deadline "${deadline.title}"?`)) return
+    try {
+      await deleteMutation.mutateAsync(deadline.deadlineId)
+      successToast('Deleted', deadline.title)
+    } catch (e) {
+      errorToast('Delete failed', (e as Error).message)
     }
   }
 
   const openEditModal = (deadline: AdminDeadline) => {
     setEditingDeadline(deadline)
-    setValue('name', deadline.name)
+    setValue('title', deadline.title)
     setValue('description', deadline.description || '')
     setValue('type', deadline.type)
     setValue('cycleId', deadline.cycleId)
-    setValue('dueDate', deadline.dueDate.split('T')[0])
-    setValue('reminderDays', deadline.reminderDays || 7)
-    setValue('isActive', deadline.isActive)
+    setValue('dueDate', deadline.dueDate ? deadline.dueDate.split('T')[0] : '')
+    setValue('reminderDays', deadline.reminderDays?.[0] ?? 7)
+    setValue('audience', (deadline.targetRoles?.[0] as DeadlineFormData['audience']) ?? 'STUDENT')
+    setValue('isExtendable', deadline.isExtendable ?? false)
   }
 
   const getDaysUntil = (dueDate: string) => {
@@ -169,9 +213,7 @@ export function DeadlineManagement() {
     const calendar: Record<string, AdminDeadline[]> = {}
     filteredDeadlines.forEach((deadline) => {
       const monthKey = new Date(deadline.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-      if (!calendar[monthKey]) {
-        calendar[monthKey] = []
-      }
+      if (!calendar[monthKey]) calendar[monthKey] = []
       calendar[monthKey].push(deadline)
     })
     return calendar
@@ -185,7 +227,8 @@ export function DeadlineManagement() {
     )
   }
 
-  const activeCycles = cyclesData?.cycles.filter((c) => c.status === 'ACTIVE' || c.status === 'PLANNING') || []
+  const cycles = cyclesData?.cycles ?? []
+  const selectableCycles = cycles.filter((c) => c.status === 'PLANNING' || c.status === 'ACTIVE')
 
   return (
     <div className="space-y-6">
@@ -197,7 +240,7 @@ export function DeadlineManagement() {
             Deadline Management
           </h1>
           <p className="text-neutral-600 mt-1">
-            Configure submission deadlines and important dates
+            Configure submission deadlines for each FYP cycle.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -223,7 +266,12 @@ export function DeadlineManagement() {
               Calendar
             </button>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button
+            onClick={() => {
+              reset({ reminderDays: 7, audience: 'STUDENT', isExtendable: false, type: 'CUSTOM' })
+              setShowCreateModal(true)
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Deadline
           </Button>
@@ -259,13 +307,23 @@ export function DeadlineManagement() {
             />
           </div>
           <select
+            value={cycleFilter ?? ''}
+            onChange={(e) => setCycleFilter(e.target.value ? Number(e.target.value) : undefined)}
+            className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">All Cycles</option>
+            {cycles.map((c) => (
+              <option key={c.cycleId} value={c.cycleId}>{c.cycleCode || c.name}</option>
+            ))}
+          </select>
+          <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as AdminDeadlineType | 'ALL')}
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Types</option>
-            {Object.entries(typeConfig).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
+            {TYPE_OPTIONS.map((key) => (
+              <option key={key} value={key}>{typeConfig[key].label}</option>
             ))}
           </select>
           <select
@@ -283,7 +341,6 @@ export function DeadlineManagement() {
 
       {/* Content */}
       {viewMode === 'list' ? (
-        /* List View */
         <div className="space-y-3">
           {filteredDeadlines && filteredDeadlines.length > 0 ? (
             filteredDeadlines.map((deadline) => {
@@ -300,18 +357,14 @@ export function DeadlineManagement() {
                         <TypeIcon className={cn('h-5 w-5', type.color)} />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-neutral-900">{deadline.name}</h3>
-                          <span className={cn(
-                            'px-2 py-0.5 rounded-full text-xs font-medium',
-                            status.bgColor,
-                            status.color
-                          )}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-neutral-900">{deadline.title}</h3>
+                          <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', status.bgColor, status.color)}>
                             {status.label}
                           </span>
-                          {!deadline.isActive && (
-                            <span className="px-2 py-0.5 bg-neutral-100 text-neutral-500 rounded-full text-xs">
-                              Inactive
+                          {deadline.cycleName && (
+                            <span className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded-full text-xs">
+                              {deadline.cycleName}
                             </span>
                           )}
                         </div>
@@ -340,12 +393,11 @@ export function DeadlineManagement() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(deadline)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEditModal(deadline)}>
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(deadline)} className="text-rose-600">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -357,7 +409,7 @@ export function DeadlineManagement() {
               <Clock className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-neutral-900">No deadlines found</h3>
               <p className="text-neutral-500 mt-1">
-                {searchQuery || typeFilter !== 'ALL' || statusFilter !== 'ALL'
+                {searchQuery || typeFilter !== 'ALL' || statusFilter !== 'ALL' || cycleFilter
                   ? 'Try adjusting your filters'
                   : 'Create your first deadline to get started'}
               </p>
@@ -365,7 +417,6 @@ export function DeadlineManagement() {
           )}
         </div>
       ) : (
-        /* Calendar View */
         <div className="space-y-6">
           {Object.entries(getCalendarData()).map(([month, deadlines]) => (
             <Card key={month} className="p-6">
@@ -378,12 +429,8 @@ export function DeadlineManagement() {
                   const type = getTypeConfig(deadline.type)
                   const TypeIcon = type.icon
                   const daysUntil = getDaysUntil(deadline.dueDate)
-
                   return (
-                    <div
-                      key={deadline.deadlineId}
-                      className="flex items-center gap-4 p-3 bg-neutral-50 rounded-lg"
-                    >
+                    <div key={deadline.deadlineId} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-lg">
                       <div className="text-center min-w-[50px]">
                         <p className="text-2xl font-bold text-neutral-900">
                           {new Date(deadline.dueDate).getDate()}
@@ -396,7 +443,7 @@ export function DeadlineManagement() {
                         <TypeIcon className={cn('h-5 w-5', type.color)} />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-neutral-900">{deadline.name}</h4>
+                        <h4 className="font-medium text-neutral-900">{deadline.title}</h4>
                         <p className="text-sm text-neutral-500">{type.label}</p>
                       </div>
                       <div className={cn(
@@ -407,11 +454,7 @@ export function DeadlineManagement() {
                       )}>
                         {daysUntil < 0 ? 'Overdue' : daysUntil === 0 ? 'Today' : `${daysUntil}d`}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(deadline)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEditModal(deadline)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
@@ -426,40 +469,28 @@ export function DeadlineManagement() {
       {/* Create/Edit Modal */}
       {(showCreateModal || editingDeadline) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-lg p-6">
+          <Card className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-neutral-900">
                 {editingDeadline ? 'Edit Deadline' : 'Create Deadline'}
               </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateModal(false)
-                  setEditingDeadline(null)
-                  reset()
-                }}
-                className="p-1 hover:bg-neutral-100 rounded"
-              >
+              <button type="button" onClick={closeModals} className="p-1 hover:bg-neutral-100 rounded">
                 <X className="h-5 w-5 text-neutral-500" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit(editingDeadline ? handleUpdate : handleCreate)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Deadline Name *
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Title *</label>
                 <Input
-                  {...register('name')}
+                  {...register('title')}
                   placeholder="e.g., Proposal Submission Deadline"
-                  error={errors.name?.message}
+                  error={errors.title?.message}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
                 <textarea
                   {...register('description')}
                   placeholder="Optional description..."
@@ -470,31 +501,28 @@ export function DeadlineManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Type *
-                  </label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Type *</label>
                   <select
                     {...register('type')}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
                   >
-                    {Object.entries(typeConfig).map(([key, config]) => (
-                      <option key={key} value={key}>{config.label}</option>
+                    {TYPE_OPTIONS.map((key) => (
+                      <option key={key} value={key}>{typeConfig[key].label}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    FYP Cycle *
-                  </label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">FYP Cycle *</label>
                   <select
                     {...register('cycleId')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+                    disabled={!!editingDeadline}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 disabled:bg-neutral-100"
                   >
                     <option value="">Select cycle</option>
-                    {activeCycles.map((cycle) => (
+                    {selectableCycles.map((cycle) => (
                       <option key={cycle.cycleId} value={cycle.cycleId}>
-                        {cycle.name}
+                        {cycle.cycleCode || cycle.name}
                       </option>
                     ))}
                   </select>
@@ -506,46 +534,37 @@ export function DeadlineManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Due Date *
-                  </label>
-                  <Input
-                    type="date"
-                    {...register('dueDate')}
-                    error={errors.dueDate?.message}
-                  />
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Due Date *</label>
+                  <Input type="date" {...register('dueDate')} error={errors.dueDate?.message} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Reminder (days before)
-                  </label>
-                  <Input
-                    type="number"
-                    {...register('reminderDays', { valueAsNumber: true })}
-                    min={0}
-                    max={30}
-                  />
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Reminder (days before)</label>
+                  <Input type="number" {...register('reminderDays')} min={0} max={30} />
                 </div>
               </div>
 
-              <label className="flex items-center gap-2">
-                <input type="checkbox" {...register('isActive')} />
-                <span className="text-sm text-neutral-700">Active (visible to users)</span>
-              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Audience</label>
+                  <select
+                    {...register('audience')}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+                  >
+                    {TARGET_ROLE_OPTIONS.map((role) => (
+                      <option key={role} value={role}>{role.replace('_', ' ')}</option>
+                    ))}
+                    <option value="ALL">Everyone</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 mt-6">
+                  <input type="checkbox" {...register('isExtendable')} />
+                  <span className="text-sm text-neutral-700">Extension allowed</span>
+                </label>
+              </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateModal(false)
-                    setEditingDeadline(null)
-                    reset()
-                  }}
-                >
-                  Cancel
-                </Button>
+                <Button type="button" variant="secondary" onClick={closeModals}>Cancel</Button>
                 <Button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}

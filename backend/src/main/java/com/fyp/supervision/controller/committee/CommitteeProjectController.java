@@ -30,7 +30,11 @@ public class CommitteeProjectController {
 
     @GetMapping("/unpaired-students")
     public ResponseEntity<?> getUnpairedStudents() {
-        var activeCycle = fypCycleRepository.findByStatus(CycleStatus.ACTIVE).orElse(null);
+        var activeCycle = fypCycleRepository
+                .findFirstByCycleTypeAndStatusOrderByStartDateDesc("FYP1", CycleStatus.ACTIVE)
+                .orElseGet(() -> fypCycleRepository
+                        .findFirstByStatusOrderByStartDateDesc(CycleStatus.ACTIVE)
+                        .orElse(null));
         if (activeCycle == null) return ResponseEntity.ok(Map.of("students", List.of()));
         List<Map<String, Object>> students = committeeService.getUnpairedStudentDtos(activeCycle.getCycleId());
         return ResponseEntity.ok(Map.of("students", students));

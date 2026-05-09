@@ -145,6 +145,7 @@ export type CycleType = 'FYP1' | 'FYP2'
 
 export interface FYPCycle {
   cycleId: number
+  cycleCode: string
   name: string
   type: CycleType
   academicYear: string
@@ -156,13 +157,14 @@ export interface FYPCycle {
   totalStudents: number
   pairedStudents: number
   completedProjects: number
+  deadlineCount: number
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateCycleRequest {
-  name: string
-  type: CycleType
+  cycleCode: string
+  cycleType: CycleType
   academicYear: string
   semester: number
   startDate: string
@@ -170,11 +172,13 @@ export interface CreateCycleRequest {
 }
 
 export interface UpdateCycleRequest {
-  name?: string
+  cycleCode?: string
+  cycleType?: CycleType
+  academicYear?: string
+  semester?: number
   startDate?: string
   endDate?: string
   status?: CycleStatus
-  isActive?: boolean
 }
 
 // ============================================

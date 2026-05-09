@@ -40,4 +40,6 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
     List<UserAccount> findByUserIdIn(List<Long> userIds);
 
     List<UserAccount> findByStatusOrderByCreatedAtAsc(UserStatus status);
+
+    List<UserAccount> findByRoleAndStatus(UserRole role, UserStatus status);
 }

@@ -57,6 +57,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final CycleLifecycleService cycleLifecycleService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -128,6 +129,9 @@ public class AuthService {
         }
 
         if (preApproved) {
+            if (role == UserRole.STUDENT) {
+                cycleLifecycleService.attachStudentToActiveFyp1(user);
+            }
             return "Registration successful. Your account has been auto-approved — you can now sign in.";
         }
 

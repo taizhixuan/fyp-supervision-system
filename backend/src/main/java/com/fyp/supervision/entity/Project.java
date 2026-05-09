@@ -34,7 +34,7 @@ public class Project {
     @JoinColumn(name = "supervisor_user_id")
     private UserAccount supervisor;
 
-    @Column(name = "project_title", nullable = false, length = 500)
+    @Column(name = "project_title", length = 500)
     private String projectTitle;
 
     @Column(columnDefinition = "TEXT")
