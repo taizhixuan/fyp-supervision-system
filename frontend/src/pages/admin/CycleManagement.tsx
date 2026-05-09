@@ -1,20 +1,18 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Calendar,
   Plus,
   Search,
   Clock,
   Users,
-  FileText,
-  ChevronRight,
+  Calendar as CalendarIcon,
   Play,
-  Pause,
   CheckCircle,
   Archive,
   Settings,
   AlertTriangle,
   Sparkles,
+  Trash2,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -22,15 +20,18 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import {
   useFYPCycles,
-  useUpdateCycle,
+  useCreateCycle,
   useCycleTemplate,
   useCreateCycleFromTemplate,
+  useActivateCycle,
+  useCompleteCycle,
+  useArchiveCycle,
+  useDeleteCycle,
 } from '@/lib/hooks/useAdmin'
 import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal'
 import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
-import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { CycleStatus, FYPCycle } from '@/types'
+import type { CycleStatus, FYPCycle, CycleType } from '@/types'
 
 type StatusEntry = { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }
 type TypeEntry = { label: string; color: string; bgColor: string }
@@ -38,50 +39,100 @@ type TypeEntry = { label: string; color: string; bgColor: string }
 const DEFAULT_STATUS: StatusEntry = { label: 'Unknown', color: 'text-neutral-500', bgColor: 'bg-neutral-50', borderColor: 'border-neutral-200', icon: Clock }
 const DEFAULT_TYPE: TypeEntry = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
 
-const statusConfig: Record<string, StatusEntry> = {
-  DRAFT: { label: 'Draft', color: 'text-amber-700', bgColor: 'bg-amber-100', borderColor: 'border-amber-200', icon: Settings },
+const statusConfig: Record<CycleStatus, StatusEntry> = {
   PLANNING: { label: 'Planning', color: 'text-amber-700', bgColor: 'bg-amber-100', borderColor: 'border-amber-200', icon: Settings },
-  UPCOMING: { label: 'Upcoming', color: 'text-sky-700', bgColor: 'bg-sky-100', borderColor: 'border-sky-200', icon: Clock },
   ACTIVE: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-100', borderColor: 'border-emerald-200', icon: Play },
-  PAUSED: { label: 'Paused', color: 'text-warning-600', bgColor: 'bg-warning-50', borderColor: 'border-warning-200', icon: Pause },
   COMPLETED: { label: 'Completed', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-stone-200', icon: CheckCircle },
   ARCHIVED: { label: 'Archived', color: 'text-neutral-500', bgColor: 'bg-neutral-50', borderColor: 'border-neutral-200', icon: Archive },
 }
 
-const typeConfig: Record<string, TypeEntry> = {
+const typeConfig: Record<CycleType, TypeEntry> = {
   FYP1: { label: 'FYP 1', color: 'text-violet-700', bgColor: 'bg-violet-100' },
   FYP2: { label: 'FYP 2', color: 'text-teal-700', bgColor: 'bg-teal-100' },
-  SHORT_SEM: { label: 'Short Semester', color: 'text-warning-600', bgColor: 'bg-warning-50' },
 }
 
-const getStatusConfig = (key: string | undefined): StatusEntry => (key && statusConfig[key]) || DEFAULT_STATUS
-const getTypeConfig = (key: string | undefined): TypeEntry => (key && typeConfig[key]) || DEFAULT_TYPE
+const getStatusConfig = (key: string | undefined): StatusEntry =>
+  (key && statusConfig[key as CycleStatus]) || DEFAULT_STATUS
+const getTypeConfig = (key: string | undefined): TypeEntry =>
+  (key && typeConfig[key as CycleType]) || DEFAULT_TYPE
+
+interface CycleFormState {
+  cycleCode: string
+  cycleType: CycleType
+  academicYear: string
+  semester: number
+  startDate: string
+  endDate: string
+}
+
+const emptyForm = (): CycleFormState => ({
+  cycleCode: '',
+  cycleType: 'FYP1',
+  academicYear: '',
+  semester: 1,
+  startDate: '',
+  endDate: '',
+})
 
 export function CycleManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'ALL'>('ALL')
   const [templateOpen, setTemplateOpen] = useState(false)
-  const [tplPhase, setTplPhase] = useState<'FYP1' | 'FYP2'>('FYP1')
-  const [tplForm, setTplForm] = useState({
-    cycleCode: '',
-    academicYear: '',
-    semester: 1,
-    startDate: '',
-    endDate: '',
-  })
+  const [tplPhase, setTplPhase] = useState<CycleType>('FYP1')
+  const [tplForm, setTplForm] = useState<CycleFormState>(emptyForm())
 
-  const { data, isLoading } = useFYPCycles(
-    statusFilter !== 'ALL' ? statusFilter : undefined
-  )
-  const updateMutation = useUpdateCycle()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createForm, setCreateForm] = useState<CycleFormState>(emptyForm())
+
+  const { data, isLoading } = useFYPCycles({
+    status: statusFilter !== 'ALL' ? statusFilter : undefined,
+  })
   const { data: templateData } = useCycleTemplate(tplPhase)
+  const createMutation = useCreateCycle()
   const fromTemplateMutation = useCreateCycleFromTemplate()
+  const activateMutation = useActivateCycle()
+  const completeMutation = useCompleteCycle()
+  const archiveMutation = useArchiveCycle()
+  const deleteMutation = useDeleteCycle()
   const successToast = useSuccessToast()
   const errorToast = useErrorToast()
 
+  const validateForm = (form: CycleFormState): string | null => {
+    if (!form.cycleCode.trim()) return 'Cycle code is required.'
+    if (!form.academicYear.trim()) return 'Academic year is required.'
+    if (!form.startDate) return 'Start date is required.'
+    if (!form.endDate) return 'End date is required.'
+    if (form.endDate < form.startDate) return 'End date must be on or after start date.'
+    return null
+  }
+
+  const handleCreate = async () => {
+    const err = validateForm(createForm)
+    if (err) {
+      errorToast('Missing fields', err)
+      return
+    }
+    try {
+      await createMutation.mutateAsync({
+        cycleCode: createForm.cycleCode,
+        cycleType: createForm.cycleType,
+        academicYear: createForm.academicYear,
+        semester: createForm.semester,
+        startDate: createForm.startDate,
+        endDate: createForm.endDate,
+      })
+      successToast('Cycle created', `${createForm.cycleCode} is now in PLANNING.`)
+      setCreateOpen(false)
+      setCreateForm(emptyForm())
+    } catch (e) {
+      errorToast('Create failed', (e as Error).message)
+    }
+  }
+
   const handleCreateFromTemplate = async () => {
-    if (!tplForm.cycleCode || !tplForm.academicYear || !tplForm.startDate || !tplForm.endDate) {
-      errorToast('Missing fields', 'Please fill in all fields.')
+    const err = validateForm(tplForm)
+    if (err) {
+      errorToast('Missing fields', err)
       return
     }
     try {
@@ -98,30 +149,71 @@ export function CycleManagement() {
         `${tplForm.cycleCode} created with ${result.deadlinesCreated} deadlines.`
       )
       setTemplateOpen(false)
-      setTplForm({ cycleCode: '', academicYear: '', semester: 1, startDate: '', endDate: '' })
+      setTplForm(emptyForm())
     } catch (e) {
       errorToast('Create failed', (e as Error).message)
     }
   }
 
-  const filteredCycles = data?.cycles.filter((cycle) => {
+  const handleActivate = async (cycle: FYPCycle) => {
+    try {
+      const result = await activateMutation.mutateAsync(cycle.cycleId)
+      const note = result.studentsAttached > 0
+        ? ` ${result.studentsAttached} student${result.studentsAttached === 1 ? '' : 's'} attached.`
+        : ''
+      successToast('Cycle started', `${cycle.cycleCode || cycle.name} is now active.${note}`)
+    } catch (e) {
+      errorToast('Activation failed', (e as Error).message)
+    }
+  }
+
+  const handleComplete = async (cycle: FYPCycle) => {
+    try {
+      await completeMutation.mutateAsync(cycle.cycleId)
+      successToast('Cycle completed', `${cycle.cycleCode || cycle.name} marked as completed.`)
+    } catch (e) {
+      errorToast('Update failed', (e as Error).message)
+    }
+  }
+
+  const handleArchive = async (cycle: FYPCycle) => {
+    try {
+      await archiveMutation.mutateAsync(cycle.cycleId)
+      successToast('Cycle archived', `${cycle.cycleCode || cycle.name} archived.`)
+    } catch (e) {
+      errorToast('Update failed', (e as Error).message)
+    }
+  }
+
+  const handleDelete = async (cycle: FYPCycle) => {
+    if (!window.confirm(`Delete cycle ${cycle.cycleCode || cycle.name}? This cannot be undone.`)) return
+    try {
+      await deleteMutation.mutateAsync(cycle.cycleId)
+      successToast('Cycle deleted', `${cycle.cycleCode || cycle.name} removed.`)
+    } catch (e) {
+      errorToast('Delete failed', (e as Error).message)
+    }
+  }
+
+  const cycles = data?.cycles ?? []
+  const filteredCycles = cycles.filter((cycle) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
-      cycle.name.toLowerCase().includes(query) ||
-      cycle.academicYear.toLowerCase().includes(query)
+      (cycle.name || '').toLowerCase().includes(query) ||
+      (cycle.cycleCode || '').toLowerCase().includes(query) ||
+      (cycle.academicYear || '').toLowerCase().includes(query)
     )
   })
 
-  const handleStatusChange = async (cycle: FYPCycle, newStatus: CycleStatus) => {
-    try {
-      await updateMutation.mutateAsync({
-        cycleId: cycle.cycleId,
-        data: { status: newStatus },
-      })
-    } catch (error) {
-      console.error('Failed to update cycle status:', error)
-    }
+  const activeFyp1 = cycles.find((c) => c.status === 'ACTIVE' && c.type === 'FYP1')
+  const activeFyp2 = cycles.find((c) => c.status === 'ACTIVE' && c.type === 'FYP2')
+
+  const stats = {
+    total: cycles.length,
+    active: cycles.filter((c) => c.status === 'ACTIVE').length,
+    planning: cycles.filter((c) => c.status === 'PLANNING').length,
+    completed: cycles.filter((c) => c.status === 'COMPLETED').length,
   }
 
   if (isLoading) {
@@ -130,14 +222,6 @@ export function CycleManagement() {
         <Spinner size="lg" />
       </div>
     )
-  }
-
-  const activeCycle = data?.cycles.find((c) => c.status === 'ACTIVE')
-  const stats = {
-    total: data?.cycles.length ?? 0,
-    active: data?.cycles.filter((c) => c.status === 'ACTIVE').length ?? 0,
-    upcoming: data?.cycles.filter((c) => c.status === 'PLANNING').length ?? 0,
-    completed: data?.cycles.filter((c) => c.status === 'COMPLETED').length ?? 0,
   }
 
   return (
@@ -157,197 +241,49 @@ export function CycleManagement() {
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </h1>
               <p className="text-stone-300 mt-1">
-                Manage academic cycles, semesters, and FYP periods
+                One active FYP1 and one active FYP2 cycle at a time. Activating a cycle attaches every existing student to it.
               </p>
             </div>
           </div>
           <div className="flex gap-2">
             <Button
               type="button"
-              onClick={() => setTemplateOpen(true)}
+              onClick={() => {
+                setTplForm(emptyForm())
+                setTemplateOpen(true)
+              }}
               className="bg-emerald-500 hover:bg-emerald-600 text-white border-0"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              Use Cycle Template
+              From Template
             </Button>
-            <Link to={ROUTES.ADMIN.CYCLE_NEW}>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Cycle
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              onClick={() => {
+                setCreateForm(emptyForm())
+                setCreateOpen(true)
+              }}
+              className="bg-amber-500 hover:bg-amber-600 text-white border-0"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Cycle
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Cycle template modal — supports FYP1 and FYP2 */}
-      <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} size="lg">
-        <ModalHeader>
-          <ModalTitle>Create {tplPhase} Cycle from Standard Template</ModalTitle>
-        </ModalHeader>
-        <ModalBody>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Phase</label>
-            <div className="flex gap-2">
-              {(['FYP1', 'FYP2'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setTplPhase(p)}
-                  className={cn(
-                    'px-4 py-2 rounded-md text-sm font-medium border transition-colors',
-                    tplPhase === p
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-sm text-neutral-600 mb-4">
-            This creates a new {tplPhase} cycle plus the{' '}
-            {templateData?.deadlines.length ?? 0} standard deadlines from the official workflow,
-            scheduled relative to your start date.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <Input
-              label="Cycle code"
-              value={tplForm.cycleCode}
-              onChange={(e) => setTplForm({ ...tplForm, cycleCode: e.target.value })}
-              placeholder={`${tplPhase}-2025-S1`}
-            />
-            <Input
-              label="Academic year"
-              value={tplForm.academicYear}
-              onChange={(e) => setTplForm({ ...tplForm, academicYear: e.target.value })}
-              placeholder="2025/2026"
-            />
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Semester</label>
-              <select
-                value={tplForm.semester}
-                onChange={(e) => setTplForm({ ...tplForm, semester: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value={1}>Sem 1</option>
-                <option value={2}>Sem 2</option>
-                <option value={3}>Sem 3 (Short)</option>
-              </select>
-            </div>
-            <Input
-              type="date"
-              label="Start date"
-              value={tplForm.startDate}
-              onChange={(e) => setTplForm({ ...tplForm, startDate: e.target.value })}
-            />
-            <Input
-              type="date"
-              label="End date"
-              value={tplForm.endDate}
-              onChange={(e) => setTplForm({ ...tplForm, endDate: e.target.value })}
-            />
-          </div>
-          {templateData && (
-            <div className="border border-neutral-200 rounded-lg overflow-hidden">
-              <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-700">
-                Deadlines that will be auto-created
-              </div>
-              <ul className="divide-y divide-neutral-100">
-                {templateData.deadlines.map((d) => (
-                  <li key={d.title} className="px-3 py-2 text-sm flex items-center justify-between">
-                    <span className="text-neutral-800">{d.title}</span>
-                    <span className="text-xs text-neutral-500">
-                      Day {d.dayOffset >= 0 ? '+' : ''}
-                      {d.dayOffset} • {d.audience}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="secondary" onClick={() => setTemplateOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateFromTemplate}
-            disabled={fromTemplateMutation.isPending}
-          >
-            {fromTemplateMutation.isPending ? <Spinner size="sm" className="mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-            Create cycle &amp; deadlines
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* Current Active Cycle Banner */}
-      {activeCycle && (
-        <Card className="p-4 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-200 rounded-lg">
-                <Play className="h-5 w-5 text-emerald-700" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-neutral-900">
-                  Active Cycle: {activeCycle.name}
-                </h3>
-                <p className="text-sm text-neutral-600">
-                  {activeCycle.academicYear} • {getTypeConfig(activeCycle.type).label}
-                </p>
-              </div>
-            </div>
-            <div className="text-sm text-neutral-600">
-              <span className="font-medium">{activeCycle.totalStudents}</span> students enrolled
-            </div>
-          </div>
-        </Card>
-      )}
+      {/* Active cycle banners */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <ActiveCycleBanner cycle={activeFyp1} type="FYP1" />
+        <ActiveCycleBanner cycle={activeFyp2} type="FYP2" />
+      </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors',
-            statusFilter === 'ALL' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter('ALL')}
-        >
-          <p className="text-sm text-neutral-500">Total Cycles</p>
-          <p className="text-2xl font-bold text-neutral-900">{stats.total}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors',
-            statusFilter === 'ACTIVE' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')}
-        >
-          <p className="text-sm text-neutral-500">Active</p>
-          <p className="text-2xl font-bold text-success-600">{stats.active}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors',
-            statusFilter === 'PLANNING' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'PLANNING' ? 'ALL' : 'PLANNING')}
-        >
-          <p className="text-sm text-neutral-500">Upcoming</p>
-          <p className="text-2xl font-bold text-info-600">{stats.upcoming}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors',
-            statusFilter === 'COMPLETED' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
-        >
-          <p className="text-sm text-neutral-500">Completed</p>
-          <p className="text-2xl font-bold text-primary-600">{stats.completed}</p>
-        </Card>
+        <StatCard label="Total Cycles" value={stats.total} active={statusFilter === 'ALL'} onClick={() => setStatusFilter('ALL')} />
+        <StatCard label="Active" value={stats.active} valueClass="text-emerald-700" active={statusFilter === 'ACTIVE'} onClick={() => setStatusFilter(statusFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')} />
+        <StatCard label="Planning" value={stats.planning} valueClass="text-amber-700" active={statusFilter === 'PLANNING'} onClick={() => setStatusFilter(statusFilter === 'PLANNING' ? 'ALL' : 'PLANNING')} />
+        <StatCard label="Completed" value={stats.completed} valueClass="text-stone-700" active={statusFilter === 'COMPLETED'} onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')} />
       </div>
 
       {/* Search & Filters */}
@@ -357,7 +293,7 @@ export function CycleManagement() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
               type="text"
-              placeholder="Search by cycle name or academic year..."
+              placeholder="Search by code, name, or academic year..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -369,10 +305,8 @@ export function CycleManagement() {
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Status</option>
-            <option value="DRAFT">Draft</option>
-            <option value="UPCOMING">Upcoming</option>
+            <option value="PLANNING">Planning</option>
             <option value="ACTIVE">Active</option>
-            <option value="PAUSED">Paused</option>
             <option value="COMPLETED">Completed</option>
             <option value="ARCHIVED">Archived</option>
           </select>
@@ -381,126 +315,78 @@ export function CycleManagement() {
 
       {/* Cycles List */}
       <div className="space-y-4">
-        {filteredCycles && filteredCycles.length > 0 ? (
+        {filteredCycles.length > 0 ? (
           filteredCycles.map((cycle) => {
             const status = getStatusConfig(cycle.status)
             const type = getTypeConfig(cycle.type)
             const StatusIcon = status.icon
+            const busy = activateMutation.isPending || completeMutation.isPending || archiveMutation.isPending || deleteMutation.isPending
 
             return (
-              <Card key={cycle.cycleId} className="p-5 hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
+              <Card key={cycle.cycleId} className="p-5 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    {/* Icon */}
                     <div className={cn('p-3 rounded-lg', status.bgColor)}>
                       <StatusIcon className={cn('h-6 w-6', status.color)} />
                     </div>
-
-                    {/* Content */}
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-neutral-900">{cycle.name}</h3>
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-xl text-xs font-medium border',
-                          status.bgColor,
-                          status.color,
-                          status.borderColor
-                        )}>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-neutral-900">{cycle.cycleCode || cycle.name}</h3>
+                        <span className={cn('px-2 py-0.5 rounded-xl text-xs font-medium border', status.bgColor, status.color, status.borderColor)}>
                           {status.label}
                         </span>
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-xl text-xs font-medium',
-                          type.bgColor,
-                          type.color
-                        )}>
+                        <span className={cn('px-2 py-0.5 rounded-xl text-xs font-medium', type.bgColor, type.color)}>
                           {type.label}
                         </span>
                       </div>
-
                       <p className="text-sm text-neutral-500 mt-1">
                         {cycle.academicYear} • Semester {cycle.semester}
                       </p>
-
-                      {/* Dates */}
                       <div className="flex items-center gap-4 mt-2 text-sm text-neutral-600">
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {new Date(cycle.startDate).toLocaleDateString()} - {new Date(cycle.endDate).toLocaleDateString()}
+                          {cycle.startDate ? new Date(cycle.startDate).toLocaleDateString() : '—'} →{' '}
+                          {cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : '—'}
                         </span>
                       </div>
-
-                      {/* Stats */}
                       <div className="flex items-center gap-4 mt-3">
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Users className="h-4 w-4 text-neutral-400" />
-                          <span className="font-medium text-neutral-900">{cycle.totalStudents}</span>
-                          <span className="text-neutral-500">students</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <FileText className="h-4 w-4 text-neutral-400" />
-                          <span className="font-medium text-neutral-900">{cycle.totalProposals}</span>
-                          <span className="text-neutral-500">proposals</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Calendar className="h-4 w-4 text-neutral-400" />
-                          <span className="font-medium text-neutral-900">{cycle.deadlines?.length || 0}</span>
-                          <span className="text-neutral-500">deadlines</span>
-                        </div>
+                        <Stat icon={<Users className="h-4 w-4 text-neutral-400" />} value={cycle.totalStudents} label="students" />
+                        <Stat icon={<CheckCircle className="h-4 w-4 text-neutral-400" />} value={cycle.pairedStudents} label="paired" />
+                        <Stat icon={<CalendarIcon className="h-4 w-4 text-neutral-400" />} value={cycle.deadlineCount} label="deadlines" />
                       </div>
                     </div>
                   </div>
-
-                  {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {/* Status Actions — workflow: PLANNING → ACTIVE → COMPLETED → ARCHIVED */}
                     {cycle.status === 'PLANNING' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleStatusChange(cycle, 'ACTIVE')}
-                        disabled={updateMutation.isPending}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Start
-                      </Button>
+                      <>
+                        <Button variant="secondary" size="sm" onClick={() => handleActivate(cycle)} disabled={busy}>
+                          <Play className="h-4 w-4 mr-1" />
+                          Start
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cycle)} disabled={busy} className="text-rose-600">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                     {cycle.status === 'ACTIVE' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleStatusChange(cycle, 'COMPLETED')}
-                        disabled={updateMutation.isPending}
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => handleComplete(cycle)} disabled={busy}>
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Complete
                       </Button>
                     )}
                     {cycle.status === 'COMPLETED' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleStatusChange(cycle, 'ARCHIVED')}
-                        disabled={updateMutation.isPending}
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => handleArchive(cycle)} disabled={busy}>
                         <Archive className="h-4 w-4 mr-1" />
                         Archive
                       </Button>
                     )}
-
-                    {/* View Details */}
-                    <Link to={ROUTES.ADMIN.CYCLE_DETAIL.replace(':id', cycle.cycleId)}>
-                      <Button variant="ghost" size="sm">
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                    </Link>
                   </div>
                 </div>
 
-                {/* Warnings */}
-                {cycle.status === 'ACTIVE' && (!cycle.deadlines || cycle.deadlines.length === 0) && (
+                {cycle.status === 'ACTIVE' && cycle.deadlineCount === 0 && (
                   <div className="mt-4 p-3 bg-warning-50 rounded-lg flex items-center gap-2 text-sm text-warning-700">
                     <AlertTriangle className="h-4 w-4" />
-                    No deadlines configured for this cycle. Students won't have clear submission dates.
+                    No deadlines configured for this cycle. Students won&apos;t see clear submission dates.
                   </div>
                 )}
               </Card>
@@ -516,16 +402,240 @@ export function CycleManagement() {
                 : 'Create your first FYP cycle to get started'}
             </p>
             {!searchQuery && statusFilter === 'ALL' && (
-              <Link to={ROUTES.ADMIN.CYCLE_NEW} className="mt-4 inline-block">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Cycle
-                </Button>
-              </Link>
+              <Button
+                className="mt-4"
+                onClick={() => {
+                  setCreateForm(emptyForm())
+                  setCreateOpen(true)
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Cycle
+              </Button>
             )}
           </Card>
         )}
       </div>
+
+      {/* Create Cycle Modal (blank, no template) */}
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="lg">
+        <ModalHeader>
+          <ModalTitle>Create FYP Cycle</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600 mb-4">
+            Creates a blank cycle in PLANNING status. Add deadlines yourself, or use the &ldquo;From Template&rdquo; option to scaffold the standard FYP1 / FYP2 timeline.
+          </p>
+          <CycleFormFields form={createForm} setForm={setCreateForm} showTypePicker />
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={createMutation.isPending}>
+            {createMutation.isPending ? <Spinner size="sm" className="mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+            Create
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Cycle template modal — supports FYP1 and FYP2 */}
+      <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} size="lg">
+        <ModalHeader>
+          <ModalTitle>Create {tplPhase} Cycle from Standard Template</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Phase</label>
+            <div className="flex gap-2">
+              {(['FYP1', 'FYP2'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    setTplPhase(p)
+                    setTplForm({ ...tplForm, cycleType: p })
+                  }}
+                  className={cn(
+                    'px-4 py-2 rounded-md text-sm font-medium border transition-colors',
+                    tplPhase === p
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50'
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-sm text-neutral-600 mb-4">
+            Creates a {tplPhase} cycle plus the {templateData?.deadlines.length ?? 0} standard deadlines from the official workflow, scheduled relative to your start date.
+          </p>
+          <CycleFormFields form={tplForm} setForm={setTplForm} />
+          {templateData && (
+            <div className="border border-neutral-200 rounded-lg overflow-hidden mt-4">
+              <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200 text-sm font-medium text-neutral-700">
+                Deadlines that will be auto-created
+              </div>
+              <ul className="divide-y divide-neutral-100">
+                {templateData.deadlines.map((d) => (
+                  <li key={d.title} className="px-3 py-2 text-sm flex items-center justify-between">
+                    <span className="text-neutral-800">{d.title}</span>
+                    <span className="text-xs text-neutral-500">
+                      Day {d.dayOffset >= 0 ? '+' : ''}{d.dayOffset} • {d.audience}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setTemplateOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreateFromTemplate} disabled={fromTemplateMutation.isPending}>
+            {fromTemplateMutation.isPending ? <Spinner size="sm" className="mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            Create cycle &amp; deadlines
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </div>
+  )
+}
+
+function ActiveCycleBanner({ cycle, type }: { cycle: FYPCycle | undefined; type: CycleType }) {
+  const typeStyle = getTypeConfig(type)
+  if (!cycle) {
+    return (
+      <Card className="p-4 border border-dashed border-neutral-300 bg-neutral-50">
+        <div className="flex items-center gap-3">
+          <div className={cn('p-2 rounded-lg', typeStyle.bgColor)}>
+            <Calendar className={cn('h-5 w-5', typeStyle.color)} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-neutral-700">No active {typeStyle.label} cycle</p>
+            <p className="text-xs text-neutral-500">Activate a PLANNING cycle to attach students.</p>
+          </div>
+        </div>
+      </Card>
+    )
+  }
+  return (
+    <Card className="p-4 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-200 rounded-lg">
+            <Play className="h-5 w-5 text-emerald-700" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-neutral-900">
+              Active {typeStyle.label}: {cycle.cycleCode || cycle.name}
+            </h3>
+            <p className="text-sm text-neutral-600">
+              {cycle.academicYear} • Semester {cycle.semester}
+            </p>
+          </div>
+        </div>
+        <div className="text-right text-sm text-neutral-600">
+          <div><span className="font-medium">{cycle.totalStudents}</span> students</div>
+          <div className="text-xs text-neutral-500">{cycle.deadlineCount} deadlines</div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function StatCard({ label, value, valueClass, active, onClick }: { label: string; value: number; valueClass?: string; active: boolean; onClick: () => void }) {
+  return (
+    <Card
+      className={cn(
+        'p-4 cursor-pointer transition-colors',
+        active ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+      )}
+      onClick={onClick}
+    >
+      <p className="text-sm text-neutral-500">{label}</p>
+      <p className={cn('text-2xl font-bold text-neutral-900', valueClass)}>{value}</p>
+    </Card>
+  )
+}
+
+function Stat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-sm">
+      {icon}
+      <span className="font-medium text-neutral-900">{value}</span>
+      <span className="text-neutral-500">{label}</span>
+    </div>
+  )
+}
+
+function CycleFormFields({
+  form,
+  setForm,
+  showTypePicker,
+}: {
+  form: CycleFormState
+  setForm: (next: CycleFormState) => void
+  showTypePicker?: boolean
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <Input
+        label="Cycle code"
+        value={form.cycleCode}
+        onChange={(e) => setForm({ ...form, cycleCode: e.target.value })}
+        placeholder={`${form.cycleType}-2025-S1`}
+      />
+      {showTypePicker ? (
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Type</label>
+          <select
+            value={form.cycleType}
+            onChange={(e) => setForm({ ...form, cycleType: e.target.value as CycleType })}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+            <option value="FYP1">FYP 1</option>
+            <option value="FYP2">FYP 2</option>
+          </select>
+        </div>
+      ) : (
+        <Input
+          label="Academic year"
+          value={form.academicYear}
+          onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
+          placeholder="2025/2026"
+        />
+      )}
+      {showTypePicker && (
+        <Input
+          label="Academic year"
+          value={form.academicYear}
+          onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
+          placeholder="2025/2026"
+        />
+      )}
+      <div>
+        <label className="block text-sm font-medium text-neutral-700 mb-1">Semester</label>
+        <select
+          value={form.semester}
+          onChange={(e) => setForm({ ...form, semester: Number(e.target.value) })}
+          className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        >
+          <option value={1}>Sem 1</option>
+          <option value={2}>Sem 2</option>
+          <option value={3}>Sem 3 (Short)</option>
+        </select>
+      </div>
+      <Input
+        type="date"
+        label="Start date"
+        value={form.startDate}
+        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+      />
+      <Input
+        type="date"
+        label="End date"
+        value={form.endDate}
+        onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+      />
     </div>
   )
 }

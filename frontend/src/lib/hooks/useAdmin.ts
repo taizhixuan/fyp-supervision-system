@@ -12,6 +12,7 @@ import type {
   AdminSystemParameter,
   UpdateParameterRequest,
   FYPCycle,
+  CycleStatus,
   CreateCycleRequest,
   UpdateCycleRequest,
   AdminDeadline,
@@ -1307,15 +1308,22 @@ export function useUpdateParameter() {
 // FYP Cycle Hooks (UC31)
 // ============================================
 
-export function useFYPCycles() {
+export interface FYPCycleListFilters {
+  status?: CycleStatus
+  type?: 'FYP1' | 'FYP2'
+}
+
+export function useFYPCycles(filters?: FYPCycleListFilters) {
   return useQuery({
-    queryKey: adminKeys.cycles(),
+    queryKey: [...adminKeys.cycles(), filters?.status ?? 'ALL', filters?.type ?? 'ALL'],
     queryFn: async () => {
       if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 400))
         return { cycles: MOCK_CYCLES, total: MOCK_CYCLES.length }
       }
-      const { data } = await apiClient.get('/admin/cycles')
+      const { data } = await apiClient.get<{ cycles: FYPCycle[]; total: number }>('/admin/cycles', {
+        params: { status: filters?.status, type: filters?.type },
+      })
       return data
     },
   })
@@ -1363,6 +1371,60 @@ export function useUpdateCycle() {
       }
       const { data: responseData } = await apiClient.put(`/admin/cycles/${cycleId}`, data)
       return responseData
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
+    },
+  })
+}
+
+export function useActivateCycle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (cycleId: number) => {
+      const { data } = await apiClient.post<{ cycleId: number; status: CycleStatus; studentsAttached: number }>(
+        `/admin/cycles/${cycleId}/activate`
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() })
+    },
+  })
+}
+
+export function useCompleteCycle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (cycleId: number) => {
+      const { data } = await apiClient.post(`/admin/cycles/${cycleId}/complete`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
+    },
+  })
+}
+
+export function useArchiveCycle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (cycleId: number) => {
+      const { data } = await apiClient.post(`/admin/cycles/${cycleId}/archive`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })
+    },
+  })
+}
+
+export function useDeleteCycle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (cycleId: number) => {
+      await apiClient.delete(`/admin/cycles/${cycleId}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.cycles() })

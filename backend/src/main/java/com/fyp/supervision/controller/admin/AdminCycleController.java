@@ -3,15 +3,21 @@ package com.fyp.supervision.controller.admin;
 import com.fyp.supervision.entity.Deadline;
 import com.fyp.supervision.entity.FypCycle;
 import com.fyp.supervision.enums.CycleStatus;
+import com.fyp.supervision.exception.BadRequestException;
+import com.fyp.supervision.exception.ConflictException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
+import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.service.AdminService;
+import com.fyp.supervision.service.CycleLifecycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,7 +29,9 @@ import java.util.Map;
 public class AdminCycleController {
     private final FypCycleRepository cycleRepository;
     private final DeadlineRepository deadlineRepository;
+    private final ProjectRepository projectRepository;
     private final AdminService adminService;
+    private final CycleLifecycleService cycleLifecycleService;
 
     /**
      * Pre-trimester FYP1 timeline derived from the official workflow image.
@@ -66,8 +74,10 @@ public class AdminCycleController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getCycles() {
-        return ResponseEntity.ok(adminService.getCycles());
+    public ResponseEntity<?> getCycles(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type) {
+        return ResponseEntity.ok(adminService.getCycles(status, type));
     }
 
     @GetMapping("/{id}")
@@ -76,14 +86,32 @@ public class AdminCycleController {
     }
 
     @PostMapping
+    @Transactional
     public ResponseEntity<?> createCycle(@RequestBody Map<String, Object> data) {
+        String cycleCode = stringField(data, "cycleCode");
+        String cycleType = normaliseCycleType(stringField(data, "cycleType"));
+        if (cycleCode == null || cycleCode.isBlank()) {
+            throw new BadRequestException("cycleCode is required.");
+        }
+        if (cycleRepository.existsByCycleCode(cycleCode)) {
+            throw new ConflictException("Cycle code is already in use.");
+        }
+        LocalDate startDate = parseDate(data.get("startDate"), "startDate");
+        LocalDate endDate = parseDate(data.get("endDate"), "endDate");
+        if (startDate == null || endDate == null) {
+            throw new BadRequestException("startDate and endDate are required.");
+        }
+        if (endDate.isBefore(startDate)) {
+            throw new BadRequestException("endDate must be on or after startDate.");
+        }
+
         FypCycle cycle = FypCycle.builder()
-                .cycleCode((String) data.get("cycleCode"))
-                .cycleType((String) data.get("cycleType"))
-                .academicYear((String) data.get("academicYear"))
-                .semester(data.get("semester") != null ? ((Number) data.get("semester")).intValue() : null)
-                .startDate(LocalDate.parse((String) data.get("startDate")))
-                .endDate(LocalDate.parse((String) data.get("endDate")))
+                .cycleCode(cycleCode)
+                .cycleType(cycleType)
+                .academicYear(stringField(data, "academicYear"))
+                .semester(intField(data, "semester"))
+                .startDate(startDate)
+                .endDate(endDate)
                 .status(CycleStatus.PLANNING)
                 .build();
         FypCycle saved = cycleRepository.save(cycle);
@@ -91,14 +119,93 @@ public class AdminCycleController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> updateCycle(@PathVariable Long id, @RequestBody Map<String, Object> data) {
-        FypCycle cycle = cycleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
-        if (data.containsKey("cycleCode")) cycle.setCycleCode((String) data.get("cycleCode"));
-        if (data.containsKey("status")) cycle.setStatus(CycleStatus.valueOf((String) data.get("status")));
-        if (data.containsKey("startDate")) cycle.setStartDate(LocalDate.parse((String) data.get("startDate")));
-        if (data.containsKey("endDate")) cycle.setEndDate(LocalDate.parse((String) data.get("endDate")));
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+
+        if (data.containsKey("cycleCode")) {
+            String code = stringField(data, "cycleCode");
+            if (code != null && !code.isBlank() && !code.equals(cycle.getCycleCode())) {
+                if (cycleRepository.existsByCycleCode(code)) {
+                    throw new ConflictException("Cycle code is already in use.");
+                }
+                cycle.setCycleCode(code);
+            }
+        }
+        if (data.containsKey("cycleType")) cycle.setCycleType(normaliseCycleType(stringField(data, "cycleType")));
+        if (data.containsKey("academicYear")) cycle.setAcademicYear(stringField(data, "academicYear"));
+        if (data.containsKey("semester")) cycle.setSemester(intField(data, "semester"));
+        if (data.containsKey("startDate")) {
+            LocalDate sd = parseDate(data.get("startDate"), "startDate");
+            if (sd != null) cycle.setStartDate(sd);
+        }
+        if (data.containsKey("endDate")) {
+            LocalDate ed = parseDate(data.get("endDate"), "endDate");
+            if (ed != null) cycle.setEndDate(ed);
+        }
+        if (cycle.getEndDate().isBefore(cycle.getStartDate())) {
+            throw new BadRequestException("endDate must be on or after startDate.");
+        }
+        if (data.containsKey("status")) {
+            CycleStatus next = parseStatus(stringField(data, "status"));
+            applyStatusTransition(cycle, next);
+        }
         cycleRepository.save(cycle);
-        return ResponseEntity.ok(Map.of("success", true));
+        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+    }
+
+    @PostMapping("/{id}/activate")
+    @Transactional
+    public ResponseEntity<?> activateCycle(@PathVariable Long id) {
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+        applyStatusTransition(cycle, CycleStatus.ACTIVE);
+        cycleRepository.save(cycle);
+
+        int attached = cycleLifecycleService.backfillFyp1Placeholders(cycle);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cycleId", cycle.getCycleId());
+        body.put("status", cycle.getStatus().name());
+        body.put("studentsAttached", attached);
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/{id}/complete")
+    @Transactional
+    public ResponseEntity<?> completeCycle(@PathVariable Long id) {
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+        applyStatusTransition(cycle, CycleStatus.COMPLETED);
+        cycleRepository.save(cycle);
+        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+    }
+
+    @PostMapping("/{id}/archive")
+    @Transactional
+    public ResponseEntity<?> archiveCycle(@PathVariable Long id) {
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+        applyStatusTransition(cycle, CycleStatus.ARCHIVED);
+        cycleRepository.save(cycle);
+        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteCycle(@PathVariable Long id) {
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+        if (cycle.getStatus() != CycleStatus.PLANNING) {
+            throw new BadRequestException("Only PLANNING cycles can be deleted. Archive completed cycles instead.");
+        }
+        long projectCount = projectRepository.findAllByCycleId(cycle.getCycleId(), org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
+        if (projectCount > 0) {
+            throw new BadRequestException("Cannot delete a cycle that already has projects attached.");
+        }
+        deadlineRepository.findByCycle_CycleIdOrderByDueDateAsc(cycle.getCycleId()).forEach(deadlineRepository::delete);
+        cycleRepository.delete(cycle);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/template")
@@ -120,18 +227,33 @@ public class AdminCycleController {
     }
 
     @PostMapping("/from-template")
+    @Transactional
     public ResponseEntity<?> createFromTemplate(@RequestBody Map<String, Object> data) {
         String phase = data.get("phase") != null ? data.get("phase").toString().toUpperCase() : "FYP1";
         if (!"FYP1".equals(phase) && !"FYP2".equals(phase)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Phase must be FYP1 or FYP2"));
+            throw new BadRequestException("Phase must be FYP1 or FYP2.");
         }
-        LocalDate startDate = LocalDate.parse((String) data.get("startDate"));
-        LocalDate endDate = LocalDate.parse((String) data.get("endDate"));
+        String cycleCode = stringField(data, "cycleCode");
+        if (cycleCode == null || cycleCode.isBlank()) {
+            throw new BadRequestException("cycleCode is required.");
+        }
+        if (cycleRepository.existsByCycleCode(cycleCode)) {
+            throw new ConflictException("Cycle code is already in use.");
+        }
+        LocalDate startDate = parseDate(data.get("startDate"), "startDate");
+        LocalDate endDate = parseDate(data.get("endDate"), "endDate");
+        if (startDate == null || endDate == null) {
+            throw new BadRequestException("startDate and endDate are required.");
+        }
+        if (endDate.isBefore(startDate)) {
+            throw new BadRequestException("endDate must be on or after startDate.");
+        }
+
         FypCycle cycle = FypCycle.builder()
-                .cycleCode((String) data.get("cycleCode"))
+                .cycleCode(cycleCode)
                 .cycleType(phase)
-                .academicYear((String) data.get("academicYear"))
-                .semester(data.get("semester") != null ? ((Number) data.get("semester")).intValue() : null)
+                .academicYear(stringField(data, "academicYear"))
+                .semester(intField(data, "semester"))
                 .startDate(startDate)
                 .endDate(endDate)
                 .status(CycleStatus.PLANNING)
@@ -159,5 +281,81 @@ public class AdminCycleController {
                 "deadlinesCreated", created,
                 "phase", phase
         ));
+    }
+
+    /**
+     * Enforce one-active-per-type and a sensible state machine:
+     *   PLANNING → ACTIVE → COMPLETED → ARCHIVED. PLANNING ↔ ACTIVE is allowed; everything
+     *   else is one-way to keep the timeline auditable.
+     */
+    private void applyStatusTransition(FypCycle cycle, CycleStatus next) {
+        CycleStatus current = cycle.getStatus();
+        if (current == next) return;
+        boolean allowed = switch (current) {
+            case PLANNING -> next == CycleStatus.ACTIVE || next == CycleStatus.ARCHIVED;
+            case ACTIVE -> next == CycleStatus.COMPLETED || next == CycleStatus.PLANNING;
+            case COMPLETED -> next == CycleStatus.ARCHIVED;
+            case ARCHIVED -> false;
+        };
+        if (!allowed) {
+            throw new BadRequestException("Cannot transition cycle from " + current + " to " + next + ".");
+        }
+        if (next == CycleStatus.ACTIVE) {
+            cycleRepository.findFirstByCycleTypeAndStatusOrderByStartDateDesc(cycle.getCycleType(), CycleStatus.ACTIVE)
+                    .ifPresent(other -> {
+                        if (!other.getCycleId().equals(cycle.getCycleId())) {
+                            other.setStatus(CycleStatus.COMPLETED);
+                            cycleRepository.save(other);
+                        }
+                    });
+        }
+        cycle.setStatus(next);
+    }
+
+    private static String stringField(Map<String, Object> data, String key) {
+        Object v = data.get(key);
+        return v == null ? null : v.toString();
+    }
+
+    private static Integer intField(Map<String, Object> data, String key) {
+        Object v = data.get(key);
+        if (v == null) return null;
+        if (v instanceof Number n) return n.intValue();
+        try {
+            return Integer.parseInt(v.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static LocalDate parseDate(Object value, String fieldName) {
+        if (value == null) return null;
+        String s = value.toString();
+        if (s.isBlank()) return null;
+        try {
+            // Accept either ISO date (2025-09-01) or full ISO datetime (2025-09-01T00:00:00.000Z).
+            int t = s.indexOf('T');
+            return LocalDate.parse(t < 0 ? s : s.substring(0, t));
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException(fieldName + " must be a valid ISO date (YYYY-MM-DD).");
+        }
+    }
+
+    private static CycleStatus parseStatus(String value) {
+        if (value == null) throw new BadRequestException("status is required.");
+        try {
+            return CycleStatus.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Unknown cycle status: " + value);
+        }
+    }
+
+    private static String normaliseCycleType(String value) {
+        if (value == null) return null;
+        String upper = value.trim().toUpperCase();
+        if (!"FYP1".equals(upper) && !"FYP2".equals(upper)) {
+            throw new BadRequestException("cycleType must be FYP1 or FYP2.");
+        }
+        return upper;
     }
 }

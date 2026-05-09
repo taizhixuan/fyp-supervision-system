@@ -167,8 +167,26 @@ public class AdminService {
 
     // ========== Cycles ==========
 
-    public Map<String, Object> getCycles() {
+    public Map<String, Object> getCycles(String status, String type) {
         List<FypCycle> cycles = fypCycleRepository.findAllByOrderByStartDateDesc();
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            CycleStatus filterStatus;
+            try {
+                filterStatus = CycleStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                filterStatus = null;
+            }
+            if (filterStatus != null) {
+                CycleStatus finalStatus = filterStatus;
+                cycles = cycles.stream().filter(c -> c.getStatus() == finalStatus).collect(Collectors.toList());
+            }
+        }
+        if (type != null && !type.isBlank() && !"ALL".equalsIgnoreCase(type)) {
+            String typeUpper = type.toUpperCase();
+            cycles = cycles.stream()
+                    .filter(c -> typeUpper.equalsIgnoreCase(c.getCycleType()))
+                    .collect(Collectors.toList());
+        }
         List<Map<String, Object>> dtos = cycles.stream()
                 .map(this::buildCycleDto)
                 .collect(Collectors.toList());
@@ -198,8 +216,14 @@ public class AdminService {
                     .filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
         } catch (Exception ignored) {}
 
+        long deadlineCount = 0;
+        try {
+            deadlineCount = deadlineRepository.findByCycle_CycleIdOrderByDueDateAsc(cycle.getCycleId()).size();
+        } catch (Exception ignored) {}
+
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("cycleId", cycle.getCycleId());
+        dto.put("cycleCode", cycle.getCycleCode());
         dto.put("name", name.trim());
         dto.put("type", cycle.getCycleType() != null ? cycle.getCycleType() : "FYP1");
         dto.put("academicYear", cycle.getAcademicYear());
@@ -211,6 +235,7 @@ public class AdminService {
         dto.put("totalStudents", totalStudents);
         dto.put("pairedStudents", pairedStudents);
         dto.put("completedProjects", completedProjects);
+        dto.put("deadlineCount", deadlineCount);
         dto.put("createdAt", cycle.getCreatedAt() != null ? cycle.getCreatedAt().toString() : "");
         dto.put("updatedAt", cycle.getUpdatedAt() != null ? cycle.getUpdatedAt().toString() : "");
         return dto;

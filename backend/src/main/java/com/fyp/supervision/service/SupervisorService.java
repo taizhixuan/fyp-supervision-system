@@ -207,15 +207,28 @@ public class SupervisorService {
         if ("ACCEPT".equalsIgnoreCase(action)) {
             request.setStatus(RequestStatus.ACCEPTED);
 
-            FypCycle activeCycle = fypCycleRepository.findByStatus(CycleStatus.ACTIVE).orElse(null);
-            Project project = Project.builder()
-                    .cycle(activeCycle)
-                    .student(request.getStudent())
-                    .supervisor(request.getSupervisorUser())
-                    .projectTitle(request.getProposedTitle() != null ? request.getProposedTitle() : "Untitled Project")
-                    .status(ProjectStatus.ACTIVE)
-                    .registeredAt(LocalDateTime.now())
-                    .build();
+            FypCycle activeCycle = fypCycleRepository
+                    .findFirstByCycleTypeAndStatusOrderByStartDateDesc("FYP1", CycleStatus.ACTIVE)
+                    .orElseGet(() -> fypCycleRepository
+                            .findFirstByStatusOrderByStartDateDesc(CycleStatus.ACTIVE)
+                            .orElse(null));
+            String title = request.getProposedTitle() != null ? request.getProposedTitle() : "Untitled Project";
+
+            // Reuse the placeholder Project that was created when the student joined the cycle.
+            Project project = projectRepository.findByStudent_UserId(request.getStudent().getUserId())
+                    .orElseGet(() -> Project.builder()
+                            .cycle(activeCycle)
+                            .student(request.getStudent())
+                            .stage("FYP1")
+                            .status(ProjectStatus.ACTIVE)
+                            .registeredAt(LocalDateTime.now())
+                            .build());
+            if (project.getCycle() == null) project.setCycle(activeCycle);
+            project.setSupervisor(request.getSupervisorUser());
+            project.setProjectTitle(title);
+            if (project.getStage() == null) project.setStage("FYP1");
+            if (project.getStatus() == null) project.setStatus(ProjectStatus.ACTIVE);
+            if (project.getRegisteredAt() == null) project.setRegisteredAt(LocalDateTime.now());
             projectRepository.save(project);
 
             SupervisorProfile profile = supervisorProfileRepository.findById(userId).orElse(null);

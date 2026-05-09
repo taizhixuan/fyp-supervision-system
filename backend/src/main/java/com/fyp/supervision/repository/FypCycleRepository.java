@@ -10,7 +10,21 @@ import java.util.Optional;
 
 @Repository
 public interface FypCycleRepository extends JpaRepository<FypCycle, Long> {
-    Optional<FypCycle> findByStatus(CycleStatus status);
+
+    /**
+     * Returns the first matching cycle, in case multiple share a status.
+     * The {@code findByStatus} variant of derived query throws when more than one row exists,
+     * so prefer this when looking for the active one.
+     */
+    Optional<FypCycle> findFirstByStatusOrderByStartDateDesc(CycleStatus status);
+
+    Optional<FypCycle> findFirstByCycleTypeAndStatusOrderByStartDateDesc(String cycleType, CycleStatus status);
+
+    List<FypCycle> findByStatus(CycleStatus status);
+
+    List<FypCycle> findByCycleType(String cycleType);
+
     List<FypCycle> findAllByOrderByStartDateDesc();
+
     boolean existsByCycleCode(String cycleCode);
 }

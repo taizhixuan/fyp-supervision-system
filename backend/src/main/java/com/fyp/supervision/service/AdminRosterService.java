@@ -38,6 +38,7 @@ public class AdminRosterService {
     private final ApprovedSupervisorRosterRepository supervisorRosterRepository;
     private final UserAccountRepository userAccountRepository;
     private final NotificationService notificationService;
+    private final CycleLifecycleService cycleLifecycleService;
 
     public List<Map<String, Object>> listStudents() {
         return studentRosterRepository.findAllByOrderByUploadedAtDesc().stream()
@@ -101,6 +102,7 @@ public class AdminRosterService {
                     user.setStatus(UserStatus.ACTIVE);
                     userAccountRepository.save(user);
                     summary.autoApproved++;
+                    cycleLifecycleService.attachStudentToActiveFyp1(user);
                     notificationService.createNotification(
                             user.getUserId(),
                             "ACCOUNT_APPROVED",

@@ -11,6 +11,7 @@ import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AdminService;
+import com.fyp.supervision.service.CycleLifecycleService;
 import com.fyp.supervision.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,7 @@ public class AdminUserController {
     private final PasswordEncoder passwordEncoder;
     private final AdminService adminService;
     private final NotificationService notificationService;
+    private final CycleLifecycleService cycleLifecycleService;
 
     @GetMapping
     public ResponseEntity<?> getUsers(
@@ -125,6 +127,9 @@ public class AdminUserController {
         }
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        if (user.getRole() == UserRole.STUDENT) {
+            cycleLifecycleService.attachStudentToActiveFyp1(user);
+        }
         notificationService.createNotification(
                 user.getUserId(),
                 "ACCOUNT_APPROVED",
