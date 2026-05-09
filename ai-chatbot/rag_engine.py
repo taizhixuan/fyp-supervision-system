@@ -2,13 +2,14 @@
 RAG (Retrieval-Augmented Generation) Engine for FYP Chatbot
 
 Provides semantic search over the FYP knowledge base using FAISS
-and generates context-aware responses using either a local Flan-T5
-model or OpenAI GPT as a fallback/enhancement.
+and generates context-aware responses using either a remote
+OpenAI-compatible LLM (Groq / OpenAI / OpenRouter / etc.) or a
+local Flan-T5 model as a fallback.
 
 Components:
     1. Retriever: FAISS index + sentence-transformers for semantic search
-    2. Generator: Flan-T5-small (local) or OpenAI GPT (optional)
-    3. Intent classifier: Simple keyword + embedding-based routing
+    2. Generator: remote OpenAI-compatible LLM (preferred) or local Flan-T5
+    3. Intent classifier: keyword-based routing for fallback responses
 """
 
 import os
@@ -104,8 +105,8 @@ class RAGEngine:
     """
     Retrieval-Augmented Generation engine for FYP chatbot.
 
-    Uses FAISS for vector similarity search and either Flan-T5 or
-    OpenAI for response generation.
+    Uses FAISS for vector similarity search, a remote OpenAI-compatible LLM
+    (preferred) or a local Flan-T5 model for response generation.
     """
 
     def __init__(
@@ -113,6 +114,7 @@ class RAGEngine:
         vector_store_dir: str = "vector_store",
         embed_model_name: str = "all-MiniLM-L6-v2",
         gen_model_name: str = "google/flan-t5-small",
+        chat_model_name: Optional[str] = None,
         use_local_gen: bool = True,
     ):
         self.vector_store_dir = Path(vector_store_dir)
@@ -121,6 +123,7 @@ class RAGEngine:
         self.chunks = None
         self.gen_model = None
         self.gen_tokenizer = None
+        self.chat_model_name = chat_model_name
         self.use_local_gen = use_local_gen
 
         # Load embedding model (shared with index building)
@@ -245,12 +248,17 @@ class RAGEngine:
             logger.warning(f"Local generation failed: {e}")
             return ""
 
-    def generate_openai(self, query: str, context: str, openai_client,
+    def generate_remote(self, query: str, context: str, llm_client,
                         session_history: List[Dict] = None) -> str:
-        """Generate a response using OpenAI with RAG context."""
+        """
+        Generate a response using a remote OpenAI-compatible LLM
+        (Groq, OpenAI, OpenRouter, etc.) with RAG context.
+        """
         try:
+            model = self.chat_model_name or "gpt-3.5-turbo"
+
             system_prompt = (
-                "You are an intelligent FYP (Final Year Project) assistant for MMU students. "
+                "You are an intelligent FYP (Final Year Project) assistant for MMU FCI students. "
                 "Use the provided context information to answer the student's question accurately. "
                 "Be helpful, encouraging, and professional. Provide specific, actionable advice. "
                 "If the context doesn't cover the question fully, say so and provide general guidance."
@@ -258,24 +266,21 @@ class RAGEngine:
 
             messages = [{"role": "system", "content": system_prompt}]
 
-            # Add RAG context
             if context:
                 messages.append({
                     "role": "system",
                     "content": f"Relevant FYP information:\n{context}",
                 })
 
-            # Add session history (last 10 messages)
             if session_history:
                 for msg in session_history[-10:]:
                     role = "user" if msg.get("sender") == "USER" else "assistant"
                     messages.append({"role": role, "content": msg.get("content", "")})
 
-            # Add current question
             messages.append({"role": "user", "content": query})
 
-            response = openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+            response = llm_client.chat.completions.create(
+                model=model,
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.7,
@@ -283,14 +288,14 @@ class RAGEngine:
 
             return response.choices[0].message.content.strip()
         except Exception as e:
-            logger.warning(f"OpenAI generation failed: {e}")
+            logger.warning(f"Remote LLM generation failed: {e}")
             return ""
 
     def answer(
         self,
         query: str,
         session_history: List[Dict] = None,
-        openai_client=None,
+        llm_client=None,
         top_k: int = 5,
         extra_context: Optional[str] = None,
     ) -> Dict:
@@ -329,12 +334,12 @@ class RAGEngine:
         reply = ""
         confidence = 0.5
 
-        # Try OpenAI first (higher quality) if available
-        if openai_client:
-            reply = self.generate_openai(query, context, openai_client, session_history)
+        # Try remote LLM first (higher quality) if configured
+        if llm_client:
+            reply = self.generate_remote(query, context, llm_client, session_history)
             if reply:
                 confidence = 0.85
-                logger.info("Response generated using OpenAI with RAG context")
+                logger.info(f"Response generated using remote LLM ({self.chat_model_name})")
 
         # Fall back to local Flan-T5
         if not reply and self.use_local_gen:
