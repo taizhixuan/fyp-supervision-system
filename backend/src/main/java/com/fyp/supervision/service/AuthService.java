@@ -196,14 +196,39 @@ public class AuthService {
         }
     }
 
+    /** Login throttle: this many consecutive failed attempts triggers a lockout. */
+    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    /** Length of each lockout window. After it passes, the account becomes usable again. */
+    private static final int LOCKOUT_WINDOW_MINUTES = 15;
+
     @Transactional
     public LoginResponse login(LoginRequest request) {
         String identifier = request.getIdentifier().toLowerCase().trim();
 
+        // Generic "invalid credentials" for unknown identifier — never reveal whether
+        // the email/mmuId exists in the system. No counter to bump.
         UserAccount user = userAccountRepository.findByEmailOrMmuId(identifier)
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials."));
 
+        // Throttle: reject early when the account is in an active lockout window.
+        LocalDateTime now = LocalDateTime.now();
+        if (user.getLockoutUntil() != null && user.getLockoutUntil().isAfter(now)) {
+            long minutesLeft = java.time.Duration.between(now, user.getLockoutUntil()).toMinutes() + 1;
+            throw new BadRequestException(
+                    "Account temporarily locked after too many failed attempts. Try again in "
+                            + minutesLeft + " minute" + (minutesLeft == 1 ? "" : "s") + ".");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            // Increment the attempt counter; lock if we've now hit the threshold.
+            int attempts = (user.getLoginAttempts() == null ? 0 : user.getLoginAttempts()) + 1;
+            if (attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+                user.setLoginAttempts(0);
+                user.setLockoutUntil(now.plusMinutes(LOCKOUT_WINDOW_MINUTES));
+            } else {
+                user.setLoginAttempts(attempts);
+            }
+            userAccountRepository.save(user);
             throw new BadCredentialsException("Invalid credentials.");
         }
 
@@ -215,8 +240,10 @@ public class AuthService {
             throw new BadRequestException("Your account has been " + user.getStatus().name().toLowerCase() + ". Please contact the administrator.");
         }
 
-        // Update last login
-        user.setLastLoginAt(LocalDateTime.now());
+        // Successful login — reset throttle counters and stamp last_login_at.
+        user.setLoginAttempts(0);
+        user.setLockoutUntil(null);
+        user.setLastLoginAt(now);
         userAccountRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
