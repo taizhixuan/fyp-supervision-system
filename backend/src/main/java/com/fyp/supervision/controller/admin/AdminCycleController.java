@@ -163,7 +163,14 @@ public class AdminCycleController {
         applyStatusTransition(cycle, CycleStatus.ACTIVE);
         cycleRepository.save(cycle);
 
-        int attached = cycleLifecycleService.backfillFyp1Placeholders(cycle);
+        // Backfill happens through the service (proxy-routed) — each row uses REQUIRES_NEW,
+        // so a per-row failure cannot poison this outer activate transaction.
+        int attached = 0;
+        try {
+            attached = cycleLifecycleService.backfillFyp1Placeholders(cycle);
+        } catch (Exception ignored) {
+            // Already logged inside the service.
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("cycleId", cycle.getCycleId());
         body.put("status", cycle.getStatus().name());
@@ -292,9 +299,9 @@ public class AdminCycleController {
         CycleStatus current = cycle.getStatus();
         if (current == next) return;
         boolean allowed = switch (current) {
-            case PLANNING -> next == CycleStatus.ACTIVE || next == CycleStatus.ARCHIVED;
+            case PLANNING -> next == CycleStatus.ACTIVE || next == CycleStatus.COMPLETED || next == CycleStatus.ARCHIVED;
             case ACTIVE -> next == CycleStatus.COMPLETED || next == CycleStatus.PLANNING;
-            case COMPLETED -> next == CycleStatus.ARCHIVED;
+            case COMPLETED -> next == CycleStatus.ARCHIVED || next == CycleStatus.ACTIVE;
             case ARCHIVED -> false;
         };
         if (!allowed) {

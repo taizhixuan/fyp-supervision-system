@@ -2,7 +2,6 @@ import {
   forwardRef,
   type HTMLAttributes,
   useEffect,
-  useCallback,
   useRef,
 } from 'react'
 import { X } from 'lucide-react'
@@ -33,32 +32,30 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
     ref
   ) => {
     const modalRef = useRef<HTMLDivElement>(null)
+    // Hold the latest onClose without re-running the open-effect every render —
+    // otherwise a fresh inline `onClose` would steal focus from inputs on every keystroke.
+    const onCloseRef = useRef(onClose)
+    onCloseRef.current = onClose
 
-    // Handle escape key
-    const handleKeyDown = useCallback(
-      (event: KeyboardEvent) => {
-        if (event.key === 'Escape' && closeOnEscape) {
-          onClose()
-        }
-      },
-      [closeOnEscape, onClose]
-    )
-
-    // Focus trap
+    // Body scroll lock + initial focus, only on the open→close transition.
     useEffect(() => {
-      if (isOpen) {
-        document.addEventListener('keydown', handleKeyDown)
-        document.body.style.overflow = 'hidden'
-
-        // Focus the modal
-        modalRef.current?.focus()
-
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown)
-          document.body.style.overflow = ''
-        }
+      if (!isOpen) return
+      document.body.style.overflow = 'hidden'
+      modalRef.current?.focus()
+      return () => {
+        document.body.style.overflow = ''
       }
-    }, [isOpen, handleKeyDown])
+    }, [isOpen])
+
+    // Escape key listener — only re-binds when the open state or the closeOnEscape flag changes.
+    useEffect(() => {
+      if (!isOpen || !closeOnEscape) return
+      const handler = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') onCloseRef.current()
+      }
+      document.addEventListener('keydown', handler)
+      return () => document.removeEventListener('keydown', handler)
+    }, [isOpen, closeOnEscape])
 
     if (!isOpen) return null
 
