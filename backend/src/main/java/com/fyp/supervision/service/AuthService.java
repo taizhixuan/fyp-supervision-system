@@ -201,7 +201,12 @@ public class AuthService {
     /** Length of each lockout window. After it passes, the account becomes usable again. */
     private static final int LOCKOUT_WINDOW_MINUTES = 15;
 
-    @Transactional
+    // noRollbackFor: when the password is wrong we increment loginAttempts then throw
+    // BadCredentialsException. Spring's default rolls back any RuntimeException, which
+    // would discard the increment and the throttle would never engage. Same goes for the
+    // BadRequestException paths (lockout, status checks) — list both so any pre-throw
+    // saves stick.
+    @Transactional(noRollbackFor = { BadCredentialsException.class, BadRequestException.class })
     public LoginResponse login(LoginRequest request) {
         String identifier = request.getIdentifier().toLowerCase().trim();
 
