@@ -719,7 +719,18 @@ export function useCreateCommitteeAnnouncement() {
         await new Promise((resolve) => setTimeout(resolve, 800))
         return { success: true, announcementId: Date.now() }
       }
-      const { data: responseData } = await apiClient.post('/committee/announcements', data)
+      // Always send multipart so the backend can parse files + JSON in one request.
+      const { attachments, ...jsonPayload } = data
+      const formData = new FormData()
+      formData.append('data', new Blob([JSON.stringify(jsonPayload)], { type: 'application/json' }))
+      if (attachments && attachments.length > 0) {
+        for (const file of attachments) {
+          formData.append('files', file)
+        }
+      }
+      const { data: responseData } = await apiClient.post('/committee/announcements', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return responseData
     },
     onSuccess: () => {

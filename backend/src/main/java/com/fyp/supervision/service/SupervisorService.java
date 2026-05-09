@@ -261,10 +261,30 @@ public class SupervisorService {
 
     // ========== Supervisees ==========
 
-    /** Returns list of supervisee DTOs matching frontend Supervisee type */
+    /**
+     * Active supervisees only — students whose enrolled cycle is still PLANNING/ACTIVE.
+     * Past supervisees (cycle COMPLETED/ARCHIVED) are excluded from the default view to
+     * keep "current workload" honest. Use {@link #getPastSuperviseeDtos} for history.
+     */
     public List<Map<String, Object>> getSuperviseeDtos(Long userId) {
-        List<Project> projects = projectRepository.findBySupervisor_UserId(userId);
-        return projects.stream().map(this::buildSuperviseeDto).collect(Collectors.toList());
+        return projectRepository.findBySupervisor_UserId(userId).stream()
+                .filter(p -> {
+                    if (p.getCycle() == null || p.getCycle().getStatus() == null) return true;
+                    return p.getCycle().getStatus() == com.fyp.supervision.enums.CycleStatus.ACTIVE
+                            || p.getCycle().getStatus() == com.fyp.supervision.enums.CycleStatus.PLANNING;
+                })
+                .map(this::buildSuperviseeDto)
+                .collect(Collectors.toList());
+    }
+
+    /** Past supervisees (cycle COMPLETED or ARCHIVED) — surfaced in a separate tab. */
+    public List<Map<String, Object>> getPastSuperviseeDtos(Long userId) {
+        return projectRepository.findBySupervisor_UserId(userId).stream()
+                .filter(p -> p.getCycle() != null && p.getCycle().getStatus() != null
+                        && (p.getCycle().getStatus() == com.fyp.supervision.enums.CycleStatus.COMPLETED
+                                || p.getCycle().getStatus() == com.fyp.supervision.enums.CycleStatus.ARCHIVED))
+                .map(this::buildSuperviseeDto)
+                .collect(Collectors.toList());
     }
 
     /** Returns single supervisee detail DTO */
@@ -316,6 +336,16 @@ public class SupervisorService {
         dto.put("documentsCount", documentsCount);
         dto.put("overallProgress", 0);
         dto.put("riskLevel", "LOW");
+        // Cycle status surfaces "past student" badges on the supervisor side.
+        if (project.getCycle() != null && project.getCycle().getStatus() != null) {
+            dto.put("cycleStatus", project.getCycle().getStatus().name());
+            dto.put("cycleType", project.getCycle().getCycleType());
+            dto.put("cycleAcademicYear", project.getCycle().getAcademicYear());
+        } else {
+            dto.put("cycleStatus", null);
+            dto.put("cycleType", null);
+            dto.put("cycleAcademicYear", null);
+        }
         return dto;
     }
 

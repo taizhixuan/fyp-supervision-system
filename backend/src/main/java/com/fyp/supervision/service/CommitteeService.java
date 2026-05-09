@@ -257,6 +257,18 @@ public class CommitteeService {
         dto.put("progress", 0);
         dto.put("lastActivity", project.getUpdatedAt() != null ? project.getUpdatedAt().toString() : "");
         dto.put("riskLevel", "LOW");
+        // Cycle status — committee needs to see "past" projects so they can audit history,
+        // but the status flag lets the UI badge them as PAST and exclude from "active load"
+        // calculations.
+        if (project.getCycle() != null && project.getCycle().getStatus() != null) {
+            dto.put("cycleStatus", project.getCycle().getStatus().name());
+            dto.put("cycleType", project.getCycle().getCycleType());
+            dto.put("academicYear", project.getCycle().getAcademicYear());
+        } else {
+            dto.put("cycleStatus", null);
+            dto.put("cycleType", null);
+            dto.put("academicYear", null);
+        }
         return dto;
     }
 
@@ -308,7 +320,8 @@ public class CommitteeService {
 
     public Map<String, Object> buildSupervisorLoadDto(SupervisorProfile profile) {
         UserAccount user = userAccountRepository.findById(profile.getUserId()).orElse(null);
-        List<Project> projects = projectRepository.findBySupervisor_UserId(profile.getUserId());
+        // Active-cycle projects only — past supervisees should not inflate "current load".
+        List<Project> projects = projectRepository.findActiveCycleBySupervisor(profile.getUserId());
 
         List<Map<String, Object>> students = projects.stream().map(p -> {
             UserAccount student = p.getStudent();

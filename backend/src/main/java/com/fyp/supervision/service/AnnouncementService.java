@@ -1,0 +1,393 @@
+package com.fyp.supervision.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fyp.supervision.entity.Announcement;
+import com.fyp.supervision.entity.AnnouncementAttachment;
+import com.fyp.supervision.entity.AnnouncementAudience;
+import com.fyp.supervision.entity.AnnouncementLink;
+import com.fyp.supervision.entity.FypCycle;
+import com.fyp.supervision.entity.Project;
+import com.fyp.supervision.entity.StudentProfile;
+import com.fyp.supervision.entity.UserAccount;
+import com.fyp.supervision.enums.AnnouncementStatus;
+import com.fyp.supervision.enums.CycleStatus;
+import com.fyp.supervision.exception.BadRequestException;
+import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.repository.AnnouncementRepository;
+import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.StudentProfileRepository;
+import com.fyp.supervision.repository.UserAccountRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * Single source of truth for announcement queries, audience filtering, attachments, and
+ * external links. Used by both the shared (student-facing) and role-scoped (supervisor /
+ * committee) controllers so they all agree on what a student is allowed to see.
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AnnouncementService {
+
+    private final AnnouncementRepository announcementRepository;
+    private final ProjectRepository projectRepository;
+    private final StudentProfileRepository studentProfileRepository;
+    private final UserAccountRepository userAccountRepository;
+    private final FileStorageService fileStorageService;
+    private final ObjectMapper objectMapper;
+
+    // ---------- Reads ----------
+
+    public Page<Map<String, Object>> listForStudent(Long studentUserId, Pageable pageable) {
+        Page<Announcement> page = announcementRepository.findByStatusOrderByCreatedAtDesc(
+                AnnouncementStatus.PUBLISHED, pageable);
+        StudentContext ctx = loadStudentContext(studentUserId);
+        List<Map<String, Object>> filtered = page.getContent().stream()
+                .filter(a -> matchesAudience(a, ctx))
+                .map(this::buildDto)
+                .toList();
+        return new PageImpl<>(filtered, pageable, filtered.size());
+    }
+
+    public List<Map<String, Object>> latestForStudent(Long studentUserId, int limit) {
+        StudentContext ctx = loadStudentContext(studentUserId);
+        return announcementRepository.findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED).stream()
+                .filter(a -> matchesAudience(a, ctx))
+                .limit(limit)
+                .map(this::buildDto)
+                .toList();
+    }
+
+    public List<Map<String, Object>> listAllPublished(Pageable pageable) {
+        return announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable)
+                .getContent().stream().map(this::buildDto).toList();
+    }
+
+    public Map<String, Object> get(Long announcementId) {
+        Announcement a = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        return buildDto(a);
+    }
+
+    public AnnouncementAttachment loadAttachment(Long announcementId, Long attachmentId) {
+        Announcement a = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        return a.getAttachments().stream()
+                .filter(att -> Objects.equals(att.getAttachmentId(), attachmentId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
+    }
+
+    // ---------- Writes ----------
+
+    /**
+     * Create an announcement with optional file attachments, external links and per-student
+     * targeting (SPECIFIC_STUDENTS scope, supervisor side). The payload is the JSON
+     * already-parsed by Jackson; files are uploaded multipart parts.
+     */
+    @Transactional
+    public Map<String, Object> create(Long creatorUserId, Map<String, Object> payload, MultipartFile[] files) {
+        UserAccount creator = userAccountRepository.findById(creatorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        String scope = optString(payload, "scope");
+        if (scope == null || scope.isBlank()) {
+            scope = optString(payload, "visibility");
+        }
+        if (scope == null || scope.isBlank()) scope = "ALL";
+
+        String title = requireString(payload, "title");
+        String content = requireString(payload, "content");
+
+        Announcement announcement = Announcement.builder()
+                .createdBy(creator)
+                .scope(scope)
+                .title(title)
+                .content(content)
+                .priority(optString(payload, "priority", "NORMAL"))
+                .status(AnnouncementStatus.PUBLISHED)
+                .publishAt(LocalDateTime.now())
+                .build();
+        announcement = announcementRepository.save(announcement);
+
+        // External links
+        Object linksRaw = payload.get("links");
+        if (linksRaw instanceof List<?> list) {
+            for (Object item : list) {
+                if (!(item instanceof Map<?, ?> m)) continue;
+                Object label = m.get("label");
+                Object url = m.get("url");
+                if (label == null || url == null
+                        || label.toString().isBlank() || url.toString().isBlank()) continue;
+                AnnouncementLink link = AnnouncementLink.builder()
+                        .announcement(announcement)
+                        .label(label.toString().trim())
+                        .url(url.toString().trim())
+                        .build();
+                announcement.getLinks().add(link);
+            }
+        }
+
+        // Specific-student targeting (supervisor side)
+        Object targetIdsRaw = payload.get("targetStudentIds");
+        if ("SPECIFIC_STUDENTS".equalsIgnoreCase(scope) && targetIdsRaw instanceof List<?> ids) {
+            for (Object id : ids) {
+                Long studentId = parseLong(id);
+                if (studentId == null) continue;
+                UserAccount target = userAccountRepository.findById(studentId).orElse(null);
+                if (target == null) continue;
+                AnnouncementAudience aud = AnnouncementAudience.builder()
+                        .announcement(announcement)
+                        .targetStudent(target)
+                        .build();
+                announcement.getAudiences().add(aud);
+            }
+        }
+
+        // File attachments
+        if (files != null) {
+            for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) continue;
+                String storedPath = fileStorageService.storeFile(file, "announcement", creatorUserId);
+                AnnouncementAttachment att = AnnouncementAttachment.builder()
+                        .announcement(announcement)
+                        .fileName(Optional.ofNullable(file.getOriginalFilename()).orElse("file"))
+                        .filePath(storedPath)
+                        .fileSize(file.getSize())
+                        .mimeType(file.getContentType())
+                        .uploadedAt(LocalDateTime.now())
+                        .build();
+                announcement.getAttachments().add(att);
+            }
+        }
+
+        Announcement saved = announcementRepository.save(announcement);
+        return buildDto(saved);
+    }
+
+    /**
+     * Parse the multipart `data` JSON part and delegate to {@link #create}. Used by the
+     * supervisor/committee controllers so callers don't need to repeat the parsing.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> createFromMultipart(Long creatorUserId, String dataJson, MultipartFile[] files) {
+        Map<String, Object> payload;
+        try {
+            payload = objectMapper.readValue(dataJson, Map.class);
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid JSON payload: " + e.getMessage());
+        }
+        return create(creatorUserId, payload, files);
+    }
+
+    @Transactional
+    public void delete(Long announcementId) {
+        Announcement a = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        for (AnnouncementAttachment att : a.getAttachments()) {
+            fileStorageService.deleteFile(att.getFilePath());
+        }
+        announcementRepository.delete(a);
+    }
+
+    // ---------- DTO ----------
+
+    public Map<String, Object> buildDto(Announcement a) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("announcementId", a.getAnnouncementId());
+        dto.put("scope", a.getScope() != null ? a.getScope() : "ALL");
+        dto.put("visibility", a.getScope() != null ? a.getScope() : "ALL");
+        dto.put("title", a.getTitle());
+        dto.put("content", a.getContent());
+        dto.put("priority", a.getPriority() != null ? a.getPriority() : "NORMAL");
+        dto.put("status", a.getStatus() != null ? a.getStatus().name() : "PUBLISHED");
+        dto.put("publishAt", a.getPublishAt() != null ? a.getPublishAt().toString() : "");
+        dto.put("expiresAt", a.getExpiresAt() != null ? a.getExpiresAt().toString() : null);
+        dto.put("createdBy", a.getCreatedBy() != null ? a.getCreatedBy().getFullName() : "");
+        dto.put("createdAt", a.getCreatedAt() != null ? a.getCreatedAt().toString() : "");
+        dto.put("updatedAt", a.getUpdatedAt() != null ? a.getUpdatedAt().toString() : "");
+        dto.put("viewCount", a.getViewCount());
+        dto.put("isActive", a.getStatus() == AnnouncementStatus.PUBLISHED);
+        dto.put("attachments", a.getAttachments().stream().map(this::attachmentDto).toList());
+        dto.put("links", a.getLinks().stream().map(this::linkDto).toList());
+        List<Long> targetStudentIds = a.getAudiences().stream()
+                .filter(au -> au.getTargetStudent() != null)
+                .map(au -> au.getTargetStudent().getUserId())
+                .toList();
+        dto.put("targetStudentIds", targetStudentIds);
+        return dto;
+    }
+
+    private Map<String, Object> attachmentDto(AnnouncementAttachment att) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("attachmentId", att.getAttachmentId());
+        m.put("fileName", att.getFileName());
+        m.put("fileSize", att.getFileSize());
+        m.put("mimeType", att.getMimeType());
+        m.put("downloadUrl", "/announcements/" + att.getAnnouncement().getAnnouncementId()
+                + "/attachments/" + att.getAttachmentId());
+        return m;
+    }
+
+    private Map<String, Object> linkDto(AnnouncementLink link) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("linkId", link.getLinkId());
+        m.put("label", link.getLabel());
+        m.put("url", link.getUrl());
+        return m;
+    }
+
+    // ---------- Audience matching ----------
+
+    private boolean matchesAudience(Announcement a, StudentContext ctx) {
+        String scope = a.getScope() == null ? "ALL" : a.getScope().trim().toUpperCase(Locale.ROOT);
+
+        // Pure broadcast — every student sees this.
+        if ("ALL".equals(scope) || "ALL_STUDENTS".equals(scope) || "ALL_SUPERVISEES".equals(scope)) {
+            // ALL_SUPERVISEES is supervisor-side and only relevant if the student is paired
+            // with this announcement's author. Treat as broadcast for now (committee hides
+            // it via scope choice; supervisor announcements with this scope go to all of
+            // their supervisees).
+            if ("ALL_SUPERVISEES".equals(scope)) {
+                return ctx.supervisorUserId != null
+                        && a.getCreatedBy() != null
+                        && Objects.equals(a.getCreatedBy().getUserId(), ctx.supervisorUserId);
+            }
+            return true;
+        }
+
+        // Phase scope: FYP1 / FYP2.
+        if ("FYP1".equals(scope) || "FYP2".equals(scope)) {
+            if (ctx.cycleType == null) return false;
+            // Supervisor-side phase scope still requires the supervisor pairing.
+            if (a.getCreatedBy() != null && a.getCreatedBy().getUserId() != null
+                    && ctx.supervisorUserId != null
+                    && Objects.equals(a.getCreatedBy().getUserId(), ctx.supervisorUserId)) {
+                return scope.equalsIgnoreCase(ctx.cycleType);
+            }
+            // Committee-side phase scope — visible to every student in that phase.
+            return scope.equalsIgnoreCase(ctx.cycleType);
+        }
+
+        // Programme scope, e.g. PROGRAMME_CS / PROGRAMME_SE / PROGRAMME_DS / PROGRAMME_IT.
+        if (scope.startsWith("PROGRAMME_")) {
+            String code = scope.substring("PROGRAMME_".length());
+            return matchesProgramme(code, ctx.programme, ctx.specialisation);
+        }
+
+        // Specific students — must be explicitly named in audiences.
+        if ("SPECIFIC_STUDENTS".equals(scope)) {
+            return a.getAudiences().stream()
+                    .anyMatch(au -> au.getTargetStudent() != null
+                            && Objects.equals(au.getTargetStudent().getUserId(), ctx.userId));
+        }
+
+        // Unknown scope — be conservative, hide it.
+        log.debug("Unrecognised announcement scope '{}' on id={} — hiding from student {}",
+                scope, a.getAnnouncementId(), ctx.userId);
+        return false;
+    }
+
+    private boolean matchesProgramme(String code, String programme, String specialisation) {
+        if (code == null) return false;
+        String c = code.toUpperCase(Locale.ROOT);
+        String p = programme == null ? "" : programme.toUpperCase(Locale.ROOT);
+        String s = specialisation == null ? "" : specialisation.toUpperCase(Locale.ROOT);
+        return switch (c) {
+            case "CS" -> p.contains("COMPUTER SCIENCE");
+            case "SE" -> s.contains("SOFTWARE ENGINEERING");
+            case "DS" -> s.contains("DATA SCIENCE");
+            case "IT" -> p.contains("INFORMATION TECHNOLOGY");
+            case "IS" -> s.contains("INFORMATION SYSTEMS");
+            case "CYB" -> s.contains("CYBERSECURITY");
+            case "GAME", "GAMEDEV" -> s.contains("GAME");
+            default -> p.contains(c) || s.contains(c);
+        };
+    }
+
+    // ---------- Student context ----------
+
+    private StudentContext loadStudentContext(Long userId) {
+        StudentContext ctx = new StudentContext();
+        ctx.userId = userId;
+        Optional<Project> projectOpt = projectRepository.findByStudent_UserId(userId);
+        if (projectOpt.isPresent()) {
+            Project p = projectOpt.get();
+            FypCycle cycle = p.getCycle();
+            if (cycle != null) {
+                ctx.cycleType = cycle.getCycleType();
+                ctx.cycleStatus = cycle.getStatus();
+            }
+            if (p.getSupervisor() != null) {
+                ctx.supervisorUserId = p.getSupervisor().getUserId();
+            }
+        }
+        StudentProfile profile = studentProfileRepository.findById(userId).orElse(null);
+        if (profile != null) {
+            ctx.programme = profile.getProgramme();
+            ctx.specialisation = profile.getSpecialisation();
+        }
+        return ctx;
+    }
+
+    private static class StudentContext {
+        Long userId;
+        String cycleType;          // FYP1 / FYP2
+        CycleStatus cycleStatus;
+        Long supervisorUserId;
+        String programme;
+        String specialisation;
+    }
+
+    // ---------- Helpers ----------
+
+    private static String optString(Map<String, Object> m, String key) {
+        Object v = m.get(key);
+        return v == null ? null : v.toString();
+    }
+
+    private static String optString(Map<String, Object> m, String key, String fallback) {
+        String v = optString(m, key);
+        return (v == null || v.isBlank()) ? fallback : v;
+    }
+
+    private static String requireString(Map<String, Object> m, String key) {
+        String v = optString(m, key);
+        if (v == null || v.isBlank()) {
+            throw new BadRequestException("Missing required field: " + key);
+        }
+        return v;
+    }
+
+    private static Long parseLong(Object o) {
+        if (o == null) return null;
+        try {
+            if (o instanceof Number n) return n.longValue();
+            return Long.parseLong(o.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // Extra helper for callers that want to know about the stale list size.
+    @SuppressWarnings("unused")
+    private List<Project> activeProjectsBySupervisor(Long supervisorId) {
+        return projectRepository.findActiveCycleBySupervisor(supervisorId);
+    }
+}

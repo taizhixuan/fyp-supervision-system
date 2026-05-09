@@ -41,6 +41,7 @@ public class CycleLifecycleService {
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
     private final DeadlineRepository deadlineRepository;
+    private final NotificationService notificationService;
 
     public Optional<FypCycle> findActiveCycle(String cycleType) {
         if (cycleType == null) return Optional.empty();
@@ -115,6 +116,39 @@ public class CycleLifecycleService {
         int updated = cycleRepository.updateStatusById(cycleId, newStatus);
         if (updated == 0) {
             throw new IllegalStateException("Cycle " + cycleId + " not found for status update.");
+        }
+        if (newStatus == CycleStatus.COMPLETED || newStatus == CycleStatus.ARCHIVED) {
+            notifyEnrolledStudents(cycleId, newStatus);
+        }
+    }
+
+    /**
+     * In-app notification to every student enrolled in the cycle that has just been
+     * COMPLETED or ARCHIVED, so they understand why their write actions are now blocked.
+     * Best-effort — a notification failure must not roll back the status change.
+     */
+    private void notifyEnrolledStudents(Long cycleId, CycleStatus newStatus) {
+        List<Project> enrolled = projectRepository.findAllByCycleId(cycleId,
+                org.springframework.data.domain.PageRequest.of(0, 500)).getContent();
+        String title = newStatus == CycleStatus.COMPLETED
+                ? "Your FYP cycle is now complete"
+                : "Your FYP cycle has been archived";
+        String message = newStatus == CycleStatus.COMPLETED
+                ? "The FYP cycle you were enrolled in has been marked as completed. You now have read-only access to your records."
+                : "The FYP cycle you were enrolled in has been archived. You now have read-only access to your records.";
+        for (Project p : enrolled) {
+            UserAccount student = p.getStudent();
+            if (student == null) continue;
+            try {
+                notificationService.createNotification(
+                        student.getUserId(),
+                        "CYCLE_STATUS",
+                        title,
+                        message,
+                        "/student/dashboard");
+            } catch (Exception e) {
+                log.warn("Cycle-status notification skipped for student {}: {}", student.getUserId(), e.getMessage());
+            }
         }
     }
 

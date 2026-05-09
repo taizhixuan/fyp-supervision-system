@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProjectDocumentRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.service.FileStorageService;
+import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -37,6 +38,7 @@ public class StudentDocumentController {
     private final ProjectRepository projectRepository;
     private final FileStorageService fileStorageService;
     private final StudentService studentService;
+    private final StudentAccessService studentAccessService;
 
     @GetMapping
     public ResponseEntity<?> getDocuments(
@@ -90,6 +92,7 @@ public class StudentDocumentController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String phase) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("Please attach a file to upload.");
         }
@@ -125,6 +128,7 @@ public class StudentDocumentController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDocument(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         ProjectDocument doc = documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
         if (doc.getUploadedBy() == null || !doc.getUploadedBy().getUserId().equals(userId)) {

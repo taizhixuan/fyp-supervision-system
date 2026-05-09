@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,6 +8,9 @@ import {
   Megaphone,
   Send,
   Users,
+  Paperclip,
+  Link2,
+  Trash2,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -22,6 +25,8 @@ import {
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+
 const announcementSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
   content: z.string().min(1, 'Content is required').max(5000, 'Content is too long'),
@@ -29,10 +34,11 @@ const announcementSchema = z.object({
   priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']),
   publishAt: z.string().min(1, 'Publish date is required'),
   expiresAt: z.string().optional(),
-  targetStudentIds: z.array(z.string()).optional(),
+  targetStudentIds: z.array(z.number()).optional(),
 })
 
 type AnnouncementFormData = z.infer<typeof announcementSchema>
+type LinkRow = { label: string; url: string }
 
 export function CreateAnnouncement() {
   const { id } = useParams<{ id: string }>()
@@ -43,6 +49,10 @@ export function CreateAnnouncement() {
   const { data: superviseesData } = useSupervisees()
   const createMutation = useCreateAnnouncement()
   const updateMutation = useUpdateAnnouncement()
+
+  const [files, setFiles] = useState<File[]>([])
+  const [links, setLinks] = useState<LinkRow[]>([])
+  const [fileError, setFileError] = useState<string | null>(null)
 
   const {
     register,
@@ -82,11 +92,16 @@ export function CreateAnnouncement() {
 
   const onSubmit = async (data: AnnouncementFormData) => {
     try {
+      const cleanedLinks = links
+        .map((l) => ({ label: l.label.trim(), url: l.url.trim() }))
+        .filter((l) => l.label && l.url)
       const payload = {
         ...data,
         publishAt: new Date(data.publishAt).toISOString(),
         expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
         isActive: true,
+        attachments: files,
+        links: cleanedLinks,
       }
 
       if (isEditing && existingAnnouncement) {
@@ -103,14 +118,32 @@ export function CreateAnnouncement() {
     }
   }
 
-  const toggleStudent = (studentId: string) => {
+  const toggleStudent = (studentUserId: number) => {
     const current = selectedStudents
-    if (current.includes(studentId)) {
-      setValue('targetStudentIds', current.filter((id) => id !== studentId))
+    if (current.includes(studentUserId)) {
+      setValue('targetStudentIds', current.filter((id) => id !== studentUserId))
     } else {
-      setValue('targetStudentIds', [...current, studentId])
+      setValue('targetStudentIds', [...current, studentUserId])
     }
   }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError(null)
+    const incoming = Array.from(e.target.files ?? [])
+    const oversize = incoming.find((f) => f.size > MAX_FILE_SIZE)
+    if (oversize) {
+      setFileError(`"${oversize.name}" is over the 10 MB limit.`)
+      return
+    }
+    setFiles((prev) => [...prev, ...incoming])
+    e.target.value = ''
+  }
+  const removeFile = (idx: number) => setFiles((prev) => prev.filter((_, i) => i !== idx))
+  const addLinkRow = () => setLinks((prev) => [...prev, { label: '', url: '' }])
+  const updateLink = (idx: number, key: 'label' | 'url', value: string) => {
+    setLinks((prev) => prev.map((l, i) => (i === idx ? { ...l, [key]: value } : l)))
+  }
+  const removeLink = (idx: number) => setLinks((prev) => prev.filter((_, i) => i !== idx))
 
   if (isEditing && loadingAnnouncement) {
     return (
@@ -262,31 +295,111 @@ export function CreateAnnouncement() {
               ))}
             </div>
 
-            {/* Student Selection (if specific students) */}
+            {/* Student Selection (if specific students) — current supervisees only.
+                Past-cycle students are filtered out by the backend so they don't
+                appear here. */}
             {visibility === 'SPECIFIC_STUDENTS' && superviseesData && (
               <div className="border rounded-lg p-4 bg-neutral-50">
                 <p className="text-sm font-medium text-neutral-700 mb-3">
-                  Select students to notify:
+                  Select current supervisees to notify:
                 </p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {superviseesData.supervisees.map((student) => (
-                    <label
-                      key={student.superviseeId}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedStudents.includes(student.superviseeId)}
-                        onChange={() => toggleStudent(student.superviseeId)}
-                        className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-neutral-700">{student.fullName}</span>
-                      <span className="text-xs text-neutral-500">({student.studentId})</span>
-                    </label>
-                  ))}
-                </div>
+                {superviseesData.supervisees.length === 0 ? (
+                  <p className="text-sm text-neutral-500">
+                    No active supervisees in your current cycle.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {superviseesData.supervisees.map((student) => {
+                      const sid = Number(student.userId)
+                      return (
+                        <label
+                          key={student.superviseeId}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedStudents.includes(sid)}
+                            onChange={() => toggleStudent(sid)}
+                            className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-neutral-700">{student.fullName}</span>
+                          <span className="text-xs text-neutral-500">({student.studentId})</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* Attachments + external links */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+            <Paperclip className="h-5 w-5 text-neutral-400" />
+            Attachments &amp; Links
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Attach files (PDF, DOC, images — 10 MB max each)
+              </label>
+              <input
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*,.txt,.zip"
+                className="block w-full text-sm text-neutral-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+              />
+              {fileError && <p className="text-sm text-error-600 mt-2">{fileError}</p>}
+              {files.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {files.map((file, i) => (
+                    <li key={i} className="flex items-center justify-between text-sm bg-neutral-50 rounded-md px-3 py-2">
+                      <span className="truncate">
+                        <Paperclip className="inline h-4 w-4 mr-2 text-neutral-400" />
+                        {file.name} <span className="text-neutral-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                      </span>
+                      <button type="button" onClick={() => removeFile(i)} className="text-error-600 hover:text-error-700">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-700">External links</label>
+                <Button type="button" variant="ghost" size="sm" onClick={addLinkRow} leftIcon={<Link2 className="h-4 w-4" />}>
+                  Add link
+                </Button>
+              </div>
+              {links.length === 0 ? (
+                <p className="text-xs text-neutral-500">No external links yet.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {links.map((link, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Input
+                        placeholder="Label"
+                        value={link.label}
+                        onChange={(e) => updateLink(i, 'label', e.target.value)}
+                      />
+                      <Input
+                        placeholder="https://..."
+                        value={link.url}
+                        onChange={(e) => updateLink(i, 'url', e.target.value)}
+                      />
+                      <button type="button" onClick={() => removeLink(i)} className="text-error-600 hover:text-error-700 p-2">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </Card>
 

@@ -126,6 +126,8 @@ const AdminProfile = lazy(() => import('@/pages/admin/AdminProfile').then(m => (
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/lib/auth/ProtectedRoute'
 import { StudentFeatureGate } from '@/components/common/StudentFeatureGate'
+import { RegisteredOnlyLockGate } from '@/components/common/RegisteredOnlyLockGate'
+import { CycleActiveGate } from '@/components/common/CycleActiveGate'
 
 export const router = createBrowserRouter([
   // Public routes (no authentication required)
@@ -224,12 +226,13 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Supervisor Discovery
+      // Supervisor Discovery — wrapped in RegisteredOnlyLockGate so already-registered
+      // students see a "you are already paired" lock instead of the directory.
       {
         path: ROUTES.STUDENT.SUPERVISORS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <SupervisorDirectory />
+            <RegisteredOnlyLockGate><SupervisorDirectory /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
@@ -237,7 +240,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.SUPERVISOR_DETAIL,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <SupervisorDetail />
+            <RegisteredOnlyLockGate><SupervisorDetail /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
@@ -245,7 +248,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.RECOMMENDATIONS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <AIRecommendations />
+            <RegisteredOnlyLockGate><AIRecommendations /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
@@ -253,17 +256,17 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.COMPARE_SUPERVISORS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <CompareSupervisors />
+            <RegisteredOnlyLockGate><CompareSupervisors /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
 
-      // Supervision Requests
+      // Supervision Requests — also locked once registered.
       {
         path: ROUTES.STUDENT.CREATE_REQUEST,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <CreateSupervisionRequest />
+            <RegisteredOnlyLockGate><CreateSupervisionRequest /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
@@ -271,7 +274,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MY_REQUESTS,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <MyRequests />
+            <RegisteredOnlyLockGate><MyRequests /></RegisteredOnlyLockGate>
           </ProtectedRoute>
         ),
       },
@@ -333,7 +336,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><MeetingRequest /></StudentFeatureGate>
+            <StudentFeatureGate><CycleActiveGate><MeetingRequest /></CycleActiveGate></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -367,7 +370,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.LOG_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><LogCreate /></StudentFeatureGate>
+            <StudentFeatureGate><CycleActiveGate><LogCreate /></CycleActiveGate></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -401,7 +404,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOG_NEW,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><MeetingLogCreate /></StudentFeatureGate>
+            <StudentFeatureGate><CycleActiveGate><MeetingLogCreate /></CycleActiveGate></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -435,7 +438,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.DOCUMENT_UPLOAD,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><DocumentUpload /></StudentFeatureGate>
+            <StudentFeatureGate><CycleActiveGate><DocumentUpload /></CycleActiveGate></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },

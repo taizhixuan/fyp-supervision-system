@@ -14,15 +14,22 @@ export function useStudentRegistrationGate() {
   const { user } = useAuth()
   const isStudent = user?.role === 'STUDENT'
   const { data, isLoading } = useStudentDashboard({ enabled: isStudent })
-  const status = data?.registrationStatus?.status
+  const reg = data?.registrationStatus
+  const status = reg?.status
   const supervisorAssigned =
     status === 'PROPOSAL_PENDING' ||
     status === 'UNDER_REVIEW' ||
     status === 'REGISTERED'
+  // Backend explicitly sets cycleActive: false when the enrolled cycle is
+  // COMPLETED/ARCHIVED. Treat undefined as "active" so admin/supervisor/etc. don't
+  // accidentally lock themselves out via this hook.
+  const cycleActive = reg?.cycleActive !== false
   return {
     isLoading: isStudent && isLoading,
     status,
     supervisorAssigned,
     isRegistered: status === 'REGISTERED',
+    cycleActive,
+    cycleStatus: reg?.cycleStatus ?? null,
   }
 }

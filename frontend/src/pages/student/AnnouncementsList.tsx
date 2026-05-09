@@ -7,7 +7,12 @@ import {
   AlertTriangle,
   Info,
   ChevronRight,
+  Paperclip,
+  Link2,
+  Download,
+  ExternalLink,
 } from 'lucide-react'
+import { apiClient } from '@/lib/api/client'
 import {
   Card,
   Spinner,
@@ -324,6 +329,72 @@ export function AnnouncementsList() {
               <p className="text-neutral-700 whitespace-pre-line leading-relaxed">
                 {selected.content}
               </p>
+
+              {selected.attachments && selected.attachments.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                    <Paperclip className="h-4 w-4 text-neutral-400" />
+                    Attachments
+                  </h4>
+                  <ul className="space-y-2">
+                    {selected.attachments.map((att) => (
+                      <li
+                        key={att.attachmentId}
+                        className="flex items-center justify-between gap-3 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2"
+                      >
+                        <span className="truncate text-sm text-neutral-700">
+                          {att.fileName}{' '}
+                          <span className="text-neutral-400 text-xs">
+                            ({(att.fileSize / 1024).toFixed(1)} KB)
+                          </span>
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          leftIcon={<Download className="h-3.5 w-3.5" />}
+                          onClick={async () => {
+                            const res = await apiClient.get(att.downloadUrl, { responseType: 'blob' })
+                            const blobUrl = URL.createObjectURL(res.data as Blob)
+                            const a = document.createElement('a')
+                            a.href = blobUrl
+                            a.download = att.fileName
+                            document.body.appendChild(a)
+                            a.click()
+                            a.remove()
+                            URL.revokeObjectURL(blobUrl)
+                          }}
+                        >
+                          Download
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selected.links && selected.links.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                    <Link2 className="h-4 w-4 text-neutral-400" />
+                    Links
+                  </h4>
+                  <ul className="space-y-2">
+                    {selected.links.map((link) => (
+                      <li key={link.linkId}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-primary-600 hover:underline break-all"
+                        >
+                          <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </ModalBody>
             <ModalFooter>
               <Button variant="secondary" onClick={() => setSelected(null)}>

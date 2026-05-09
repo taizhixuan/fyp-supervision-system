@@ -45,6 +45,15 @@ const STUDENT_GATED_HREFS: ReadonlySet<string> = new Set<string>([
   ROUTES.STUDENT.DOCUMENTS,
 ])
 
+// Once the student is REGISTERED, the supervisor-discovery flow is no longer relevant —
+// these items render with a lock icon and the routes themselves render LockedFeaturePage
+// via RegisteredOnlyLockGate.
+const STUDENT_POST_REGISTRATION_LOCKED_HREFS: ReadonlySet<string> = new Set<string>([
+  ROUTES.STUDENT.SUPERVISORS,
+  ROUTES.STUDENT.RECOMMENDATIONS,
+  ROUTES.STUDENT.MY_REQUESTS,
+])
+
 const studentNavItems: NavItem[] = [
   {
     label: 'Dashboard',
@@ -299,7 +308,8 @@ export function SideNav({
 }: SideNavProps) {
   const navItems = getNavItemsForRole(userRole)
   const studentGate = useStudentRegistrationGate()
-  const showLocks = userRole === 'STUDENT' && !studentGate.supervisorAssigned
+  const showPreSupervisorLocks = userRole === 'STUDENT' && !studentGate.supervisorAssigned
+  const showPostRegistrationLocks = userRole === 'STUDENT' && studentGate.isRegistered
 
   const commonNavItems: NavItem[] = [
     {
@@ -366,7 +376,12 @@ export function SideNav({
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
             {navItems.map((item) => {
-              const locked = showLocks && STUDENT_GATED_HREFS.has(item.href)
+              const lockedPreSupervisor = showPreSupervisorLocks && STUDENT_GATED_HREFS.has(item.href)
+              const lockedPostRegistration = showPostRegistrationLocks && STUDENT_POST_REGISTRATION_LOCKED_HREFS.has(item.href)
+              const locked = lockedPreSupervisor || lockedPostRegistration
+              const lockReason = lockedPostRegistration
+                ? 'already paired with a supervisor'
+                : 'pair with a supervisor first'
               return (
                 <li key={item.href}>
                   <NavLink
@@ -381,7 +396,7 @@ export function SideNav({
                         locked && 'opacity-50'
                       )
                     }
-                    title={isCollapsed ? item.label : locked ? `${item.label} (locked — pair with a supervisor first)` : undefined}
+                    title={isCollapsed ? item.label : locked ? `${item.label} (locked — ${lockReason})` : undefined}
                   >
                     <span className="flex-shrink-0">{item.icon}</span>
                     {!isCollapsed && (

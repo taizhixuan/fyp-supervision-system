@@ -263,6 +263,9 @@ export interface ProjectRegistration {
   registeredAt?: string
   nextSteps: RegistrationStep[]
   timeline: RegistrationTimelineEvent[]
+  /** Cycle-lifecycle gating — backend signals when the FYP cycle has ended. */
+  cycleStatus?: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED' | null
+  cycleActive?: boolean
 }
 
 export interface RegistrationStep {

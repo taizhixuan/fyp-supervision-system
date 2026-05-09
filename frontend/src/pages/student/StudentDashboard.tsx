@@ -12,6 +12,7 @@ import {
   Sparkles,
   TrendingUp,
   AlertTriangle,
+  AlertCircle,
   Video,
   MapPin,
   ChevronRight,
@@ -290,6 +291,24 @@ export function StudentDashboard() {
         </div>
       </div>
 
+      {/* Cycle-ended banner — backend signals when the FYP cycle has been
+          COMPLETED/ARCHIVED so write actions across the app are disabled. */}
+      {dashboard.registrationStatus.cycleActive === false && (
+        <Card className="p-4 border-l-4 border-l-warning-500 bg-warning-50">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-warning-900">Your FYP cycle has ended</p>
+              <p className="text-sm text-warning-800 mt-0.5">
+                The FYP cycle you were enrolled in has been{' '}
+                {dashboard.registrationStatus.cycleStatus === 'ARCHIVED' ? 'archived' : 'completed'}.
+                You now have read-only access — viewing your records is fine, but new submissions are disabled.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Pairing banner — different content depending on whether the student has a project yet */}
       {isPaired ? (
         <Card className="p-5 border-l-4 border-l-success-500 bg-gradient-to-r from-success-50 to-white">
@@ -417,7 +436,8 @@ export function StudentDashboard() {
         </div>
       )}
 
-      {/* Registration Progress */}
+      {/* Registration Progress — hidden once registration is complete (proposal APPROVED). */}
+      {backendStatus !== 'REGISTERED' && (
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -601,6 +621,7 @@ export function StudentDashboard() {
           </div>
         )}
       </Card>
+      )}
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

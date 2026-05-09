@@ -30,4 +30,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p WHERE (p.stage IS NULL OR p.stage = 'FYP1' OR p.stage = 'FYP 1') AND p.student IS NOT NULL ORDER BY p.updatedAt DESC")
     List<Project> findFyp1Projects();
+
+    /**
+     * Projects whose enrolled cycle is currently ACTIVE — used by supervisor/committee
+     * lists so they don't surface students from cycles that have been COMPLETED/ARCHIVED.
+     */
+    @Query("SELECT p FROM Project p WHERE p.supervisor.userId = :supervisorId AND p.cycle.status = com.fyp.supervision.enums.CycleStatus.ACTIVE")
+    List<Project> findActiveCycleBySupervisor(@Param("supervisorId") Long supervisorId);
 }
