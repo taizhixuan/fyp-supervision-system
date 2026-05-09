@@ -52,6 +52,12 @@ public class GradingService {
                 .map(this::buildDto).toList();
     }
 
+    /** Admin inbox — all grades in a given status (typically SUBMITTED, awaiting finalisation). */
+    public List<Map<String, Object>> listByStatus(String status) {
+        return gradeRepository.findByStatusOrderByUpdatedAtDesc(status).stream()
+                .map(this::buildDto).toList();
+    }
+
     /** Supervisor's grading queue — every row they authored. */
     public List<Map<String, Object>> listForGrader(Long graderUserId) {
         return gradeRepository.findByGrader_UserIdOrderByUpdatedAtDesc(graderUserId).stream()

@@ -23,4 +23,7 @@ public interface FypGradeRepository extends JpaRepository<FypGrade, Long> {
     /** Finalised grades visible to the student. */
     List<FypGrade> findByProject_ProjectIdAndStatusOrderByPhaseAscCreatedAtAsc(
             Long projectId, String status);
+
+    /** Used by admin's global "submitted grades" inbox. */
+    List<FypGrade> findByStatusOrderByUpdatedAtDesc(String status);
 }
