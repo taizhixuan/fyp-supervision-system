@@ -120,6 +120,7 @@ const ExportConfigurationPage = lazy(() => import('@/pages/admin/ExportConfigura
 const MaintenanceCenter = lazy(() => import('@/pages/admin/MaintenanceCenter').then(m => ({ default: m.MaintenanceCenter })))
 const JobHistory = lazy(() => import('@/pages/admin/JobHistory').then(m => ({ default: m.JobHistory })))
 const AuditLogs = lazy(() => import('@/pages/admin/AuditLogs').then(m => ({ default: m.AuditLogs })))
+const AdminNotificationCenter = lazy(() => import('@/pages/admin/AdminNotificationCenter').then(m => ({ default: m.AdminNotificationCenter })))
 
 // Layout components
 import { AppShell } from '@/components/layout/AppShell'
@@ -1048,6 +1049,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <AuditLogs />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Notifications
+      {
+        path: ROUTES.ADMIN.NOTIFICATIONS,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <AdminNotificationCenter />
           </ProtectedRoute>
         ),
       },
