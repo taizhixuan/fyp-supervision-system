@@ -56,14 +56,22 @@ public class AnnouncementService {
     // ---------- Reads ----------
 
     public Page<Map<String, Object>> listForStudent(Long studentUserId, Pageable pageable) {
-        Page<Announcement> page = announcementRepository.findByStatusOrderByCreatedAtDesc(
-                AnnouncementStatus.PUBLISHED, pageable);
+        // Audience filter must run before pagination, otherwise the per-page
+        // count drifts (DB returns N rows, filter drops some, you get < N) and
+        // `total` ends up as the filtered slice size instead of the global
+        // count. Announcement volume per cycle is low enough that loading all
+        // PUBLISHED rows here is fine; switch to a JPQL predicate if it ever
+        // grows out of hand.
         StudentContext ctx = loadStudentContext(studentUserId);
-        List<Map<String, Object>> filtered = page.getContent().stream()
+        List<Map<String, Object>> visible = announcementRepository
+                .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, Pageable.unpaged())
+                .getContent().stream()
                 .filter(a -> matchesAudience(a, ctx))
                 .map(this::buildDto)
                 .toList();
-        return new PageImpl<>(filtered, pageable, filtered.size());
+        int from = Math.min((int) pageable.getOffset(), visible.size());
+        int to = Math.min(from + pageable.getPageSize(), visible.size());
+        return new PageImpl<>(visible.subList(from, to), pageable, visible.size());
     }
 
     public List<Map<String, Object>> latestForStudent(Long studentUserId, int limit) {
