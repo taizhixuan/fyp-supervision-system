@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -110,7 +112,22 @@ public class AdminRosterService {
                     user.setStatus(UserStatus.ACTIVE);
                     userAccountRepository.save(user);
                     summary.autoApproved++;
-                    cycleLifecycleService.attachStudentToActiveFyp1(user);
+                    // After-commit attach (see AuthService.schedulePlaceholderAttach).
+                    // Inline call would deadlock vs. the parent's X lock on user_account.
+                    final Long sid = user.getUserId();
+                    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                            @Override public void afterCommit() {
+                                try {
+                                    UserAccount fresh = userAccountRepository.findById(sid).orElse(null);
+                                    if (fresh != null) cycleLifecycleService.attachStudentToActiveFyp1(fresh);
+                                } catch (Exception e) {
+                                    log.warn("Placeholder attach (after-commit) failed for roster auto-approval of {}: {}",
+                                            sid, e.getMessage());
+                                }
+                            }
+                        });
+                    }
                     notificationService.createNotification(
                             user.getUserId(),
                             "ACCOUNT_APPROVED",
