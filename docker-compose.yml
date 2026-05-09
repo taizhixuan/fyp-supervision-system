@@ -75,7 +75,16 @@ services:
       - "5002:5002"
     environment:
       FLASK_PORT: "5002"
+      # Remote LLM provider for richer feedback prose. First match wins:
+      #   LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL) -> generic OpenAI-compatible
+      #   GROQ_API_KEY                            -> Groq defaults
+      #   OPENAI_API_KEY                          -> OpenAI defaults
+      # Unset all three to run NLP-only (no LLM enhancement).
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
     volumes:
       - analyzer_models:/app/models
     networks:

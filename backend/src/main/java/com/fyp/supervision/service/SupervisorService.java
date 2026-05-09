@@ -99,7 +99,33 @@ public class SupervisorService {
         dto.put("googleScholarUrl", profile.getGoogleScholarUrl());
         dto.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
         dto.put("updatedAt", profile.getUpdatedAt() != null ? profile.getUpdatedAt().toString() : "");
+        dto.put("pastProjects", recentSupervisedProjects(profile.getUserId()));
         return dto;
+    }
+
+    /**
+     * Up to 6 most-recent projects this supervisor has supervised, sorted by
+     * updatedAt descending. Same shape as the student-facing supervisor detail
+     * page so the supervisor sees what students see — and matches the AI
+     * recommender's signal source.
+     */
+    private List<Map<String, Object>> recentSupervisedProjects(Long supervisorUserId) {
+        if (supervisorUserId == null) return List.of();
+        List<Project> projects = projectRepository.findBySupervisor_UserId(supervisorUserId);
+        return projects.stream()
+                .filter(p -> p != null && p.getProjectTitle() != null && !p.getProjectTitle().isBlank())
+                .sorted(Comparator.comparing(
+                        Project::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(6)
+                .map(p -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("title", p.getProjectTitle().trim());
+                    entry.put("status", p.getStatus() != null ? p.getStatus().name() : null);
+                    entry.put("year", p.getUpdatedAt() != null ? p.getUpdatedAt().getYear() : null);
+                    return entry;
+                })
+                .toList();
     }
 
     // ========== Dashboard ==========

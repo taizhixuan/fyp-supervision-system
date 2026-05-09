@@ -19,6 +19,7 @@ import {
   Award,
   Target,
   AlertTriangle,
+  FolderGit2,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -454,6 +455,58 @@ export function SupervisorProfile() {
                   />
                 ) : (
                   <p className="text-stone-600 leading-relaxed">{profile?.bio || 'No bio provided.'}</p>
+                )}
+              </div>
+            </Card>
+
+            {/* Recent Supervised Projects */}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-100 rounded-lg">
+                      <FolderGit2 className="h-5 w-5 text-rose-600" />
+                    </div>
+                    <h3 className="font-semibold text-stone-800">Recent Supervised Projects</h3>
+                  </div>
+                  <span className="text-xs text-stone-500">Used by AI matching</span>
+                </div>
+              </div>
+              <div className="p-5">
+                {profile?.pastProjects && profile.pastProjects.length > 0 ? (
+                  <ul className="space-y-3">
+                    {profile.pastProjects.map((project, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-stone-50"
+                      >
+                        <FolderGit2 className="h-5 w-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-stone-800 font-medium">{project.title}</p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-stone-500">
+                            {project.year && <span>{project.year}</span>}
+                            {project.year && project.status && <span>·</span>}
+                            {project.status && (
+                              <span className={cn(
+                                'px-2 py-0.5 rounded-md text-xs font-medium',
+                                project.status === 'COMPLETED'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : project.status === 'ACTIVE'
+                                  ? 'bg-sky-100 text-sky-700'
+                                  : 'bg-stone-200 text-stone-700'
+                              )}>
+                                {project.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-stone-500">
+                    No supervised projects yet. Once students are paired with you, their project titles appear here.
+                  </p>
                 )}
               </div>
             </Card>

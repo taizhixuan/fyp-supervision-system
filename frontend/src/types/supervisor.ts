@@ -23,6 +23,14 @@ export interface SupervisorProfile {
   googleScholarUrl?: string
   createdAt: string
   updatedAt: string
+  /** Recent projects this supervisor has supervised, newest first */
+  pastProjects?: SupervisorPastProject[]
+}
+
+export interface SupervisorPastProject {
+  title: string
+  status?: string
+  year?: number | null
 }
 
 // Supervision request from student
