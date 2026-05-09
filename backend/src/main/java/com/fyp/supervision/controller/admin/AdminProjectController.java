@@ -6,8 +6,12 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.MeetingLogComplianceService;
 import com.fyp.supervision.service.NotificationService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +34,7 @@ public class AdminProjectController {
     private final UserAccountRepository userRepository;
     private final NotificationService notificationService;
     private final MeetingLogComplianceService meetingLogComplianceService;
+    private final AuditService auditService;
 
     @GetMapping("/fyp1-pass")
     public ResponseEntity<?> getFyp1Projects() {
@@ -73,11 +78,15 @@ public class AdminProjectController {
     }
 
     @PostMapping("/{id}/fyp1-passed")
-    public ResponseEntity<?> setFyp1Passed(@PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> setFyp1Passed(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserDetails admin,
+                                           HttpServletRequest httpRequest,
+                                           @RequestBody Map<String, Object> data) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         Object passedRaw = data.get("passed");
         Boolean passed = passedRaw == null ? null : (Boolean) passedRaw;
+        Boolean previous = project.getFyp1Passed();
         project.setFyp1Passed(passed);
         projectRepository.save(project);
         if (passed != null && project.getStudent() != null) {
@@ -92,6 +101,11 @@ public class AdminProjectController {
                     "/student"
             );
         }
+        UserAccount adminUser = admin == null ? null
+                : userRepository.findById(Long.parseLong(admin.getUsername())).orElse(null);
+        String studentLabel = project.getStudent() != null ? project.getStudent().getEmail() : ("project " + id);
+        auditService.record(adminUser, "FYP1_RESULT_SET", "PROJECT", String.valueOf(id),
+                "student=" + studentLabel + " previous=" + previous + " new=" + passed, httpRequest);
         return ResponseEntity.ok(Map.of("projectId", id, "fyp1Passed", passed));
     }
 

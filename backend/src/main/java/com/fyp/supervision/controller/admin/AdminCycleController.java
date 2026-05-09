@@ -9,12 +9,17 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AdminService;
+import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.CycleLifecycleService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +40,8 @@ public class AdminCycleController {
     private final ProjectRepository projectRepository;
     private final AdminService adminService;
     private final CycleLifecycleService cycleLifecycleService;
+    private final AuditService auditService;
+    private final UserAccountRepository userAccountRepository;
 
     /**
      * Pre-trimester FYP1 timeline derived from the official workflow image.
@@ -173,7 +180,9 @@ public class AdminCycleController {
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<?> activateCycle(@PathVariable Long id) {
+    public ResponseEntity<?> activateCycle(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserDetails admin,
+                                           HttpServletRequest httpRequest) {
         log.info("Activate cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
@@ -190,6 +199,10 @@ public class AdminCycleController {
         } catch (Exception ex) {
             log.warn("Backfill after activating cycle {} failed", id, ex);
         }
+        auditService.record(adminFromPrincipal(admin), "CYCLE_ACTIVATED", "FYP_CYCLE",
+                String.valueOf(id),
+                cycle.getCycleType() + " " + cycle.getAcademicYear() + " — " + attached + " students attached",
+                httpRequest);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("cycleId", id);
         body.put("status", CycleStatus.ACTIVE.name());
@@ -198,23 +211,43 @@ public class AdminCycleController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> completeCycle(@PathVariable Long id) {
+    public ResponseEntity<?> completeCycle(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserDetails admin,
+                                           HttpServletRequest httpRequest) {
         log.info("Complete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
         validateTransition(cycle, CycleStatus.COMPLETED);
         cycleLifecycleService.setCycleStatus(id, CycleStatus.COMPLETED);
+        auditService.record(adminFromPrincipal(admin), "CYCLE_COMPLETED", "FYP_CYCLE",
+                String.valueOf(id),
+                cycle.getCycleType() + " " + cycle.getAcademicYear(), httpRequest);
         return ResponseEntity.ok(Map.of("cycleId", id, "status", CycleStatus.COMPLETED.name()));
     }
 
     @PostMapping("/{id}/archive")
-    public ResponseEntity<?> archiveCycle(@PathVariable Long id) {
+    public ResponseEntity<?> archiveCycle(@PathVariable Long id,
+                                          @AuthenticationPrincipal UserDetails admin,
+                                          HttpServletRequest httpRequest) {
         log.info("Archive cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
         validateTransition(cycle, CycleStatus.ARCHIVED);
         cycleLifecycleService.setCycleStatus(id, CycleStatus.ARCHIVED);
+        auditService.record(adminFromPrincipal(admin), "CYCLE_ARCHIVED", "FYP_CYCLE",
+                String.valueOf(id),
+                cycle.getCycleType() + " " + cycle.getAcademicYear(), httpRequest);
         return ResponseEntity.ok(Map.of("cycleId", id, "status", CycleStatus.ARCHIVED.name()));
+    }
+
+    /** Resolve the admin principal to a UserAccount (for audit-log actor field). */
+    private com.fyp.supervision.entity.UserAccount adminFromPrincipal(UserDetails principal) {
+        if (principal == null) return null;
+        try {
+            return userAccountRepository.findById(Long.parseLong(principal.getUsername())).orElse(null);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @DeleteMapping("/{id}")
