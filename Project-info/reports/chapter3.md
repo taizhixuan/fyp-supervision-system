@@ -210,7 +210,7 @@ Table 3.4 Use Cases by Actor
 </tbody>
 </table>
 
-<img src="../media/media/image2.jpeg" style="width:5.72014in;height:8.43452in" />
+<img src="media/media/image2.jpeg" style="width:5.72014in;height:8.43452in" />
 
 Figure 3.2 Use Case Diagram
 
