@@ -14,9 +14,12 @@ import com.fyp.supervision.service.AdminService;
 import com.fyp.supervision.service.CycleLifecycleService;
 import com.fyp.supervision.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -27,6 +30,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminUserController {
     private final UserAccountRepository userRepository;
     private final StudentProfileRepository studentProfileRepository;
@@ -128,7 +132,22 @@ public class AdminUserController {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         if (user.getRole() == UserRole.STUDENT) {
-            cycleLifecycleService.attachStudentToActiveFyp1(user);
+            // After-commit attach — see AuthService.schedulePlaceholderAttach for why.
+            // Calling inline here would deadlock the same way (parent tx holds X lock on
+            // user_account; inner tx's INSERT into project can't read it for FK validation).
+            final Long sid = user.getUserId();
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override public void afterCommit() {
+                        try {
+                            UserAccount fresh = userRepository.findById(sid).orElse(null);
+                            if (fresh != null) cycleLifecycleService.attachStudentToActiveFyp1(fresh);
+                        } catch (Exception e) {
+                            log.warn("Placeholder attach (after-commit) failed for approved user {}: {}", sid, e.getMessage());
+                        }
+                    }
+                });
+            }
         }
         notificationService.createNotification(
                 user.getUserId(),

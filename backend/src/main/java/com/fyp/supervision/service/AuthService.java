@@ -29,6 +29,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -133,7 +135,15 @@ public class AuthService {
 
         if (preApproved) {
             if (role == UserRole.STUDENT) {
-                cycleLifecycleService.attachStudentToActiveFyp1(user);
+                // Defer the placeholder Project attach to AFTER this register transaction
+                // commits. Calling it inline (even via REQUIRES_NEW) deadlocks: the inner
+                // transaction's INSERT into project needs to read the new user_account row
+                // for FK validation, but this register transaction holds an X lock on that
+                // row until commit, so the inner INSERT times out at innodb_lock_wait_timeout.
+                // After-commit synchronization runs in a fresh tx with the user_account
+                // already visible.
+                final Long savedUserId = user.getUserId();
+                schedulePlaceholderAttach(savedUserId);
             }
             return "Registration successful. Your account has been auto-approved — you can now sign in.";
         }
@@ -150,6 +160,40 @@ public class AuthService {
                 ));
 
         return "Registration successful. Your account is pending approval.";
+    }
+
+    /**
+     * Register an after-commit hook that attaches the student to the active FYP1 cycle in
+     * a fresh transaction. The user_account row is fully committed by then, so the inner
+     * INSERT into project (which references it via FK) doesn't deadlock against the
+     * register transaction's row lock. Best-effort — failures are logged, not rethrown.
+     *
+     * <p>Falls back to inline call when there is no active synchronization (e.g. unit
+     * tests bypassing @Transactional) — same best-effort semantics.
+     */
+    private void schedulePlaceholderAttach(Long studentUserId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    UserAccount fresh = userAccountRepository.findById(studentUserId).orElse(null);
+                    if (fresh == null) return;
+                    try {
+                        cycleLifecycleService.attachStudentToActiveFyp1(fresh);
+                    } catch (Exception e) {
+                        log.warn("Placeholder attach (after-commit) failed for user {}: {}",
+                                studentUserId, e.getMessage());
+                    }
+                }
+            });
+        } else {
+            try {
+                UserAccount fresh = userAccountRepository.findById(studentUserId).orElse(null);
+                if (fresh != null) cycleLifecycleService.attachStudentToActiveFyp1(fresh);
+            } catch (Exception e) {
+                log.warn("Placeholder attach (inline) failed for user {}: {}", studentUserId, e.getMessage());
+            }
+        }
     }
 
     @Transactional
