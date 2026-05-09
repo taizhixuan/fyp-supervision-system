@@ -3,6 +3,7 @@ package com.fyp.supervision.controller.supervisor;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AuditService;
+import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorRequestController {
     private final SupervisorService supervisorService;
+    private final SupervisorAccessService access;
     private final AuditService auditService;
     private final UserAccountRepository userAccountRepository;
 
@@ -30,10 +32,10 @@ public class SupervisorRequestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getRequest(@PathVariable Long id) {
-        // Use the buildRequestDto from a loaded entity
+    public ResponseEntity<?> getRequest(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
         return ResponseEntity.ok(supervisorService.buildRequestDto(
-                supervisorService.getRequestEntity(id)));
+                access.requireOwnRequest(userId, id)));
     }
 
     @PostMapping("/{id}/respond")

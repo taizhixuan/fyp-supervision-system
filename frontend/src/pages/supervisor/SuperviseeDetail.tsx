@@ -20,13 +20,17 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { ProjectStatus, SvProposalStatus } from '@/types'
 
+// Keys mirror backend enum ProjectStatus (ACTIVE, COMPLETED, SUSPENDED, DROPPED).
+// The previous keys (NOT_STARTED / IN_PROGRESS / ON_HOLD / TERMINATED) never
+// matched what the API returned — looking them up returned `undefined` and
+// crashed the page on `.bgColor`.
 const projectStatusConfig: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
-  NOT_STARTED: { label: 'Not Started', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
-  IN_PROGRESS: { label: 'In Progress', color: 'text-primary-600', bgColor: 'bg-primary-50' },
+  ACTIVE: { label: 'Active', color: 'text-primary-600', bgColor: 'bg-primary-50' },
   COMPLETED: { label: 'Completed', color: 'text-success-600', bgColor: 'bg-success-50' },
-  ON_HOLD: { label: 'On Hold', color: 'text-warning-600', bgColor: 'bg-warning-50' },
-  TERMINATED: { label: 'Terminated', color: 'text-error-600', bgColor: 'bg-error-50' },
+  SUSPENDED: { label: 'Suspended', color: 'text-warning-600', bgColor: 'bg-warning-50' },
+  DROPPED: { label: 'Dropped', color: 'text-error-600', bgColor: 'bg-error-50' },
 }
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
 
 const proposalStatusConfig: Record<SvProposalStatus, { label: string; color: string; bgColor: string }> = {
   NOT_SUBMITTED: { label: 'Not Submitted', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
@@ -69,9 +73,9 @@ export function SuperviseeDetail() {
     )
   }
 
-  const projectStatus = projectStatusConfig[supervisee.projectStatus]
-  const proposalStatus = proposalStatusConfig[supervisee.proposalStatus]
-  const risk = riskConfig[supervisee.riskLevel]
+  const projectStatus = projectStatusConfig[supervisee.projectStatus] ?? FALLBACK_STATUS
+  const proposalStatus = proposalStatusConfig[supervisee.proposalStatus] ?? FALLBACK_STATUS
+  const risk = riskConfig[supervisee.riskLevel] ?? FALLBACK_STATUS
 
   return (
     <div className="space-y-6">

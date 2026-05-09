@@ -5,6 +5,7 @@ import com.fyp.supervision.enums.MeetingLogStatus;
 import com.fyp.supervision.repository.MeetingLogRepository;
 import com.fyp.supervision.service.MeetingLogService;
 import com.fyp.supervision.service.StudentService;
+import com.fyp.supervision.service.SupervisorAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +23,7 @@ public class SupervisorMeetingLogController {
     private final MeetingLogRepository meetingLogRepository;
     // Reuses the canonical MMU MeetingLog DTO shape that the student side returns.
     private final StudentService studentService;
+    private final SupervisorAccessService access;
 
     @GetMapping
     public ResponseEntity<?> getMeetingLogs(
@@ -46,8 +48,9 @@ public class SupervisorMeetingLogController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLog(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.buildMeetingLogDto(meetingLogService.getLog(id)));
+    public ResponseEntity<?> getLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        return ResponseEntity.ok(studentService.buildMeetingLogDto(access.requireOwnLog(userId, id)));
     }
 
     @PutMapping("/{id}/comments")
