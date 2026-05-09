@@ -16,6 +16,8 @@ import { Drawer, DrawerContent, DrawerFooter } from '@/components/ui/Drawer'
 import { Button, Spinner } from '@/components/ui'
 import { NotificationItem } from './NotificationItem'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import { useAuth } from '@/lib/auth/useAuth'
+import { ROUTES } from '@/lib/constants/routes'
 
 interface NotificationDrawerProps {
   isOpen: boolean
@@ -24,6 +26,7 @@ interface NotificationDrawerProps {
 
 export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const {
     notifications,
     isLoading,
@@ -32,6 +35,15 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
     isMarkingAllRead,
     unreadCount,
   } = useNotifications(10)
+
+  const viewAllRoute = (() => {
+    switch (user?.role) {
+      case 'STUDENT': return ROUTES.STUDENT.NOTIFICATIONS
+      case 'SUPERVISOR': return ROUTES.SUPERVISOR.NOTIFICATIONS
+      case 'FYP_COMMITTEE': return ROUTES.COMMITTEE.NOTIFICATIONS
+      default: return null
+    }
+  })()
 
   const handleNotificationClick = (notificationId: number, targetRoute?: string) => {
     markAsRead(notificationId)
@@ -42,7 +54,8 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
   }
 
   const handleViewAll = () => {
-    navigate('/notifications')
+    if (!viewAllRoute) return
+    navigate(viewAllRoute)
     onClose()
   }
 
@@ -97,7 +110,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
         </div>
       </DrawerContent>
 
-      {notifications.length > 0 && (
+      {notifications.length > 0 && viewAllRoute && (
         <DrawerFooter>
           <Button variant="secondary" className="w-full" onClick={handleViewAll}>
             View All Notifications
