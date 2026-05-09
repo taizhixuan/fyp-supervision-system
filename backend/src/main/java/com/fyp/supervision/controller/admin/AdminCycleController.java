@@ -12,6 +12,8 @@ import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.service.AdminService;
 import com.fyp.supervision.service.CycleLifecycleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/cycles")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminCycleController {
     private final FypCycleRepository cycleRepository;
     private final DeadlineRepository deadlineRepository;
@@ -161,18 +164,26 @@ public class AdminCycleController {
     @PostMapping("/{id}/activate")
     @Transactional
     public ResponseEntity<?> activateCycle(@PathVariable Long id) {
+        log.info("Activate cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        applyStatusTransition(cycle, CycleStatus.ACTIVE);
-        cycleRepository.save(cycle);
+        try {
+            applyStatusTransition(cycle, CycleStatus.ACTIVE);
+            cycleRepository.save(cycle);
+        } catch (BadRequestException | ConflictException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Activate cycle {} failed during status update", id, ex);
+            throw new BadRequestException("Activate failed: " + ex.getMessage());
+        }
 
-        // Backfill happens through the service (proxy-routed) — each row uses REQUIRES_NEW,
-        // so a per-row failure cannot poison this outer activate transaction.
+        // Backfill goes through the service (proxy-routed) using REQUIRES_NEW —
+        // a backfill failure cannot poison this outer activate transaction.
         int attached = 0;
         try {
             attached = cycleLifecycleService.backfillFyp1Placeholders(cycle);
-        } catch (Exception ignored) {
-            // Already logged inside the service.
+        } catch (Exception ex) {
+            log.warn("Backfill after activating cycle {} failed", id, ex);
         }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("cycleId", cycle.getCycleId());
@@ -184,10 +195,18 @@ public class AdminCycleController {
     @PostMapping("/{id}/complete")
     @Transactional
     public ResponseEntity<?> completeCycle(@PathVariable Long id) {
+        log.info("Complete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        applyStatusTransition(cycle, CycleStatus.COMPLETED);
-        cycleRepository.save(cycle);
+        try {
+            applyStatusTransition(cycle, CycleStatus.COMPLETED);
+            cycleRepository.save(cycle);
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Complete cycle {} failed", id, ex);
+            throw new BadRequestException("Complete failed: " + ex.getMessage());
+        }
         // Don't call buildCycleDto here — it issues additional queries (projects, deadlines)
         // which, if they fail, would mark this transaction rollback-only and turn this
         // status update into a 500. The frontend invalidates and re-fetches the list.
@@ -200,10 +219,18 @@ public class AdminCycleController {
     @PostMapping("/{id}/archive")
     @Transactional
     public ResponseEntity<?> archiveCycle(@PathVariable Long id) {
+        log.info("Archive cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        applyStatusTransition(cycle, CycleStatus.ARCHIVED);
-        cycleRepository.save(cycle);
+        try {
+            applyStatusTransition(cycle, CycleStatus.ARCHIVED);
+            cycleRepository.save(cycle);
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Archive cycle {} failed", id, ex);
+            throw new BadRequestException("Archive failed: " + ex.getMessage());
+        }
         return ResponseEntity.ok(Map.of(
                 "cycleId", cycle.getCycleId(),
                 "status", cycle.getStatus().name()
@@ -213,17 +240,38 @@ public class AdminCycleController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> deleteCycle(@PathVariable Long id) {
+        log.info("Delete cycle {} requested", id);
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
-        if (cycle.getStatus() != CycleStatus.PLANNING) {
-            throw new BadRequestException("Only PLANNING cycles can be deleted. Archive completed cycles instead.");
+        if (cycle.getStatus() != CycleStatus.PLANNING && cycle.getStatus() != CycleStatus.ARCHIVED) {
+            throw new BadRequestException(
+                    "Only PLANNING or ARCHIVED cycles can be deleted. Complete and archive the cycle first.");
         }
-        long projectCount = projectRepository.findAllByCycleId(cycle.getCycleId(), org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
+
+        // Count-only query: avoids loading any Project entity, which could itself fail
+        // and mark this transaction rollback-only.
+        long projectCount = projectRepository.countByCycle_CycleId(cycle.getCycleId());
         if (projectCount > 0) {
-            throw new BadRequestException("Cannot delete a cycle that already has projects attached.");
+            throw new BadRequestException(
+                    "Cannot delete a cycle that has " + projectCount
+                            + " project(s) attached. Detach or archive them first.");
         }
-        deadlineRepository.findByCycle_CycleIdOrderByDueDateAsc(cycle.getCycleId()).forEach(deadlineRepository::delete);
-        cycleRepository.delete(cycle);
+
+        try {
+            // Bulk delete avoids loading each deadline; per-deadline delete is fragile if
+            // any single row trips a constraint. ON DELETE CASCADE on deadline_reminder_log
+            // handles the FK from there.
+            int removed = deadlineRepository.deleteAllByCycleId(cycle.getCycleId());
+            log.info("Removed {} deadlines for cycle {}", removed, id);
+            cycleRepository.delete(cycle);
+        } catch (DataIntegrityViolationException ex) {
+            log.warn("Delete cycle {} blocked by integrity constraint", id, ex);
+            throw new BadRequestException(
+                    "Cannot delete cycle: it is still referenced by other records.");
+        } catch (Exception ex) {
+            log.error("Delete cycle {} failed", id, ex);
+            throw new BadRequestException("Delete failed: " + ex.getMessage());
+        }
         return ResponseEntity.noContent().build();
     }
 
