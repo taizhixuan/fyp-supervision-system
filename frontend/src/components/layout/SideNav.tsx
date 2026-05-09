@@ -7,7 +7,6 @@ import {
   Calendar,
   FolderOpen,
   Settings,
-  HelpCircle,
   ChevronLeft,
   Megaphone,
   ClipboardList,
@@ -21,7 +20,9 @@ import {
   Clock,
   Download,
   Shield,
-  Lightbulb,
+  Sparkles,
+  Send,
+  Inbox,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
@@ -45,9 +46,19 @@ const studentNavItems: NavItem[] = [
     icon: <User className="h-5 w-5" />,
   },
   {
-    label: 'Browse Topics',
-    href: ROUTES.STUDENT.TOPICS,
-    icon: <Lightbulb className="h-5 w-5" />,
+    label: 'Find Supervisor',
+    href: ROUTES.STUDENT.SUPERVISORS,
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    label: 'AI Recommendations',
+    href: ROUTES.STUDENT.RECOMMENDATIONS,
+    icon: <Sparkles className="h-5 w-5" />,
+  },
+  {
+    label: 'My Requests',
+    href: ROUTES.STUDENT.MY_REQUESTS,
+    icon: <Send className="h-5 w-5" />,
   },
   {
     label: 'Proposal',
@@ -83,9 +94,9 @@ const supervisorNavItems: NavItem[] = [
     icon: <User className="h-5 w-5" />,
   },
   {
-    label: 'My Topics',
-    href: ROUTES.SUPERVISOR.TOPICS,
-    icon: <Lightbulb className="h-5 w-5" />,
+    label: 'Supervision Requests',
+    href: ROUTES.SUPERVISOR.REQUESTS,
+    icon: <Inbox className="h-5 w-5" />,
   },
   {
     label: 'Supervisees',
@@ -134,11 +145,6 @@ const committeeNavItems: NavItem[] = [
     label: 'Announcements',
     href: ROUTES.COMMITTEE.ANNOUNCEMENTS,
     icon: <Megaphone className="h-5 w-5" />,
-  },
-  {
-    label: 'Topic Review',
-    href: ROUTES.COMMITTEE.TOPICS,
-    icon: <Lightbulb className="h-5 w-5" />,
   },
   {
     label: 'Proposals',
@@ -267,11 +273,6 @@ export function SideNav({
       label: 'Account Settings',
       href: ROUTES.SETTINGS,
       icon: <Settings className="h-5 w-5" />,
-    },
-    {
-      label: 'Help & FAQ',
-      href: ROUTES.HELP,
-      icon: <HelpCircle className="h-5 w-5" />,
     },
   ]
 

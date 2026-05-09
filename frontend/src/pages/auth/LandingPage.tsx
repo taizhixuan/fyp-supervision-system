@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import {
-  HelpCircle,
   ArrowRight,
   Users,
   FileText,
@@ -60,13 +59,6 @@ export function LandingPage() {
 
           {/* Navigation */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link
-              to={ROUTES.HELP}
-              className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900 transition-colors px-3 py-2 rounded-lg hover:bg-stone-100"
-            >
-              <HelpCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Help</span>
-            </Link>
             <Link to={ROUTES.LOGIN}>
               <Button variant="primary" size="sm">
                 Log In
@@ -204,15 +196,6 @@ export function LandingPage() {
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
               </Link>
-              <Link to={ROUTES.HELP}>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="min-w-[200px] bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white/50"
-                >
-                  Learn More
-                </Button>
-              </Link>
             </div>
           </div>
         </section>
@@ -221,35 +204,19 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="bg-[#0f1f33] text-white py-12 px-4 border-t border-white/10">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.svg"
-                alt="FYP Supervision System"
-                className="h-10 w-auto"
-              />
-              <div className="flex flex-col">
-                <span className="text-lg font-semibold text-white">
-                  FYP Supervision System
-                </span>
-                <span className="text-xs text-blue-300/60">
-                  Faculty of Computing and Informatics, MMU
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-8 text-sm">
-              <Link
-                to={ROUTES.HELP}
-                className="text-blue-200/50 hover:text-white transition-colors"
-              >
-                Help & FAQs
-              </Link>
-              <a
-                href="mailto:fyp-committee@mmu.edu.my"
-                className="text-blue-200/50 hover:text-white transition-colors"
-              >
-                Contact FYP Committee
-              </a>
+          <div className="flex items-center justify-center gap-3">
+            <img
+              src="/logo.svg"
+              alt="FYP Supervision System"
+              className="h-10 w-auto"
+            />
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold text-white">
+                FYP Supervision System
+              </span>
+              <span className="text-xs text-blue-300/60">
+                Faculty of Computing and Informatics, MMU
+              </span>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm text-blue-200/40">
