@@ -18,6 +18,7 @@ import {
 import { Card, Button, Spinner } from '@/components/ui'
 import { TaskSummaryBadges } from '@/components/meetingLog'
 import { useMeetingLogList } from '@/lib/hooks/useMeetingLog'
+import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingLog } from '@/types/meetingLog'
@@ -39,6 +40,16 @@ export function MeetingLogList() {
 
   const { data, isLoading } = useMeetingLogList(phaseFilter !== 'all' ? { phase: phaseFilter } : undefined)
   const logs = data?.logs || []
+
+  // FCI compliance: ≥ 6 LOCKED logs per phase. Read from the dashboard payload so we
+  // don't issue a second backend request just for the count.
+  const { data: dashboard } = useStudentDashboard()
+  const reg = dashboard?.registrationStatus
+  const logsCompleted = reg?.meetingLogsCompleted ?? 0
+  const logsRequired = reg?.meetingLogsRequired ?? 6
+  const phaseLabel = (reg?.cycle ?? 'FYP1').toUpperCase()
+  const meetsMin = logsCompleted >= logsRequired
+  const logsRemaining = Math.max(0, logsRequired - logsCompleted)
 
   const filteredLogs = logs.filter((log) => {
     const matchesStatus = statusFilter === 'all' || log.status === statusFilter
@@ -89,6 +100,33 @@ export function MeetingLogList() {
               New Meeting Log
             </Button>
           </Link>
+        </div>
+      </div>
+
+      {/* FCI minimum-log compliance banner */}
+      <div className={cn(
+        'rounded-xl p-4 border shadow-sm',
+        meetsMin
+          ? 'bg-success-50 border-success-200'
+          : 'bg-warning-50 border-warning-200',
+      )}>
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
+            meetsMin ? 'bg-success-500' : 'bg-warning-500',
+          )}>
+            {meetsMin ? <CheckCircle className="h-6 w-6 text-white" /> : <AlertCircle className="h-6 w-6 text-white" />}
+          </div>
+          <div className="flex-1">
+            <p className={cn('font-semibold', meetsMin ? 'text-success-900' : 'text-warning-900')}>
+              {logsCompleted} of {logsRequired} required {phaseLabel} meeting logs completed
+            </p>
+            <p className={cn('text-sm', meetsMin ? 'text-success-700' : 'text-warning-700')}>
+              {meetsMin
+                ? `You've met the FCI minimum for ${phaseLabel}.`
+                : `Log ${logsRemaining} more before the trimester ends to meet the ${phaseLabel} minimum.`}
+            </p>
+          </div>
         </div>
       </div>
 

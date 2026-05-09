@@ -888,6 +888,10 @@ export interface Fyp1PassRow {
   supervisorName: string | null
   stage: string
   fyp1Passed: boolean | null
+  /** Compliance signal for the soft-warning badge — backend includes these fields. */
+  meetingLogsCompleted?: number
+  meetingLogsRequired?: number
+  meetsMeetingLogMinimum?: boolean
 }
 
 export function useFyp1PassList() {

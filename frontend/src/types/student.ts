@@ -266,6 +266,15 @@ export interface ProjectRegistration {
   /** Cycle-lifecycle gating — backend signals when the FYP cycle has ended. */
   cycleStatus?: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED' | null
   cycleActive?: boolean
+  /** Trimester window for the dashboard's "Week N of M" widget. */
+  trimesterStartDate?: string | null
+  trimesterEndDate?: string | null
+  /** FCI rule: ≥ 6 LOCKED meeting logs per phase. Soft warning, not enforced server-side. */
+  meetingLogsCompleted?: number
+  meetingLogsRequired?: number
+  /** Admin-marked FYP1 outcome. NULL = not yet decided. */
+  fyp1Passed?: boolean | null
+  fyp1ResultDecidedAt?: string | null
 }
 
 export interface RegistrationStep {

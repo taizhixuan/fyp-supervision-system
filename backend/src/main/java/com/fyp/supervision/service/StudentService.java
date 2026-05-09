@@ -40,6 +40,7 @@ public class StudentService {
     private final FypCycleRepository fypCycleRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
+    private final MeetingLogComplianceService meetingLogComplianceService;
 
     // ========================= Profile =========================
 
@@ -967,16 +968,62 @@ public class StudentService {
         // Cycle lifecycle status — surfaces "your cycle has ended" to the dashboard so
         // the frontend can render a read-only banner and lock write-mode features. The
         // backend separately enforces this via StudentAccessService.requireActiveCycle.
+        //
+        // Important nuance: a brand-new student gets a placeholder Project attached to
+        // whatever FYP1 cycle is ACTIVE at registration time. If the admin later marks
+        // that cycle COMPLETED before the student ever paired with a supervisor, the
+        // student is effectively still in the discovery phase — they shouldn't be locked
+        // out as "cycle ended". So we only flag the cycle as ended for students who had
+        // real engagement (supervisor assigned OR proposal created). Placeholder-only
+        // students get treated as still-active pending re-attach on the next FYP1 cycle.
         FypCycle enrolledCycle = projectOpt.map(Project::getCycle).orElse(null);
+        boolean hasSupervisorPaired =
+                projectOpt.map(Project::getSupervisor).isPresent();
+        boolean hadEngagement = hasSupervisorPaired
+                || proposalRepository.findByStudent_UserId(userId).isPresent();
         if (enrolledCycle != null && enrolledCycle.getStatus() != null) {
-            reg.put("cycleStatus", enrolledCycle.getStatus().name());
-            reg.put("cycleActive",
-                    enrolledCycle.getStatus() == com.fyp.supervision.enums.CycleStatus.ACTIVE
-                            || enrolledCycle.getStatus() == com.fyp.supervision.enums.CycleStatus.PLANNING);
+            com.fyp.supervision.enums.CycleStatus cs = enrolledCycle.getStatus();
+            boolean cycleTerminal = cs == com.fyp.supervision.enums.CycleStatus.COMPLETED
+                    || cs == com.fyp.supervision.enums.CycleStatus.ARCHIVED;
+            if (cycleTerminal && !hadEngagement) {
+                // Stale placeholder on a finished cycle — pretend the student is still
+                // in discovery. The next FYP1 activate + backfill should re-attach.
+                reg.put("cycleStatus", "ACTIVE");
+                reg.put("cycleActive", true);
+            } else {
+                reg.put("cycleStatus", cs.name());
+                reg.put("cycleActive",
+                        cs == com.fyp.supervision.enums.CycleStatus.ACTIVE
+                                || cs == com.fyp.supervision.enums.CycleStatus.PLANNING);
+            }
         } else {
             reg.put("cycleStatus", null);
             reg.put("cycleActive", true);
         }
+
+        // Trimester window — used by the dashboard to render Week N of M / weeks remaining.
+        // Pulls from the cycle the student is actually enrolled in (placeholder + paired
+        // both have a cycle FK), falling back to the phaseCycle lookup above.
+        FypCycle windowCycle = enrolledCycle != null ? enrolledCycle : phaseCycle;
+        if (windowCycle != null) {
+            reg.put("trimesterStartDate", windowCycle.getStartDate() != null ? windowCycle.getStartDate().toString() : null);
+            reg.put("trimesterEndDate", windowCycle.getEndDate() != null ? windowCycle.getEndDate().toString() : null);
+        } else {
+            reg.put("trimesterStartDate", null);
+            reg.put("trimesterEndDate", null);
+        }
+
+        // Meeting-log compliance for this phase. Both FYP1 and FYP2 require 6 LOCKED logs.
+        reg.put("meetingLogsCompleted", meetingLogComplianceService.completedLogCount(userId, normalisedStage));
+        reg.put("meetingLogsRequired", meetingLogComplianceService.requiredLogCount(normalisedStage));
+
+        // FYP1 pass-tracking result. NULL means admin hasn't decided yet.
+        Project pForResult = projectOpt.orElse(null);
+        Boolean fyp1Passed = pForResult != null ? pForResult.getFyp1Passed() : null;
+        reg.put("fyp1Passed", fyp1Passed);
+        reg.put("fyp1ResultDecidedAt",
+                fyp1Passed != null && pForResult != null && pForResult.getUpdatedAt() != null
+                        ? pForResult.getUpdatedAt().toString() : null);
 
         // "Paired" requires an actual supervisor assignment, not just a Project row.
         // CycleLifecycleService creates placeholder Projects with no supervisor when a

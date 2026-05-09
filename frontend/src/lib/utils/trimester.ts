@@ -1,0 +1,40 @@
+/**
+ * Compute "Week N of M" / weeks remaining inside an FYP cycle's date window. The
+ * trimester length is derived from cycle.startDate → cycle.endDate (admin-configured)
+ * rather than hard-coded to 14 weeks, since semester durations vary by intake.
+ *
+ * Returns null when either bound is missing so the dashboard can hide the widget.
+ */
+export interface TrimesterProgress {
+  totalWeeks: number
+  currentWeek: number
+  weeksRemaining: number
+  hasStarted: boolean
+  hasEnded: boolean
+}
+
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+
+export function trimesterProgress(
+  startISO?: string | null,
+  endISO?: string | null,
+  now: Date = new Date(),
+): TrimesterProgress | null {
+  if (!startISO || !endISO) return null
+  const start = new Date(startISO).getTime()
+  const end = new Date(endISO).getTime()
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return null
+
+  const nowMs = now.getTime()
+  const totalWeeks = Math.max(1, Math.round((end - start) / MS_PER_WEEK))
+  const hasStarted = nowMs >= start
+  const hasEnded = nowMs >= end
+
+  let currentWeek: number
+  if (!hasStarted) currentWeek = 0
+  else if (hasEnded) currentWeek = totalWeeks
+  else currentWeek = Math.max(1, Math.min(totalWeeks, Math.ceil((nowMs - start) / MS_PER_WEEK)))
+
+  const weeksRemaining = Math.max(0, totalWeeks - currentWeek)
+  return { totalWeeks, currentWeek, weeksRemaining, hasStarted, hasEnded }
+}
