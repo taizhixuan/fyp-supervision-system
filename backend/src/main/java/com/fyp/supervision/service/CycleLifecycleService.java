@@ -13,6 +13,7 @@ import com.fyp.supervision.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -81,8 +82,13 @@ public class CycleLifecycleService {
      * Backfill placeholders for every active student who is missing a Project, when an
      * FYP1 cycle is being activated. Returns the count attached. Skips students who
      * already have any Project so this is safe to re-run.
+     *
+     * <p>Uses REQUIRES_NEW so a per-row failure (e.g. unique-constraint hit) cannot
+     * poison the caller's activate transaction — even if every save fails, the cycle's
+     * status update still commits. Must be called via the Spring proxy (i.e. from a
+     * different bean) for REQUIRES_NEW to take effect.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int backfillFyp1Placeholders(FypCycle cycle) {
         if (cycle == null || !"FYP1".equalsIgnoreCase(cycle.getCycleType())) return 0;
         if (cycle.getStatus() != CycleStatus.ACTIVE) return 0;

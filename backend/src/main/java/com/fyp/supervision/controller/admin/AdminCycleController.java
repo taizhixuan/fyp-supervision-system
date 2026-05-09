@@ -152,7 +152,10 @@ public class AdminCycleController {
             applyStatusTransition(cycle, next);
         }
         cycleRepository.save(cycle);
-        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+        return ResponseEntity.ok(Map.of(
+                "cycleId", cycle.getCycleId(),
+                "status", cycle.getStatus().name()
+        ));
     }
 
     @PostMapping("/{id}/activate")
@@ -185,7 +188,13 @@ public class AdminCycleController {
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
         applyStatusTransition(cycle, CycleStatus.COMPLETED);
         cycleRepository.save(cycle);
-        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+        // Don't call buildCycleDto here — it issues additional queries (projects, deadlines)
+        // which, if they fail, would mark this transaction rollback-only and turn this
+        // status update into a 500. The frontend invalidates and re-fetches the list.
+        return ResponseEntity.ok(Map.of(
+                "cycleId", cycle.getCycleId(),
+                "status", cycle.getStatus().name()
+        ));
     }
 
     @PostMapping("/{id}/archive")
@@ -195,7 +204,10 @@ public class AdminCycleController {
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
         applyStatusTransition(cycle, CycleStatus.ARCHIVED);
         cycleRepository.save(cycle);
-        return ResponseEntity.ok(adminService.buildCycleDto(cycle));
+        return ResponseEntity.ok(Map.of(
+                "cycleId", cycle.getCycleId(),
+                "status", cycle.getStatus().name()
+        ));
     }
 
     @DeleteMapping("/{id}")
