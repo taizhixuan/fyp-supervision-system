@@ -559,6 +559,38 @@ export function useUploadProposalFile() {
   })
 }
 
+/**
+ * Download the canonical MMU FCI FYP Proposal Form .docx generated server-side
+ * from the structured proposal data. Triggers a browser download.
+ */
+export function useExportProposalDocx() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.get('/student/proposal/export.docx', {
+        responseType: 'blob',
+      })
+      const blob = new Blob([response.data as BlobPart], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })
+      // Pull filename out of content-disposition if present.
+      const cd = response.headers?.['content-disposition'] as string | undefined
+      let filename = 'FYP-Proposal.docx'
+      if (cd) {
+        const match = /filename="?([^";]+)"?/.exec(cd)
+        if (match) filename = match[1]
+      }
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    },
+  })
+}
+
 // ==================== AI Proposal Analysis ====================
 export function useProposalAnalysis() {
   return useQuery({
