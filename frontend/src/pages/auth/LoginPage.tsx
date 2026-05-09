@@ -22,7 +22,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const from = location.state?.from?.pathname || ROUTES.REDIRECT
+  const fromPath = location.state?.from?.pathname
 
   const {
     register,
@@ -42,7 +42,9 @@ export function LoginPage() {
     setError(null)
     try {
       await login(data)
-      navigate(from, { replace: true })
+      // Always go through /redirect so the role-aware logic (FYP1 gate,
+      // role-vs-`from` compatibility) runs in one place.
+      navigate(ROUTES.REDIRECT, { replace: true, state: { from: fromPath } })
     } catch (err) {
       // Generic error message for security
       setError('Invalid credentials. Please try again.')

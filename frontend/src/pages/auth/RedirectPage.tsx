@@ -1,11 +1,24 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Spinner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES, ROLE_ROUTES } from '@/lib/constants/routes'
+import type { UserRole } from '@/types'
+
+// Mirrors backend SecurityConfig URL→authority rules. A student should never
+// land on /admin/* etc. just because they tried to deep-link there before login.
+function isPathAllowedForRole(path: string, role: UserRole): boolean {
+  if (path === '/admin' || path.startsWith('/admin/')) return role === 'SYSTEM_ADMIN'
+  if (path === '/committee' || path.startsWith('/committee/')) return role === 'FYP_COMMITTEE'
+  if (path === '/supervisor' || path.startsWith('/supervisor/')) return role === 'SUPERVISOR'
+  if (path === '/supervisors' || path.startsWith('/supervisors/')) return role === 'STUDENT'
+  if (path === '/student' || path.startsWith('/student/')) return role === 'STUDENT'
+  return true
+}
 
 export function RedirectPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
@@ -45,15 +58,22 @@ export function RedirectPage() {
       }
     }
 
-    // Get role-based dashboard route
+    // Role-based dashboard route
     const dashboardRoute = ROLE_ROUTES[user.role]
-    if (dashboardRoute) {
-      navigate(dashboardRoute, { replace: true })
-    } else {
-      // Unknown role - redirect to access denied
+    if (!dashboardRoute) {
       navigate(ROUTES.ACCESS_DENIED, { replace: true })
+      return
     }
-  }, [user, isAuthenticated, isLoading, navigate])
+
+    // Honour deep-link `from` only if it's compatible with the user's role —
+    // otherwise a student who deep-linked /admin/* would land on /access-denied.
+    const fromPath = (location.state as { from?: string } | null)?.from
+    if (fromPath && fromPath !== ROUTES.LOGIN && isPathAllowedForRole(fromPath, user.role)) {
+      navigate(fromPath, { replace: true })
+    } else {
+      navigate(dashboardRoute, { replace: true })
+    }
+  }, [user, isAuthenticated, isLoading, navigate, location.state])
 
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
