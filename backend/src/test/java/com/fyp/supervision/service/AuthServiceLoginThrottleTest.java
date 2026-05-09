@@ -48,7 +48,9 @@ class AuthServiceLoginThrottleTest {
     @Mock FypCycleRepository fypCycleRepository;
     @Mock PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock NotificationService notificationService;
+    @Mock EmailService emailService;
     @Mock CycleLifecycleService cycleLifecycleService;
+    @Mock AuditService auditService;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtTokenProvider jwtTokenProvider;
 

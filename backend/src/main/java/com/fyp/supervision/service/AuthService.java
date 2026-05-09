@@ -26,11 +26,14 @@ import com.fyp.supervision.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -60,6 +63,7 @@ public class AuthService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final CycleLifecycleService cycleLifecycleService;
+    private final AuditService auditService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -171,6 +175,21 @@ public class AuthService {
      * <p>Falls back to inline call when there is no active synchronization (e.g. unit
      * tests bypassing @Transactional) — same best-effort semantics.
      */
+    /**
+     * Pulls the inbound HTTP request out of Spring's request scope so service-layer
+     * methods can hand it to AuditService without changing every caller's signature.
+     * Returns null when called outside a web request (e.g. scheduled job, unit test).
+     */
+    private HttpServletRequest currentRequest() {
+        try {
+            ServletRequestAttributes attrs = (ServletRequestAttributes)
+                    RequestContextHolder.getRequestAttributes();
+            return attrs == null ? null : attrs.getRequest();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private void schedulePlaceholderAttach(Long studentUserId) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -210,15 +229,25 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         String identifier = request.getIdentifier().toLowerCase().trim();
 
+        HttpServletRequest httpRequest = currentRequest();
+
         // Generic "invalid credentials" for unknown identifier — never reveal whether
-        // the email/mmuId exists in the system. No counter to bump.
-        UserAccount user = userAccountRepository.findByEmailOrMmuId(identifier)
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials."));
+        // the email/mmuId exists in the system. No counter to bump. We do still audit
+        // the attempt so admins can spot enumeration patterns.
+        UserAccount user = userAccountRepository.findByEmailOrMmuId(identifier).orElse(null);
+        if (user == null) {
+            auditService.recordAnonymous("LOGIN_FAILURE_UNKNOWN_USER", "USER_ACCOUNT", null,
+                    "identifier=" + identifier, httpRequest);
+            throw new BadCredentialsException("Invalid credentials.");
+        }
 
         // Throttle: reject early when the account is in an active lockout window.
         LocalDateTime now = LocalDateTime.now();
         if (user.getLockoutUntil() != null && user.getLockoutUntil().isAfter(now)) {
             long minutesLeft = java.time.Duration.between(now, user.getLockoutUntil()).toMinutes() + 1;
+            auditService.record(user, "LOGIN_REJECTED_LOCKED", "USER_ACCOUNT",
+                    String.valueOf(user.getUserId()),
+                    "lockoutUntil=" + user.getLockoutUntil(), httpRequest);
             throw new BadRequestException(
                     "Account temporarily locked after too many failed attempts. Try again in "
                             + minutesLeft + " minute" + (minutesLeft == 1 ? "" : "s") + ".");
@@ -227,13 +256,24 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             // Increment the attempt counter; lock if we've now hit the threshold.
             int attempts = (user.getLoginAttempts() == null ? 0 : user.getLoginAttempts()) + 1;
+            boolean justLocked = false;
             if (attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
                 user.setLoginAttempts(0);
                 user.setLockoutUntil(now.plusMinutes(LOCKOUT_WINDOW_MINUTES));
+                justLocked = true;
             } else {
                 user.setLoginAttempts(attempts);
             }
             userAccountRepository.save(user);
+            if (justLocked) {
+                auditService.record(user, "LOGIN_LOCKOUT_TRIGGERED", "USER_ACCOUNT",
+                        String.valueOf(user.getUserId()),
+                        "after " + MAX_FAILED_LOGIN_ATTEMPTS + " failed attempts", httpRequest);
+            } else {
+                auditService.record(user, "LOGIN_FAILURE", "USER_ACCOUNT",
+                        String.valueOf(user.getUserId()),
+                        "attempts=" + attempts, httpRequest);
+            }
             throw new BadCredentialsException("Invalid credentials.");
         }
 
@@ -250,6 +290,8 @@ public class AuthService {
         user.setLockoutUntil(null);
         user.setLastLoginAt(now);
         userAccountRepository.save(user);
+        auditService.record(user, "LOGIN_SUCCESS", "USER_ACCOUNT",
+                String.valueOf(user.getUserId()), null, httpRequest);
 
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
 

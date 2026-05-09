@@ -11,12 +11,16 @@ import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AdminService;
+import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.CycleLifecycleService;
 import com.fyp.supervision.service.NotificationService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -39,6 +43,7 @@ public class AdminUserController {
     private final AdminService adminService;
     private final NotificationService notificationService;
     private final CycleLifecycleService cycleLifecycleService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<?> getUsers(
@@ -123,7 +128,10 @@ public class AdminUserController {
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<?> approveRegistration(@PathVariable Long id) {
+    public ResponseEntity<?> approveRegistration(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails admin,
+            HttpServletRequest httpRequest) {
         UserAccount user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (user.getStatus() != UserStatus.PENDING) {
@@ -131,6 +139,9 @@ public class AdminUserController {
         }
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        UserAccount adminUser = adminFromPrincipal(admin);
+        auditService.record(adminUser, "USER_APPROVED", "USER_ACCOUNT", String.valueOf(id),
+                "approved " + user.getRole() + " " + user.getEmail(), httpRequest);
         if (user.getRole() == UserRole.STUDENT) {
             // After-commit attach — see AuthService.schedulePlaceholderAttach for why.
             // Calling inline here would deadlock the same way (parent tx holds X lock on
@@ -160,7 +171,11 @@ public class AdminUserController {
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<?> rejectRegistration(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> data) {
+    public ResponseEntity<?> rejectRegistration(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails admin,
+            HttpServletRequest httpRequest,
+            @RequestBody(required = false) Map<String, Object> data) {
         UserAccount user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (user.getStatus() != UserStatus.PENDING) {
@@ -169,6 +184,9 @@ public class AdminUserController {
         String reason = data != null && data.get("reason") != null ? data.get("reason").toString() : "No reason given";
         user.setStatus(UserStatus.BLOCKED);
         userRepository.save(user);
+        UserAccount adminUser = adminFromPrincipal(admin);
+        auditService.record(adminUser, "USER_REJECTED", "USER_ACCOUNT", String.valueOf(id),
+                "rejected " + user.getEmail() + " — reason: " + reason, httpRequest);
         notificationService.createNotification(
                 user.getUserId(),
                 "ACCOUNT_REJECTED",
@@ -177,6 +195,16 @@ public class AdminUserController {
                 "/login"
         );
         return ResponseEntity.ok(Map.of("success", true, "userId", user.getUserId(), "status", "BLOCKED"));
+    }
+
+    /** Resolve the admin principal to a UserAccount (for audit-log actor field). */
+    private UserAccount adminFromPrincipal(UserDetails principal) {
+        if (principal == null) return null;
+        try {
+            return userRepository.findById(Long.parseLong(principal.getUsername())).orElse(null);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Map<String, Object> buildPendingDto(UserAccount user) {
