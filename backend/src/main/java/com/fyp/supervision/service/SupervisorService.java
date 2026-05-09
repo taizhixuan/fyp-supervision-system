@@ -524,19 +524,25 @@ public class SupervisorService {
     }
 
     public Map<String, Object> buildDocumentDto(ProjectDocument doc) {
-        UserAccount student = doc.getUploadedBy();
+        UserAccount student = (doc.getProject() != null && doc.getProject().getStudent() != null)
+                ? doc.getProject().getStudent()
+                : doc.getUploadedBy();
 
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("documentId", doc.getDocumentId());
-        dto.put("studentId", student != null ? student.getMmuId() : "");
-        dto.put("studentName", student != null ? student.getFullName() : "");
-        dto.put("title", doc.getTitle() != null ? doc.getTitle() : doc.getFileName());
-        dto.put("type", doc.getDocType() != null ? doc.getDocType() : "OTHER");
-        dto.put("version", 1);
+        dto.put("studentId", student != null && student.getMmuId() != null ? student.getMmuId() : "");
+        dto.put("studentName", student != null && student.getFullName() != null ? student.getFullName() : "");
+        dto.put("title", doc.getTitle() != null && !doc.getTitle().isBlank() ? doc.getTitle() : doc.getFileName());
+        String type = doc.getDocType() != null && !doc.getDocType().isBlank() ? doc.getDocType() : "OTHER";
+        dto.put("type", type);
+        dto.put("phase", doc.getPhase() != null && !doc.getPhase().isBlank() ? doc.getPhase() : "FYP1");
+        dto.put("version", doc.getVersionNo() != null ? doc.getVersionNo() : 1);
         dto.put("fileName", doc.getFileName());
         dto.put("fileType", doc.getMimeType() != null ? doc.getMimeType() : "");
-        dto.put("fileSize", doc.getFileSize());
+        dto.put("mimeType", doc.getMimeType());
+        dto.put("fileSize", doc.getFileSize() != null ? doc.getFileSize() : 0);
         dto.put("storagePath", doc.getStoragePath());
+        dto.put("downloadUrl", "/supervisor/documents/" + doc.getDocumentId() + "/download");
         dto.put("description", doc.getDescription());
         dto.put("uploadedAt", doc.getUploadedAt() != null ? doc.getUploadedAt().toString() : "");
         dto.put("lastViewedAt", null);

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   FileText,
@@ -8,14 +8,18 @@ import {
   MessageSquare,
   Send,
   Upload,
-  Eye,
-  ExternalLink,
+  AlertCircle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { useSuperviseeDocument, useSubmitDocumentFeedback } from '@/lib/hooks/useSupervisor'
+import {
+  useSuperviseeDocument,
+  useSubmitDocumentFeedback,
+  useDownloadSuperviseeDocument,
+} from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
+import { getApiErrorMessage } from '@/lib/api/client'
 import { cn } from '@/lib/utils/cn'
 import type { SvDocumentType } from '@/types'
 
@@ -29,17 +33,25 @@ const typeConfig: Record<SvDocumentType, { label: string; color: string; bgColor
   OTHER: { label: 'Other', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
 }
 
+function resolveType(type: string | undefined): SvDocumentType {
+  if (!type) return 'OTHER'
+  return (typeConfig[type as SvDocumentType] ? type : 'OTHER') as SvDocumentType
+}
+
 export function DocumentDetail() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const [feedbackContent, setFeedbackContent] = useState('')
   const [annotatedFile, setAnnotatedFile] = useState<File | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const { data: document, isLoading } = useSuperviseeDocument(Number(id))
+  const documentId = Number(id)
+  const { data: document, isLoading, isError, error } = useSuperviseeDocument(documentId)
   const submitFeedback = useSubmitDocumentFeedback()
+  const download = useDownloadSuperviseeDocument()
 
   const handleSubmitFeedback = async () => {
     if (!document || !feedbackContent.trim()) return
+    setActionError(null)
     try {
       await submitFeedback.mutateAsync({
         documentId: document.documentId,
@@ -48,8 +60,18 @@ export function DocumentDetail() {
       })
       setFeedbackContent('')
       setAnnotatedFile(null)
-    } catch (error) {
-      console.error('Failed to submit feedback:', error)
+    } catch (err) {
+      setActionError(getApiErrorMessage(err))
+    }
+  }
+
+  const handleDownload = async () => {
+    if (!document) return
+    setActionError(null)
+    try {
+      await download.mutateAsync({ documentId: document.documentId, fileName: document.fileName })
+    } catch (err) {
+      setActionError(getApiErrorMessage(err))
     }
   }
 
@@ -67,23 +89,24 @@ export function DocumentDetail() {
     )
   }
 
-  if (!document) {
+  if (isError || !document) {
     return (
-      <div className="text-center py-12">
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <AlertCircle className="h-12 w-12 text-error-500 mx-auto" />
         <h2 className="text-xl font-semibold text-neutral-900">Document not found</h2>
-        <p className="text-neutral-600 mt-2">The document you're looking for doesn't exist.</p>
+        <p className="text-neutral-600">{isError ? getApiErrorMessage(error) : "The document you're looking for doesn't exist."}</p>
         <Link to={ROUTES.SUPERVISOR.DOCUMENTS}>
-          <Button className="mt-4">Back to Documents</Button>
+          <Button>Back to Documents</Button>
         </Link>
       </div>
     )
   }
 
-  const type = typeConfig[document.type]
+  const typeKey = resolveType(document.type)
+  const type = typeConfig[typeKey]
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.DOCUMENTS}>
           <Button variant="ghost" size="sm">
@@ -93,16 +116,20 @@ export function DocumentDetail() {
         </Link>
       </div>
 
+      {actionError && (
+        <div className="rounded-lg border border-error-200 bg-error-50 p-4 text-sm text-error-700">
+          {actionError}
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Document Info */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Document Card */}
           <Card className="p-6">
             <div className="text-center">
               <div className={cn('w-20 h-20 rounded-lg flex items-center justify-center mx-auto mb-4', type.bgColor)}>
                 <FileText className={cn('h-10 w-10', type.color)} />
               </div>
-              <h2 className="text-lg font-semibold text-neutral-900">{document.title}</h2>
+              <h2 className="text-lg font-semibold text-neutral-900 break-all">{document.title}</h2>
               <span className={cn(
                 'inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium',
                 type.bgColor,
@@ -113,9 +140,9 @@ export function DocumentDetail() {
             </div>
 
             <div className="mt-6 space-y-3 text-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <span className="text-neutral-500">File Name</span>
-                <span className="font-medium text-neutral-900 truncate max-w-[150px]">
+                <span className="font-medium text-neutral-900 truncate text-right" title={document.fileName}>
                   {document.fileName}
                 </span>
               </div>
@@ -137,32 +164,20 @@ export function DocumentDetail() {
                   })}
                 </span>
               </div>
-              {document.lastViewedAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-neutral-500">Last Viewed</span>
-                  <span className="font-medium">
-                    {new Date(document.lastViewedAt).toLocaleDateString('en-MY', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </span>
-                </div>
-              )}
             </div>
 
             <div className="mt-6 space-y-2">
-              <Button className="w-full">
-                <Eye className="h-4 w-4 mr-2" />
-                View Document
-              </Button>
-              <Button variant="secondary" className="w-full">
+              <Button
+                className="w-full"
+                onClick={handleDownload}
+                isLoading={download.isPending}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>
             </div>
           </Card>
 
-          {/* Student Info */}
           <Card className="p-6">
             <h3 className="font-semibold text-neutral-900 mb-4">Uploaded By</h3>
             <div className="flex items-center gap-3">
@@ -177,30 +192,14 @@ export function DocumentDetail() {
           </Card>
         </div>
 
-        {/* Right Column - Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Description */}
           {document.description && (
             <Card className="p-6">
               <h3 className="font-semibold text-neutral-900 mb-3">Description</h3>
-              <p className="text-neutral-600">{document.description}</p>
+              <p className="text-neutral-600 whitespace-pre-wrap">{document.description}</p>
             </Card>
           )}
 
-          {/* Document Preview Placeholder */}
-          <Card className="p-6">
-            <h3 className="font-semibold text-neutral-900 mb-4">Document Preview</h3>
-            <div className="bg-neutral-100 rounded-lg p-12 text-center">
-              <FileText className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
-              <p className="text-neutral-600">Document preview not available</p>
-              <Button className="mt-4">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open in New Tab
-              </Button>
-            </div>
-          </Card>
-
-          {/* Feedback Section */}
           <Card className="p-6">
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-neutral-400" />
@@ -215,7 +214,6 @@ export function DocumentDetail() {
               placeholder="Enter your feedback or comments on this document..."
             />
 
-            {/* Annotated File Upload */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Upload Annotated Version (Optional)
@@ -223,10 +221,10 @@ export function DocumentDetail() {
               <div className="border-2 border-dashed border-neutral-300 rounded-lg p-4">
                 {annotatedFile ? (
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-neutral-400" />
-                      <span className="text-sm text-neutral-700">{annotatedFile.name}</span>
-                      <span className="text-xs text-neutral-500">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-5 w-5 text-neutral-400 flex-shrink-0" />
+                      <span className="text-sm text-neutral-700 truncate">{annotatedFile.name}</span>
+                      <span className="text-xs text-neutral-500 flex-shrink-0">
                         ({formatFileSize(annotatedFile.size)})
                       </span>
                     </div>
@@ -274,27 +272,6 @@ export function DocumentDetail() {
               Submit Feedback
             </Button>
           </Card>
-
-          {/* Previous Feedback */}
-          {document.feedbackCount > 0 && (
-            <Card className="p-6">
-              <h3 className="font-semibold text-neutral-900 mb-4">
-                Previous Feedback ({document.feedbackCount})
-              </h3>
-              <div className="space-y-4">
-                {/* Placeholder - would be populated with actual feedback data */}
-                <div className="p-4 bg-neutral-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-900">Dr. Sarah Lee</span>
-                    <span className="text-xs text-neutral-500">Jan 18, 2025</span>
-                  </div>
-                  <p className="text-sm text-neutral-600">
-                    Good progress on the document structure. Please add more detail to the methodology section.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>

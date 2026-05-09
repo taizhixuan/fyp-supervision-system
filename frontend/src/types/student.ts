@@ -381,20 +381,17 @@ export interface FYPDocument {
   studentId: string
   title: string
   description?: string
-  type?: DocumentType
-  category?: DocumentCategory
-  phase?: DocumentPhase
+  type: DocumentType
+  phase: DocumentPhase
   fileName: string
   fileSize: number
   fileUrl: string
+  downloadUrl: string
   mimeType?: string
   version: number
   uploadedAt: string
   updatedAt: string
-  // Additional fields for document detail views
   uploadedBy?: string
-  isShared?: boolean
-  tags?: string[]
 }
 
 export interface DocumentVersion {
@@ -488,6 +485,7 @@ export interface ChatMessage {
   content: string
   timestamp: string
   references?: ChatReference[]
+  confidence?: number
 }
 
 export interface ChatReference {
@@ -498,8 +496,8 @@ export interface ChatReference {
 }
 
 export interface ChatSession {
-  sessionId: string
+  sessionId: string | null
   messages: ChatMessage[]
-  createdAt: string
-  updatedAt: string
+  createdAt: string | null
+  updatedAt: string | null
 }

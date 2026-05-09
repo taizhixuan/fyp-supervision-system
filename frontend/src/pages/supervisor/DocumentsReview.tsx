@@ -16,16 +16,22 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSuperviseeDocuments } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { DocumentType } from '@/types'
+type DocStyle = { label: string; color: string; bgColor: string; borderColor: string }
 
-const typeConfig: Record<DocumentType, { label: string; color: string; bgColor: string; borderColor: string }> = {
+const typeConfig: Record<string, DocStyle> = {
   PROPOSAL: { label: 'Proposal', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-l-amber-500' },
   REPORT: { label: 'Report', color: 'text-sky-600', bgColor: 'bg-sky-50', borderColor: 'border-l-sky-500' },
   PRESENTATION: { label: 'Presentation', color: 'text-violet-600', bgColor: 'bg-violet-50', borderColor: 'border-l-violet-500' },
   MEETING_NOTES: { label: 'Meeting Notes', color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-l-emerald-500' },
   REFERENCE: { label: 'Reference', color: 'text-rose-600', bgColor: 'bg-rose-50', borderColor: 'border-l-rose-500' },
   FEEDBACK: { label: 'Feedback', color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-l-orange-500' },
+  CODE: { label: 'Code', color: 'text-slate-600', bgColor: 'bg-slate-100', borderColor: 'border-l-slate-500' },
+  DATASET: { label: 'Dataset', color: 'text-teal-600', bgColor: 'bg-teal-50', borderColor: 'border-l-teal-500' },
   OTHER: { label: 'Other', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400' },
+}
+
+function styleFor(type: string | undefined): DocStyle {
+  return typeConfig[(type || 'OTHER').toUpperCase()] || typeConfig.OTHER
 }
 
 const filterOptions = [
@@ -164,7 +170,7 @@ export function DocumentsReview() {
       <div className="flex flex-col gap-4">
         {filteredDocuments && filteredDocuments.length > 0 ? (
           filteredDocuments.map((doc) => {
-            const type = typeConfig[doc.type]
+            const type = styleFor(doc.type)
             return (
               <Link
                 key={doc.documentId}

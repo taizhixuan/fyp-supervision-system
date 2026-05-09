@@ -1209,6 +1209,25 @@ export function useSubmitDocumentFeedback() {
   })
 }
 
+export function useDownloadSuperviseeDocument() {
+  return useMutation({
+    mutationFn: async ({ documentId, fileName }: { documentId: number; fileName: string }) => {
+      const response = await apiClient.get(`/supervisor/documents/${documentId}/download`, {
+        responseType: 'blob',
+      })
+      const blob = response.data as Blob
+      const url = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = fileName || 'document'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    },
+  })
+}
+
 // Announcements
 export function useSupervisorAnnouncements() {
   return useQuery({
