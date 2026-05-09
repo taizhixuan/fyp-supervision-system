@@ -24,6 +24,7 @@ public class NotificationService {
     private final UserAccountRepository userAccountRepository;
     private final NotificationPreferenceService preferenceService;
     private final EmailService emailService;
+    private final PushService pushService;
 
     public void createNotification(Long userId, String type, String title, String message, String targetRoute) {
         UserAccount user = userAccountRepository.findById(userId)
@@ -52,6 +53,10 @@ public class NotificationService {
                     message,
                     targetRoute
             );
+        }
+
+        if (preferenceService.shouldDeliverPush(userId, category)) {
+            pushService.sendToUser(userId, type, title, message, targetRoute);
         }
     }
 

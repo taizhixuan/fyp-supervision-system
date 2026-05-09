@@ -53,7 +53,15 @@ public class NotificationPreferenceService {
     }
 
     public boolean shouldDeliverInApp(Long userId, NotificationCategory category) {
-        return channelEnabled(loadPreferences(userId), "inApp", category);
+        Map<String, Object> prefs = loadPreferences(userId);
+        if (!channelEnabled(prefs, "inApp", category)) {
+            return false;
+        }
+        if (isInQuietHours(prefs)) {
+            log.debug("In-app notification skipped: quiet hours for user {}", userId);
+            return false;
+        }
+        return true;
     }
 
     public boolean shouldDeliverEmail(Long userId, NotificationCategory category) {
@@ -63,6 +71,18 @@ public class NotificationPreferenceService {
         }
         if (isInQuietHours(prefs)) {
             log.debug("Email skipped: quiet hours for user {}", userId);
+            return false;
+        }
+        return true;
+    }
+
+    public boolean shouldDeliverPush(Long userId, NotificationCategory category) {
+        Map<String, Object> prefs = loadPreferences(userId);
+        if (!channelEnabled(prefs, "push", category)) {
+            return false;
+        }
+        if (isInQuietHours(prefs)) {
+            log.debug("Push skipped: quiet hours for user {}", userId);
             return false;
         }
         return true;
