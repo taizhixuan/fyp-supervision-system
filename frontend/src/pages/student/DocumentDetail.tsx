@@ -215,7 +215,10 @@ export function DocumentDetail() {
               >
                 Download
               </Button>
-              <Link to={`${ROUTES.STUDENT.DOCUMENT_UPLOAD}?replace=${document.documentId}`}>
+              <Link
+                to={`${ROUTES.STUDENT.DOCUMENT_UPLOAD}?replace=${document.documentId}`}
+                className="block"
+              >
                 <Button variant="secondary" className="w-full" leftIcon={<Edit className="h-4 w-4" />}>
                   Upload New Version
                 </Button>
