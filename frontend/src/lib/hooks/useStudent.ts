@@ -268,7 +268,7 @@ const MOCK_SUPERVISORS: SupervisorSummary[] = [
 ]
 
 // ==================== Dashboard ====================
-export function useStudentDashboard() {
+export function useStudentDashboard(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: studentKeys.dashboard(),
     queryFn: async () => {
@@ -276,6 +276,7 @@ export function useStudentDashboard() {
       const { data } = await apiClient.get<StudentDashboardData>('/student/dashboard')
       return data
     },
+    enabled: options?.enabled ?? true,
   })
 }
 
