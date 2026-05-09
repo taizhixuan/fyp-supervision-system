@@ -7,6 +7,7 @@ import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.enums.ProjectStatus;
 import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.enums.UserStatus;
+import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
@@ -39,6 +40,7 @@ public class CycleLifecycleService {
     private final FypCycleRepository cycleRepository;
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
+    private final DeadlineRepository deadlineRepository;
 
     public Optional<FypCycle> findActiveCycle(String cycleType) {
         if (cycleType == null) return Optional.empty();
@@ -101,6 +103,49 @@ public class CycleLifecycleService {
             if (savePlaceholder(cycle, student).isPresent()) count++;
         }
         return count;
+    }
+
+    /**
+     * Atomic status flip via direct UPDATE — no entity load, no dirty checking, no flush.
+     * Eliminates a class of commit-time failures that can occur when an entity loaded in
+     * the same session has unrelated lazy-loading or constraint problems.
+     */
+    @Transactional
+    public void setCycleStatus(Long cycleId, CycleStatus newStatus) {
+        int updated = cycleRepository.updateStatusById(cycleId, newStatus);
+        if (updated == 0) {
+            throw new IllegalStateException("Cycle " + cycleId + " not found for status update.");
+        }
+    }
+
+    /**
+     * Atomic activate: deactivate any other ACTIVE cycle of the same type, then set this
+     * one to ACTIVE — both via direct UPDATE statements.
+     */
+    @Transactional
+    public void activateCycleAtomically(Long cycleId, String cycleType) {
+        if (cycleType != null) {
+            int demoted = cycleRepository.reassignStatusForType(
+                    cycleType, CycleStatus.ACTIVE, CycleStatus.COMPLETED, cycleId);
+            if (demoted > 0) {
+                log.info("Demoted {} previously-active {} cycle(s) before activating {}", demoted, cycleType, cycleId);
+            }
+        }
+        setCycleStatus(cycleId, CycleStatus.ACTIVE);
+    }
+
+    /**
+     * Atomic delete: bulk-delete deadlines first (CASCADE handles deadline_reminder_log),
+     * then delete the cycle row. Project FK is checked beforehand by the caller.
+     */
+    @Transactional
+    public void deleteCycleAtomically(Long cycleId) {
+        int deadlines = deadlineRepository.deleteAllByCycleId(cycleId);
+        log.info("Deleting cycle {}: removed {} deadlines", cycleId, deadlines);
+        int removed = cycleRepository.deleteByIdDirect(cycleId);
+        if (removed == 0) {
+            throw new IllegalStateException("Cycle " + cycleId + " not found for delete.");
+        }
     }
 
     private Optional<Project> savePlaceholder(FypCycle cycle, UserAccount student) {
