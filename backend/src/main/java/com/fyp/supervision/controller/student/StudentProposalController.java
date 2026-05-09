@@ -1,12 +1,16 @@
 package com.fyp.supervision.controller.student;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fyp.supervision.entity.Proposal;
 import com.fyp.supervision.entity.ProposalCheckResult;
 import com.fyp.supervision.entity.ProposalVersion;
 import com.fyp.supervision.repository.ProposalCheckResultRepository;
 import com.fyp.supervision.service.AiServiceClient;
+import com.fyp.supervision.service.ProposalDocumentService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +28,7 @@ public class StudentProposalController {
     private final StudentService studentService;
     private final AiServiceClient aiServiceClient;
     private final ProposalCheckResultRepository checkResultRepository;
+    private final ProposalDocumentService proposalDocumentService;
 
     @GetMapping
     public ResponseEntity<?> getProposal(@AuthenticationPrincipal UserDetails user) {
@@ -89,25 +94,43 @@ public class StudentProposalController {
                 .orElse(ResponseEntity.ok(Map.of()));
     }
 
+    /**
+     * Render the canonical MMU FCI FYP Proposal Form .docx, populated with the
+     * student's structured proposal data. Replaces the manual file upload as the
+     * primary submission artifact.
+     */
+    @GetMapping("/export.docx")
+    public ResponseEntity<?> exportDocx(@AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.parseLong(user.getUsername());
+        return studentService.getProposal(userId)
+                .map(proposal -> {
+                    try {
+                        Map<String, Object> latestContent = studentService.getLatestProposalContent(proposal);
+                        byte[] bytes = proposalDocumentService.renderProposalForm(proposal, latestContent);
+                        String safeTitle = (proposal.getTitle() == null ? "FYP-Proposal" : proposal.getTitle())
+                                .replaceAll("[^A-Za-z0-9._-]+", "_");
+                        String filename = safeTitle + ".docx";
+                        return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                                .contentType(MediaType.parseMediaType(
+                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                                .body((Object) bytes);
+                    } catch (Exception e) {
+                        return ResponseEntity.internalServerError()
+                                .body((Object) Map.of("message", "Failed to generate document: " + e.getMessage()));
+                    }
+                })
+                .orElse(ResponseEntity.status(404).body(Map.of("message", "No proposal found.")));
+    }
+
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
         return studentService.getProposal(userId)
                 .map(proposal -> {
-                    List<ProposalVersion> versions = studentService.getProposal(userId)
-                            .map(p -> p.getVersions())
-                            .orElse(List.of());
-
-                    // Send full proposal content (not just title) to the AI analyzer
-                    String content = versions.stream()
-                            .max(Comparator.comparing(ProposalVersion::getVersionNo))
-                            .map(ProposalVersion::getContentText)
-                            .orElse(proposal.getTitle());
-
-                    // Prepend title if content doesn't already contain it
-                    if (proposal.getTitle() != null && !content.contains(proposal.getTitle())) {
-                        content = "Title: " + proposal.getTitle() + "\n\n" + content;
-                    }
+                    // Build a STABLE prose blob from the structured form fields. The previous
+                    // implementation sent raw JSON; the analyzer (NLP scorer) needs prose.
+                    String content = buildAnalyzerProse(proposal);
 
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("proposalContent", content);
@@ -149,5 +172,56 @@ public class StudentProposalController {
         if (value == null) return "[]";
         try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value); }
         catch (Exception e) { return "[]"; }
+    }
+
+    /**
+     * Compose the prose blob the analyzer scores. Stable section order so successive
+     * runs are comparable, and we hide the structured fields (Status / Type /
+     * Specialisation / etc.) the analyzer can't usefully reason about.
+     */
+    private String buildAnalyzerProse(Proposal proposal) {
+        ProposalVersion latest = proposal.getVersions().stream()
+                .max(Comparator.comparing(ProposalVersion::getVersionNo))
+                .orElse(null);
+        Map<String, Object> content = Map.of();
+        if (latest != null && latest.getContentText() != null) {
+            try {
+                content = new ObjectMapper().readValue(latest.getContentText(), Map.class);
+            } catch (Exception ignored) {
+                // fall through with empty content
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        appendBlock(sb, "Title", proposal.getTitle());
+        appendBlock(sb, "Problem Statement", str(content.get("problemStatement")));
+        appendList(sb, "Objectives", content.get("objectives"));
+        appendBlock(sb, "Methodology", str(content.get("methodology")));
+        appendBlock(sb, "Scope", str(content.get("scope")));
+        appendList(sb, "Expected Outcomes", content.get("expectedOutcomes"));
+        appendBlock(sb, "Timeline", str(content.get("timeline")));
+        return sb.toString().trim();
+    }
+
+    private void appendBlock(StringBuilder sb, String label, String value) {
+        if (value == null || value.isBlank()) return;
+        sb.append(label).append(":\n").append(value.trim()).append("\n\n");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendList(StringBuilder sb, String label, Object value) {
+        if (!(value instanceof List<?> list) || list.isEmpty()) return;
+        sb.append(label).append(":\n");
+        int i = 1;
+        for (Object item : (List<Object>) list) {
+            String s = str(item);
+            if (s == null || s.isBlank()) continue;
+            sb.append(i++).append(". ").append(s.trim()).append('\n');
+        }
+        sb.append('\n');
+    }
+
+    private String str(Object value) {
+        return value == null ? null : value.toString();
     }
 }

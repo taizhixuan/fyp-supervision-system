@@ -31,6 +31,7 @@ import {
   useUpdateProposal,
   useSubmitProposal,
   useUploadProposalFile,
+  useExportProposalDocx,
 } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import {
@@ -189,6 +190,7 @@ export function ProposalWorkspace() {
   const updateProposal = useUpdateProposal()
   const submitProposal = useSubmitProposal()
   const uploadFile = useUploadProposalFile()
+  const exportDocx = useExportProposalDocx()
 
   const isNewProposal = !proposal
 
@@ -433,6 +435,17 @@ export function ProposalWorkspace() {
                 Status Timeline
               </Button>
             </Link>
+            {!isNewProposal && (
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<FileText className="h-4 w-4" />}
+                onClick={() => exportDocx.mutate()}
+                isLoading={exportDocx.isPending}
+              >
+                Download MMU Form
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {canEdit && (
@@ -1065,20 +1078,51 @@ export function ProposalWorkspace() {
           />
         </Card>
 
-        {/* File Upload */}
+        {/* Canonical MMU Form Export + Optional Supporting Attachment */}
         <Card>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Proposal Document</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1">MMU FYP Proposal Form</h2>
           <p className="text-sm text-neutral-500 mb-4">
-            Upload your proposal document (PDF, DOC, DOCX - Max 10MB)
+            The system generates the official MMU FCI proposal form from the fields above —
+            this is the artifact your supervisor and the FYP committee will read.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-primary-50 rounded-lg border border-primary-100 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <p className="font-medium text-neutral-900">FYP Proposal Form (.docx)</p>
+                <p className="text-sm text-neutral-600">
+                  Auto-filled from the form above. Save your draft first to capture the latest changes.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<FileText className="h-4 w-4" />}
+              onClick={() => exportDocx.mutate()}
+              isLoading={exportDocx.isPending}
+              disabled={isNewProposal}
+            >
+              Download
+            </Button>
+          </div>
+
+          <h3 className="font-medium text-neutral-900 mb-1">Supporting attachment (optional)</h3>
+          <p className="text-sm text-neutral-500 mb-3">
+            Attach a supporting document if your supervisor asks for one (e.g. a marked-up draft).
+            This is <strong>not</strong> the canonical form — submission still uses the generated MMU form above.
           </p>
 
           {proposalFileUrl ? (
             <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <FileText className="h-8 w-8 text-primary-600" />
+                <FileText className="h-8 w-8 text-neutral-500" />
                 <div>
                   <p className="font-medium text-neutral-900">{proposalFileName}</p>
-                  <p className="text-sm text-neutral-500">Uploaded document</p>
+                  <p className="text-sm text-neutral-500">Supporting attachment</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1102,12 +1146,12 @@ export function ProposalWorkspace() {
             </div>
           ) : canEdit ? (
             <label className="block">
-              <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer">
-                <Upload className="h-10 w-10 text-neutral-400 mx-auto mb-3" />
-                <p className="font-medium text-neutral-700">
-                  {uploadingFile ? 'Uploading...' : 'Click to upload proposal document'}
+              <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
+                <Upload className="h-8 w-8 text-neutral-400 mx-auto mb-2" />
+                <p className="font-medium text-neutral-700 text-sm">
+                  {uploadingFile ? 'Uploading...' : 'Click to attach a supporting document'}
                 </p>
-                <p className="text-sm text-neutral-500 mt-1">PDF, DOC, or DOCX up to 10MB</p>
+                <p className="text-xs text-neutral-500 mt-1">PDF, DOC, or DOCX up to 10MB</p>
               </div>
               <input
                 type="file"
@@ -1118,7 +1162,7 @@ export function ProposalWorkspace() {
               />
             </label>
           ) : (
-            <p className="text-neutral-500">No document uploaded</p>
+            <p className="text-neutral-500 text-sm">No supporting attachment</p>
           )}
         </Card>
       </form>
