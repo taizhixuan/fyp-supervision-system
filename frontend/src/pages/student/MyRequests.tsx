@@ -10,7 +10,8 @@ import {
   MessageSquare,
   RotateCcw,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner, AlertBanner, Modal } from '@/components/ui'
+import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
+import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal'
 import { useSupervisionRequests, useWithdrawSupervisionRequest } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
@@ -266,107 +267,113 @@ export function MyRequests() {
       <Modal
         isOpen={!!selectedRequest}
         onClose={() => setSelectedRequest(null)}
-        title="Request Details"
         size="lg"
       >
         {selectedRequest && (
-          <div className="space-y-4">
-            {/* Status */}
-            <div className="flex items-center justify-between">
-              <Badge
-                variant={statusConfig[selectedRequest.status].variant}
-                size="lg"
-              >
-                {statusConfig[selectedRequest.status].label}
-              </Badge>
-              <span className="text-sm text-neutral-500">
-                Submitted {new Date(selectedRequest.submittedAt).toLocaleDateString('en-MY')}
-              </span>
-            </div>
-
-            {/* Supervisor */}
-            <Card className="bg-neutral-50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary-600">
-                    {selectedRequest.supervisor.fullName
-                      .split(' ')
-                      .filter((n) => !['Dr.', 'Prof.'].includes(n))
-                      .map((n) => n[0])
-                      .join('')
-                      .slice(0, 2)}
+          <>
+            <ModalHeader>
+              <ModalTitle>Request Details</ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              <div className="space-y-4">
+                {/* Status */}
+                <div className="flex items-center justify-between">
+                  <Badge
+                    variant={statusConfig[selectedRequest.status].variant}
+                    size="lg"
+                  >
+                    {statusConfig[selectedRequest.status].label}
+                  </Badge>
+                  <span className="text-sm text-neutral-500">
+                    Submitted {new Date(selectedRequest.submittedAt).toLocaleDateString('en-MY')}
                   </span>
                 </div>
+
+                {/* Supervisor */}
+                <Card className="bg-neutral-50">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary-600">
+                        {selectedRequest.supervisor.fullName
+                          .split(' ')
+                          .filter((n) => !['Dr.', 'Prof.'].includes(n))
+                          .map((n) => n[0])
+                          .join('')
+                          .slice(0, 2)}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-neutral-900">
+                        {selectedRequest.supervisor.fullName}
+                      </h4>
+                      <p className="text-sm text-neutral-600">
+                        {selectedRequest.supervisor.title} • {selectedRequest.supervisor.department}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Project Info */}
                 <div>
-                  <h4 className="font-semibold text-neutral-900">
-                    {selectedRequest.supervisor.fullName}
-                  </h4>
-                  <p className="text-sm text-neutral-600">
-                    {selectedRequest.supervisor.title} • {selectedRequest.supervisor.department}
+                  <h4 className="text-sm font-medium text-neutral-700 mb-1">Proposed Title</h4>
+                  <p className="text-neutral-900">{selectedRequest.proposedTitle}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-neutral-700 mb-1">Description</h4>
+                  <p className="text-neutral-700 whitespace-pre-wrap">
+                    {selectedRequest.topicDescription}
                   </p>
                 </div>
-              </div>
-            </Card>
 
-            {/* Project Info */}
-            <div>
-              <h4 className="text-sm font-medium text-neutral-700 mb-1">Proposed Title</h4>
-              <p className="text-neutral-900">{selectedRequest.proposedTitle}</p>
-            </div>
+                {selectedRequest.message && (
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-700 mb-1">Personal Message</h4>
+                    <p className="text-neutral-700">{selectedRequest.message}</p>
+                  </div>
+                )}
 
-            <div>
-              <h4 className="text-sm font-medium text-neutral-700 mb-1">Description</h4>
-              <p className="text-neutral-700 whitespace-pre-wrap">
-                {selectedRequest.topicDescription}
-              </p>
-            </div>
-
-            {selectedRequest.message && (
-              <div>
-                <h4 className="text-sm font-medium text-neutral-700 mb-1">Personal Message</h4>
-                <p className="text-neutral-700">{selectedRequest.message}</p>
-              </div>
-            )}
-
-            {/* Response */}
-            {selectedRequest.responseMessage && (
-              <div className={cn(
-                'p-4 rounded-lg',
-                selectedRequest.status === 'ACCEPTED' ? 'bg-success-50' : 'bg-error-50'
-              )}>
-                <h4 className={cn(
-                  'text-sm font-medium mb-1',
-                  selectedRequest.status === 'ACCEPTED' ? 'text-success-700' : 'text-error-700'
-                )}>
-                  Supervisor Response
-                </h4>
-                <p className={cn(
-                  selectedRequest.status === 'ACCEPTED' ? 'text-success-900' : 'text-error-900'
-                )}>
-                  {selectedRequest.responseMessage}
-                </p>
-                {selectedRequest.respondedAt && (
-                  <p className={cn(
-                    'text-sm mt-2',
-                    selectedRequest.status === 'ACCEPTED' ? 'text-success-600' : 'text-error-600'
+                {/* Response */}
+                {selectedRequest.responseMessage && (
+                  <div className={cn(
+                    'p-4 rounded-lg',
+                    selectedRequest.status === 'ACCEPTED' ? 'bg-success-50' : 'bg-error-50'
                   )}>
-                    Responded on {new Date(selectedRequest.respondedAt).toLocaleDateString('en-MY')}
-                  </p>
+                    <h4 className={cn(
+                      'text-sm font-medium mb-1',
+                      selectedRequest.status === 'ACCEPTED' ? 'text-success-700' : 'text-error-700'
+                    )}>
+                      Supervisor Response
+                    </h4>
+                    <p className={cn(
+                      selectedRequest.status === 'ACCEPTED' ? 'text-success-900' : 'text-error-900'
+                    )}>
+                      {selectedRequest.responseMessage}
+                    </p>
+                    {selectedRequest.respondedAt && (
+                      <p className={cn(
+                        'text-sm mt-2',
+                        selectedRequest.status === 'ACCEPTED' ? 'text-success-600' : 'text-error-600'
+                      )}>
+                        Responded on {new Date(selectedRequest.respondedAt).toLocaleDateString('en-MY')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions for accepted requests */}
+                {selectedRequest.status === 'ACCEPTED' && (
+                  <div className="pt-4 border-t border-neutral-200">
+                    <Link to={ROUTES.STUDENT.MEETING_NEW}>
+                      <Button variant="primary" className="w-full">
+                        Schedule First Meeting
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
-            )}
-
-            {/* Actions for accepted requests */}
-            {selectedRequest.status === 'ACCEPTED' && (
-              <div className="pt-4 border-t border-neutral-200">
-                <Link to={ROUTES.STUDENT.MEETING_NEW}>
-                  <Button variant="primary" className="w-full">
-                    Schedule First Meeting
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
+            </ModalBody>
+          </>
         )}
       </Modal>
 
@@ -377,32 +384,34 @@ export function MyRequests() {
           setWithdrawModalOpen(false)
           setRequestToWithdraw(null)
         }}
-        title="Withdraw Request"
         size="sm"
       >
-        <div className="space-y-4">
-          <p className="text-neutral-600">
+        <ModalHeader>
+          <ModalTitle>Withdraw Request</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600">
             Are you sure you want to withdraw this supervision request? This action cannot be undone.
           </p>
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setWithdrawModalOpen(false)
-                setRequestToWithdraw(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="error"
-              onClick={handleWithdraw}
-              isLoading={withdrawRequest.isPending}
-            >
-              Withdraw Request
-            </Button>
-          </div>
-        </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setWithdrawModalOpen(false)
+              setRequestToWithdraw(null)
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="error"
+            onClick={handleWithdraw}
+            isLoading={withdrawRequest.isPending}
+          >
+            Withdraw Request
+          </Button>
+        </ModalFooter>
       </Modal>
     </div>
   )
