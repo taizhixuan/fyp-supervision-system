@@ -50,6 +50,15 @@ public class UserAccount {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    /** Consecutive failed login attempts. Reset to 0 on successful login. */
+    @Column(name = "login_attempts", nullable = false)
+    @Builder.Default
+    private Integer loginAttempts = 0;
+
+    /** Set when the account is temporarily locked. NULL when not locked. */
+    @Column(name = "lockout_until")
+    private LocalDateTime lockoutUntil;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
