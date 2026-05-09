@@ -23,7 +23,7 @@ export function AuthLayout({
         <header className="py-4 px-4 sm:px-6">
           <Link
             to={backLinkTo}
-            className="group inline-flex items-center gap-2.5 px-4 py-2.5 text-base font-medium text-stone-700 hover:text-amber-700 bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded-full shadow hover:shadow-md transition-all duration-200"
+            className="group inline-flex items-center gap-2.5 px-4 py-2.5 text-base font-medium text-stone-700 hover:text-primary-900 bg-white hover:bg-primary-50 border border-stone-200 hover:border-primary-300 rounded-full shadow hover:shadow-md transition-all duration-200"
           >
             <ArrowLeft className="h-5 w-5 transition-transform duration-200 group-hover:-translate-x-0.5" />
             {backLinkText}

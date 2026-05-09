@@ -68,8 +68,8 @@ export function RegisterPage() {
     <AuthLayout>
       <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden max-w-lg w-full">
         {/* Header - Compact */}
-        <div className="bg-gradient-to-br from-stone-800 to-stone-900 px-6 py-5 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500 rounded-xl mb-3 shadow-lg">
+        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-6 py-5 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-accent-500 rounded-xl mb-3 shadow-lg">
             <UserPlus className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-xl font-bold text-white">Create Your Account</h1>
@@ -104,7 +104,7 @@ export function RegisterPage() {
                 className={cn(
                   'grid grid-cols-2 gap-2 p-1 rounded-xl border transition-colors',
                   !selectedRole
-                    ? 'border-dashed border-amber-300 bg-amber-50/40'
+                    ? 'border-dashed border-primary-300 bg-primary-50/40'
                     : 'border-transparent'
                 )}
               >
@@ -112,8 +112,8 @@ export function RegisterPage() {
                   className={cn(
                     'relative flex items-center justify-center gap-2 px-3 py-3 border-2 rounded-lg cursor-pointer transition-all bg-white',
                     selectedRole === 'STUDENT'
-                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm ring-2 ring-amber-200'
-                      : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/50'
+                      ? 'border-primary-500 bg-primary-50 text-primary-900 shadow-sm ring-2 ring-primary-200'
+                      : 'border-stone-300 hover:border-primary-400 hover:bg-primary-50/50'
                   )}
                 >
                   <input
@@ -124,11 +124,11 @@ export function RegisterPage() {
                   />
                   <GraduationCap className={cn(
                     'h-5 w-5',
-                    selectedRole === 'STUDENT' ? 'text-amber-600' : 'text-stone-500'
+                    selectedRole === 'STUDENT' ? 'text-primary-700' : 'text-stone-500'
                   )} />
                   <span className="font-medium text-sm">Student</span>
                   {selectedRole === 'STUDENT' && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-500 text-white text-[10px] font-bold">
                       ✓
                     </span>
                   )}
@@ -137,8 +137,8 @@ export function RegisterPage() {
                   className={cn(
                     'relative flex items-center justify-center gap-2 px-3 py-3 border-2 rounded-lg cursor-pointer transition-all bg-white',
                     selectedRole === 'SUPERVISOR'
-                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm ring-2 ring-amber-200'
-                      : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/50'
+                      ? 'border-primary-500 bg-primary-50 text-primary-900 shadow-sm ring-2 ring-primary-200'
+                      : 'border-stone-300 hover:border-primary-400 hover:bg-primary-50/50'
                   )}
                 >
                   <input
@@ -149,11 +149,11 @@ export function RegisterPage() {
                   />
                   <Briefcase className={cn(
                     'h-5 w-5',
-                    selectedRole === 'SUPERVISOR' ? 'text-amber-600' : 'text-stone-500'
+                    selectedRole === 'SUPERVISOR' ? 'text-primary-700' : 'text-stone-500'
                   )} />
                   <span className="font-medium text-sm">Supervisor</span>
                   {selectedRole === 'SUPERVISOR' && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-500 text-white text-[10px] font-bold">
                       ✓
                     </span>
                   )}
@@ -181,7 +181,7 @@ export function RegisterPage() {
                   <input
                     type="text"
                     placeholder="Your full name"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('fullName')}
                   />
                 </div>
@@ -201,7 +201,7 @@ export function RegisterPage() {
                   <input
                     type="text"
                     placeholder="1201234567"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('mmuId')}
                   />
                 </div>
@@ -224,7 +224,7 @@ export function RegisterPage() {
                   <input
                     type="email"
                     placeholder="name@mmu.edu.my"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('email')}
                   />
                 </div>
@@ -244,7 +244,7 @@ export function RegisterPage() {
                   <input
                     type="tel"
                     placeholder="+60123456789"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('phone')}
                   />
                 </div>
@@ -266,7 +266,7 @@ export function RegisterPage() {
                       <BookOpen className="h-4 w-4 text-stone-400" />
                     </div>
                     <select
-                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       defaultValue=""
                       {...register('specialisation')}
                     >
@@ -299,7 +299,7 @@ export function RegisterPage() {
                       min={INTAKE_YEAR_MIN}
                       max={INTAKE_YEAR_MAX}
                       placeholder={`e.g. ${INTAKE_YEAR_MAX}`}
-                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       {...register('intakeYear')}
                     />
                   </div>
@@ -323,7 +323,7 @@ export function RegisterPage() {
                   <input
                     type="password"
                     placeholder="Min 8 chars"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('password')}
                   />
                 </div>
@@ -343,7 +343,7 @@ export function RegisterPage() {
                   <input
                     type="password"
                     placeholder="Re-enter"
-                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('confirmPassword')}
                   />
                 </div>
@@ -359,7 +359,7 @@ export function RegisterPage() {
                 <input
                   type="checkbox"
                   id="acceptTerms"
-                  className="mt-0.5 h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 text-primary-700 focus:ring-primary-500"
                   {...register('acceptTerms')}
                 />
                 <label htmlFor="acceptTerms" className="text-sm text-stone-600">
@@ -368,7 +368,7 @@ export function RegisterPage() {
                     href="/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-amber-600 hover:text-amber-700 underline"
+                    className="font-medium text-primary-700 hover:text-primary-900 underline"
                   >
                     Terms of Service
                   </a>{' '}
@@ -377,7 +377,7 @@ export function RegisterPage() {
                     href="/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-amber-600 hover:text-amber-700 underline"
+                    className="font-medium text-primary-700 hover:text-primary-900 underline"
                   >
                     Privacy Policy
                   </a>
@@ -391,7 +391,7 @@ export function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-lg font-medium shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 transition-all"
+              className="w-full bg-primary-900 hover:bg-primary-800 text-white py-2.5 rounded-lg font-medium shadow-lg shadow-primary-900/25 hover:shadow-primary-900/40 transition-all"
               isLoading={isSubmitting}
             >
               Create Account
@@ -403,7 +403,7 @@ export function RegisterPage() {
               Already have an account?{' '}
               <Link
                 to={ROUTES.LOGIN}
-                className="font-semibold text-amber-600 hover:text-amber-700"
+                className="font-semibold text-primary-700 hover:text-primary-900"
               >
                 Log in here
               </Link>

@@ -55,8 +55,8 @@ export function LoginPage() {
     <AuthLayout>
       <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-br from-stone-800 to-stone-900 px-8 py-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500 rounded-2xl mb-4 shadow-lg">
+        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-8 py-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-500 rounded-2xl mb-4 shadow-lg">
             <LogIn className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
@@ -87,7 +87,7 @@ export function LoginPage() {
                 <input
                   type="text"
                   placeholder="e.g., 1201234567 or john@mmu.edu.my"
-                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   {...register('identifier')}
                 />
               </div>
@@ -107,7 +107,7 @@ export function LoginPage() {
                 <input
                   type="password"
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   {...register('password')}
                 />
               </div>
@@ -117,7 +117,7 @@ export function LoginPage() {
               <div className="mt-2 text-right">
                 <Link
                   to={ROUTES.FORGOT_PASSWORD}
-                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                  className="text-sm text-primary-700 hover:text-primary-900 font-medium"
                 >
                   Forgot password?
                 </Link>
@@ -128,7 +128,7 @@ export function LoginPage() {
               <input
                 type="checkbox"
                 id="rememberMe"
-                className="h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-500"
+                className="h-4 w-4 rounded border-stone-300 text-primary-700 focus:ring-primary-500"
                 {...register('rememberMe')}
               />
               <label htmlFor="rememberMe" className="ml-2.5 text-sm text-stone-600">
@@ -138,7 +138,7 @@ export function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-medium shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 transition-all"
+              className="w-full bg-primary-900 hover:bg-primary-800 text-white py-3 rounded-xl font-medium shadow-lg shadow-primary-900/25 hover:shadow-primary-900/40 transition-all"
               isLoading={isSubmitting}
             >
               Log In
@@ -146,10 +146,10 @@ export function LoginPage() {
           </form>
 
           {import.meta.env.DEV && (
-            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <div className="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-xl">
               <div className="flex items-center gap-2 mb-3">
-                <Info className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-800">Demo Accounts</span>
+                <Info className="h-4 w-4 text-primary-700" />
+                <span className="text-sm font-semibold text-primary-900">Demo Accounts</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {DEMO_ACCOUNTS.map((account) => (
@@ -160,14 +160,14 @@ export function LoginPage() {
                       setValue('identifier', account.identifier)
                       setValue('password', account.password)
                     }}
-                    className="flex items-center gap-2 p-2 text-left text-sm bg-white rounded-lg border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                    className="flex items-center gap-2 p-2 text-left text-sm bg-white rounded-lg border border-primary-100 hover:border-primary-300 hover:bg-primary-50 transition-colors"
                   >
-                    <account.Icon className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                    <account.Icon className="h-4 w-4 text-primary-700 flex-shrink-0" />
                     <span className="font-medium text-stone-700 truncate">{account.role}</span>
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-amber-600 text-center">
+              <p className="mt-3 text-xs text-primary-700 text-center">
                 Click to auto-fill credentials. Password: Test@123 (Admin: Admin@123)
               </p>
             </div>
@@ -178,7 +178,7 @@ export function LoginPage() {
               Don't have an account?{' '}
               <Link
                 to={ROUTES.REGISTER}
-                className="font-semibold text-amber-600 hover:text-amber-700"
+                className="font-semibold text-primary-700 hover:text-primary-900"
               >
                 Register here
               </Link>
