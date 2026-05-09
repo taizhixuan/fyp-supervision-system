@@ -31,6 +31,9 @@ public class ApprovedStudentRoster {
     private String programme;
 
     @Column(length = 200)
+    private String specialisation;
+
+    @Column(length = 200)
     private String faculty;
 
     @Column(name = "intake_year")

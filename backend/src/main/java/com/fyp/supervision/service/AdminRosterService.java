@@ -75,8 +75,9 @@ public class AdminRosterService {
 
             String fullName = column(columns, 2);
             String programme = column(columns, 3);
-            String faculty = column(columns, 4);
-            Integer intakeYear = parseInt(column(columns, 5));
+            String specialisation = column(columns, 4);
+            String faculty = column(columns, 5);
+            Integer intakeYear = parseInt(column(columns, 6));
 
             ApprovedStudentRoster row = studentRosterRepository.findByMmuId(mmuId)
                     .orElseGet(ApprovedStudentRoster::new);
@@ -85,6 +86,7 @@ public class AdminRosterService {
             row.setEmail(email);
             if (!fullName.isEmpty()) row.setFullName(fullName);
             if (!programme.isEmpty()) row.setProgramme(programme);
+            if (!specialisation.isEmpty()) row.setSpecialisation(specialisation);
             if (!faculty.isEmpty()) row.setFaculty(faculty);
             if (intakeYear != null) row.setIntakeYear(intakeYear);
             if (isNew) row.setUploadedBy(uploadedBy);
@@ -239,6 +241,7 @@ public class AdminRosterService {
         dto.put("email", r.getEmail());
         dto.put("fullName", r.getFullName());
         dto.put("programme", r.getProgramme());
+        dto.put("specialisation", r.getSpecialisation());
         dto.put("faculty", r.getFaculty());
         dto.put("intakeYear", r.getIntakeYear());
         dto.put("uploadedAt", r.getUploadedAt() != null ? r.getUploadedAt().toString() : null);
