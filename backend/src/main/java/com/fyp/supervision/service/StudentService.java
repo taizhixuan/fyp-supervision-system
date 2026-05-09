@@ -543,6 +543,8 @@ public class StudentService {
         dto.put("proposalId", p.getProposalId().toString());
         dto.put("studentId", p.getStudent().getMmuId());
         dto.put("supervisorId", p.getSupervisor() != null ? p.getSupervisor().getUserId().toString() : null);
+
+        // Existing free-text fields (from JSON content)
         dto.put("title", p.getTitle() != null ? p.getTitle() : "");
         dto.put("problemStatement", latestContent.getOrDefault("problemStatement", ""));
         dto.put("objectives", latestContent.getOrDefault("objectives", List.of()));
@@ -551,6 +553,36 @@ public class StudentService {
         dto.put("expectedOutcomes", latestContent.getOrDefault("expectedOutcomes", List.of()));
         dto.put("timeline", latestContent.getOrDefault("timeline", null));
         dto.put("references", latestContent.getOrDefault("references", List.of()));
+
+        // MMU FCI template-aligned fields (also stored in JSON content)
+        dto.put("projectStatus", latestContent.getOrDefault("projectStatus", "Student-Proposed"));
+        dto.put("projectType", latestContent.getOrDefault("projectType", null));
+        dto.put("specialisation", latestContent.getOrDefault("specialisation", defaultStudentSpecialisation(p)));
+        dto.put("projectCategory", latestContent.getOrDefault("projectCategory", null));
+        dto.put("projectFocus", latestContent.getOrDefault("projectFocus", null));
+        dto.put("numberOfStudents", latestContent.getOrDefault("numberOfStudents", "One"));
+        dto.put("industryCollaboration", latestContent.getOrDefault("industryCollaboration", false));
+        dto.put("industryCompanyName", latestContent.getOrDefault("industryCompanyName", null));
+        dto.put("industryContactName", latestContent.getOrDefault("industryContactName", null));
+        dto.put("industryContactPhone", latestContent.getOrDefault("industryContactPhone", null));
+        dto.put("coSupervisorName", latestContent.getOrDefault("coSupervisorName", null));
+        dto.put("student1Subtitle", latestContent.getOrDefault("student1Subtitle", null));
+        dto.put("student1WorkDistribution", latestContent.getOrDefault("student1WorkDistribution", null));
+        dto.put("student2MmuId", latestContent.getOrDefault("student2MmuId", null));
+        dto.put("student2Subtitle", latestContent.getOrDefault("student2Subtitle", null));
+        dto.put("student2WorkDistribution", latestContent.getOrDefault("student2WorkDistribution", null));
+
+        // Autofilled blocks (read-only on the frontend)
+        dto.put("supervisor", buildProposalSupervisorBlock(p));
+        dto.put("student1", buildProposalStudentBlock(p.getStudent()));
+        Object student2MmuId = latestContent.get("student2MmuId");
+        if (student2MmuId instanceof String s2 && !s2.isBlank()) {
+            UserAccount s2User = userAccountRepository.findByMmuId(s2.trim()).orElse(null);
+            dto.put("student2", s2User != null ? buildProposalStudentBlock(s2User) : null);
+        } else {
+            dto.put("student2", null);
+        }
+
         dto.put("status", p.getStatus().name());
         dto.put("version", p.getCurrentVersion());
         dto.put("submittedAt", p.getStatus() == ProposalStatus.SUBMITTED || p.getStatus() == ProposalStatus.UNDER_REVIEW || p.getStatus() == ProposalStatus.APPROVED ? p.getUpdatedAt().toString() : null);
@@ -559,6 +591,42 @@ public class StudentService {
         dto.put("createdAt", p.getCreatedAt() != null ? p.getCreatedAt().toString() : "");
         dto.put("updatedAt", p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : "");
         return dto;
+    }
+
+    private String defaultStudentSpecialisation(Proposal p) {
+        if (p.getStudent() == null) return null;
+        return studentProfileRepository.findById(p.getStudent().getUserId())
+                .map(StudentProfile::getSpecialisation)
+                .orElse(null);
+    }
+
+    private Map<String, Object> buildProposalSupervisorBlock(Proposal p) {
+        if (p.getSupervisor() == null) return null;
+        UserAccount sup = p.getSupervisor();
+        Map<String, Object> block = new LinkedHashMap<>();
+        block.put("userId", sup.getUserId().toString());
+        block.put("fullName", sup.getFullName());
+        block.put("email", sup.getEmail());
+        block.put("phone", sup.getPhone());
+        SupervisorProfile sp = supervisorProfileRepository.findById(sup.getUserId()).orElse(null);
+        block.put("position", sp != null ? sp.getPosition() : null);
+        block.put("department", sp != null ? sp.getDepartment() : null);
+        block.put("faculty", sp != null ? sp.getFaculty() : null);
+        return block;
+    }
+
+    private Map<String, Object> buildProposalStudentBlock(UserAccount user) {
+        if (user == null) return null;
+        Map<String, Object> block = new LinkedHashMap<>();
+        block.put("userId", user.getUserId().toString());
+        block.put("studentId", user.getMmuId());
+        block.put("fullName", user.getFullName());
+        block.put("email", user.getEmail());
+        block.put("phone", user.getPhone());
+        StudentProfile sp = studentProfileRepository.findById(user.getUserId()).orElse(null);
+        block.put("specialisation", sp != null ? sp.getSpecialisation() : null);
+        block.put("intakeYear", sp != null ? sp.getIntakeYear() : null);
+        return block;
     }
 
     private Map<String, Object> buildProposalVersionDto(ProposalVersion v, Proposal proposal) {
