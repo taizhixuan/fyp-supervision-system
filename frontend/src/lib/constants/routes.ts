@@ -153,6 +153,8 @@ export const ROUTES = {
     USER_EDIT: '/admin/users/:id/edit',
     // Pending registrations queue (real-world flow: faculty admin gates signups)
     PENDING_REGISTRATIONS: '/admin/registrations',
+    // Approved roster (CSV-driven auto-approval list)
+    APPROVED_ROSTER: '/admin/roster',
     // FYP1 pass tracking (sourced from external eBwise/Clic results)
     FYP1_PASS: '/admin/fyp1-pass',
     // System Parameters (UC31)

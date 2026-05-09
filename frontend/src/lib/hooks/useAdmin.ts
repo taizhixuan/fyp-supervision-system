@@ -764,6 +764,8 @@ export const adminKeys = {
   pendingRegistrations: () => [...adminKeys.all, 'pendingRegistrations'] as const,
   fyp1Pass: () => [...adminKeys.all, 'fyp1Pass'] as const,
   cycleTemplate: (phase: string) => [...adminKeys.all, 'cycleTemplate', phase] as const,
+  rosterStudents: () => [...adminKeys.all, 'roster', 'students'] as const,
+  rosterSupervisors: () => [...adminKeys.all, 'roster', 'supervisors'] as const,
 }
 
 // ============================================
@@ -931,6 +933,132 @@ export function useImportFyp1Passed() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.fyp1Pass() })
+    },
+  })
+}
+
+// ============================================
+// Approved roster (auto-approve via CSV)
+// ============================================
+
+export interface ApprovedStudentRosterEntry {
+  rosterId: number
+  mmuId: string
+  email: string
+  fullName: string | null
+  programme: string | null
+  faculty: string | null
+  intakeYear: number | null
+  uploadedAt: string | null
+}
+
+export interface ApprovedSupervisorRosterEntry {
+  rosterId: number
+  mmuId: string
+  email: string
+  fullName: string | null
+  department: string | null
+  faculty: string | null
+  position: string | null
+  uploadedAt: string | null
+}
+
+export interface RosterImportResult {
+  imported: number
+  updated: number
+  autoApproved: number
+  errors: string[]
+  errorCount: number
+}
+
+export function useApprovedStudentRoster() {
+  return useQuery({
+    queryKey: adminKeys.rosterStudents(),
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ entries: ApprovedStudentRosterEntry[] }>(
+        '/admin/roster/students'
+      )
+      return data.entries
+    },
+  })
+}
+
+export function useApprovedSupervisorRoster() {
+  return useQuery({
+    queryKey: adminKeys.rosterSupervisors(),
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ entries: ApprovedSupervisorRosterEntry[] }>(
+        '/admin/roster/supervisors'
+      )
+      return data.entries
+    },
+  })
+}
+
+export function useImportStudentRoster() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await apiClient.post<RosterImportResult>(
+        '/admin/roster/students/import',
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.rosterStudents() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.pendingRegistrations() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() })
+    },
+  })
+}
+
+export function useImportSupervisorRoster() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await apiClient.post<RosterImportResult>(
+        '/admin/roster/supervisors/import',
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.rosterSupervisors() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.pendingRegistrations() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.users() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() })
+    },
+  })
+}
+
+export function useDeleteStudentRosterEntry() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (rosterId: number) => {
+      await apiClient.delete(`/admin/roster/students/${rosterId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.rosterStudents() })
+    },
+  })
+}
+
+export function useDeleteSupervisorRosterEntry() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (rosterId: number) => {
+      await apiClient.delete(`/admin/roster/supervisors/${rosterId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.rosterSupervisors() })
     },
   })
 }

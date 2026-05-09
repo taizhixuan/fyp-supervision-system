@@ -14,6 +14,8 @@ import com.fyp.supervision.enums.UserStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ConflictException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.repository.ApprovedStudentRosterRepository;
+import com.fyp.supervision.repository.ApprovedSupervisorRosterRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.PasswordResetTokenRepository;
 import com.fyp.supervision.repository.ProjectRepository;
@@ -46,6 +48,8 @@ public class AuthService {
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final SupervisorProfileRepository supervisorProfileRepository;
+    private final ApprovedStudentRosterRepository approvedStudentRosterRepository;
+    private final ApprovedSupervisorRosterRepository approvedSupervisorRosterRepository;
     private final ProjectRepository projectRepository;
     private final FypCycleRepository fypCycleRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -56,10 +60,13 @@ public class AuthService {
 
     @Transactional
     public String register(RegisterRequest request) {
-        if (userAccountRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        String mmuId = request.getMmuId() == null ? "" : request.getMmuId().trim();
+
+        if (userAccountRepository.existsByEmail(email)) {
             throw new ConflictException("Email is already registered.");
         }
-        if (userAccountRepository.existsByMmuId(request.getMmuId())) {
+        if (userAccountRepository.existsByMmuId(mmuId)) {
             throw new ConflictException("MMU ID is already registered.");
         }
 
@@ -74,14 +81,30 @@ public class AuthService {
             throw new BadRequestException("Only STUDENT and SUPERVISOR roles can self-register.");
         }
 
+        // Role / domain pairing — students use @student.mmu.edu.my, staff use @mmu.edu.my (and not the student subdomain).
+        if (role == UserRole.STUDENT && !email.endsWith("@student.mmu.edu.my")) {
+            throw new BadRequestException("Students must register with a @student.mmu.edu.my email address.");
+        }
+        if (role == UserRole.SUPERVISOR
+                && (!email.endsWith("@mmu.edu.my") || email.endsWith("@student.mmu.edu.my"))) {
+            throw new BadRequestException("Supervisors must register with a @mmu.edu.my email address.");
+        }
+
+        // Pre-approved roster lookup. Match requires both mmuId and email so a leaked CSV row can't unlock a different account.
+        boolean preApproved = role == UserRole.STUDENT
+                ? approvedStudentRosterRepository.findByMmuIdAndEmail(mmuId, email).isPresent()
+                : approvedSupervisorRosterRepository.findByMmuIdAndEmail(mmuId, email).isPresent();
+
+        UserStatus initialStatus = preApproved ? UserStatus.ACTIVE : UserStatus.PENDING;
+
         UserAccount user = UserAccount.builder()
-                .mmuId(request.getMmuId())
-                .email(request.getEmail())
+                .mmuId(mmuId)
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .role(role)
-                .status(UserStatus.PENDING)
+                .status(initialStatus)
                 .build();
 
         userAccountRepository.save(user);
@@ -104,6 +127,10 @@ public class AuthService {
             supervisorProfileRepository.save(profile);
         }
 
+        if (preApproved) {
+            return "Registration successful. Your account has been auto-approved — you can now sign in.";
+        }
+
         // Notify all system admins so they can approve from the registration queue.
         userAccountRepository.findAll().stream()
                 .filter(u -> u.getRole() == UserRole.SYSTEM_ADMIN && u.getStatus() == UserStatus.ACTIVE)
@@ -111,7 +138,7 @@ public class AuthService {
                         admin.getUserId(),
                         "REGISTRATION_PENDING",
                         "New " + role.name().toLowerCase() + " registration",
-                        request.getFullName() + " (" + request.getMmuId() + ") needs approval.",
+                        request.getFullName() + " (" + mmuId + ") needs approval.",
                         "/admin/registrations"
                 ));
 

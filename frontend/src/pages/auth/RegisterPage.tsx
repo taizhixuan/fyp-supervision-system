@@ -223,14 +223,26 @@ export function RegisterPage() {
                   </div>
                   <input
                     type="email"
-                    placeholder="name@mmu.edu.my"
+                    placeholder={
+                      selectedRole === 'STUDENT'
+                        ? 'name@student.mmu.edu.my'
+                        : selectedRole === 'SUPERVISOR'
+                          ? 'name@mmu.edu.my'
+                          : 'name@mmu.edu.my'
+                    }
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('email')}
                   />
                 </div>
-                {errors.email && (
+                {errors.email ? (
                   <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
-                )}
+                ) : selectedRole ? (
+                  <p className="mt-1 text-xs text-stone-500">
+                    {selectedRole === 'STUDENT'
+                      ? 'Use your @student.mmu.edu.my address.'
+                      : 'Use your @mmu.edu.my staff address.'}
+                  </p>
+                ) : null}
               </div>
 
               <div>
