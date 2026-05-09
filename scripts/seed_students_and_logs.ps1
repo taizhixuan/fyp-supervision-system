@@ -24,14 +24,14 @@ $DefaultPwd = 'Test@123'
 
 # 8 students with realistic intake + specialisation mix.
 $Students = @(
-    @{ tag='A'; mmuId='1201234001'; email='aisyah.roslan@student.mmu.edu.my';   fullName='Aisyah binti Roslan';     phone='011-2400001'; spec='Software Engineering'; intake=2022; bio='Backend engineer interested in distributed systems.';      },
-    @{ tag='B'; mmuId='1201234002'; email='bryan.tay@student.mmu.edu.my';        fullName='Bryan Tay Jun Wei';       phone='011-2400002'; spec='Data Science';         intake=2022; bio='ML enthusiast keen on time-series forecasting.';            },
-    @{ tag='C'; mmuId='1201234003'; email='cheryl.lim@student.mmu.edu.my';       fullName='Cheryl Lim Yi Xuan';      phone='011-2400003'; spec='Software Engineering'; intake=2022; bio='Full-stack developer with cloud-native focus.';            },
-    @{ tag='D'; mmuId='1201234004'; email='danish.zaki@student.mmu.edu.my';      fullName='Danish Zaki bin Ariff';   phone='011-2400004'; spec='Cybersecurity';        intake=2022; bio='Aspiring security researcher (CTF player).';               },
-    @{ tag='E'; mmuId='1201234005'; email='elaine.chong@student.mmu.edu.my';     fullName='Elaine Chong Hui Ling';   phone='011-2400005'; spec='Data Science';         intake=2023; bio='Visual analytics + healthcare data.';                       },
-    @{ tag='F'; mmuId='1201234006'; email='farhan.iskandar@student.mmu.edu.my';  fullName='Farhan bin Iskandar';     phone='011-2400006'; spec='Information Systems';  intake=2023; bio='Enterprise systems and process automation.';                },
-    @{ tag='G'; mmuId='1201234007'; email='grace.wong@student.mmu.edu.my';       fullName='Grace Wong Mei Yi';       phone='011-2400007'; spec='Game Development';     intake=2023; bio='Indie game designer learning Unity.';                      },
-    @{ tag='H'; mmuId='1201234008'; email='hadi.amin@student.mmu.edu.my';        fullName='Hadi bin Amin';           phone='011-2400008'; spec='Software Engineering'; intake=2023; bio='Mobile dev hobbyist (Flutter, Kotlin).';                  }
+    @{ tag='A'; mmuId='1201234001'; email='aisyah.roslan@student.mmu.edu.my';   fullName='Aisyah binti Roslan';     phone='011-2400001'; spec='Software Engineering'; intake=2024; bio='Backend engineer interested in distributed systems.';      },
+    @{ tag='B'; mmuId='1201234002'; email='bryan.tay@student.mmu.edu.my';        fullName='Bryan Tay Jun Wei';       phone='011-2400002'; spec='Data Science';         intake=2024; bio='ML enthusiast keen on time-series forecasting.';            },
+    @{ tag='C'; mmuId='1201234003'; email='cheryl.lim@student.mmu.edu.my';       fullName='Cheryl Lim Yi Xuan';      phone='011-2400003'; spec='Software Engineering'; intake=2024; bio='Full-stack developer with cloud-native focus.';            },
+    @{ tag='D'; mmuId='1201234004'; email='danish.zaki@student.mmu.edu.my';      fullName='Danish Zaki bin Ariff';   phone='011-2400004'; spec='Cybersecurity';        intake=2024; bio='Aspiring security researcher (CTF player).';               },
+    @{ tag='E'; mmuId='1201234005'; email='elaine.chong@student.mmu.edu.my';     fullName='Elaine Chong Hui Ling';   phone='011-2400005'; spec='Data Science';         intake=2025; bio='Visual analytics + healthcare data.';                       },
+    @{ tag='F'; mmuId='1201234006'; email='farhan.iskandar@student.mmu.edu.my';  fullName='Farhan bin Iskandar';     phone='011-2400006'; spec='Information Systems';  intake=2025; bio='Enterprise systems and process automation.';                },
+    @{ tag='G'; mmuId='1201234007'; email='grace.wong@student.mmu.edu.my';       fullName='Grace Wong Mei Yi';       phone='011-2400007'; spec='Game Development';     intake=2025; bio='Indie game designer learning Unity.';                      },
+    @{ tag='H'; mmuId='1201234008'; email='hadi.amin@student.mmu.edu.my';        fullName='Hadi bin Amin';           phone='011-2400008'; spec='Software Engineering'; intake=2025; bio='Mobile dev hobbyist (Flutter, Kotlin).';                  }
 )
 
 # Pairing plan (state = paired) — student tag -> supervisor email

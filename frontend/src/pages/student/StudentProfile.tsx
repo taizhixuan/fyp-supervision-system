@@ -34,6 +34,17 @@ import { assetUrl } from '@/lib/utils/assetUrl'
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 
+// Stored value can be "YYYY" (legacy from AuthService) or "YYYY-MM" (form input).
+// Bare "YYYY" through `new Date()` becomes Jan 1 of that year — render as plain
+// year instead so users don't see "Jan 2025" for what's really just a year.
+function formatExpectedGraduation(value: string): string {
+  if (/^\d{4}$/.test(value)) return value
+  const d = new Date(value)
+  return Number.isNaN(d.getTime())
+    ? value
+    : d.toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })
+}
+
 // Validation schema
 const profileSchema = z.object({
   phone: z.string().optional(),
@@ -374,7 +385,7 @@ export function StudentProfile() {
               )}
               {displayProfile.expectedGraduation && (
                 <Badge variant="default">
-                  Expected Graduation: {new Date(displayProfile.expectedGraduation).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}
+                  Expected Graduation: {formatExpectedGraduation(displayProfile.expectedGraduation)}
                 </Badge>
               )}
             </div>
@@ -538,7 +549,7 @@ export function StudentProfile() {
                 <p className="text-sm text-neutral-500">Expected Graduation</p>
                 <p className="font-medium text-neutral-900">
                   {displayProfile.expectedGraduation
-                    ? new Date(displayProfile.expectedGraduation).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })
+                    ? formatExpectedGraduation(displayProfile.expectedGraduation)
                     : '—'}
                 </p>
               </div>
