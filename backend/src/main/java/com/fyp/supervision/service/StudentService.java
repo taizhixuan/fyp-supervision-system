@@ -964,9 +964,14 @@ public class StudentService {
         reg.put("semester", phaseCycle != null ? phaseCycle.getSemester() : null);
         reg.put("cycle", normalisedStage);
 
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
-            // Project exists ⇒ supervisor accepted. Status now driven by proposal lifecycle.
+        // "Paired" requires an actual supervisor assignment, not just a Project row.
+        // CycleLifecycleService creates placeholder Projects with no supervisor when a
+        // student joins an FYP1 cycle; those must NOT be treated as paired.
+        Project project = projectOpt.orElse(null);
+        boolean hasSupervisor = project != null && project.getSupervisor() != null;
+
+        if (hasSupervisor) {
+            // Real supervision pair — status now driven by proposal lifecycle.
             ProposalStatus proposalStatus = proposalRepository.findByStudent_UserId(userId)
                     .map(Proposal::getStatus)
                     .orElse(null);
@@ -982,19 +987,15 @@ public class StudentService {
                 status = "UNDER_REVIEW";
             }
             reg.put("status", status);
-            reg.put("supervisorId", project.getSupervisor() != null ? project.getSupervisor().getUserId().toString() : null);
-            if (project.getSupervisor() != null) {
-                SupervisorProfile sp = supervisorProfileRepository.findById(project.getSupervisor().getUserId()).orElse(null);
-                reg.put("supervisor", sp != null ? buildSupervisorSummaryDto(sp) : null);
-            }
+            reg.put("supervisorId", project.getSupervisor().getUserId().toString());
+            SupervisorProfile sp = supervisorProfileRepository.findById(project.getSupervisor().getUserId()).orElse(null);
+            reg.put("supervisor", sp != null ? buildSupervisorSummaryDto(sp) : null);
         } else {
-            // Check for pending requests
+            // No supervisor yet (placeholder project, or no project at all).
             boolean hasPendingRequest = supervisorRequestRepository.existsByStudent_UserIdAndStatus(userId, RequestStatus.PENDING);
-            if (hasPendingRequest) {
-                reg.put("status", "SUPERVISOR_PENDING");
-            } else {
-                reg.put("status", "NOT_STARTED");
-            }
+            reg.put("status", hasPendingRequest ? "SUPERVISOR_PENDING" : "NOT_STARTED");
+            reg.put("supervisorId", null);
+            reg.put("supervisor", null);
         }
         reg.put("nextSteps", List.of());
         reg.put("timeline", List.of());
