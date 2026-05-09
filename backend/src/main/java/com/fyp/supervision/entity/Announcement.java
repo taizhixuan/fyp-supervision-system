@@ -63,6 +63,16 @@ public class Announcement {
     @Builder.Default
     private List<AnnouncementAudience> audiences = new ArrayList<>();
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<AnnouncementAttachment> attachments = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<AnnouncementLink> links = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

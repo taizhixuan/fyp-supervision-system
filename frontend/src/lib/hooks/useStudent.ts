@@ -1102,6 +1102,20 @@ export function useMarkAllRead() {
 }
 
 // ==================== Announcements (UC14) ====================
+export interface StudentAnnouncementAttachment {
+  attachmentId: number
+  fileName: string
+  fileSize: number
+  mimeType?: string
+  downloadUrl: string
+}
+
+export interface StudentAnnouncementLink {
+  linkId: number
+  label: string
+  url: string
+}
+
 export interface StudentAnnouncement {
   announcementId: number
   scope: string
@@ -1110,6 +1124,9 @@ export interface StudentAnnouncement {
   priority: string
   publishAt: string
   createdAt: string
+  createdBy?: string
+  attachments?: StudentAnnouncementAttachment[]
+  links?: StudentAnnouncementLink[]
 }
 
 export function useStudentAnnouncements() {

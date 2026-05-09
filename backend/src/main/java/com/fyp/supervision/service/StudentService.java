@@ -964,6 +964,20 @@ public class StudentService {
         reg.put("semester", phaseCycle != null ? phaseCycle.getSemester() : null);
         reg.put("cycle", normalisedStage);
 
+        // Cycle lifecycle status — surfaces "your cycle has ended" to the dashboard so
+        // the frontend can render a read-only banner and lock write-mode features. The
+        // backend separately enforces this via StudentAccessService.requireActiveCycle.
+        FypCycle enrolledCycle = projectOpt.map(Project::getCycle).orElse(null);
+        if (enrolledCycle != null && enrolledCycle.getStatus() != null) {
+            reg.put("cycleStatus", enrolledCycle.getStatus().name());
+            reg.put("cycleActive",
+                    enrolledCycle.getStatus() == com.fyp.supervision.enums.CycleStatus.ACTIVE
+                            || enrolledCycle.getStatus() == com.fyp.supervision.enums.CycleStatus.PLANNING);
+        } else {
+            reg.put("cycleStatus", null);
+            reg.put("cycleActive", true);
+        }
+
         // "Paired" requires an actual supervisor assignment, not just a Project row.
         // CycleLifecycleService creates placeholder Projects with no supervisor when a
         // student joins an FYP1 cycle; those must NOT be treated as paired.

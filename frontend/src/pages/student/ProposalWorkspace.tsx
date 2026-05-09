@@ -33,6 +33,7 @@ import {
   useUploadProposalFile,
   useExportProposalDocx,
 } from '@/lib/hooks/useStudent'
+import { useStudentRegistrationGate } from '@/lib/hooks/useStudentRegistrationGate'
 import { ROUTES } from '@/lib/constants/routes'
 import {
   PROJECT_STATUS_OPTIONS,
@@ -191,6 +192,7 @@ export function ProposalWorkspace() {
   const submitProposal = useSubmitProposal()
   const uploadFile = useUploadProposalFile()
   const exportDocx = useExportProposalDocx()
+  const studentGate = useStudentRegistrationGate()
 
   const isNewProposal = !proposal
 
@@ -387,8 +389,12 @@ export function ProposalWorkspace() {
   const proposalVersion = proposal?.version ?? 1
   const proposalFileUrl = proposal?.fileUrl
   const proposalFileName = proposal?.fileName
-  const canEdit = ['DRAFT', 'REVISION_REQUIRED'].includes(proposalStatus)
-  const canSubmit = proposalStatus === 'DRAFT' || proposalStatus === 'REVISION_REQUIRED'
+  const canEdit =
+    studentGate.cycleActive !== false
+    && ['DRAFT', 'REVISION_REQUIRED'].includes(proposalStatus)
+  const canSubmit = canEdit
+  const isApproved = proposalStatus === 'APPROVED'
+  const cycleEnded = studentGate.cycleActive === false
 
   if (isLoading) {
     return (
@@ -400,6 +406,17 @@ export function ProposalWorkspace() {
 
   return (
     <div className="space-y-6">
+      {/* Read-only banners — proposal APPROVED, or the FYP cycle has ended. */}
+      {(isApproved || cycleEnded) && (
+        <AlertBanner
+          variant={cycleEnded ? 'warning' : 'success'}
+          title={cycleEnded ? 'Your FYP cycle has ended' : 'Proposal approved — read-only'}
+          description={cycleEnded
+            ? 'Your enrolled cycle is no longer active. You can view your proposal but submissions are disabled.'
+            : 'Your proposal has been approved by the committee. The form is now read-only — refer to it as your project specification.'}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

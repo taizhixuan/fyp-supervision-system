@@ -1,59 +1,90 @@
 package com.fyp.supervision.controller;
 
-import com.fyp.supervision.entity.Announcement;
-import com.fyp.supervision.enums.AnnouncementStatus;
-import com.fyp.supervision.repository.AnnouncementRepository;
+import com.fyp.supervision.entity.AnnouncementAttachment;
+import com.fyp.supervision.enums.UserRole;
+import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AnnouncementService;
+import com.fyp.supervision.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/announcements")
 @RequiredArgsConstructor
 public class AnnouncementController {
 
-    private final AnnouncementRepository announcementRepository;
+    private final AnnouncementService announcementService;
+    private final FileStorageService fileStorageService;
+    private final UserAccountRepository userAccountRepository;
 
     @GetMapping("/latest")
-    public ResponseEntity<?> getLatestAnnouncements(@RequestParam(defaultValue = "5") int limit) {
-        List<Announcement> announcements = announcementRepository.findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED);
-        if (announcements.size() > limit) {
-            announcements = announcements.subList(0, limit);
+    public ResponseEntity<?> getLatestAnnouncements(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(defaultValue = "5") int limit) {
+        List<Map<String, Object>> dtos;
+        if (isStudent(user)) {
+            dtos = announcementService.latestForStudent(Long.parseLong(user.getUsername()), limit);
+        } else {
+            dtos = announcementService.listAllPublished(Pageable.ofSize(Math.max(1, limit)));
         }
-        List<Map<String, Object>> dtos = announcements.stream()
-                .map(this::buildAnnouncementDto)
-                .collect(Collectors.toList());
         return ResponseEntity.ok(Map.of("announcements", dtos));
     }
 
     @GetMapping
     public ResponseEntity<?> getAnnouncements(
+            @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String scope,
             Pageable pageable) {
-        Page<Announcement> page = announcementRepository.findByStatusOrderByCreatedAtDesc(
-                AnnouncementStatus.PUBLISHED, pageable);
-        List<Map<String, Object>> dtos = page.getContent().stream()
-                .map(this::buildAnnouncementDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(Map.of("announcements", dtos, "total", page.getTotalElements()));
+        if (isStudent(user)) {
+            Page<Map<String, Object>> page = announcementService.listForStudent(
+                    Long.parseLong(user.getUsername()), pageable);
+            return ResponseEntity.ok(Map.of(
+                    "announcements", page.getContent(),
+                    "total", page.getTotalElements()));
+        }
+        List<Map<String, Object>> dtos = announcementService.listAllPublished(pageable);
+        return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
-    private Map<String, Object> buildAnnouncementDto(Announcement a) {
-        Map<String, Object> dto = new LinkedHashMap<>();
-        dto.put("announcementId", a.getAnnouncementId());
-        dto.put("scope", a.getScope() != null ? a.getScope() : "ALL");
-        dto.put("title", a.getTitle());
-        dto.put("content", a.getContent());
-        dto.put("priority", a.getPriority() != null ? a.getPriority() : "NORMAL");
-        dto.put("publishAt", a.getPublishAt() != null ? a.getPublishAt().toString() : "");
-        dto.put("createdAt", a.getCreatedAt() != null ? a.getCreatedAt().toString() : "");
-        return dto;
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAnnouncement(@PathVariable Long id) {
+        return ResponseEntity.ok(announcementService.get(id));
+    }
+
+    @GetMapping("/{id}/attachments/{attachmentId}")
+    public ResponseEntity<Resource> downloadAttachment(
+            @PathVariable Long id,
+            @PathVariable Long attachmentId) {
+        AnnouncementAttachment att = announcementService.loadAttachment(id, attachmentId);
+        Resource resource = fileStorageService.loadFile(att.getFilePath());
+        String contentType = att.getMimeType() != null ? att.getMimeType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + att.getFileName() + "\"")
+                .body(resource);
+    }
+
+    private boolean isStudent(UserDetails user) {
+        if (user == null) return false;
+        try {
+            Long userId = Long.parseLong(user.getUsername());
+            return userAccountRepository.findById(userId)
+                    .map(u -> u.getRole() == UserRole.STUDENT)
+                    .orElse(false);
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }

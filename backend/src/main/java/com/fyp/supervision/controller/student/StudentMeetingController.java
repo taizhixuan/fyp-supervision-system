@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ public class StudentMeetingController {
     private final MeetingRepository meetingRepository;
     private final ProjectRepository projectRepository;
     private final StudentService studentService;
+    private final StudentAccessService studentAccessService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(
@@ -43,6 +45,7 @@ public class StudentMeetingController {
     @PostMapping
     public ResponseEntity<?> createMeeting(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No active project found."));
 
@@ -67,6 +70,8 @@ public class StudentMeetingController {
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody(required = false) Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         Meeting meeting = meetingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
 

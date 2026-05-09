@@ -1,57 +1,51 @@
 package com.fyp.supervision.controller.committee;
 
 import com.fyp.supervision.entity.Announcement;
-import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
-import com.fyp.supervision.repository.UserAccountRepository;
-import com.fyp.supervision.service.CommitteeService;
+import com.fyp.supervision.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/committee/announcements")
 @RequiredArgsConstructor
 public class CommitteeAnnouncementController {
     private final AnnouncementRepository announcementRepository;
-    private final UserAccountRepository userAccountRepository;
-    private final CommitteeService committeeService;
+    private final AnnouncementService announcementService;
 
     @GetMapping
     public ResponseEntity<?> getAnnouncements(Pageable pageable) {
-        Page<Announcement> page = announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable);
-        List<Map<String, Object>> dtos = page.getContent().stream()
-                .map(committeeService::buildAnnouncementDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(Map.of("announcements", dtos, "total", page.getTotalElements()));
+        List<Map<String, Object>> dtos = announcementService.listAllPublished(pageable);
+        return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
-    @PostMapping
-    public ResponseEntity<?> createAnnouncement(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<?> createAnnouncement(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestPart(value = "data", required = false) String dataJson,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            @RequestBody(required = false) Map<String, Object> jsonBody) {
         Long userId = Long.parseLong(user.getUsername());
-        UserAccount creator = userAccountRepository.findById(userId).orElseThrow();
-        Announcement announcement = Announcement.builder()
-                .createdBy(creator)
-                .scope((String) data.getOrDefault("scope", "ALL"))
-                .title((String) data.get("title"))
-                .content((String) data.get("content"))
-                .priority((String) data.getOrDefault("priority", "NORMAL"))
-                .status(AnnouncementStatus.PUBLISHED)
-                .publishAt(LocalDateTime.now())
-                .build();
-        Announcement saved = announcementRepository.save(announcement);
-        return ResponseEntity.ok(committeeService.buildAnnouncementDto(saved));
+        Map<String, Object> dto;
+        if (dataJson != null && !dataJson.isBlank()) {
+            dto = announcementService.createFromMultipart(userId, dataJson, files);
+        } else if (jsonBody != null) {
+            dto = announcementService.create(userId, jsonBody, null);
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing announcement payload"));
+        }
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}")
@@ -59,8 +53,9 @@ public class CommitteeAnnouncementController {
         Announcement a = announcementRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
         if (data.containsKey("title")) a.setTitle((String) data.get("title"));
         if (data.containsKey("content")) a.setContent((String) data.get("content"));
+        if (data.containsKey("priority")) a.setPriority((String) data.get("priority"));
         announcementRepository.save(a);
-        return ResponseEntity.ok(Map.of("success", true));
+        return ResponseEntity.ok(announcementService.buildDto(a));
     }
 
     @PostMapping("/{id}/archive")
@@ -69,5 +64,11 @@ public class CommitteeAnnouncementController {
         a.setStatus(AnnouncementStatus.ARCHIVED);
         announcementRepository.save(a);
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAnnouncement(@PathVariable Long id) {
+        announcementService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

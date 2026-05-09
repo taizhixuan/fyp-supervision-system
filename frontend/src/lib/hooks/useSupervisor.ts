@@ -1264,11 +1264,26 @@ export function useSupervisorAnnouncement(announcementId: number) {
 export function useCreateAnnouncement() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (announcementData: Partial<SupervisorAnnouncement>) => {
+    mutationFn: async (
+      announcementData: Partial<SupervisorAnnouncement> & {
+        attachments?: File[]
+        links?: { label: string; url: string }[]
+      },
+    ) => {
       if (USE_MOCK_DATA) {
         return { announcementId: Math.random() * 1000 }
       }
-      const { data } = await apiClient.post('/supervisor/announcements', announcementData)
+      const { attachments, ...rest } = announcementData
+      const formData = new FormData()
+      formData.append('data', new Blob([JSON.stringify(rest)], { type: 'application/json' }))
+      if (attachments && attachments.length > 0) {
+        for (const file of attachments) {
+          formData.append('files', file)
+        }
+      }
+      const { data } = await apiClient.post('/supervisor/announcements', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {

@@ -1,19 +1,18 @@
 package com.fyp.supervision.controller.supervisor;
 
 import com.fyp.supervision.entity.Announcement;
-import com.fyp.supervision.entity.UserAccount;
-import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
-import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AnnouncementService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorAnnouncementController {
     private final AnnouncementRepository announcementRepository;
-    private final UserAccountRepository userAccountRepository;
+    private final AnnouncementService announcementService;
     private final SupervisorService supervisorService;
 
     @GetMapping
@@ -34,28 +33,25 @@ public class SupervisorAnnouncementController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAnnouncement(@PathVariable Long id) {
-        Announcement announcement = announcementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
-        return ResponseEntity.ok(supervisorService.buildAnnouncementDto(announcement));
+        return ResponseEntity.ok(announcementService.get(id));
     }
 
-    @PostMapping
-    public ResponseEntity<?> createAnnouncement(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<?> createAnnouncement(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestPart(value = "data", required = false) String dataJson,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            @RequestBody(required = false) Map<String, Object> jsonBody) {
         Long userId = Long.parseLong(user.getUsername());
-        UserAccount creator = userAccountRepository.findById(userId).orElseThrow();
-
-        Announcement announcement = Announcement.builder()
-                .createdBy(creator)
-                .scope((String) data.getOrDefault("visibility", "ALL_SUPERVISEES"))
-                .title((String) data.get("title"))
-                .content((String) data.get("content"))
-                .priority((String) data.getOrDefault("priority", "NORMAL"))
-                .status(AnnouncementStatus.PUBLISHED)
-                .publishAt(LocalDateTime.now())
-                .build();
-
-        Announcement saved = announcementRepository.save(announcement);
-        return ResponseEntity.ok(supervisorService.buildAnnouncementDto(saved));
+        Map<String, Object> dto;
+        if (dataJson != null && !dataJson.isBlank()) {
+            dto = announcementService.createFromMultipart(userId, dataJson, files);
+        } else if (jsonBody != null) {
+            dto = announcementService.create(userId, jsonBody, null);
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing announcement payload"));
+        }
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}")
@@ -66,12 +62,12 @@ public class SupervisorAnnouncementController {
         if (data.containsKey("content")) announcement.setContent((String) data.get("content"));
         if (data.containsKey("priority")) announcement.setPriority((String) data.get("priority"));
         announcementRepository.save(announcement);
-        return ResponseEntity.ok(Map.of("success", true));
+        return ResponseEntity.ok(announcementService.buildDto(announcement));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAnnouncement(@PathVariable Long id) {
-        announcementRepository.deleteById(id);
+        announcementService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

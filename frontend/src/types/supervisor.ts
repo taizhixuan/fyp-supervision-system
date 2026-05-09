@@ -228,6 +228,20 @@ export interface DocumentFeedback {
 export type AnnouncementVisibility = 'ALL_SUPERVISEES' | 'SPECIFIC_STUDENTS' | 'FYP1' | 'FYP2'
 export type AnnouncementPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 
+export interface SupervisorAnnouncementAttachment {
+  attachmentId: number
+  fileName: string
+  fileSize: number
+  mimeType?: string
+  downloadUrl?: string
+}
+
+export interface SupervisorAnnouncementLink {
+  linkId: number
+  label: string
+  url: string
+}
+
 export interface SupervisorAnnouncement {
   announcementId: number
   supervisorId: string
@@ -235,13 +249,27 @@ export interface SupervisorAnnouncement {
   content: string
   visibility: AnnouncementVisibility
   priority: AnnouncementPriority
-  targetStudentIds?: string[]
+  targetStudentIds?: number[]
   publishAt: string
   expiresAt?: string
   isActive: boolean
   viewCount: number
   createdAt: string
   updatedAt: string
+  attachments?: SupervisorAnnouncementAttachment[]
+  links?: SupervisorAnnouncementLink[]
+}
+
+export interface CreateSupervisorAnnouncementData {
+  title: string
+  content: string
+  visibility: AnnouncementVisibility
+  priority: AnnouncementPriority
+  targetStudentIds?: number[]
+  publishAt?: string
+  expiresAt?: string
+  attachments?: File[]
+  links?: { label: string; url: string }[]
 }
 
 // Dashboard statistics

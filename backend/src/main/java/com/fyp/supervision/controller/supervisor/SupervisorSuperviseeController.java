@@ -17,9 +17,13 @@ public class SupervisorSuperviseeController {
     private final SupervisorService supervisorService;
 
     @GetMapping
-    public ResponseEntity<?> getSupervisees(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<?> getSupervisees(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(name = "scope", required = false, defaultValue = "active") String scope) {
         Long userId = Long.parseLong(user.getUsername());
-        List<Map<String, Object>> supervisees = supervisorService.getSuperviseeDtos(userId);
+        List<Map<String, Object>> supervisees = "past".equalsIgnoreCase(scope)
+                ? supervisorService.getPastSuperviseeDtos(userId)
+                : supervisorService.getSuperviseeDtos(userId);
         return ResponseEntity.ok(Map.of("supervisees", supervisees, "total", supervisees.size()));
     }
 

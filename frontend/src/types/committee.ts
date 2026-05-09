@@ -51,13 +51,26 @@ export interface FYPAnnouncement {
   updatedAt: string
   viewCount: number
   attachments?: AnnouncementAttachment[]
+  links?: AnnouncementLink[]
 }
 
 export interface AnnouncementAttachment {
   attachmentId: number
   fileName: string
   fileSize: number
-  fileUrl: string
+  mimeType?: string
+  /**
+   * Backend returns a relative path under /announcements/{id}/attachments/{attId}.
+   * Kept as `downloadUrl` going forward; legacy `fileUrl` retained for back-compat.
+   */
+  downloadUrl?: string
+  fileUrl?: string
+}
+
+export interface AnnouncementLink {
+  linkId: number
+  label: string
+  url: string
 }
 
 export interface CreateAnnouncementData {
@@ -67,7 +80,10 @@ export interface CreateAnnouncementData {
   priority: CommitteeAnnouncementPriority
   publishAt: string
   expiresAt?: string
+  /** New: File objects uploaded as multipart parts. */
   attachments?: File[]
+  /** New: external links (label + URL pairs). */
+  links?: { label: string; url: string }[]
 }
 
 // Proposal Review Types

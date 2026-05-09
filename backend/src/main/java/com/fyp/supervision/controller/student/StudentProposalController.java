@@ -7,6 +7,7 @@ import com.fyp.supervision.entity.ProposalVersion;
 import com.fyp.supervision.repository.ProposalCheckResultRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import com.fyp.supervision.service.ProposalDocumentService;
+import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +30,7 @@ public class StudentProposalController {
     private final AiServiceClient aiServiceClient;
     private final ProposalCheckResultRepository checkResultRepository;
     private final ProposalDocumentService proposalDocumentService;
+    private final StudentAccessService studentAccessService;
 
     @GetMapping
     public ResponseEntity<?> getProposal(@AuthenticationPrincipal UserDetails user) {
@@ -43,18 +45,21 @@ public class StudentProposalController {
     @PostMapping
     public ResponseEntity<?> createProposal(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         return ResponseEntity.ok(studentService.createProposal(userId, data));
     }
 
     @PutMapping
     public ResponseEntity<?> updateProposal(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         return ResponseEntity.ok(studentService.updateProposal(userId, data));
     }
 
     @PostMapping("/submit")
     public ResponseEntity<?> submitProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         return ResponseEntity.ok(studentService.submitProposal(userId));
     }
 

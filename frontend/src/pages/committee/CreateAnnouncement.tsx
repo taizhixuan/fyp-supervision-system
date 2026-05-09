@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,6 +8,9 @@ import {
   Megaphone,
   Send,
   Users,
+  Paperclip,
+  Link2,
+  Trash2,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -21,6 +24,8 @@ import {
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 const announcementSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
   content: z.string().min(1, 'Content is required').max(10000, 'Content is too long'),
@@ -31,6 +36,7 @@ const announcementSchema = z.object({
 })
 
 type AnnouncementFormData = z.infer<typeof announcementSchema>
+type LinkRow = { label: string; url: string }
 
 export function CreateAnnouncement() {
   const { id } = useParams<{ id: string }>()
@@ -40,6 +46,10 @@ export function CreateAnnouncement() {
   const { data: existingAnnouncement, isLoading: loadingAnnouncement } = useCommitteeAnnouncement(Number(id))
   const createMutation = useCreateCommitteeAnnouncement()
   const updateMutation = useUpdateCommitteeAnnouncement()
+
+  const [files, setFiles] = useState<File[]>([])
+  const [links, setLinks] = useState<LinkRow[]>([])
+  const [fileError, setFileError] = useState<string | null>(null)
 
   const {
     register,
@@ -76,10 +86,15 @@ export function CreateAnnouncement() {
 
   const onSubmit = async (data: AnnouncementFormData) => {
     try {
+      const cleanedLinks = links
+        .map((l) => ({ label: l.label.trim(), url: l.url.trim() }))
+        .filter((l) => l.label && l.url)
       const payload = {
         ...data,
         publishAt: new Date(data.publishAt).toISOString(),
         expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
+        links: cleanedLinks,
+        attachments: files,
       }
 
       if (isEditing && existingAnnouncement) {
@@ -95,6 +110,29 @@ export function CreateAnnouncement() {
       console.error('Failed to save announcement:', error)
     }
   }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError(null)
+    const incoming = Array.from(e.target.files ?? [])
+    const oversize = incoming.find((f) => f.size > MAX_FILE_SIZE)
+    if (oversize) {
+      setFileError(`"${oversize.name}" is over the 10 MB limit.`)
+      return
+    }
+    setFiles((prev) => [...prev, ...incoming])
+    // Reset the input so the same filename can be re-picked.
+    e.target.value = ''
+  }
+
+  const removeFile = (idx: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const addLinkRow = () => setLinks((prev) => [...prev, { label: '', url: '' }])
+  const updateLink = (idx: number, key: 'label' | 'url', value: string) => {
+    setLinks((prev) => prev.map((l, i) => (i === idx ? { ...l, [key]: value } : l)))
+  }
+  const removeLink = (idx: number) => setLinks((prev) => prev.filter((_, i) => i !== idx))
 
   if (isEditing && loadingAnnouncement) {
     return (
@@ -254,6 +292,79 @@ export function CreateAnnouncement() {
                 <span className="text-xs text-neutral-500 mt-1 ml-6">{option.description}</span>
               </label>
             ))}
+          </div>
+        </Card>
+
+        {/* Attachments + external links */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+            <Paperclip className="h-5 w-5 text-neutral-400" />
+            Attachments &amp; Links
+          </h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Attach files (PDF, DOC, images — 10 MB max each)
+              </label>
+              <input
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*,.txt,.zip"
+                className="block w-full text-sm text-neutral-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+              />
+              {fileError && <p className="text-sm text-error-600 mt-2">{fileError}</p>}
+              {files.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {files.map((file, i) => (
+                    <li key={i} className="flex items-center justify-between text-sm bg-neutral-50 rounded-md px-3 py-2">
+                      <span className="truncate">
+                        <Paperclip className="inline h-4 w-4 mr-2 text-neutral-400" />
+                        {file.name} <span className="text-neutral-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                      </span>
+                      <button type="button" onClick={() => removeFile(i)} className="text-error-600 hover:text-error-700">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-700">
+                  External links
+                </label>
+                <Button type="button" variant="ghost" size="sm" onClick={addLinkRow} leftIcon={<Link2 className="h-4 w-4" />}>
+                  Add link
+                </Button>
+              </div>
+              {links.length === 0 ? (
+                <p className="text-xs text-neutral-500">No external links yet — useful for guides, slides, or external resources.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {links.map((link, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Input
+                        placeholder="Label (e.g. Marking Rubric)"
+                        value={link.label}
+                        onChange={(e) => updateLink(i, 'label', e.target.value)}
+                      />
+                      <Input
+                        placeholder="https://..."
+                        value={link.url}
+                        onChange={(e) => updateLink(i, 'url', e.target.value)}
+                      />
+                      <button type="button" onClick={() => removeLink(i)} className="text-error-600 hover:text-error-700 p-2">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </Card>
 
