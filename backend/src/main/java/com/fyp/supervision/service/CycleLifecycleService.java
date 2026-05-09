@@ -33,6 +33,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CycleLifecycleService {
 
+    private static final String PENDING_PROJECT_TITLE = "(Pending — awaiting supervisor)";
+
     private final FypCycleRepository cycleRepository;
     private final ProjectRepository projectRepository;
     private final UserAccountRepository userAccountRepository;
@@ -48,11 +50,15 @@ public class CycleLifecycleService {
 
     /**
      * Idempotently attach a student to the currently-active FYP1 cycle by creating a
-     * placeholder Project (no supervisor, no title yet). Safe to call from registration,
-     * admin approval, and roster auto-approval. Does nothing if:
+     * placeholder Project (no supervisor, default placeholder title). Safe to call from
+     * registration, admin approval, and roster auto-approval. Does nothing if:
      *   - the user isn't an active student
      *   - no FYP1 cycle is active
      *   - the student already has a Project row
+     *
+     * <p>The placeholder uses a default title because some deployments may still have
+     * project_title NOT NULL (V24 hasn't migrated yet). This avoids a constraint
+     * violation that would otherwise poison the caller's transaction.
      */
     @Transactional
     public Optional<Project> attachStudentToActiveFyp1(UserAccount student) {
@@ -68,25 +74,13 @@ public class CycleLifecycleService {
         if (active.isEmpty()) {
             return Optional.empty();
         }
-        Project project = Project.builder()
-                .cycle(active.get())
-                .student(student)
-                .stage("FYP1")
-                .status(ProjectStatus.ACTIVE)
-                .registeredAt(LocalDateTime.now())
-                .build();
-        try {
-            return Optional.of(projectRepository.save(project));
-        } catch (Exception e) {
-            // Race / unique-constraint hit — another path attached this student concurrently.
-            log.warn("Failed to attach student {} to FYP1 cycle: {}", student.getUserId(), e.getMessage());
-            return projectRepository.findByStudent_UserId(student.getUserId());
-        }
+        return savePlaceholder(active.get(), student);
     }
 
     /**
      * Backfill placeholders for every active student who is missing a Project, when an
-     * FYP1 cycle is being activated. Returns the count attached.
+     * FYP1 cycle is being activated. Returns the count attached. Skips students who
+     * already have any Project so this is safe to re-run.
      */
     @Transactional
     public int backfillFyp1Placeholders(FypCycle cycle) {
@@ -96,20 +90,25 @@ public class CycleLifecycleService {
         int count = 0;
         for (UserAccount student : students) {
             if (projectRepository.findByStudent_UserId(student.getUserId()).isPresent()) continue;
-            Project project = Project.builder()
-                    .cycle(cycle)
-                    .student(student)
-                    .stage("FYP1")
-                    .status(ProjectStatus.ACTIVE)
-                    .registeredAt(LocalDateTime.now())
-                    .build();
-            try {
-                projectRepository.save(project);
-                count++;
-            } catch (Exception e) {
-                log.warn("Backfill skipped student {}: {}", student.getUserId(), e.getMessage());
-            }
+            if (savePlaceholder(cycle, student).isPresent()) count++;
         }
         return count;
+    }
+
+    private Optional<Project> savePlaceholder(FypCycle cycle, UserAccount student) {
+        Project project = Project.builder()
+                .cycle(cycle)
+                .student(student)
+                .projectTitle(PENDING_PROJECT_TITLE)
+                .stage("FYP1")
+                .status(ProjectStatus.ACTIVE)
+                .registeredAt(LocalDateTime.now())
+                .build();
+        try {
+            return Optional.of(projectRepository.save(project));
+        } catch (Exception e) {
+            log.warn("Failed to attach student {} to FYP1 cycle: {}", student.getUserId(), e.getMessage());
+            return projectRepository.findByStudent_UserId(student.getUserId());
+        }
     }
 }
