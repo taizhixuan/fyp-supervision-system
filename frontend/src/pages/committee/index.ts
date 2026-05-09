@@ -1,6 +1,9 @@
 // Committee Dashboard
 export { CommitteeDashboard } from './CommitteeDashboard'
 
+// Profile
+export { CommitteeProfile } from './CommitteeProfile'
+
 // Announcements (UC24)
 export { AnnouncementsList } from './AnnouncementsList'
 export { CreateAnnouncement } from './CreateAnnouncement'

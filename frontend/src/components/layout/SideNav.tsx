@@ -157,6 +157,11 @@ const committeeNavItems: NavItem[] = [
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
+    label: 'My Profile',
+    href: ROUTES.COMMITTEE.PROFILE,
+    icon: <User className="h-5 w-5" />,
+  },
+  {
     label: 'Announcements',
     href: ROUTES.COMMITTEE.ANNOUNCEMENTS,
     icon: <Megaphone className="h-5 w-5" />,
@@ -193,6 +198,11 @@ const adminNavItems: NavItem[] = [
     label: 'Dashboard',
     href: ROUTES.ADMIN.DASHBOARD,
     icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  {
+    label: 'My Profile',
+    href: ROUTES.ADMIN.PROFILE,
+    icon: <User className="h-5 w-5" />,
   },
   {
     label: 'Pending Registrations',

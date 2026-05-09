@@ -101,6 +101,7 @@ const ExportOverview = lazy(() => import('@/pages/committee/ExportOverview').the
 const ReportsModule = lazy(() => import('@/pages/committee/ReportsModule').then(m => ({ default: m.ReportsModule })))
 const ReportsHistory = lazy(() => import('@/pages/committee/ReportsHistory').then(m => ({ default: m.ReportsHistory })))
 const CommitteeNotificationsCenter = lazy(() => import('@/pages/committee/NotificationsCenter').then(m => ({ default: m.NotificationsCenter })))
+const CommitteeProfile = lazy(() => import('@/pages/committee/CommitteeProfile').then(m => ({ default: m.CommitteeProfile })))
 
 // Admin pages - All lazy loaded
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
@@ -118,6 +119,7 @@ const MaintenanceCenter = lazy(() => import('@/pages/admin/MaintenanceCenter').t
 const JobHistory = lazy(() => import('@/pages/admin/JobHistory').then(m => ({ default: m.JobHistory })))
 const AuditLogs = lazy(() => import('@/pages/admin/AuditLogs').then(m => ({ default: m.AuditLogs })))
 const AdminNotificationCenter = lazy(() => import('@/pages/admin/AdminNotificationCenter').then(m => ({ default: m.AdminNotificationCenter })))
+const AdminProfile = lazy(() => import('@/pages/admin/AdminProfile').then(m => ({ default: m.AdminProfile })))
 
 // Layout components
 import { AppShell } from '@/components/layout/AppShell'
@@ -723,6 +725,16 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Profile
+      {
+        path: ROUTES.COMMITTEE.PROFILE,
+        element: (
+          <ProtectedRoute allowedRoles={['FYP_COMMITTEE']}>
+            <CommitteeProfile />
+          </ProtectedRoute>
+        ),
+      },
+
       // Announcements (UC24)
       {
         path: ROUTES.COMMITTEE.ANNOUNCEMENTS,
@@ -889,6 +901,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Profile
+      {
+        path: ROUTES.ADMIN.PROFILE,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <AdminProfile />
           </ProtectedRoute>
         ),
       },
