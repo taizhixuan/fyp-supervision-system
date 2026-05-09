@@ -1,36 +1,44 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { isAxiosError } from 'axios'
 import {
   Sparkles,
   RefreshCw,
-  Star,
   Target,
-  Clock,
-  TrendingUp,
   Users,
   Info,
+  GraduationCap,
+  KeyRound,
+  Network,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorRecommendations, useRefreshRecommendations } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { SupervisorRecommendation } from '@/types'
+import type { SupervisorRecommendation, RecommendationComponents } from '@/types'
 
 const categoryIcons: Record<string, typeof Target> = {
   research_area: Target,
-  skills: Star,
+  skills: Target,
   availability: Users,
-  success_rate: TrendingUp,
-  response_time: Clock,
 }
 
 const categoryLabels: Record<string, string> = {
   research_area: 'Research Match',
   skills: 'Skills Match',
   availability: 'Availability',
-  success_rate: 'Success Rate',
-  response_time: 'Response Time',
 }
+
+const componentMeta: Array<{
+  key: keyof RecommendationComponents
+  label: string
+  Icon: typeof Target
+}> = [
+  { key: 'semantic', label: 'Topic alignment', Icon: Network },
+  { key: 'keyword', label: 'Keyword overlap', Icon: KeyRound },
+  { key: 'programme', label: 'Programme', Icon: GraduationCap },
+  { key: 'availability', label: 'Availability', Icon: Users },
+]
 
 export function AIRecommendations() {
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([])
@@ -103,17 +111,26 @@ export function AIRecommendations() {
       <AlertBanner
         variant="info"
         title="How AI Recommendations Work"
-        description="Our AI analyzes your research interests, skills, and project preferences to find supervisors with the best match. Scores are based on research alignment, skill compatibility, availability, and historical success rates."
+        description="Each supervisor is scored on four signals: topic alignment between your interests and their research areas (semantic similarity), direct keyword overlap, programme/department match, and current supervision availability. Supervisors who are full or unavailable are filtered out."
         dismissible
       />
 
       {error && (
-        <AlertBanner
-          variant="error"
-          title="Failed to load recommendations"
-          description="Using cached recommendations. Try refreshing."
-          dismissible
-        />
+        isAxiosError(error) && error.response?.status === 503 ? (
+          <AlertBanner
+            variant="warning"
+            title="Recommendation service is temporarily unavailable"
+            description="The AI service is offline or warming up. Please try Refresh in a moment."
+            dismissible
+          />
+        ) : (
+          <AlertBanner
+            variant="error"
+            title="Failed to load recommendations"
+            description="Something went wrong. Try refreshing — if the problem persists, check that your profile has interests and skills filled in."
+            dismissible
+          />
+        )
       )}
 
       {/* Compare Bar */}
@@ -248,12 +265,51 @@ export function AIRecommendations() {
                   </div>
                 </div>
 
-                {/* Match Reasons */}
+                {/* Score Breakdown */}
+                {rec.components && (
+                  <div className="mt-4 pt-4 border-t border-neutral-200">
+                    <h4 className="text-sm font-medium text-neutral-700 mb-3">
+                      Score breakdown
+                    </h4>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {componentMeta.map(({ key, label, Icon }) => {
+                        const value = rec.components?.[key] ?? 0
+                        const pct = Math.round(value * 100)
+                        return (
+                          <div key={key} className="p-3 rounded-lg bg-neutral-50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Icon className="h-4 w-4 text-neutral-500" />
+                              <span className="text-xs font-medium text-neutral-700">
+                                {label}
+                              </span>
+                              <span className="ml-auto text-xs font-semibold text-neutral-700">
+                                {pct}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary-500 rounded-full transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {rec.explanation && (
+                      <p className="mt-3 text-sm text-neutral-600 leading-relaxed">
+                        {rec.explanation}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Match Reasons (research overlap, availability) */}
                 <div className="mt-4 pt-4 border-t border-neutral-200">
                   <h4 className="text-sm font-medium text-neutral-700 mb-3">
                     Why this match?
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {rec.matchReasons.map((reason) => {
                       const Icon = categoryIcons[reason.category] || Info
                       return (

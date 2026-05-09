@@ -153,6 +153,17 @@ public class StudentRecommendationController {
             int scoreInt = (int) Math.round(score.doubleValue());
             dto.put("matchScore", scoreInt);
             dto.put("matchReasons", buildMatchReasons(recMap, scoreInt));
+            // Pass through the four scoring components from the recommender so
+            // the UI can render a real breakdown (semantic / keyword / programme
+            // / availability) rather than just the rolled-up score.
+            Object components = recMap.get("components");
+            if (components instanceof Map<?, ?>) {
+                dto.put("components", components);
+            }
+            Object explanation = recMap.get("explanation");
+            if (explanation instanceof String s && !s.isBlank()) {
+                dto.put("explanation", s);
+            }
             out.add(dto);
         }
 
@@ -170,14 +181,6 @@ public class StudentRecommendationController {
             reasons.add(Map.of(
                     "category", "research_area",
                     "description", "Overlapping interests: " + String.join(", ", (List<String>) areaList),
-                    "score", matchScore
-            ));
-        }
-        Object explanation = rec.get("explanation");
-        if (explanation instanceof String s && !s.isBlank()) {
-            reasons.add(Map.of(
-                    "category", "success_rate",
-                    "description", s,
                     "score", matchScore
             ));
         }

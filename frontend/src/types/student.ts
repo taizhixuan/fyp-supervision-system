@@ -72,10 +72,21 @@ export interface SupervisorRecommendation {
   matchScore: number
   matchReasons: MatchReason[]
   rank: number
+  /** 0..1 contribution of each scoring component, when available */
+  components?: RecommendationComponents
+  /** Human-readable explanation generated from the score breakdown */
+  explanation?: string
+}
+
+export interface RecommendationComponents {
+  semantic: number
+  keyword: number
+  programme: number
+  availability: number
 }
 
 export interface MatchReason {
-  category: 'research_area' | 'skills' | 'availability' | 'success_rate' | 'response_time'
+  category: 'research_area' | 'skills' | 'availability'
   description: string
   score: number
 }
