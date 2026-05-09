@@ -1,4 +1,4 @@
--- V28: Final-report grading. One grade row per (project, phase, grader). The rubric
+-- V30: Final-report grading. One grade row per (project, phase, grader). The rubric
 -- is stored as JSON (criterion -> marks) so the schema doesn't need to change every
 -- time the committee tweaks the rubric. Status flow: DRAFT -> SUBMITTED -> FINALISED.
 -- Only FINALISED grades are visible to the student.
