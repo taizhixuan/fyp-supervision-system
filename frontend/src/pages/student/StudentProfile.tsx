@@ -28,6 +28,7 @@ import {
   INTAKE_YEAR_MAX,
 } from '@/lib/validators/auth'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 
 // Allowed image types and max size
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -319,9 +320,9 @@ export function StudentProfile() {
           {/* Avatar */}
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-              {displayProfile.profileImageUrl ? (
+              {assetUrl(displayProfile.profileImageUrl) ? (
                 <img
-                  src={displayProfile.profileImageUrl}
+                  src={assetUrl(displayProfile.profileImageUrl)!}
                   alt={displayProfile.fullName}
                   className="w-24 h-24 rounded-full object-cover"
                 />

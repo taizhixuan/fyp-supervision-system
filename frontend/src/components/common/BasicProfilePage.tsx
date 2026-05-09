@@ -34,6 +34,7 @@ import {
   useUploadUserProfileImage,
 } from '@/lib/hooks/useUserProfile'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 
 const profileSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -181,7 +182,7 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const profileImageUrl = profile.profileImagePath
+  const profileImageUrl = assetUrl(profile.profileImagePath)
   const roleLabel = roleLabelOverride ?? ROLE_LABELS[profile.role] ?? profile.role
   const roleBadgeVariant = ROLE_BADGE_VARIANTS[profile.role] ?? 'default'
 

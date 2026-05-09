@@ -12,6 +12,7 @@ import { Card, Button, Input, Badge, Spinner, Pagination } from '@/components/ui
 import { useSupervisorList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 import type { SupervisorSummary } from '@/types'
 
 const PAGE_SIZE = 6
@@ -358,9 +359,9 @@ export function SupervisorDirectory() {
                 <div className="flex gap-4">
                   {/* Avatar */}
                   <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                    {supervisor.profileImageUrl ? (
+                    {assetUrl(supervisor.profileImageUrl) ? (
                       <img
-                        src={supervisor.profileImageUrl}
+                        src={assetUrl(supervisor.profileImageUrl)!}
                         alt={supervisor.fullName}
                         className="w-16 h-16 rounded-full object-cover"
                       />
