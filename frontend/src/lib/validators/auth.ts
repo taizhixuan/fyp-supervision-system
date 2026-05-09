@@ -50,27 +50,44 @@ export const registerSchema = z
     path: ['confirmPassword'],
   })
   .superRefine((data, ctx) => {
-    if (data.role !== 'STUDENT') return
-    if (
-      !data.specialisation ||
-      !(STUDENT_SPECIALISATIONS as readonly string[]).includes(data.specialisation)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['specialisation'],
-        message: 'Please select your specialisation',
-      })
-    }
-    if (
-      data.intakeYear === undefined ||
-      data.intakeYear < INTAKE_YEAR_MIN ||
-      data.intakeYear > INTAKE_YEAR_MAX
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['intakeYear'],
-        message: `Intake year must be between ${INTAKE_YEAR_MIN} and ${INTAKE_YEAR_MAX}`,
-      })
+    const email = data.email?.trim().toLowerCase() ?? ''
+    if (data.role === 'STUDENT') {
+      if (!email.endsWith('@student.mmu.edu.my')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['email'],
+          message: 'Students must use a @student.mmu.edu.my email address',
+        })
+      }
+      if (
+        !data.specialisation ||
+        !(STUDENT_SPECIALISATIONS as readonly string[]).includes(data.specialisation)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['specialisation'],
+          message: 'Please select your specialisation',
+        })
+      }
+      if (
+        data.intakeYear === undefined ||
+        data.intakeYear < INTAKE_YEAR_MIN ||
+        data.intakeYear > INTAKE_YEAR_MAX
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['intakeYear'],
+          message: `Intake year must be between ${INTAKE_YEAR_MIN} and ${INTAKE_YEAR_MAX}`,
+        })
+      }
+    } else if (data.role === 'SUPERVISOR') {
+      if (!email.endsWith('@mmu.edu.my') || email.endsWith('@student.mmu.edu.my')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['email'],
+          message: 'Supervisors must use a @mmu.edu.my email address',
+        })
+      }
     }
   })
 

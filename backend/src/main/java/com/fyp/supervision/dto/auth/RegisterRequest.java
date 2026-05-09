@@ -18,6 +18,10 @@ public class RegisterRequest {
 
     @NotBlank
     @Email
+    @Pattern(
+            regexp = "^[A-Za-z0-9._%+-]+@(student\\.mmu\\.edu\\.my|mmu\\.edu\\.my)$",
+            message = "Email must end with @student.mmu.edu.my or @mmu.edu.my"
+    )
     private String email;
 
     private String phone;

@@ -107,6 +107,7 @@ const CommitteeProfile = lazy(() => import('@/pages/committee/CommitteeProfile')
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then(m => ({ default: m.UserManagement })))
 const PendingRegistrations = lazy(() => import('@/pages/admin/PendingRegistrations').then(m => ({ default: m.PendingRegistrations })))
+const ApprovedRoster = lazy(() => import('@/pages/admin/ApprovedRoster').then(m => ({ default: m.ApprovedRoster })))
 const Fyp1PassTracking = lazy(() => import('@/pages/admin/Fyp1PassTracking').then(m => ({ default: m.Fyp1PassTracking })))
 const CreateUser = lazy(() => import('@/pages/admin/CreateUser').then(m => ({ default: m.CreateUser })))
 const UserDetail = lazy(() => import('@/pages/admin/UserDetail').then(m => ({ default: m.UserDetail })))
@@ -929,6 +930,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <PendingRegistrations />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN.APPROVED_ROSTER,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <ApprovedRoster />
           </ProtectedRoute>
         ),
       },

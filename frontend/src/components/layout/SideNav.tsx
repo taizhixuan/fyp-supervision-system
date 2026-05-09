@@ -24,6 +24,7 @@ import {
   Send,
   Inbox,
   Lock,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
@@ -208,6 +209,11 @@ const adminNavItems: NavItem[] = [
     label: 'Pending Registrations',
     href: ROUTES.ADMIN.PENDING_REGISTRATIONS,
     icon: <UserPlus className="h-5 w-5" />,
+  },
+  {
+    label: 'Approved Roster',
+    href: ROUTES.ADMIN.APPROVED_ROSTER,
+    icon: <ShieldCheck className="h-5 w-5" />,
   },
   {
     label: 'Users',
