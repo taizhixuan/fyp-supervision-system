@@ -79,8 +79,16 @@ services:
       - "5003:5003"
     environment:
       FLASK_PORT: "5003"
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       USE_LOCAL_GEN: "true"
+      # Remote LLM provider — first match wins:
+      #   LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL) -> generic
+      #   GROQ_API_KEY                            -> Groq defaults
+      #   OPENAI_API_KEY                          -> OpenAI defaults
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
     volumes:
       - chatbot_vector_store:/app/vector_store
     networks:
