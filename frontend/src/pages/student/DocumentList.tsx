@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FileText,
@@ -8,101 +8,43 @@ import {
   File,
   FileImage,
   FileCode,
+  Database,
+  Presentation,
   Clock,
   ChevronRight,
   Grid,
   List,
+  AlertCircle,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, Input } from '@/components/ui'
 import { useDocumentList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
+import { getApiErrorMessage } from '@/lib/api/client'
 import { cn } from '@/lib/utils/cn'
-import type { FYPDocument, DocumentCategory } from '@/types'
+import type { FYPDocument, DocumentType, DocumentPhase } from '@/types'
 
-// Sample data
-const SAMPLE_DOCUMENTS: FYPDocument[] = [
-  {
-    documentId: '1',
-    studentId: '1',
-    title: 'FYP Proposal v2',
-    description: 'Final revised proposal document',
-    category: 'PROPOSAL',
-    fileName: 'FYP_Proposal_v2.pdf',
-    fileSize: 2456789,
-    fileType: 'application/pdf',
-    fileUrl: '/documents/proposal.pdf',
-    version: 2,
-    uploadedAt: '2025-01-15T14:30:00Z',
-    uploadedBy: 'Student',
-  },
-  {
-    documentId: '2',
-    studentId: '1',
-    title: 'Literature Review Draft',
-    description: 'Draft of literature review chapter',
-    category: 'REPORT',
-    fileName: 'Literature_Review.docx',
-    fileSize: 1234567,
-    fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    fileUrl: '/documents/lit-review.docx',
-    version: 1,
-    uploadedAt: '2025-01-20T10:00:00Z',
-    uploadedBy: 'Student',
-  },
-  {
-    documentId: '3',
-    studentId: '1',
-    title: 'System Architecture Diagram',
-    description: 'High-level system architecture',
-    category: 'DIAGRAM',
-    fileName: 'system_architecture.png',
-    fileSize: 456789,
-    fileType: 'image/png',
-    fileUrl: '/documents/architecture.png',
-    version: 1,
-    uploadedAt: '2025-01-22T09:00:00Z',
-    uploadedBy: 'Student',
-  },
-  {
-    documentId: '4',
-    studentId: '1',
-    title: 'Source Code - Backend API',
-    description: 'Backend API source code repository',
-    category: 'CODE',
-    fileName: 'backend_api.zip',
-    fileSize: 5678901,
-    fileType: 'application/zip',
-    fileUrl: '/documents/backend.zip',
-    version: 3,
-    uploadedAt: '2025-01-25T16:00:00Z',
-    uploadedBy: 'Student',
-  },
-  {
-    documentId: '5',
-    studentId: '1',
-    title: 'Supervisor Feedback - Proposal',
-    description: 'Feedback on proposal from Dr. Sarah Lee',
-    category: 'OTHER',
-    fileName: 'Supervisor_Feedback.pdf',
-    fileSize: 234567,
-    fileType: 'application/pdf',
-    fileUrl: '/documents/feedback.pdf',
-    version: 1,
-    uploadedAt: '2025-01-18T11:00:00Z',
-    uploadedBy: 'Supervisor',
-  },
-]
+type Icon = typeof FileText
 
-const categoryConfig: Record<DocumentCategory, { label: string; color: string; icon: typeof FileText }> = {
+const typeConfig: Record<DocumentType, { label: string; color: string; icon: Icon }> = {
   PROPOSAL: { label: 'Proposal', color: 'bg-primary-100 text-primary-700', icon: FileText },
   REPORT: { label: 'Report', color: 'bg-info-100 text-info-700', icon: FileText },
-  DIAGRAM: { label: 'Diagram', color: 'bg-success-100 text-success-700', icon: FileImage },
+  PRESENTATION: { label: 'Presentation', color: 'bg-error-100 text-error-700', icon: Presentation },
   CODE: { label: 'Code', color: 'bg-warning-100 text-warning-700', icon: FileCode },
-  PRESENTATION: { label: 'Presentation', color: 'bg-error-100 text-error-700', icon: FileText },
+  DATASET: { label: 'Dataset', color: 'bg-success-100 text-success-700', icon: Database },
   OTHER: { label: 'Other', color: 'bg-neutral-100 text-neutral-700', icon: File },
 }
 
-const categoryOptions = ['all', 'PROPOSAL', 'REPORT', 'DIAGRAM', 'CODE', 'PRESENTATION', 'OTHER']
+const TYPE_ORDER: DocumentType[] = ['PROPOSAL', 'REPORT', 'PRESENTATION', 'CODE', 'DATASET', 'OTHER']
+
+function resolveType(doc: FYPDocument): DocumentType {
+  return typeConfig[doc.type] ? doc.type : 'OTHER'
+}
+
+function pickIcon(mimeType?: string): Icon {
+  if (!mimeType) return File
+  if (mimeType.startsWith('image/')) return FileImage
+  return File
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -112,29 +54,35 @@ function formatFileSize(bytes: number): string {
 
 export function DocumentList() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [phaseFilter, setPhaseFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | DocumentType>('all')
+  const [phaseFilter, setPhaseFilter] = useState<'all' | DocumentPhase>('all')
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
-  const { data, isLoading } = useDocumentList(phaseFilter !== 'all' ? { phase: phaseFilter } : undefined)
+  const { data, isLoading, isError, error, refetch } = useDocumentList(
+    phaseFilter !== 'all' ? { phase: phaseFilter } : undefined
+  )
 
-  // Use sample data
-  const documents = data?.documents || SAMPLE_DOCUMENTS
+  const documents = useMemo(() => data?.documents ?? [], [data])
 
-  const filteredDocuments = documents.filter((doc) => {
-    const matchesCategory = categoryFilter === 'all' || doc.category === categoryFilter
-    const matchesSearch = searchQuery === '' ||
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.fileName.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const filteredDocuments = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return documents.filter((doc) => {
+      const matchesType = typeFilter === 'all' || resolveType(doc) === typeFilter
+      const matchesSearch =
+        q === '' ||
+        doc.title.toLowerCase().includes(q) ||
+        (doc.fileName?.toLowerCase().includes(q) ?? false)
+      return matchesType && matchesSearch
+    })
+  }, [documents, searchQuery, typeFilter])
 
-  // Group by category for stats
-  const categoryStats = Object.entries(categoryConfig).map(([key, config]) => ({
-    category: key as DocumentCategory,
-    ...config,
-    count: documents.filter(d => d.category === key).length,
-  }))
+  const typeStats = useMemo(() =>
+    TYPE_ORDER.map((type) => ({
+      type,
+      ...typeConfig[type],
+      count: documents.filter((d) => resolveType(d) === type).length,
+    })),
+  [documents])
 
   if (isLoading) {
     return (
@@ -144,9 +92,19 @@ export function DocumentList() {
     )
   }
 
+  if (isError) {
+    return (
+      <Card className="text-center py-12">
+        <AlertCircle className="h-12 w-12 text-error-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-neutral-900 mb-2">Couldn't load documents</h3>
+        <p className="text-neutral-500 mb-4">{getApiErrorMessage(error)}</p>
+        <Button variant="secondary" onClick={() => refetch()}>Try again</Button>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900">Documents</h1>
@@ -159,29 +117,28 @@ export function DocumentList() {
         </Link>
       </div>
 
-      {/* Category Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {categoryStats.map(({ category, label, color, count, icon: Icon }) => (
-          <button
-            key={category}
-            onClick={() => setCategoryFilter(categoryFilter === category ? 'all' : category)}
-            className={cn(
-              'p-3 rounded-lg text-center transition-all',
-              categoryFilter === category
-                ? 'ring-2 ring-primary-500 bg-white'
-                : 'bg-white hover:shadow-md'
-            )}
-          >
-            <div className={cn('w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center', color)}>
-              <Icon className="h-5 w-5" />
-            </div>
-            <p className="text-2xl font-bold text-neutral-900">{count}</p>
-            <p className="text-xs text-neutral-500">{label}</p>
-          </button>
-        ))}
+        {typeStats.map(({ type, label, color, count, icon: Icon }) => {
+          const active = typeFilter === type
+          return (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(active ? 'all' : type)}
+              className={cn(
+                'p-3 rounded-lg text-center transition-all',
+                active ? 'ring-2 ring-primary-500 bg-white' : 'bg-white hover:shadow-md'
+              )}
+            >
+              <div className={cn('w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center', color)}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="text-2xl font-bold text-neutral-900">{count}</p>
+              <p className="text-xs text-neutral-500">{label}</p>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Filters */}
       <Card>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
@@ -195,7 +152,9 @@ export function DocumentList() {
           <div className="flex items-center gap-2">
             <div className="flex bg-neutral-100 rounded-lg p-1">
               <button
+                type="button"
                 onClick={() => setViewMode('list')}
+                aria-label="List view"
                 className={cn(
                   'p-2 rounded transition-colors',
                   viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
@@ -204,7 +163,9 @@ export function DocumentList() {
                 <List className="h-4 w-4" />
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('grid')}
+                aria-label="Grid view"
                 className={cn(
                   'p-2 rounded transition-colors',
                   viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
@@ -218,14 +179,16 @@ export function DocumentList() {
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-neutral-200">
           <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Phase</span>
           <div className="flex flex-wrap gap-2">
-            {[
+            {([
               { value: 'all', label: 'All' },
               { value: 'FYP1', label: 'FYP 1' },
               { value: 'FYP2', label: 'FYP 2' },
-            ].map((option) => (
+              { value: 'FINAL', label: 'Final' },
+            ] as const).map((option) => (
               <button
                 key={option.value}
-                onClick={() => setPhaseFilter(option.value)}
+                type="button"
+                onClick={() => setPhaseFilter(option.value as 'all' | DocumentPhase)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
                   phaseFilter === option.value
@@ -240,8 +203,24 @@ export function DocumentList() {
         </div>
       </Card>
 
-      {/* Documents */}
-      {viewMode === 'list' ? (
+      {filteredDocuments.length === 0 ? (
+        <Card className="text-center py-12">
+          <Folder className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            {documents.length === 0 ? 'No documents yet' : 'No documents match your filters'}
+          </h3>
+          <p className="text-neutral-500 mb-4">
+            {documents.length === 0
+              ? 'Upload your first document to get started'
+              : 'Try clearing the search or selecting a different category'}
+          </p>
+          {documents.length === 0 && (
+            <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
+              <Button variant="primary">Upload Document</Button>
+            </Link>
+          )}
+        </Card>
+      ) : viewMode === 'list' ? (
         <div className="space-y-2">
           {filteredDocuments.map((doc) => (
             <DocumentRow key={doc.documentId} document={doc} />
@@ -254,50 +233,36 @@ export function DocumentList() {
           ))}
         </div>
       )}
-
-      {filteredDocuments.length === 0 && (
-        <Card className="text-center py-12">
-          <Folder className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No documents found</h3>
-          <p className="text-neutral-500 mb-4">
-            {categoryFilter === 'all'
-              ? 'Upload your first document to get started'
-              : 'No documents match the selected filter'}
-          </p>
-          <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-            <Button variant="primary">Upload Document</Button>
-          </Link>
-        </Card>
-      )}
     </div>
   )
 }
 
 function DocumentRow({ document }: { document: FYPDocument }) {
-  const config = categoryConfig[document.category]
-  const Icon = config.icon
+  const type = resolveType(document)
+  const config = typeConfig[type]
+  const Icon = type === 'OTHER' ? pickIcon(document.mimeType) : config.icon
 
   return (
     <Link to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}>
       <Card hover className="transition-all">
         <div className="flex items-center gap-4">
-          {/* Icon */}
           <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', config.color)}>
             <Icon className="h-6 w-6" />
           </div>
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-neutral-900 truncate">{document.title}</h3>
               {document.version > 1 && (
                 <Badge variant="default" size="sm">v{document.version}</Badge>
               )}
+              {document.phase && (
+                <Badge variant="default" size="sm">{document.phase}</Badge>
+              )}
             </div>
             <p className="text-sm text-neutral-500 truncate">{document.fileName}</p>
           </div>
 
-          {/* Meta */}
           <div className="hidden sm:flex items-center gap-4 text-sm text-neutral-500">
             <span>{formatFileSize(document.fileSize)}</span>
             <span className="flex items-center gap-1">
@@ -314,19 +279,18 @@ function DocumentRow({ document }: { document: FYPDocument }) {
 }
 
 function DocumentCard({ document }: { document: FYPDocument }) {
-  const config = categoryConfig[document.category]
-  const Icon = config.icon
+  const type = resolveType(document)
+  const config = typeConfig[type]
+  const Icon = type === 'OTHER' ? pickIcon(document.mimeType) : config.icon
 
   return (
     <Link to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}>
       <Card hover className="h-full">
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className={cn('w-full h-24 rounded-lg flex items-center justify-center mb-4', config.color)}>
             <Icon className="h-12 w-12" />
           </div>
 
-          {/* Content */}
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-neutral-900 truncate">{document.title}</h3>
@@ -340,7 +304,6 @@ function DocumentCard({ document }: { document: FYPDocument }) {
             )}
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 text-xs text-neutral-500">
             <span>{formatFileSize(document.fileSize)}</span>
             <span>{new Date(document.uploadedAt).toLocaleDateString('en-MY')}</span>

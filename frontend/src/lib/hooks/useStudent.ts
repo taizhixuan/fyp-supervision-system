@@ -874,13 +874,13 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: async (uploadData: UploadDocumentData) => {
       const formData = new FormData()
+      formData.append('file', uploadData.file)
       formData.append('title', uploadData.title)
       formData.append('type', uploadData.type)
       formData.append('phase', uploadData.phase)
       if (uploadData.description) {
         formData.append('description', uploadData.description)
       }
-      formData.append('file', uploadData.file)
       const { data } = await apiClient.post<FYPDocument>('/student/documents', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -901,6 +901,25 @@ export function useDeleteDocument() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentKeys.documents() })
+    },
+  })
+}
+
+export function useDownloadDocument() {
+  return useMutation({
+    mutationFn: async ({ documentId, fileName }: { documentId: string; fileName: string }) => {
+      const response = await apiClient.get(`/student/documents/${documentId}/download`, {
+        responseType: 'blob',
+      })
+      const blob = response.data as Blob
+      const url = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = fileName || 'document'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
     },
   })
 }
