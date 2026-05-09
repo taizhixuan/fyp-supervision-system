@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Settings, HelpCircle, LogOut, ChevronDown } from 'lucide-react'
+import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
@@ -130,15 +130,6 @@ export function UserMenu() {
             >
               <Settings className="h-4 w-4 text-neutral-400" />
               Account Settings
-            </Link>
-            <Link
-              to={ROUTES.HELP}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-              role="menuitem"
-            >
-              <HelpCircle className="h-4 w-4 text-neutral-400" />
-              Help & FAQ
             </Link>
           </div>
 

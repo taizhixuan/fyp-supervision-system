@@ -17,7 +17,6 @@ const Fyp1ResultPendingPage = lazy(() => import('@/pages/auth/Fyp1ResultPendingP
 
 // Common pages - Lazy load
 const AccountSettingsPage = lazy(() => import('@/pages/common/AccountSettingsPage').then(m => ({ default: m.AccountSettingsPage })))
-const HelpFaqPage = lazy(() => import('@/pages/common/HelpFaqPage').then(m => ({ default: m.HelpFaqPage })))
 const NotFoundPage = lazy(() => import('@/pages/common/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 const AccessDeniedPage = lazy(() => import('@/pages/common/AccessDeniedPage').then(m => ({ default: m.AccessDeniedPage })))
 const ServerErrorPage = lazy(() => import('@/pages/common/ServerErrorPage').then(m => ({ default: m.ServerErrorPage })))
@@ -28,7 +27,6 @@ const MaintenancePage = lazy(() => import('@/pages/common/MaintenancePage').then
 const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard').then(m => ({ default: m.StudentDashboard })))
 const StudentProfile = lazy(() => import('@/pages/student/StudentProfile').then(m => ({ default: m.StudentProfile })))
 const SupervisorDirectory = lazy(() => import('@/pages/student/SupervisorDirectory').then(m => ({ default: m.SupervisorDirectory })))
-const BrowseTopics = lazy(() => import('@/pages/student/BrowseTopics').then(m => ({ default: m.BrowseTopics })))
 const SupervisorDetail = lazy(() => import('@/pages/student/SupervisorDetail').then(m => ({ default: m.SupervisorDetail })))
 const AIRecommendations = lazy(() => import('@/pages/student/AIRecommendations').then(m => ({ default: m.AIRecommendations })))
 const CompareSupervisors = lazy(() => import('@/pages/student/CompareSupervisors').then(m => ({ default: m.CompareSupervisors })))
@@ -65,7 +63,6 @@ const Chatbot = lazy(() => import('@/pages/student/Chatbot').then(m => ({ defaul
 // Supervisor pages - All lazy loaded
 const SupervisorDashboard = lazy(() => import('@/pages/supervisor/SupervisorDashboard').then(m => ({ default: m.SupervisorDashboard })))
 const SupervisorProfile = lazy(() => import('@/pages/supervisor/SupervisorProfile').then(m => ({ default: m.SupervisorProfile })))
-const MyTopics = lazy(() => import('@/pages/supervisor/MyTopics').then(m => ({ default: m.MyTopics })))
 const RequestInbox = lazy(() => import('@/pages/supervisor/RequestInbox').then(m => ({ default: m.RequestInbox })))
 const RequestDetail = lazy(() => import('@/pages/supervisor/RequestDetail').then(m => ({ default: m.RequestDetail })))
 const SuperviseesList = lazy(() => import('@/pages/supervisor/SuperviseesList').then(m => ({ default: m.SuperviseesList })))
@@ -91,7 +88,6 @@ const CommitteeAnnouncementsList = lazy(() => import('@/pages/committee/Announce
 const CommitteeCreateAnnouncement = lazy(() => import('@/pages/committee/CreateAnnouncement').then(m => ({ default: m.CreateAnnouncement })))
 const CommitteeProposalQueue = lazy(() => import('@/pages/committee/ProposalReviewQueue').then(m => ({ default: m.ProposalReviewQueue })))
 const CommitteeProposalDetail = lazy(() => import('@/pages/committee/ProposalReviewDetail').then(m => ({ default: m.ProposalReviewDetail })))
-const CommitteeTopicReviewQueue = lazy(() => import('@/pages/committee/TopicReviewQueue').then(m => ({ default: m.TopicReviewQueue })))
 const DocumentsManagement = lazy(() => import('@/pages/committee/DocumentsManagement').then(m => ({ default: m.DocumentsManagement })))
 const CommitteeDocumentUpload = lazy(() => import('@/pages/committee/DocumentUpload').then(m => ({ default: m.DocumentUpload })))
 const DocumentVersions = lazy(() => import('@/pages/committee/DocumentVersions').then(m => ({ default: m.DocumentVersions })))
@@ -169,12 +165,6 @@ export const router = createBrowserRouter([
     element: <RedirectPage />,
   },
 
-  // Help page (public)
-  {
-    path: ROUTES.HELP,
-    element: <HelpFaqPage />,
-  },
-
   // Error pages (public)
   {
     path: ROUTES.ACCESS_DENIED,
@@ -225,16 +215,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
             <StudentProfile />
-          </ProtectedRoute>
-        ),
-      },
-
-      // Project Topics (browse approved supervisor-led catalogue)
-      {
-        path: ROUTES.STUDENT.TOPICS,
-        element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
-            <BrowseTopics />
           </ProtectedRoute>
         ),
       },
@@ -547,16 +527,6 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Project Topics (supervisor-led catalogue)
-      {
-        path: ROUTES.SUPERVISOR.TOPICS,
-        element: (
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <MyTopics />
-          </ProtectedRoute>
-        ),
-      },
-
       // Supervision Requests
       {
         path: ROUTES.SUPERVISOR.REQUESTS,
@@ -763,16 +733,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['FYP_COMMITTEE']}>
             <CommitteeCreateAnnouncement />
-          </ProtectedRoute>
-        ),
-      },
-
-      // Topic Review (supervisor-led catalogue)
-      {
-        path: ROUTES.COMMITTEE.TOPICS,
-        element: (
-          <ProtectedRoute allowedRoles={['FYP_COMMITTEE']}>
-            <CommitteeTopicReviewQueue />
           </ProtectedRoute>
         ),
       },
