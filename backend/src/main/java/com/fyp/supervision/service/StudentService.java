@@ -4,6 +4,7 @@ import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.*;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.proposal.ProposalTemplateOptions;
 import com.fyp.supervision.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,10 +12,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +72,35 @@ public class StudentService {
             else if (iy instanceof String s && !s.isBlank()) {
                 try { profile.setIntakeYear(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
             } else if (iy == null) profile.setIntakeYear(null);
+        }
+        if (updates.containsKey("cgpa")) {
+            Object cg = updates.get("cgpa");
+            if (cg == null || (cg instanceof String s && s.isBlank())) {
+                profile.setCgpa(null);
+            } else {
+                BigDecimal value;
+                if (cg instanceof Number n) value = new BigDecimal(n.toString());
+                else {
+                    try { value = new BigDecimal(cg.toString().trim()); }
+                    catch (NumberFormatException e) { throw new BadRequestException("CGPA must be a number"); }
+                }
+                if (value.compareTo(BigDecimal.ZERO) < 0 || value.compareTo(new BigDecimal("4.00")) > 0) {
+                    throw new BadRequestException("CGPA must be between 0.00 and 4.00");
+                }
+                profile.setCgpa(value.setScale(2, RoundingMode.HALF_UP));
+            }
+        }
+        if (updates.containsKey("expectedGraduation")) {
+            Object eg = updates.get("expectedGraduation");
+            if (eg == null || (eg instanceof String s && s.isBlank())) {
+                profile.setExpectedGraduation(null);
+            } else {
+                String value = eg.toString().trim();
+                if (!Pattern.matches("^\\d{4}-(0[1-9]|1[0-2])$", value)) {
+                    throw new BadRequestException("Expected graduation must be in YYYY-MM format");
+                }
+                profile.setExpectedGraduation(value);
+            }
         }
         if (updates.containsKey("phone")) {
             user.setPhone((String) updates.get("phone"));
@@ -235,11 +268,22 @@ public class StudentService {
         return proposalRepository.findByStudent_UserId(userId);
     }
 
+    /** Convenience: parse the latest ProposalVersion content JSON into a Map. */
+    public Map<String, Object> getLatestProposalContent(Proposal proposal) {
+        return proposalVersionRepository
+                .findByProposal_ProposalIdOrderByVersionNoDesc(proposal.getProposalId())
+                .stream()
+                .findFirst()
+                .map(v -> parseJsonMap(v.getContentText()))
+                .orElseGet(Map::of);
+    }
+
     @Transactional
     public Map<String, Object> createProposal(Long userId, Map<String, Object> data) {
         if (proposalRepository.findByStudent_UserId(userId).isPresent()) {
             throw new BadRequestException("You already have a proposal.");
         }
+        validateProposalPayload(data);
 
         UserAccount student = userAccountRepository.findById(userId).orElseThrow();
         Optional<Project> project = projectRepository.findByStudent_UserId(userId);
@@ -272,6 +316,7 @@ public class StudentService {
     public Map<String, Object> updateProposal(Long userId, Map<String, Object> data) {
         Proposal proposal = proposalRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        validateProposalPayload(data);
 
         if (data.containsKey("title")) proposal.setTitle((String) data.get("title"));
 
@@ -287,6 +332,55 @@ public class StudentService {
         proposalVersionRepository.save(version);
 
         return buildProposalDto(proposal);
+    }
+
+    /**
+     * Cross-field validation aligned with the MMU FCI FYP Proposal Form.
+     * Frontend has the same rules; backend enforces as the source of truth.
+     */
+    private void validateProposalPayload(Map<String, Object> data) {
+        Object specObj = data.get("specialisation");
+        if (specObj instanceof String spec && !spec.isBlank()) {
+            if (!ProposalTemplateOptions.SPECIALISATIONS.contains(spec)) {
+                throw new BadRequestException("Invalid specialisation: " + spec);
+            }
+            Object catObj = data.get("projectCategory");
+            if (catObj instanceof String cat && !cat.isBlank()
+                    && !ProposalTemplateOptions.CATEGORIES_BY_SPEC
+                            .getOrDefault(spec, java.util.List.of()).contains(cat)) {
+                throw new BadRequestException("Project category does not belong to specialisation '" + spec + "'.");
+            }
+            Object focusObj = data.get("projectFocus");
+            if (focusObj instanceof String focus && !focus.isBlank()
+                    && !ProposalTemplateOptions.FOCUS_BY_SPEC
+                            .getOrDefault(spec, java.util.List.of()).contains(focus)) {
+                throw new BadRequestException("Project focus does not belong to specialisation '" + spec + "'.");
+            }
+        }
+        Object statusObj = data.get("projectStatus");
+        if (statusObj instanceof String status && !status.isBlank()
+                && !ProposalTemplateOptions.PROJECT_STATUS.contains(status)) {
+            throw new BadRequestException("Invalid project status: " + status);
+        }
+        Object typeObj = data.get("projectType");
+        if (typeObj instanceof String type && !type.isBlank()
+                && !ProposalTemplateOptions.PROJECT_TYPE.contains(type)) {
+            throw new BadRequestException("Invalid project type: " + type);
+        }
+        Object numObj = data.get("numberOfStudents");
+        if (numObj instanceof String num && !num.isBlank()
+                && !ProposalTemplateOptions.NUMBER_OF_STUDENTS.contains(num)) {
+            throw new BadRequestException("Invalid number of students: " + num);
+        }
+        // Two-student project: student2 MMU ID must resolve and not point at the author.
+        if ("Two".equals(data.get("numberOfStudents"))) {
+            Object s2 = data.get("student2MmuId");
+            if (s2 instanceof String s2id && !s2id.isBlank()) {
+                userAccountRepository.findByMmuId(s2id.trim())
+                        .orElseThrow(() -> new BadRequestException(
+                                "Student 2 MMU ID not found: " + s2id));
+            }
+        }
     }
 
     @Transactional
@@ -460,7 +554,7 @@ public class StudentService {
         dto.put("specialisation", profile.getSpecialisation());
         dto.put("intakeYear", profile.getIntakeYear() != null ? profile.getIntakeYear() : null);
         dto.put("expectedGraduation", profile.getExpectedGraduation() != null ? profile.getExpectedGraduation() : "");
-        dto.put("cgpa", profile.getCgpa());
+        dto.put("cgpa", profile.getCgpa() != null ? profile.getCgpa().doubleValue() : null);
         dto.put("profileImageUrl", user.getProfileImagePath());
         dto.put("bio", profile.getBio());
         dto.put("skills", parseJsonArray(profile.getSkills()));

@@ -57,6 +57,20 @@ const profileSchema = z.object({
     .min(INTAKE_YEAR_MIN, `Intake year must be ≥ ${INTAKE_YEAR_MIN}`)
     .max(INTAKE_YEAR_MAX, `Intake year must be ≤ ${INTAKE_YEAR_MAX}`)
     .optional()),
+  cgpa: z.preprocess((v) => {
+    if (v === undefined || v === '' || v === null) return undefined
+    const n = typeof v === 'number' ? v : Number.parseFloat(String(v))
+    return Number.isFinite(n) ? n : undefined
+  }, z
+    .number()
+    .min(0, 'CGPA cannot be negative')
+    .max(4, 'CGPA cannot exceed 4.00')
+    .optional()),
+  expectedGraduation: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use YYYY-MM (e.g. 2025-06)')
+    .optional()
+    .or(z.literal('')),
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
@@ -96,6 +110,8 @@ export function StudentProfile() {
       portfolioUrl: '',
       specialisation: '',
       intakeYear: undefined,
+      cgpa: undefined,
+      expectedGraduation: '',
     },
   })
 
@@ -110,6 +126,8 @@ export function StudentProfile() {
       portfolioUrl: profile.portfolioUrl || '',
       specialisation: profile.specialisation || '',
       intakeYear: profile.intakeYear ?? undefined,
+      cgpa: profile.cgpa ?? undefined,
+      expectedGraduation: profile.expectedGraduation || '',
     })
     setSkills(profile.skills ?? [])
     setInterests(profile.researchInterests ?? [])
@@ -119,6 +137,8 @@ export function StudentProfile() {
     try {
       await updateProfile.mutateAsync({
         ...data,
+        cgpa: data.cgpa ?? null,
+        expectedGraduation: data.expectedGraduation ? data.expectedGraduation : null,
         skills,
         researchInterests: interests,
       })
@@ -138,6 +158,8 @@ export function StudentProfile() {
         portfolioUrl: profile.portfolioUrl || '',
         specialisation: profile.specialisation || '',
         intakeYear: profile.intakeYear ?? undefined,
+        cgpa: profile.cgpa ?? undefined,
+        expectedGraduation: profile.expectedGraduation || '',
       })
       setSkills(profile.skills ?? [])
       setInterests(profile.researchInterests ?? [])
@@ -432,6 +454,27 @@ export function StudentProfile() {
               error={errors.intakeYear?.message}
               {...register('intakeYear')}
             />
+            <Input
+              label="CGPA"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min={0}
+              max={4}
+              placeholder="e.g. 3.50"
+              leftIcon={<GraduationCap className="h-5 w-5" />}
+              helperText="Out of 4.00"
+              error={errors.cgpa?.message}
+              {...register('cgpa')}
+            />
+            <Input
+              label="Expected Graduation"
+              type="month"
+              leftIcon={<Calendar className="h-5 w-5" />}
+              helperText="Month and year you expect to graduate"
+              error={errors.expectedGraduation?.message}
+              {...register('expectedGraduation')}
+            />
             <div className="flex items-start gap-3 sm:col-span-2 px-3 py-2 rounded-lg bg-neutral-50 text-xs text-neutral-500">
               <Mail className="h-4 w-4 mt-0.5 flex-shrink-0" />
               Email and program info are managed by the registry — contact the FYP committee to change them.
@@ -473,6 +516,30 @@ export function StudentProfile() {
               <div>
                 <p className="text-sm text-neutral-500">Intake Year</p>
                 <p className="font-medium text-neutral-900">{displayProfile.intakeYear || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="h-5 w-5 text-success-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">CGPA</p>
+                <p className="font-medium text-neutral-900">
+                  {typeof displayProfile.cgpa === 'number' ? displayProfile.cgpa.toFixed(2) : '—'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Expected Graduation</p>
+                <p className="font-medium text-neutral-900">
+                  {displayProfile.expectedGraduation
+                    ? new Date(displayProfile.expectedGraduation).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })
+                    : '—'}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3 sm:col-span-2">

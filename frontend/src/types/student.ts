@@ -10,8 +10,8 @@ export interface StudentProfile {
   faculty: string
   specialisation?: string
   intakeYear?: number | null
-  expectedGraduation: string
-  cgpa?: number
+  expectedGraduation?: string | null
+  cgpa?: number | null
   profileImageUrl?: string
   bio?: string
   skills: string[]
@@ -33,6 +33,8 @@ export interface UpdateStudentProfileData {
   portfolioUrl?: string
   specialisation?: string
   intakeYear?: number | null
+  cgpa?: number | null
+  expectedGraduation?: string | null
 }
 
 // Supervisor Types (for student view)
