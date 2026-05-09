@@ -4,63 +4,18 @@ import {
   ArrowRight,
   Bot,
   CalendarCheck,
-  ClipboardList,
   Compass,
   FileCheck,
   FileText,
-  GraduationCap,
   HelpCircle,
   Mail,
   Search,
   Sparkles,
   Trophy,
-  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
-
-const ROLE_GUIDES = [
-  {
-    icon: GraduationCap,
-    title: 'For Students',
-    intro: 'From topic browsing to final defence — your supervised research, end to end.',
-    accent: 'from-amber-500 to-orange-500',
-    badge: 'bg-amber-50 text-amber-700',
-    steps: [
-      'Browse approved supervisor-led topics or get AI-powered recommendations.',
-      'Send a supervision request and align on scope with your supervisor.',
-      'Submit a formal proposal for committee review and iterate on feedback.',
-      'Log meetings, upload reports, and track progress through FYP1 and FYP2.',
-    ],
-  },
-  {
-    icon: Users,
-    title: 'For Supervisors',
-    intro: 'Post topics, manage your supervisees, and review submissions in one place.',
-    accent: 'from-blue-500 to-indigo-500',
-    badge: 'bg-blue-50 text-blue-700',
-    steps: [
-      'Publish project topics for the committee to approve and students to browse.',
-      'Review supervision requests and accept students within your quota.',
-      'Schedule meetings, sign supervision logs, and give feedback on proposals.',
-      'Assess interim and final reports submitted by your supervisees.',
-    ],
-  },
-  {
-    icon: ClipboardList,
-    title: 'For Committee',
-    intro: 'Oversee the FYP lifecycle — cycles, deadlines, pairings, and reports.',
-    accent: 'from-emerald-500 to-teal-500',
-    badge: 'bg-emerald-50 text-emerald-700',
-    steps: [
-      'Configure FYP cycles, deadlines, and post faculty-wide announcements.',
-      'Approve supervisor topics and review submitted student proposals.',
-      'Monitor pairing status, supervisor workload, and unpaired students.',
-      'Generate reports for academic boards and the dean.',
-    ],
-  },
-]
 
 const JOURNEY_STEPS = [
   {
@@ -134,39 +89,6 @@ export function HelpFaqPage() {
             Everything you need to navigate your FYP journey at FCI — from finding the right
             supervisor to your final defence.
           </p>
-        </div>
-      </section>
-
-      {/* Role Guides */}
-      <section className="mb-16">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-800 mb-2">Find your starting point</h2>
-          <p className="text-stone-600">Choose the guide that matches your role on the platform.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ROLE_GUIDES.map(({ icon: Icon, title, intro, accent, badge, steps }) => (
-            <div
-              key={title}
-              className="bg-white rounded-2xl border border-stone-200 p-6 hover:border-stone-300 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-            >
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${accent} text-white flex items-center justify-center mb-5 shadow-md`}>
-                <Icon className="h-7 w-7" />
-              </div>
-              <h3 className="text-lg font-semibold text-stone-800 mb-1">{title}</h3>
-              <p className="text-sm text-stone-500 mb-5 leading-relaxed">{intro}</p>
-              <ol className="space-y-3">
-                {steps.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-stone-600">
-                    <span className={`flex-shrink-0 w-6 h-6 rounded-full ${badge} font-semibold flex items-center justify-center text-xs`}>
-                      {i + 1}
-                    </span>
-                    <span className="leading-relaxed">{step}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
         </div>
       </section>
 
