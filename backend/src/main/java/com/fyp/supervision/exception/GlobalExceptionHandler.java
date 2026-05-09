@@ -61,7 +61,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
         log.error("Unhandled exception", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
+        // Surface the exception class + message so the frontend toast can show something
+        // useful. Stack traces are still in the server log.
+        String detail = ex.getClass().getSimpleName()
+                + (ex.getMessage() != null ? ": " + ex.getMessage() : "");
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, detail);
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {

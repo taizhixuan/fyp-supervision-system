@@ -57,11 +57,13 @@ public class CycleLifecycleService {
      *   - no FYP1 cycle is active
      *   - the student already has a Project row
      *
-     * <p>The placeholder uses a default title because some deployments may still have
-     * project_title NOT NULL (V24 hasn't migrated yet). This avoids a constraint
-     * violation that would otherwise poison the caller's transaction.
+     * <p>Uses REQUIRES_NEW so a placeholder save failure cannot mark the caller's
+     * transaction (registration, approval, roster import) as rollback-only — those
+     * paths must still commit even if cycle-attach fails. The placeholder also gets a
+     * non-null title so deployments where project_title is still NOT NULL don't trip a
+     * constraint violation.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<Project> attachStudentToActiveFyp1(UserAccount student) {
         if (student == null
                 || student.getRole() != UserRole.STUDENT
