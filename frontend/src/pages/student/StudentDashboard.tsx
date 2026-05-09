@@ -252,24 +252,32 @@ export function StudentDashboard() {
   const currentPhase = (reg.cycle ?? 'FYP1').toUpperCase()
   const isFyp2 = currentPhase === 'FYP2'
   const fyp1Passed = reg.fyp1Passed
-  // Three-step phase strip. Step 1 done when FYP1 passed; step 2 active in FYP2; step 3 done when REGISTERED + cycle ended.
+  // Three-step phase strip. The student's current phase + cycle state are the source
+  // of truth — fyp1Passed is just an admin-recorded outcome, not the gate. If the
+  // student is currently in FYP2 they have demonstrably moved past FYP1 (AuthService /
+  // committee already flipped Project.stage), so step 1 is done regardless.
+  const cycleEnded = reg.cycleActive === false
+  const fyp1Done = isFyp2 || fyp1Passed === true
+  const fyp2Done = isFyp2 && cycleEnded
   const phaseSteps = [
     {
       key: 'FYP1',
       label: 'FYP 1',
-      status: (fyp1Passed === true) ? 'done' : (currentPhase === 'FYP1' ? 'current' : 'pending'),
+      status: fyp1Done
+        ? 'done'
+        : (currentPhase === 'FYP1' && !cycleEnded ? 'current' : 'pending'),
     },
     {
       key: 'FYP2',
       label: 'FYP 2',
-      status: backendStatus === 'REGISTERED' && reg.cycleActive === false
+      status: fyp2Done
         ? 'done'
-        : (isFyp2 ? 'current' : 'pending'),
+        : (isFyp2 && !cycleEnded ? 'current' : 'pending'),
     },
     {
       key: 'COMPLETE',
       label: 'Complete',
-      status: backendStatus === 'REGISTERED' && reg.cycleActive === false ? 'current' : 'pending',
+      status: fyp2Done ? 'current' : 'pending',
     },
   ] as const
 
