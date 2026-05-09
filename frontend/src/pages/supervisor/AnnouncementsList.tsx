@@ -29,12 +29,19 @@ const priorityConfig: Record<AnnouncementPriority, { label: string; color: strin
   URGENT: { label: 'Urgent', color: 'text-rose-600', bgColor: 'bg-rose-100', borderColor: 'border-l-rose-500' },
 }
 
-const visibilityConfig: Record<AnnouncementVisibility, { label: string; icon: typeof Users }> = {
+// Backend can also publish ALL / ALL_STUDENTS / PROGRAMME_<CODE> via committee
+// or admin announcements that the supervisor sees in their inbox. Lookups for
+// any unknown scope fall back to FALLBACK_VISIBILITY below so the page never
+// crashes on .icon when the enum grows.
+const visibilityConfig: Record<string, { label: string; icon: typeof Users }> = {
+  ALL: { label: 'All Users', icon: Users },
+  ALL_STUDENTS: { label: 'All Students', icon: Users },
   ALL_SUPERVISEES: { label: 'All Supervisees', icon: Users },
   SPECIFIC_STUDENTS: { label: 'Specific Students', icon: Users },
   FYP1: { label: 'FYP 1 Students', icon: Users },
   FYP2: { label: 'FYP 2 Students', icon: Users },
 }
+const FALLBACK_VISIBILITY = { label: 'Other', icon: Users }
 
 export function AnnouncementsList() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -115,7 +122,7 @@ export function AnnouncementsList() {
         {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
           filteredAnnouncements.map((announcement) => {
             const priority = priorityConfig[announcement.priority]
-            const visibility = visibilityConfig[announcement.visibility]
+            const visibility = visibilityConfig[announcement.visibility] ?? FALLBACK_VISIBILITY
             const VisibilityIcon = visibility.icon
             const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date()
             // Backend returns "RECEIVED" for committee/admin announcements (read-only),

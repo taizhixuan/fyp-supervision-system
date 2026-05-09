@@ -1,6 +1,7 @@
 package com.fyp.supervision.controller.supervisor;
 
 import com.fyp.supervision.service.MeetingLogService;
+import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorLogController {
     private final SupervisorService supervisorService;
+    private final SupervisorAccessService access;
     private final MeetingLogService meetingLogService;
 
     @GetMapping
@@ -26,8 +28,9 @@ public class SupervisorLogController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLog(@PathVariable Long id) {
-        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(meetingLogService.getLog(id)));
+    public ResponseEntity<?> getLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        return ResponseEntity.ok(supervisorService.buildLogForReviewDto(access.requireOwnLog(userId, id)));
     }
 
     @PostMapping("/{id}/review")

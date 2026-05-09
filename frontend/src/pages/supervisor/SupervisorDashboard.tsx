@@ -23,6 +23,15 @@ import { useSupervisorDashboard, useSupervisorProfile } from '@/lib/hooks/useSup
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
+// Strip the academic title prefix ("Dr.", "Prof.", etc.) before pulling the
+// first name. Without this, the first space-separated token of "Dr. Tan Wei
+// Ming" is "Dr." and the greeting renders as "Welcome back, Dr."
+function firstNameOf(fullName?: string | null): string | undefined {
+  if (!fullName) return undefined
+  const stripped = fullName.replace(/^(Dr\.?|Prof\.?|Mr\.?|Mrs\.?|Ms\.?|Mdm\.?|Datuk|Dato'?|Datin)\s+/i, '').trim()
+  return stripped.split(' ')[0] || undefined
+}
+
 export function SupervisorDashboard() {
   const { data: stats, isLoading: statsLoading } = useSupervisorDashboard()
   const { data: profile, isLoading: profileLoading } = useSupervisorProfile()
@@ -133,7 +142,7 @@ export function SupervisorDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">
-                Welcome back, {profile?.fullName?.split(' ')[0] ?? 'Supervisor'}
+                Welcome back, {firstNameOf(profile?.fullName) ?? 'Supervisor'}
               </h1>
               <p className="text-stone-300 mt-1">
                 You have <span className="text-amber-400 font-semibold">{stats?.pendingRequests ?? 0}</span> pending requests and <span className="text-amber-400 font-semibold">{stats?.pendingLogReviews ?? 0}</span> logs awaiting review.

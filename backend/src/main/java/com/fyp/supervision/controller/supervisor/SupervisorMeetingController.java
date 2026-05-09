@@ -4,6 +4,7 @@ import com.fyp.supervision.entity.Meeting;
 import com.fyp.supervision.enums.MeetingStatus;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
+import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorMeetingController {
     private final SupervisorService supervisorService;
+    private final SupervisorAccessService access;
     private final MeetingRepository meetingRepository;
 
     @GetMapping
@@ -30,16 +32,16 @@ public class SupervisorMeetingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMeeting(@PathVariable Long id) {
-        Meeting meeting = meetingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+    public ResponseEntity<?> getMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
         return ResponseEntity.ok(supervisorService.buildSupervisorMeetingDto(meeting));
     }
 
     @PostMapping("/{id}/respond")
-    public ResponseEntity<?> respondToMeeting(@PathVariable Long id, @RequestBody Map<String, Object> data) {
-        Meeting meeting = meetingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+    public ResponseEntity<?> respondToMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
         String action = (String) data.get("action");
         if ("CONFIRM".equalsIgnoreCase(action)) {
             meeting.setStatus(MeetingStatus.CONFIRMED);
@@ -55,9 +57,9 @@ public class SupervisorMeetingController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<?> completeMeeting(@PathVariable Long id, @RequestBody Map<String, Object> data) {
-        Meeting meeting = meetingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+    public ResponseEntity<?> completeMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
         meeting.setStatus(MeetingStatus.COMPLETED);
         if (data.get("notes") != null) meeting.setNotes((String) data.get("notes"));
         meetingRepository.save(meeting);

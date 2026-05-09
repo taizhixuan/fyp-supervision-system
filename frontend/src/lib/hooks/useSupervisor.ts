@@ -1341,8 +1341,11 @@ export function useSupervisorNotifications(limit: number = 10) {
           total: MOCK_NOTIFICATIONS.length,
         }
       }
+      // Shared notification controller serves all roles at /notifications.
+      // Per-role prefixes (/supervisor/notifications) were never wired on the
+      // backend and would 500 with NoResourceFoundException.
       const { data } = await apiClient.get<{ notifications: SupervisorNotification[]; total: number }>(
-        '/supervisor/notifications',
+        '/notifications',
         { params: { limit } }
       )
       return data
@@ -1358,7 +1361,7 @@ export function useSupervisorUnreadCount() {
       if (USE_MOCK_DATA) {
         return { count: MOCK_NOTIFICATIONS.filter(n => !n.isRead).length }
       }
-      const { data } = await apiClient.get<{ count: number }>('/supervisor/notifications/unread-count')
+      const { data } = await apiClient.get<{ count: number }>('/notifications/unread-count')
       return data
     },
     staleTime: 30000,
@@ -1372,7 +1375,7 @@ export function useMarkSupervisorNotificationRead() {
       if (USE_MOCK_DATA) {
         return { success: true }
       }
-      const { data } = await apiClient.put(`/supervisor/notifications/${notificationId}/read`)
+      const { data } = await apiClient.put(`/notifications/${notificationId}/read`)
       return data
     },
     onSuccess: () => {

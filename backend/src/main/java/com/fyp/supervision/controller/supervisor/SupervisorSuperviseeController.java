@@ -1,5 +1,6 @@
 package com.fyp.supervision.controller.supervisor;
 
+import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorSuperviseeController {
     private final SupervisorService supervisorService;
+    private final SupervisorAccessService access;
 
     @GetMapping
     public ResponseEntity<?> getSupervisees(
@@ -28,7 +30,9 @@ public class SupervisorSuperviseeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getSupervisee(@PathVariable Long id) {
+    public ResponseEntity<?> getSupervisee(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        access.requireOwnProject(userId, id);
         return ResponseEntity.ok(supervisorService.getSuperviseeDetailDto(id));
     }
 }

@@ -1,5 +1,6 @@
 package com.fyp.supervision.controller.supervisor;
 
+import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupervisorProposalController {
     private final SupervisorService supervisorService;
+    private final SupervisorAccessService access;
 
     @GetMapping
     public ResponseEntity<?> getProposals(@AuthenticationPrincipal UserDetails user) {
@@ -24,7 +26,9 @@ public class SupervisorProposalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProposal(@PathVariable Long id) {
+    public ResponseEntity<?> getProposal(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        access.requireOwnProposal(userId, id);
         return ResponseEntity.ok(supervisorService.getProposalForReviewDto(id));
     }
 

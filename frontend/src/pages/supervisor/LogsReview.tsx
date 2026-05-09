@@ -166,13 +166,18 @@ export function LogsReview() {
                             <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">{log.studentName}</h3>
                           </div>
                           <p className="text-sm text-stone-500">
-                            {new Date(log.weekStartDate).toLocaleDateString('en-MY', {
-                              day: 'numeric',
-                              month: 'short',
-                            })} - {new Date(log.weekEndDate).toLocaleDateString('en-MY', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
+                            {(() => {
+                              const fmt = (s?: string) => {
+                                if (!s) return null
+                                const d = new Date(s)
+                                return Number.isNaN(d.getTime())
+                                  ? null
+                                  : d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })
+                              }
+                              const start = fmt(log.weekStartDate)
+                              const end = fmt(log.weekEndDate)
+                              return end ? `${start ?? '—'} – ${end}` : (start ?? '—')
+                            })()}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
