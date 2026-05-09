@@ -243,7 +243,10 @@ function DocumentRow({ document }: { document: FYPDocument }) {
   const Icon = type === 'OTHER' ? pickIcon(document.mimeType) : config.icon
 
   return (
-    <Link to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}>
+    <Link
+      to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}
+      className="block"
+    >
       <Card hover className="transition-all">
         <div className="flex items-center gap-4">
           <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', config.color)}>
@@ -284,7 +287,10 @@ function DocumentCard({ document }: { document: FYPDocument }) {
   const Icon = type === 'OTHER' ? pickIcon(document.mimeType) : config.icon
 
   return (
-    <Link to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}>
+    <Link
+      to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}
+      className="block h-full"
+    >
       <Card hover className="h-full">
         <div className="flex flex-col h-full">
           <div className={cn('w-full h-24 rounded-lg flex items-center justify-center mb-4', config.color)}>

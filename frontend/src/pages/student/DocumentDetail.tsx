@@ -15,7 +15,8 @@ import {
   User,
   AlertCircle,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner, Modal } from '@/components/ui'
+import { Card, Button, Badge, Spinner } from '@/components/ui'
+import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui/Modal'
 import {
   useDocumentDetail,
   useDeleteDocument,
@@ -273,26 +274,28 @@ export function DocumentDetail() {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Delete Document"
         size="sm"
       >
-        <div className="space-y-4">
-          <p className="text-neutral-600">
+        <ModalHeader>
+          <ModalTitle>Delete Document</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-neutral-600">
             Are you sure you want to delete <strong>{document.title}</strong>? This action cannot be undone.
           </p>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="error"
-              onClick={handleDelete}
-              isLoading={deleteDocument.isPending}
-            >
-              Delete Document
-            </Button>
-          </div>
-        </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="error"
+            onClick={handleDelete}
+            isLoading={deleteDocument.isPending}
+          >
+            Delete Document
+          </Button>
+        </ModalFooter>
       </Modal>
     </div>
   )
