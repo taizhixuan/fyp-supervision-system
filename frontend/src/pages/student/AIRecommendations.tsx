@@ -16,101 +16,6 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisorRecommendation } from '@/types'
 
-// Sample data for design preview
-const SAMPLE_RECOMMENDATIONS: SupervisorRecommendation[] = [
-  {
-    supervisor: {
-      supervisorId: '1',
-      userId: '101',
-      fullName: 'Dr. Sarah Lee Wei Lin',
-      email: 'sarah.lee@mmu.edu.my',
-      title: 'Associate Professor',
-      department: 'Software Engineering',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Artificial Intelligence', 'Machine Learning', 'NLP'],
-      currentLoad: 5,
-      maxCapacity: 8,
-      isAcceptingStudents: true,
-    },
-    matchScore: 95,
-    rank: 1,
-    matchReasons: [
-      { category: 'research_area', description: 'Strong match with your interest in AI and Machine Learning', score: 98 },
-      { category: 'skills', description: 'Your Python and TensorFlow skills align well', score: 92 },
-      { category: 'availability', description: 'Has 3 available slots', score: 90 },
-      { category: 'success_rate', description: 'High completion rate with supervised students', score: 95 },
-    ],
-  },
-  {
-    supervisor: {
-      supervisorId: '5',
-      userId: '105',
-      fullName: 'Dr. Tan Chee Keong',
-      email: 'tan.ck@mmu.edu.my',
-      title: 'Associate Professor',
-      department: 'Computer Science',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Computer Vision', 'Image Processing', 'Deep Learning'],
-      currentLoad: 3,
-      maxCapacity: 6,
-      isAcceptingStudents: true,
-    },
-    matchScore: 88,
-    rank: 2,
-    matchReasons: [
-      { category: 'research_area', description: 'Your interest in Deep Learning matches well', score: 85 },
-      { category: 'skills', description: 'Good alignment with your programming background', score: 88 },
-      { category: 'availability', description: 'Has 3 available slots', score: 95 },
-      { category: 'response_time', description: 'Quick response time to students', score: 90 },
-    ],
-  },
-  {
-    supervisor: {
-      supervisorId: '4',
-      userId: '104',
-      fullName: 'Dr. Muhammad Hafiz',
-      email: 'muhammad.hafiz@mmu.edu.my',
-      title: 'Senior Lecturer',
-      department: 'Software Engineering',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Web Development', 'Cloud Computing', 'DevOps'],
-      currentLoad: 4,
-      maxCapacity: 8,
-      isAcceptingStudents: true,
-    },
-    matchScore: 82,
-    rank: 3,
-    matchReasons: [
-      { category: 'research_area', description: 'Matches your interest in Web Development', score: 90 },
-      { category: 'skills', description: 'Your React and Node.js skills are relevant', score: 85 },
-      { category: 'availability', description: 'Has 4 available slots', score: 100 },
-      { category: 'success_rate', description: 'Good track record with FYP students', score: 80 },
-    ],
-  },
-  {
-    supervisor: {
-      supervisorId: '6',
-      userId: '106',
-      fullName: 'Dr. Siti Aminah',
-      email: 'siti.aminah@mmu.edu.my',
-      title: 'Lecturer',
-      department: 'Information Systems',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Human-Computer Interaction', 'UX Design', 'Accessibility'],
-      currentLoad: 2,
-      maxCapacity: 5,
-      isAcceptingStudents: true,
-    },
-    matchScore: 75,
-    rank: 4,
-    matchReasons: [
-      { category: 'skills', description: 'Your frontend skills could apply to UX research', score: 78 },
-      { category: 'availability', description: 'Has 3 available slots', score: 95 },
-      { category: 'response_time', description: 'Very responsive to student queries', score: 92 },
-    ],
-  },
-]
-
 const categoryIcons: Record<string, typeof Target> = {
   research_area: Target,
   skills: Star,
@@ -133,8 +38,10 @@ export function AIRecommendations() {
   const { data, isLoading, error } = useSupervisorRecommendations()
   const refreshMutation = useRefreshRecommendations()
 
-  // Use sample data if no API data available
-  const recommendations = data?.recommendations || SAMPLE_RECOMMENDATIONS
+  // Drop any malformed entries from the AI response to avoid render crashes.
+  const recommendations = (data?.recommendations ?? []).filter(
+    (r): r is SupervisorRecommendation => Boolean(r?.supervisor?.fullName)
+  )
   const generatedAt = data?.generatedAt || new Date().toISOString()
 
   const toggleCompare = (supervisorId: string) => {

@@ -210,7 +210,7 @@ Table 3.4 Use Cases by Actor
 </tbody>
 </table>
 
-<img src="./media/media/image2.jpeg" style="width:5.72014in;height:8.43452in" />
+<img src="../media/media/image2.jpeg" style="width:5.72014in;height:8.43452in" />
 
 Figure 3.2 Use Case Diagram
 
@@ -2268,7 +2268,7 @@ Table 3.38 UC33: Perform System Maintenance
 
 ##  3.6 Entity Relationship Diagram
 
-<img src="./media/media/image4.svg" style="width:8.52354in;height:5.70983in" />
+Note: refer to @Project-info/reports/ERD.md
 
 Figure 3.3 Entity Relationship Diagram
 
@@ -2349,20 +2349,3 @@ Table 3.50: System Administrator Use Cases (UC1, <mark>UC30–UC33</mark>) and M
 | UC32 – Configure Integration and Export Settings | INTEGRATION_SETTING (C/R/U/D), <mark>EXPORT_CONFIG (C/R/U/D), </mark>AUDIT_LOG (C) |
 | UC33 – Perform System Maintenance | <mark>MAINTENANCE_JOB (C/R/U), </mark>AUDIT_LOG (C/R) |
 
-### 3.6.3 Sub-ERDs by Actor
-
-<img src="./media/media/image6.svg" style="width:5.54514in;height:7.15208in" />To improve readability of the complete ERD (Figure 3.3), role-based Sub-ERDs are provided to show the main entities involved in each actor’s workflow. Figures 3.4 –3.7 summarise the database entities and key relationships relevant to the Student, Supervisor, FYP Committee, and System Administrator perspectives.
-
-<mark>Note: the Student and FYP Committee Sub-ERDs should be regenerated to include USER_NOTIFICATION_PREFERENCES (Student) and GENERATED_REPORT (Committee). The System Administrator Sub-ERD should be regenerated to include EXPORT_CONFIG and MAINTENANCE_JOB.</mark>
-
-Figure 3.4 Student Sub-ERD
-
-<img src="./media/media/image8.svg" style="width:5.68194in;height:7.2037in" />
-
-Figure 3.5 Supervisor Sub-ERD
-
-<img src="./media/media/image10.svg" style="width:5.72014in;height:7.44516in" />
-
-Figure 3.6 <mark>FYP Committee</mark> Sub-ERD
-
-<img src="./media/media/image12.svg" style="width:5.72014in;height:5.19097in" />Figure 3.7 <mark>System Administrator</mark> Sub-ERD

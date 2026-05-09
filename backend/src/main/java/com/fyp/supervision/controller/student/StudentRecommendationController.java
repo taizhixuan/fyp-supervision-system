@@ -53,12 +53,14 @@ public class StudentRecommendationController {
             studentPayload.put("fullName", studentAccount.getFullName());
         }
 
-        // Build supervisor profiles payload
+        // Build supervisor profiles payload + index for post-processing
         List<SupervisorProfile> supervisors = supervisorProfileRepository.findAll();
         List<Map<String, Object>> supervisorPayloads = new ArrayList<>();
+        Map<Long, SupervisorProfile> supervisorById = new HashMap<>();
         for (SupervisorProfile sp : supervisors) {
             UserAccount supAccount = sp.getUser();
             if (supAccount == null) continue;
+            supervisorById.put(supAccount.getUserId(), sp);
 
             Map<String, Object> supPayload = new HashMap<>();
             supPayload.put("userId", supAccount.getUserId());
@@ -79,7 +81,109 @@ public class StudentRecommendationController {
         payload.put("studentProfile", studentPayload);
         payload.put("supervisorProfiles", supervisorPayloads);
 
-        return aiServiceClient.getRecommendations(payload);
+        Map<String, Object> aiResponse = aiServiceClient.getRecommendations(payload);
+        return transformResponse(aiResponse, supervisorById);
+    }
+
+    /**
+     * AI service returns a flat list. Frontend expects a nested {supervisor, rank,
+     * matchScore, matchReasons} shape. Enrich each entry with profile fields the AI
+     * doesn't echo (title, faculty, maxCapacity, isAcceptingStudents).
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> transformResponse(Map<String, Object> aiResponse,
+                                                  Map<Long, SupervisorProfile> supervisorById) {
+        if (aiResponse == null) {
+            return Map.of("recommendations", List.of(), "generatedAt", null);
+        }
+        Object rawList = aiResponse.get("recommendations");
+        if (!(rawList instanceof List<?> list)) {
+            return Map.of("recommendations", List.of(),
+                    "generatedAt", aiResponse.get("generatedAt"));
+        }
+
+        List<Map<String, Object>> out = new ArrayList<>();
+        int rank = 1;
+        for (Object raw : list) {
+            if (!(raw instanceof Map<?, ?> rec)) continue;
+            Map<String, Object> recMap = (Map<String, Object>) rec;
+            Long supervisorId = toLong(recMap.get("supervisorId"));
+            SupervisorProfile sp = supervisorId != null ? supervisorById.get(supervisorId) : null;
+            UserAccount supAccount = sp != null ? sp.getUser() : null;
+
+            Map<String, Object> supervisorDto = new LinkedHashMap<>();
+            supervisorDto.put("supervisorId", supervisorId != null ? supervisorId.toString() : null);
+            supervisorDto.put("userId", supervisorId != null ? supervisorId.toString() : null);
+            supervisorDto.put("fullName", supAccount != null
+                    ? supAccount.getFullName()
+                    : recMap.getOrDefault("supervisorName", "Unknown"));
+            supervisorDto.put("email", supAccount != null ? supAccount.getEmail() : null);
+            supervisorDto.put("title", sp != null ? sp.getPosition() : null);
+            supervisorDto.put("department", sp != null ? sp.getDepartment() : recMap.get("department"));
+            supervisorDto.put("faculty", sp != null ? sp.getFaculty() : null);
+            supervisorDto.put("researchAreas", recMap.getOrDefault("researchAreas", List.of()));
+            int currentLoad = sp != null && sp.getCurrentLoad() != null ? sp.getCurrentLoad() : 0;
+            int quota = sp != null && sp.getSupervisionQuota() != null ? sp.getSupervisionQuota() : 8;
+            String availability = sp != null ? sp.getAvailabilityStatus() : null;
+            supervisorDto.put("currentLoad", currentLoad);
+            supervisorDto.put("maxCapacity", quota);
+            supervisorDto.put("isAcceptingStudents",
+                    currentLoad < quota && !"UNAVAILABLE".equalsIgnoreCase(availability));
+
+            Map<String, Object> dto = new LinkedHashMap<>();
+            dto.put("supervisor", supervisorDto);
+            dto.put("rank", rank++);
+            Number score = (Number) recMap.getOrDefault("matchScore", 0);
+            int scoreInt = (int) Math.round(score.doubleValue());
+            dto.put("matchScore", scoreInt);
+            dto.put("matchReasons", buildMatchReasons(recMap, scoreInt));
+            out.add(dto);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("recommendations", out);
+        result.put("generatedAt", aiResponse.get("generatedAt"));
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> buildMatchReasons(Map<String, Object> rec, int matchScore) {
+        List<Map<String, Object>> reasons = new ArrayList<>();
+        Object areas = rec.get("matchAreas");
+        if (areas instanceof List<?> areaList && !areaList.isEmpty()) {
+            reasons.add(Map.of(
+                    "category", "research_area",
+                    "description", "Overlapping interests: " + String.join(", ", (List<String>) areaList),
+                    "score", matchScore
+            ));
+        }
+        Object explanation = rec.get("explanation");
+        if (explanation instanceof String s && !s.isBlank()) {
+            reasons.add(Map.of(
+                    "category", "success_rate",
+                    "description", s,
+                    "score", matchScore
+            ));
+        }
+        Number load = (Number) rec.getOrDefault("currentLoad", 0);
+        Number quota = (Number) rec.getOrDefault("supervisionQuota", 8);
+        int slots = Math.max(0, quota.intValue() - load.intValue());
+        reasons.add(Map.of(
+                "category", "availability",
+                "description", slots > 0 ? slots + " open slot" + (slots == 1 ? "" : "s") : "Currently full",
+                "score", slots > 0 ? Math.min(100, slots * 25) : 0
+        ));
+        return reasons;
+    }
+
+    private Long toLong(Object v) {
+        if (v == null) return null;
+        if (v instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(v.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")
