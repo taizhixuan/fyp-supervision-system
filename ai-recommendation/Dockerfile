@@ -10,8 +10,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-download the sentence-transformer model during the image build so the
-# first request doesn't pay the download cost.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# first request doesn't pay the download cost. BGE-base is the default; the
+# old MiniLM is kept as a smaller fallback if REC_EMBED_MODEL is overridden.
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-base-en-v1.5'); SentenceTransformer('all-MiniLM-L6-v2')"
 
 COPY . .
 

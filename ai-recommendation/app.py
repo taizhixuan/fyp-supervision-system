@@ -4,14 +4,17 @@ AI Recommendation Service — Supervisor matching for FYP students.
 Architecture (deterministic, no training, no LLM in hot path):
 
     score(student, supervisor) =
-          0.55 * cosine( sbert(student_text), sbert(supervisor_text) )
-        + 0.20 * jaccard( student_interests, supervisor_research_areas )
-        + 0.10 * programme_match
+          0.50 * cosine( embed(student_text), embed(supervisor_text) )
+        + 0.18 * jaccard( student_interests, supervisor_research_areas )
+        + 0.10 * jaccard( student_skills, supervisor_expertise )
+        + 0.07 * programme_match
         + 0.15 * availability_factor
 
-Embeddings come from a pretrained Sentence-BERT (`all-MiniLM-L6-v2`,
-384-dim, ~22 MB, MIT license). No model is trained on data we synthesise.
-Explanations are generated locally from the score breakdown.
+Embeddings come from a pretrained Sentence-BERT model (default
+`BAAI/bge-base-en-v1.5`, 768-dim). No model is trained on data we
+synthesise. Supervisor text includes recent project titles they have
+actually supervised, not just self-described expertise. Explanations are
+generated locally from the score breakdown.
 
 Hard filter: supervisors at capacity or marked UNAVAILABLE are dropped
 before scoring, not penalised.
@@ -42,12 +45,48 @@ logger = logging.getLogger(__name__)
 # Config (env-driven)
 # ============================================================================
 
-W_SEMANTIC = float(os.environ.get("REC_W_SEMANTIC", "0.55"))
-W_KEYWORD = float(os.environ.get("REC_W_KEYWORD", "0.20"))
-W_PROGRAMME = float(os.environ.get("REC_W_PROGRAMME", "0.10"))
-W_AVAILABILITY = float(os.environ.get("REC_W_AVAILABILITY", "0.15"))
-TOP_K = int(os.environ.get("REC_TOP_K", "10"))
-EMBED_MODEL_NAME = os.environ.get("REC_EMBED_MODEL", "all-MiniLM-L6-v2")
+def _env_float(name: str, default: float) -> float:
+    """Read a float env var, treating unset/empty as the default. The compose
+    file passes `${VAR:-}` which evaluates to '' when unset, so a plain
+    `float(os.environ.get(...))` would crash."""
+    raw = os.environ.get(name, "")
+    if not raw or not raw.strip():
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        logger.warning("Invalid %s=%r — using default %s", name, raw, default)
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "")
+    if not raw or not raw.strip():
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        logger.warning("Invalid %s=%r — using default %s", name, raw, default)
+        return default
+
+
+def _env_str(name: str, default: str) -> str:
+    raw = os.environ.get(name, "")
+    return raw.strip() if raw and raw.strip() else default
+
+
+W_SEMANTIC = _env_float("REC_W_SEMANTIC", 0.50)
+W_INTEREST = _env_float("REC_W_INTEREST", 0.18)
+W_SKILL = _env_float("REC_W_SKILL", 0.10)
+W_PROGRAMME = _env_float("REC_W_PROGRAMME", 0.07)
+W_AVAILABILITY = _env_float("REC_W_AVAILABILITY", 0.15)
+
+TOP_K = _env_int("REC_TOP_K", 10)
+EMBED_MODEL_NAME = _env_str("REC_EMBED_MODEL", "BAAI/bge-base-en-v1.5")
+
+# BGE family models expect "query: ..." / "passage: ..." prefixes for best
+# retrieval quality. Other Sentence-BERT models do not — disable for them.
+USE_BGE_PREFIXES = "bge" in EMBED_MODEL_NAME.lower()
 
 
 # ============================================================================
@@ -56,7 +95,7 @@ EMBED_MODEL_NAME = os.environ.get("REC_EMBED_MODEL", "all-MiniLM-L6-v2")
 
 logger.info("Loading sentence-transformer %s ...", EMBED_MODEL_NAME)
 embed_model = SentenceTransformer(EMBED_MODEL_NAME)
-logger.info("Embedding model ready")
+logger.info("Embedding model ready (bge_prefixes=%s)", USE_BGE_PREFIXES)
 
 
 # ============================================================================
@@ -120,7 +159,8 @@ def _student_text(profile: dict) -> str:
         parts.append("Specialisation: " + str(profile["specialisation"]))
     if profile.get("bio"):
         parts.append(str(profile["bio"]))
-    return ". ".join(parts) if parts else "general student profile"
+    text = ". ".join(parts) if parts else "general student profile"
+    return f"query: {text}" if USE_BGE_PREFIXES else text
 
 
 def _supervisor_text(profile: dict) -> str:
@@ -138,7 +178,17 @@ def _supervisor_text(profile: dict) -> str:
         parts.append("Department: " + str(profile["department"]))
     if profile.get("bio"):
         parts.append(str(profile["bio"]))
-    return ". ".join(parts) if parts else "general supervisor profile"
+    # Past project titles the supervisor has actually supervised. These are
+    # often the strongest signal of what the supervisor really does and let
+    # the embedding match against students whose interests align with real
+    # past work, not just self-described expertise.
+    past_titles = _list(profile.get("pastProjectTitles"))
+    if past_titles:
+        # Cap individual titles to keep the embedding window healthy.
+        clipped = [t[:160] for t in past_titles[:6]]
+        parts.append("Recent supervised projects: " + "; ".join(clipped))
+    text = ". ".join(parts) if parts else "general supervisor profile"
+    return f"passage: {text}" if USE_BGE_PREFIXES else text
 
 
 # ============================================================================
@@ -208,7 +258,7 @@ def _build_explanation(student: dict, supervisor: dict, components: dict) -> tup
     if common_areas:
         shown = ", ".join(common_areas[:3])
         bits.append(f"shared research areas ({shown})")
-    elif common_skills:
+    if common_skills:
         shown = ", ".join(common_skills[:3])
         bits.append(f"shared skills ({shown})")
 
@@ -241,18 +291,27 @@ def _score(student: dict, candidates: list[dict]) -> list[dict]:
     sv_embs = embeddings[1:]
 
     student_interests = _norm_set(_list(student.get("interests")))
+    student_skills = _norm_set(_list(student.get("skills")))
 
     out = []
     for sv, sv_emb in zip(candidates, sv_embs):
         sem = _cosine(student_emb, sv_emb)
-        kw = _jaccard(student_interests, _norm_set(_list(sv.get("researchAreas"))))
+        interest = _jaccard(student_interests, _norm_set(_list(sv.get("researchAreas"))))
+        skill = _jaccard(student_skills, _norm_set(_list(sv.get("expertise"))))
         prog = _programme_match(student, sv)
         avail = _availability_factor(sv)
 
-        components = {"semantic": sem, "keyword": kw, "programme": prog, "availability": avail}
+        components = {
+            "semantic": sem,
+            "interest": interest,
+            "skill": skill,
+            "programme": prog,
+            "availability": avail,
+        }
         score = (
             W_SEMANTIC * sem
-            + W_KEYWORD * kw
+            + W_INTEREST * interest
+            + W_SKILL * skill
             + W_PROGRAMME * prog
             + W_AVAILABILITY * avail
         )
@@ -282,9 +341,11 @@ def health():
         "status": "ok",
         "service": "ai-recommendation",
         "embedding_model": EMBED_MODEL_NAME,
+        "bge_prefixes": USE_BGE_PREFIXES,
         "weights": {
             "semantic": W_SEMANTIC,
-            "keyword": W_KEYWORD,
+            "interest": W_INTEREST,
+            "skill": W_SKILL,
             "programme": W_PROGRAMME,
             "availability": W_AVAILABILITY,
         },

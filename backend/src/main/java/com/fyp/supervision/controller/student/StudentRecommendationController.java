@@ -1,9 +1,11 @@
 package com.fyp.supervision.controller.student;
 
+import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.SupervisorProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.exception.AiServiceUnavailableException;
+import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -28,6 +31,9 @@ public class StudentRecommendationController {
     private final StudentProfileRepository studentProfileRepository;
     private final SupervisorProfileRepository supervisorProfileRepository;
     private final UserAccountRepository userAccountRepository;
+    private final ProjectRepository projectRepository;
+
+    private static final int PAST_PROJECT_TITLE_LIMIT = 6;
 
     @GetMapping
     public ResponseEntity<?> getRecommendations(@AuthenticationPrincipal UserDetails user) {
@@ -90,6 +96,10 @@ public class StudentRecommendationController {
             supPayload.put("availabilityStatus", sp.getAvailabilityStatus());
             supPayload.put("currentLoad", sp.getCurrentLoad());
             supPayload.put("supervisionQuota", sp.getSupervisionQuota());
+            // Recent project titles this supervisor has actually supervised — fed
+            // into the embedding text so the model sees "what they really do" in
+            // addition to "what they claim to do" via expertise/researchAreas.
+            supPayload.put("pastProjectTitles", recentProjectTitles(supAccount.getUserId()));
             supervisorPayloads.add(supPayload);
         }
 
@@ -202,6 +212,32 @@ public class StudentRecommendationController {
             return Long.parseLong(v.toString());
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * Latest few non-blank project titles this supervisor has supervised.
+     * Sorted by most recently updated. Used to enrich the supervisor's
+     * embedding text with what they've actually worked on.
+     */
+    private List<String> recentProjectTitles(Long supervisorUserId) {
+        if (supervisorUserId == null) return List.of();
+        try {
+            List<Project> projects = projectRepository.findBySupervisor_UserId(supervisorUserId);
+            return projects.stream()
+                    .filter(p -> p != null && p.getProjectTitle() != null
+                            && !p.getProjectTitle().isBlank())
+                    .sorted(Comparator.comparing(
+                            Project::getUpdatedAt,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .limit(PAST_PROJECT_TITLE_LIMIT)
+                    .map(Project::getProjectTitle)
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Failed to load past project titles for supervisor {}: {}",
+                    supervisorUserId, e.getMessage());
+            return List.of();
         }
     }
 

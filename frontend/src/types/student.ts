@@ -64,6 +64,14 @@ export interface SupervisorDetail extends SupervisorSummary {
   averageResponseTime?: string
   rating?: number
   totalSupervised: number
+  /** Recent projects this supervisor has supervised, newest first */
+  pastProjects?: PastSupervisedProject[]
+}
+
+export interface PastSupervisedProject {
+  title: string
+  status?: string
+  year?: number | null
 }
 
 // AI Recommendation Types
@@ -80,7 +88,10 @@ export interface SupervisorRecommendation {
 
 export interface RecommendationComponents {
   semantic: number
-  keyword: number
+  /** Jaccard overlap between student interests and supervisor research areas */
+  interest: number
+  /** Jaccard overlap between student skills and supervisor expertise */
+  skill: number
   programme: number
   availability: number
 }
