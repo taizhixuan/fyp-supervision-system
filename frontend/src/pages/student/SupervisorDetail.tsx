@@ -15,6 +15,7 @@ import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorDetail } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 
 // Sample data for design preview
 const SAMPLE_SUPERVISOR = {
@@ -95,9 +96,9 @@ export function SupervisorDetail() {
           {/* Avatar */}
           <div className="flex-shrink-0">
             <div className="w-32 h-32 rounded-xl bg-primary-100 flex items-center justify-center">
-              {displaySupervisor.profileImageUrl ? (
+              {assetUrl(displaySupervisor.profileImageUrl) ? (
                 <img
-                  src={displaySupervisor.profileImageUrl}
+                  src={assetUrl(displaySupervisor.profileImageUrl)!}
                   alt={displaySupervisor.fullName}
                   className="w-32 h-32 rounded-xl object-cover"
                 />
