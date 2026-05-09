@@ -216,10 +216,18 @@ public class CycleLifecycleService {
                 .registeredAt(LocalDateTime.now())
                 .build();
         try {
-            return Optional.of(projectRepository.save(project));
+            // saveAndFlush forces the INSERT to succeed-or-throw inside this method —
+            // no transient entity left in the session for a later flush to assert on.
+            return Optional.of(projectRepository.saveAndFlush(project));
         } catch (Exception e) {
-            log.warn("Failed to attach student {} to FYP1 cycle: {}", student.getUserId(), e.getMessage());
-            return projectRepository.findByStudent_UserId(student.getUserId());
+            // Don't query inside the catch. The failed Project is still in the session
+            // (transient, no id); any query would trigger a flush and Hibernate would
+            // throw "AssertionFailure: null id in Project entry". Just log + return
+            // empty — the REQUIRES_NEW transaction rolls back cleanly, the parent
+            // (e.g. AuthService.register) keeps going since the placeholder is best-effort.
+            log.warn("Failed to attach student {} to FYP1 cycle {}: {}",
+                    student.getUserId(), cycle != null ? cycle.getCycleId() : null, e.getMessage());
+            return Optional.empty();
         }
     }
 }
