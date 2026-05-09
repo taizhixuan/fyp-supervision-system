@@ -10,6 +10,7 @@ export interface User {
   phone?: string
   role: UserRole
   status: UserStatus
+  profileImagePath?: string
   lastLoginAt?: string
   createdAt: string
   updatedAt: string
@@ -37,6 +38,10 @@ export interface RegisterRequest {
   email: string
   phone?: string
   password: string
+  /** Student-only. Backend ignores it for non-STUDENT roles. */
+  specialisation?: string
+  /** Student-only. Backend ignores it for non-STUDENT roles. */
+  intakeYear?: number
 }
 
 export interface ForgotPasswordRequest {

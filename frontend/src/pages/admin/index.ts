@@ -1,4 +1,5 @@
 export { AdminDashboard } from './AdminDashboard'
+export { AdminProfile } from './AdminProfile'
 export { UserManagement } from './UserManagement'
 export { PendingRegistrations } from './PendingRegistrations'
 export { Fyp1PassTracking } from './Fyp1PassTracking'

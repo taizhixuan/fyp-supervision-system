@@ -25,4 +25,11 @@ public class RegisterRequest {
     @NotBlank
     @Size(min = 8, max = 100)
     private String password;
+
+    /** Student-only. One of: Software Engineering, Data Science, Cybersecurity, Game Development, Information Systems. */
+    @Size(max = 200)
+    private String specialisation;
+
+    /** Student-only. The 4-digit calendar year the student joined the programme. */
+    private Integer intakeYear;
 }

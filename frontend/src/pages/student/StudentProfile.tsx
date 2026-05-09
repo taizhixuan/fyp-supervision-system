@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,9 +18,15 @@ import {
   Sparkles,
   Camera,
   Upload,
+  BookOpen,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui'
 import { useStudentProfile, useUpdateStudentProfile, useUploadProfileImage } from '@/lib/hooks/useStudent'
+import {
+  STUDENT_SPECIALISATIONS,
+  INTAKE_YEAR_MIN,
+  INTAKE_YEAR_MAX,
+} from '@/lib/validators/auth'
 import { cn } from '@/lib/utils/cn'
 
 // Allowed image types and max size
@@ -34,40 +40,33 @@ const profileSchema = z.object({
   linkedinUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   githubUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   portfolioUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  specialisation: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || (STUDENT_SPECIALISATIONS as readonly string[]).includes(v),
+      'Please select a valid specialisation'
+    ),
+  intakeYear: z.preprocess((v) => {
+    if (v === undefined || v === '' || v === null) return undefined
+    const n = typeof v === 'number' ? v : Number.parseInt(String(v), 10)
+    return Number.isFinite(n) ? n : undefined
+  }, z
+    .number()
+    .int()
+    .min(INTAKE_YEAR_MIN, `Intake year must be ≥ ${INTAKE_YEAR_MIN}`)
+    .max(INTAKE_YEAR_MAX, `Intake year must be ≤ ${INTAKE_YEAR_MAX}`)
+    .optional()),
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
-
-// Sample data for design preview
-const SAMPLE_PROFILE = {
-  userId: '1',
-  studentId: '1201234567',
-  fullName: 'Ahmad bin Abdullah',
-  email: 'ahmad@student.mmu.edu.my',
-  phone: '+60 12-345 6789',
-  programCode: 'BIT',
-  programName: 'Bachelor of Information Technology (Hons)',
-  faculty: 'Faculty of Computing and Informatics',
-  intakeYear: 2021,
-  expectedGraduation: '2025-06',
-  cgpa: 3.45,
-  profileImageUrl: undefined,
-  bio: 'Passionate about building scalable web applications and exploring machine learning. Currently working on my FYP project focusing on AI-powered systems.',
-  skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'TensorFlow', 'SQL', 'Git'],
-  researchInterests: ['Artificial Intelligence', 'Machine Learning', 'Web Development', 'Cloud Computing'],
-  linkedinUrl: 'https://linkedin.com/in/ahmad-abdullah',
-  githubUrl: 'https://github.com/ahmad-abdullah',
-  portfolioUrl: 'https://ahmad.dev',
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-15',
-}
 
 export function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false)
   const [newSkill, setNewSkill] = useState('')
   const [newInterest, setNewInterest] = useState('')
-  const [skills, setSkills] = useState<string[]>(SAMPLE_PROFILE.skills)
-  const [interests, setInterests] = useState<string[]>(SAMPLE_PROFILE.researchInterests)
+  const [skills, setSkills] = useState<string[]>([])
+  const [interests, setInterests] = useState<string[]>([])
 
   // Profile image upload state
   const [showImageModal, setShowImageModal] = useState(false)
@@ -80,8 +79,7 @@ export function StudentProfile() {
   const updateProfile = useUpdateStudentProfile()
   const uploadImage = useUploadProfileImage()
 
-  // Use sample data if no API data available
-  const displayProfile = profile || SAMPLE_PROFILE
+  const displayProfile = profile
 
   const {
     register,
@@ -91,13 +89,31 @@ export function StudentProfile() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      phone: displayProfile.phone || '',
-      bio: displayProfile.bio || '',
-      linkedinUrl: displayProfile.linkedinUrl || '',
-      githubUrl: displayProfile.githubUrl || '',
-      portfolioUrl: displayProfile.portfolioUrl || '',
+      phone: '',
+      bio: '',
+      linkedinUrl: '',
+      githubUrl: '',
+      portfolioUrl: '',
+      specialisation: '',
+      intakeYear: undefined,
     },
   })
+
+  // Hydrate the form + tag arrays once the real profile arrives.
+  useEffect(() => {
+    if (!profile) return
+    reset({
+      phone: profile.phone || '',
+      bio: profile.bio || '',
+      linkedinUrl: profile.linkedinUrl || '',
+      githubUrl: profile.githubUrl || '',
+      portfolioUrl: profile.portfolioUrl || '',
+      specialisation: profile.specialisation || '',
+      intakeYear: profile.intakeYear ?? undefined,
+    })
+    setSkills(profile.skills ?? [])
+    setInterests(profile.researchInterests ?? [])
+  }, [profile, reset])
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
@@ -113,9 +129,19 @@ export function StudentProfile() {
   }
 
   const handleCancel = () => {
-    reset()
-    setSkills(displayProfile.skills)
-    setInterests(displayProfile.researchInterests)
+    if (profile) {
+      reset({
+        phone: profile.phone || '',
+        bio: profile.bio || '',
+        linkedinUrl: profile.linkedinUrl || '',
+        githubUrl: profile.githubUrl || '',
+        portfolioUrl: profile.portfolioUrl || '',
+        specialisation: profile.specialisation || '',
+        intakeYear: profile.intakeYear ?? undefined,
+      })
+      setSkills(profile.skills ?? [])
+      setInterests(profile.researchInterests ?? [])
+    }
     setIsEditing(false)
   }
 
@@ -207,7 +233,7 @@ export function StudentProfile() {
     )
   }
 
-  if (error && !displayProfile) {
+  if (error || !displayProfile) {
     return (
       <AlertBanner
         variant="error"
@@ -313,13 +339,21 @@ export function StudentProfile() {
             <h2 className="text-xl font-bold text-neutral-900">{displayProfile.fullName}</h2>
             <p className="text-neutral-600">{displayProfile.studentId}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="primary">{displayProfile.programCode}</Badge>
-              {displayProfile.cgpa && (
+              {displayProfile.programCode && <Badge variant="primary">{displayProfile.programCode}</Badge>}
+              {displayProfile.specialisation && (
+                <Badge variant="default">{displayProfile.specialisation}</Badge>
+              )}
+              {displayProfile.intakeYear && (
+                <Badge variant="default">Intake {displayProfile.intakeYear}</Badge>
+              )}
+              {typeof displayProfile.cgpa === 'number' && (
                 <Badge variant="success">CGPA: {displayProfile.cgpa.toFixed(2)}</Badge>
               )}
-              <Badge variant="default">
-                Expected Graduation: {new Date(displayProfile.expectedGraduation).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}
-              </Badge>
+              {displayProfile.expectedGraduation && (
+                <Badge variant="default">
+                  Expected Graduation: {new Date(displayProfile.expectedGraduation).toLocaleDateString('en-MY', { month: 'short', year: 'numeric' })}
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -362,44 +396,96 @@ export function StudentProfile() {
       {/* Academic Information */}
       <Card>
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Academic Information</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-              <GraduationCap className="h-5 w-5 text-primary-600" />
-            </div>
+        {isEditing ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-neutral-500">Program</p>
-              <p className="font-medium text-neutral-900">{displayProfile.programName}</p>
+              <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                Specialisation
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <BookOpen className="h-4 w-4 text-neutral-400" />
+                </div>
+                <select
+                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-neutral-300 rounded-lg bg-white text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  defaultValue={displayProfile.specialisation || ''}
+                  {...register('specialisation')}
+                >
+                  <option value="">Select specialisation</option>
+                  {STUDENT_SPECIALISATIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              {errors.specialisation && (
+                <p className="mt-1 text-xs text-error-600">{errors.specialisation.message}</p>
+              )}
+            </div>
+            <Input
+              label="Intake Year"
+              type="number"
+              inputMode="numeric"
+              min={INTAKE_YEAR_MIN}
+              max={INTAKE_YEAR_MAX}
+              placeholder={`e.g. ${INTAKE_YEAR_MAX}`}
+              leftIcon={<Calendar className="h-5 w-5" />}
+              error={errors.intakeYear?.message}
+              {...register('intakeYear')}
+            />
+            <div className="flex items-start gap-3 sm:col-span-2 px-3 py-2 rounded-lg bg-neutral-50 text-xs text-neutral-500">
+              <Mail className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              Email and program info are managed by the registry — contact the FYP committee to change them.
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
-              <Building className="h-5 w-5 text-success-600" />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="h-5 w-5 text-primary-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Program</p>
+                <p className="font-medium text-neutral-900">{displayProfile.programName || '—'}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-neutral-500">Faculty</p>
-              <p className="font-medium text-neutral-900">{displayProfile.faculty}</p>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
+                <Building className="h-5 w-5 text-success-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Faculty</p>
+                <p className="font-medium text-neutral-900">{displayProfile.faculty || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-accent-100 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="h-5 w-5 text-accent-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Specialisation</p>
+                <p className="font-medium text-neutral-900">{displayProfile.specialisation || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-warning-100 flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-5 w-5 text-warning-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Intake Year</p>
+                <p className="font-medium text-neutral-900">{displayProfile.intakeYear || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 sm:col-span-2">
+              <div className="w-10 h-10 rounded-lg bg-info-100 flex items-center justify-center flex-shrink-0">
+                <Mail className="h-5 w-5 text-info-600" />
+              </div>
+              <div>
+                <p className="text-sm text-neutral-500">Email</p>
+                <p className="font-medium text-neutral-900">{displayProfile.email}</p>
+              </div>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-warning-100 flex items-center justify-center flex-shrink-0">
-              <Calendar className="h-5 w-5 text-warning-600" />
-            </div>
-            <div>
-              <p className="text-sm text-neutral-500">Intake Year</p>
-              <p className="font-medium text-neutral-900">{displayProfile.intakeYear}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-info-100 flex items-center justify-center flex-shrink-0">
-              <Mail className="h-5 w-5 text-info-600" />
-            </div>
-            <div>
-              <p className="text-sm text-neutral-500">Email</p>
-              <p className="font-medium text-neutral-900">{displayProfile.email}</p>
-            </div>
-          </div>
-        </div>
+        )}
       </Card>
 
       {/* Contact & Social Links */}

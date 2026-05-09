@@ -76,6 +76,8 @@ public class AuthService {
         if (role == UserRole.STUDENT) {
             StudentProfile profile = StudentProfile.builder()
                     .user(user)
+                    .specialisation(request.getSpecialisation())
+                    .intakeYear(request.getIntakeYear())
                     .build();
             studentProfileRepository.save(profile);
         } else {

@@ -3,7 +3,10 @@ package com.fyp.supervision.controller;
 import com.fyp.supervision.dto.auth.*;
 import com.fyp.supervision.dto.common.MessageResponse;
 import com.fyp.supervision.dto.common.UserDto;
+import com.fyp.supervision.entity.UserAccount;
+import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AuthService;
+import com.fyp.supervision.service.FileStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -20,6 +24,8 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final FileStorageService fileStorageService;
+    private final UserAccountRepository userAccountRepository;
 
     @PostMapping("/register")
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -62,6 +68,18 @@ public class AuthController {
         Long userId = Long.parseLong(userDetails.getUsername());
         UserDto user = authService.updateProfile(userId, request);
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/profile-image")
+    public ResponseEntity<?> uploadProfileImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") MultipartFile file) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        String path = fileStorageService.storeFile(file, "profiles", userId);
+        UserAccount account = userAccountRepository.findById(userId).orElseThrow();
+        account.setProfileImagePath(path);
+        userAccountRepository.save(account);
+        return ResponseEntity.ok(Map.of("imageUrl", path));
     }
 
     @PostMapping("/forgot-password")

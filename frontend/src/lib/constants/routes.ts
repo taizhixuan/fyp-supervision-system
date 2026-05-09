@@ -113,6 +113,8 @@ export const ROUTES = {
   COMMITTEE: {
     // Dashboard
     DASHBOARD: '/committee/dashboard',
+    // Profile
+    PROFILE: '/committee/profile',
     // Announcements
     ANNOUNCEMENTS: '/committee/announcements',
     ANNOUNCEMENT_NEW: '/committee/announcements/new',
@@ -142,6 +144,8 @@ export const ROUTES = {
   ADMIN: {
     // Dashboard
     DASHBOARD: '/admin/dashboard',
+    // Profile
+    PROFILE: '/admin/profile',
     // User Management (UC30)
     USERS: '/admin/users',
     USER_NEW: '/admin/users/new',

@@ -8,6 +8,18 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
+export const STUDENT_SPECIALISATIONS = [
+  'Software Engineering',
+  'Data Science',
+  'Cybersecurity',
+  'Game Development',
+  'Information Systems',
+] as const
+
+const _currentYear = new Date().getFullYear()
+export const INTAKE_YEAR_MIN = _currentYear - 8
+export const INTAKE_YEAR_MAX = _currentYear
+
 export const registerSchema = z
   .object({
     role: z.enum(['STUDENT', 'SUPERVISOR'], {
@@ -17,6 +29,12 @@ export const registerSchema = z
     mmuId: z.string().regex(/^\d{10}$/, 'MMU ID must be 10 digits'),
     email: z.string().email('Please enter a valid email address'),
     phone: z.string().optional(),
+    specialisation: z.string().optional(),
+    intakeYear: z.preprocess((v) => {
+      if (v === undefined || v === '' || v === null) return undefined
+      const n = typeof v === 'number' ? v : Number.parseInt(String(v), 10)
+      return Number.isFinite(n) ? n : undefined
+    }, z.number().int().optional()),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -30,6 +48,30 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .superRefine((data, ctx) => {
+    if (data.role !== 'STUDENT') return
+    if (
+      !data.specialisation ||
+      !(STUDENT_SPECIALISATIONS as readonly string[]).includes(data.specialisation)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['specialisation'],
+        message: 'Please select your specialisation',
+      })
+    }
+    if (
+      data.intakeYear === undefined ||
+      data.intakeYear < INTAKE_YEAR_MIN ||
+      data.intakeYear > INTAKE_YEAR_MAX
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['intakeYear'],
+        message: `Intake year must be between ${INTAKE_YEAR_MIN} and ${INTAKE_YEAR_MAX}`,
+      })
+    }
   })
 
 export type RegisterFormData = z.infer<typeof registerSchema>

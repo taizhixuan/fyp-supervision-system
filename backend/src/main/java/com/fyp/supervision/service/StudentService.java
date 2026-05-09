@@ -61,6 +61,14 @@ public class StudentService {
         if (updates.containsKey("linkedinUrl")) profile.setLinkedinUrl((String) updates.get("linkedinUrl"));
         if (updates.containsKey("githubUrl")) profile.setGithubUrl((String) updates.get("githubUrl"));
         if (updates.containsKey("portfolioUrl")) profile.setPortfolioUrl((String) updates.get("portfolioUrl"));
+        if (updates.containsKey("specialisation")) profile.setSpecialisation((String) updates.get("specialisation"));
+        if (updates.containsKey("intakeYear")) {
+            Object iy = updates.get("intakeYear");
+            if (iy instanceof Number n) profile.setIntakeYear(n.intValue());
+            else if (iy instanceof String s && !s.isBlank()) {
+                try { profile.setIntakeYear(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
+            } else if (iy == null) profile.setIntakeYear(null);
+        }
         if (updates.containsKey("phone")) {
             user.setPhone((String) updates.get("phone"));
             userAccountRepository.save(user);
@@ -449,7 +457,8 @@ public class StudentService {
         dto.put("programCode", profile.getProgramme() != null ? profile.getProgramme() : "");
         dto.put("programName", profile.getProgramme() != null ? profile.getProgramme() : "");
         dto.put("faculty", profile.getFaculty() != null ? profile.getFaculty() : "");
-        dto.put("intakeYear", profile.getIntakeYear() != null ? profile.getIntakeYear() : 0);
+        dto.put("specialisation", profile.getSpecialisation());
+        dto.put("intakeYear", profile.getIntakeYear() != null ? profile.getIntakeYear() : null);
         dto.put("expectedGraduation", profile.getExpectedGraduation() != null ? profile.getExpectedGraduation() : "");
         dto.put("cgpa", profile.getCgpa());
         dto.put("profileImageUrl", user.getProfileImagePath());

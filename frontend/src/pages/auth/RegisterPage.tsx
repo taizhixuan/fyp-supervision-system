@@ -2,11 +2,17 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { UserPlus, GraduationCap, Briefcase, User, Mail, Phone, Lock, Hash } from 'lucide-react'
+import { UserPlus, GraduationCap, Briefcase, User, Mail, Phone, Lock, Hash, BookOpen, Calendar } from 'lucide-react'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button, AlertBanner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
-import { registerSchema, type RegisterFormData } from '@/lib/validators/auth'
+import {
+  registerSchema,
+  STUDENT_SPECIALISATIONS,
+  INTAKE_YEAR_MIN,
+  INTAKE_YEAR_MAX,
+  type RegisterFormData,
+} from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
@@ -28,6 +34,8 @@ export function RegisterPage() {
       mmuId: '',
       email: '',
       phone: '',
+      specialisation: '',
+      intakeYear: undefined,
       password: '',
       confirmPassword: '',
       acceptTerms: false,
@@ -46,6 +54,9 @@ export function RegisterPage() {
         email: data.email,
         phone: data.phone || undefined,
         password: data.password,
+        ...(data.role === 'STUDENT'
+          ? { specialisation: data.specialisation, intakeYear: data.intakeYear }
+          : {}),
       })
       navigate(ROUTES.ACCOUNT_PENDING)
     } catch (err) {
@@ -242,6 +253,62 @@ export function RegisterPage() {
                 )}
               </div>
             </div>
+
+            {/* Student academic info - only when STUDENT role selected */}
+            {selectedRole === 'STUDENT' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Specialisation <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <BookOpen className="h-4 w-4 text-stone-400" />
+                    </div>
+                    <select
+                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      defaultValue=""
+                      {...register('specialisation')}
+                    >
+                      <option value="" disabled>
+                        Select specialisation
+                      </option>
+                      {STUDENT_SPECIALISATIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.specialisation && (
+                    <p className="mt-1 text-xs text-red-500">{errors.specialisation.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Intake Year <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="h-4 w-4 text-stone-400" />
+                    </div>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={INTAKE_YEAR_MIN}
+                      max={INTAKE_YEAR_MAX}
+                      placeholder={`e.g. ${INTAKE_YEAR_MAX}`}
+                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      {...register('intakeYear')}
+                    />
+                  </div>
+                  {errors.intakeYear && (
+                    <p className="mt-1 text-xs text-red-500">{errors.intakeYear.message}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Password & Confirm - Two columns */}
             <div className="grid grid-cols-2 gap-3">

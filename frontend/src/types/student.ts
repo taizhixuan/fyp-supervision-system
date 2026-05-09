@@ -8,7 +8,8 @@ export interface StudentProfile {
   programCode: string
   programName: string
   faculty: string
-  intakeYear: number
+  specialisation?: string
+  intakeYear?: number | null
   expectedGraduation: string
   cgpa?: number
   profileImageUrl?: string
@@ -30,6 +31,8 @@ export interface UpdateStudentProfileData {
   linkedinUrl?: string
   githubUrl?: string
   portfolioUrl?: string
+  specialisation?: string
+  intakeYear?: number | null
 }
 
 // Supervisor Types (for student view)

@@ -18,11 +18,6 @@ import {
   GraduationCap,
   Award,
   Target,
-  History,
-  ArrowRight,
-  ToggleLeft,
-  Hash,
-  FileText,
   AlertTriangle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
@@ -30,9 +25,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { AlertBanner } from '@/components/ui/AlertBanner'
-import { useSupervisorProfile, useUpdateSupervisorProfile, useProfileAuditLog } from '@/lib/hooks/useSupervisor'
+import { useSupervisorProfile, useUpdateSupervisorProfile } from '@/lib/hooks/useSupervisor'
 import { cn } from '@/lib/utils/cn'
-import type { ProfileAuditAction } from '@/types'
 
 const profileSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -53,13 +47,6 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>
 
-const AUDIT_ACTION_META: Record<ProfileAuditAction, { label: string; icon: typeof FileText; color: string }> = {
-  UPDATE_PROFILE: { label: 'Profile Updated', icon: FileText, color: 'text-sky-600 bg-sky-100' },
-  UPDATE_RESEARCH_AREAS: { label: 'Research Areas Changed', icon: BookOpen, color: 'text-violet-600 bg-violet-100' },
-  UPDATE_QUOTA: { label: 'Quota Changed', icon: Hash, color: 'text-amber-600 bg-amber-100' },
-  TOGGLE_AVAILABILITY: { label: 'Availability Toggled', icon: ToggleLeft, color: 'text-emerald-600 bg-emerald-100' },
-}
-
 export function SupervisorProfile() {
   const [isEditing, setIsEditing] = useState(false)
   const [newResearchArea, setNewResearchArea] = useState('')
@@ -69,7 +56,6 @@ export function SupervisorProfile() {
 
   const { data: profile, isLoading } = useSupervisorProfile()
   const updateProfile = useUpdateSupervisorProfile()
-  const { data: auditData } = useProfileAuditLog()
 
   const {
     register,
@@ -672,74 +658,6 @@ export function SupervisorProfile() {
           </div>
         </div>
       </form>
-
-      {/* Profile Activity Log */}
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-stone-200 rounded-lg">
-              <History className="h-5 w-5 text-stone-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-stone-800">Profile Activity Log</h3>
-              <p className="text-xs text-stone-500">Recent changes to your profile</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-5">
-          {auditData?.entries && auditData.entries.length > 0 ? (
-            <div className="space-y-4">
-              {auditData.entries.slice(0, 10).map((entry) => {
-                const meta = AUDIT_ACTION_META[entry.action]
-                const Icon = meta.icon
-                const [iconColor, iconBg] = meta.color.split(' ')
-                return (
-                  <div
-                    key={entry.auditId}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors"
-                  >
-                    <div className={cn('p-2 rounded-lg flex-shrink-0', iconBg)}>
-                      <Icon className={cn('h-4 w-4', iconColor)} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-stone-800">
-                          {meta.label}
-                        </span>
-                        <time className="text-xs text-stone-400 whitespace-nowrap">
-                          {new Date(entry.timestamp).toLocaleDateString(undefined, {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}{' '}
-                          {new Date(entry.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </time>
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5 text-xs text-stone-500">
-                        <span className="font-mono bg-stone-200 px-1.5 py-0.5 rounded truncate max-w-[140px]" title={entry.oldValue}>
-                          {entry.oldValue}
-                        </span>
-                        <ArrowRight className="h-3 w-3 flex-shrink-0 text-stone-400" />
-                        <span className="font-mono bg-stone-200 px-1.5 py-0.5 rounded truncate max-w-[140px]" title={entry.newValue}>
-                          {entry.newValue}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <History className="h-10 w-10 text-stone-300 mx-auto mb-3" />
-              <p className="text-sm text-stone-500">No profile changes recorded yet</p>
-            </div>
-          )}
-        </div>
-      </Card>
     </div>
   )
 }

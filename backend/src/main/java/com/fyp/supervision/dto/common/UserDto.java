@@ -18,6 +18,7 @@ public class UserDto {
     private String phone;
     private String role;
     private String status;
+    private String profileImagePath;
     private String lastLoginAt;
     private String createdAt;
     private String updatedAt;
@@ -31,6 +32,7 @@ public class UserDto {
                 .phone(user.getPhone())
                 .role(user.getRole().name())
                 .status(user.getStatus().name())
+                .profileImagePath(user.getProfileImagePath())
                 .lastLoginAt(user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null)
                 .createdAt(user.getCreatedAt().toString())
                 .updatedAt(user.getUpdatedAt().toString())
