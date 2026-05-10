@@ -108,7 +108,7 @@ export function MyRequests() {
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [requestToWithdraw, setRequestToWithdraw] = useState<string | null>(null)
 
-  const { data, isLoading, error } = useSupervisionRequests()
+  const { data, isLoading, error, errorUpdatedAt } = useSupervisionRequests()
   const withdrawRequest = useWithdrawSupervisionRequest()
 
   // Use sample data if no API data available
@@ -156,7 +156,11 @@ export function MyRequests() {
       </div>
 
       {error && (
+        // key resets the banner's internal hidden state on every new error
+        // tick from TanStack Query (errorUpdatedAt changes per failed fetch),
+        // so dismissing once doesn't suppress subsequent retry failures.
         <AlertBanner
+          key={errorUpdatedAt}
           variant="error"
           title="Failed to load requests"
           description="Please try refreshing the page."

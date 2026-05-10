@@ -45,7 +45,7 @@ const componentMeta: Array<{
 export function AIRecommendations() {
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([])
 
-  const { data, isLoading, error } = useSupervisorRecommendations()
+  const { data, isLoading, error, errorUpdatedAt } = useSupervisorRecommendations()
   const refreshMutation = useRefreshRecommendations()
 
   // Drop any malformed entries from the AI response to avoid render crashes.
@@ -118,8 +118,12 @@ export function AIRecommendations() {
       />
 
       {error && (
+        // key bumps with each new errorUpdatedAt tick so the banner remounts
+        // on every failed retry rather than staying suppressed after the
+        // user clicked X once.
         isAxiosError(error) && error.response?.status === 503 ? (
           <AlertBanner
+            key={errorUpdatedAt}
             variant="warning"
             title="Recommendation service is temporarily unavailable"
             description="The AI service is offline or warming up. Please try Refresh in a moment."
@@ -127,6 +131,7 @@ export function AIRecommendations() {
           />
         ) : (
           <AlertBanner
+            key={errorUpdatedAt}
             variant="error"
             title="Failed to load recommendations"
             description="Something went wrong. Try refreshing — if the problem persists, check that your profile has interests and skills filled in."
