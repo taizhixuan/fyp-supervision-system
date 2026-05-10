@@ -4,6 +4,7 @@ import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
+import { avatarInitials } from '@/lib/utils/name'
 
 export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
@@ -58,14 +59,10 @@ export function UserMenu() {
     }
   }
 
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
+  // Delegates to shared util so honorific prefixes ("Dr.", "Prof." …) are
+  // stripped before initials, matching BasicProfilePage and the avatar
+  // helpers used across admin pages.
+  const getInitials = (name: string): string => avatarInitials(name)
 
   return (
     <div ref={menuRef} className="relative">

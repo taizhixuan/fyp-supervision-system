@@ -35,6 +35,7 @@ import {
 } from '@/lib/hooks/useUserProfile'
 import { cn } from '@/lib/utils/cn'
 import { assetUrl } from '@/lib/utils/assetUrl'
+import { avatarInitials as initialsFromName } from '@/lib/utils/name'
 
 const profileSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -71,16 +72,6 @@ function formatDate(value?: string | null) {
   const d = new Date(value)
   if (isNaN(d.getTime())) return value
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
-function initialsFromName(name: string): string {
-  return name
-    .split(' ')
-    .filter((n) => !['Dr.', 'Prof.', 'Mr.', 'Ms.', 'Mrs.'].includes(n))
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: BasicProfilePageProps) {

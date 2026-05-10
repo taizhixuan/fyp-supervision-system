@@ -28,6 +28,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import { useAdminUser, useUpdateUser, useDeleteUser, useResendInvite, useSendCredentials } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
+import { avatarInitial } from '@/lib/utils/name'
 import { cn } from '@/lib/utils/cn'
 import type { UserRole, UserStatus } from '@/types'
 
@@ -168,7 +169,7 @@ export function UserDetail() {
               <Lock className="h-8 w-8 text-error-600" />
             ) : (
               <span className="text-2xl font-bold text-primary-600">
-                {user.fullName.charAt(0).toUpperCase()}
+                {avatarInitial(user.fullName)}
               </span>
             )}
           </div>
