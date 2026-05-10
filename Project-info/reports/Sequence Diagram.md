@@ -73,7 +73,7 @@ sequenceDiagram
         alt Invalid credentials
           AUTH-->>BE: Fail
           %% NEW (FYP2 A6): increment counter, lock at 5
-          BE->>DB: Increment login_attempts; if >= 5 set lockout_until = now + 15 min and reset counter
+          BE->>DB: Increment login_attempts and lock account when threshold reached
           BE->>AUD: Log LOGIN_FAILURE (or LOGIN_LOCKOUT_TRIGGERED)
           BE-->>FE: 401 Invalid credentials
           FE-->>U: Show error and retry
@@ -89,7 +89,7 @@ sequenceDiagram
   end
 
   %% NEW (FYP2 E4): every subsequent authenticated request re-reads user.status
-  Note over BE,DB: On every authenticated request, JwtAuthenticationFilter re-loads UserAccount; if status flipped to non-ACTIVE the filter rejects with 401.
+  Note over BE,DB: Every authenticated request re-loads UserAccount and rejects with 401 if status is no longer ACTIVE
 ```
 
 
@@ -2546,7 +2546,7 @@ sequenceDiagram
     AUD-->>BE: Logged
     BE-->>FE: 200 Roster summary
     FE-->>ADM: Show added/updated counts
-    Note over BE,DB: Future self-registrations whose (mmu_id, email) match a roster row will auto-activate (see UC1 A5).
+    Note over BE,DB: Future self-registrations matching a roster row will auto-activate as in UC1 A5
   end
 
   %% NEW (FYP2 A4): pending-registration approve/reject queue
@@ -3164,7 +3164,7 @@ sequenceDiagram
   participant AUD as Audit Log
 
   %% Step 1 — Create cycle
-  ADM->>FE: Open Cycle Management; click New Cycle
+  ADM->>FE: Open Cycle Management and click New Cycle
   FE-->>ADM: Show cycle form
   ADM->>FE: Enter cycle_code, type, year, semester, dates
   FE->>BE: POST /admin/cycles
@@ -3213,7 +3213,7 @@ sequenceDiagram
       CLS->>DB: INSERT placeholder Project (no supervisor, title='(Pending — awaiting supervisor)') pinned to new cycle
       DB-->>CLS: Created
     end
-    Note over CLS,DB: Stale placeholders from a recently-COMPLETED cycle are also re-pointed to the new ACTIVE cycle.
+    Note over CLS,DB: Stale placeholders from a recently-COMPLETED cycle are also re-pointed to the new ACTIVE cycle
   end
 
   BE->>AUD: Log CYCLE_ACTIVATED
@@ -3233,10 +3233,10 @@ sequenceDiagram
   BE->>AUD: Log CYCLE_COMPLETED
   BE-->>FE: 200 OK
   FE-->>ADM: Show cycle as COMPLETED
-  Note over BE,DB: From now on, StudentAccessService.requireActiveCycle throws ForbiddenException for write endpoints; reads stay open.
+  Note over BE,DB: From now on the cycle-active gate throws ForbiddenException on write endpoints while reads stay open
 
   %% Step 6 — FYP1 → FYP2 promotion (A2)
-  Note over BE: On a passed student's next login, AuthService.refreshFyp1Status flips Project.stage from FYP1 to FYP2 (handled inside UC1 Log In flow).
+  Note over BE: On a passed student's next login the auth flow flips Project.stage from FYP1 to FYP2 (handled inside UC1 Log In)
 
   %% Step 7 — Archive cycle
   ADM->>FE: Click Archive on COMPLETED cycle
