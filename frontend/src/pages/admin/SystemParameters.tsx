@@ -320,7 +320,9 @@ function ParameterRow({
           <div className="flex items-center gap-2 mt-2 text-xs text-stone-400">
             <Clock className="h-3.5 w-3.5" />
             <span>
-              Modified by {param.lastModifiedBy} on{' '}
+              {param.lastModifiedBy
+                ? `Modified by ${param.lastModifiedBy} on `
+                : 'Modified on '}
               {new Date(param.lastModifiedAt).toLocaleDateString()}
             </span>
           </div>
