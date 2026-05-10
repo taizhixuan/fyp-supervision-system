@@ -360,6 +360,18 @@ def recommendations():
         student = data.get("studentProfile") or {}
         supervisors = data.get("supervisorProfiles") or []
 
+        # Reject non-object / non-list payloads up-front so a malformed
+        # request returns 400, not a 500 from a downstream `.get(...)` on
+        # the wrong type.
+        if not isinstance(student, dict):
+            return jsonify({"error": "studentProfile must be an object"}), 400
+        if not isinstance(supervisors, list):
+            return jsonify({"error": "supervisorProfiles must be an array"}), 400
+
+        # Drop any non-dict entries (defensive; the backend always sends
+        # objects, but this keeps the service from 500ing on bad input).
+        supervisors = [s for s in supervisors if isinstance(s, dict)]
+
         if not supervisors:
             return jsonify({
                 "recommendations": [],

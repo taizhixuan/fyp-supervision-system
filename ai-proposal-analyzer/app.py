@@ -367,12 +367,14 @@ def analyze_proposal(text):
             f"Section completeness: {nlp_results['section_completeness']}%."
         )
 
+    # Use round() (banker's rounding to nearest int) rather than int() — int()
+    # truncates 71.6 to 71, biasing every score downward by up to 1 point.
     return {
-        "overallScore": int(overall_score),
-        "feasibilityScore": int(feasibility_score),
-        "innovationScore": int(innovation_score),
-        "clarityScore": int(clarity_score),
-        "scopeScore": int(scope_score),
+        "overallScore": round(overall_score),
+        "feasibilityScore": round(feasibility_score),
+        "innovationScore": round(innovation_score),
+        "clarityScore": round(clarity_score),
+        "scopeScore": round(scope_score),
         "strengths": strengths,
         "weaknesses": weaknesses,
         "suggestions": suggestions,
@@ -414,7 +416,14 @@ def analyze_proposal_endpoint():
     try:
         data = request.get_json(silent=True) or {}
         proposal_content = data.get("proposalContent", "")
-        if not proposal_content:
+        # Reject non-string payloads up-front. Without this, a number / list /
+        # dict propagates into the tokenizer and crashes with an opaque
+        # "expected string or bytes-like object" 500.
+        if not isinstance(proposal_content, str):
+            return jsonify({
+                "error": "proposalContent must be a string"
+            }), 400
+        if not proposal_content.strip():
             return jsonify({"error": "proposalContent is required"}), 400
         result = analyze_proposal(proposal_content)
         result["analyzedAt"] = datetime.now(timezone.utc).isoformat()

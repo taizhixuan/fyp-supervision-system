@@ -42,32 +42,43 @@ OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1"
 OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo"
 
 
+def _env(name, default=None):
+    """Read env var, treating unset/empty as default. Compose passes
+    `${VAR:-}` which sets the var to '' when not in the user's shell —
+    `os.environ.get(...)` would otherwise return that empty string instead
+    of falling through to a default."""
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return raw
+
+
 def _resolve_llm_config():
     """Return (api_key, base_url, model, provider) — all None if unconfigured."""
-    api_key = os.environ.get("LLM_API_KEY")
+    api_key = _env("LLM_API_KEY")
     if api_key:
         return (
             api_key,
-            os.environ.get("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
-            os.environ.get("LLM_MODEL", GROQ_DEFAULT_MODEL),
+            _env("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
+            _env("LLM_MODEL", GROQ_DEFAULT_MODEL),
             "custom",
         )
 
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = _env("GROQ_API_KEY")
     if api_key:
         return (
             api_key,
-            os.environ.get("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
-            os.environ.get("LLM_MODEL", GROQ_DEFAULT_MODEL),
+            _env("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
+            _env("LLM_MODEL", GROQ_DEFAULT_MODEL),
             "groq",
         )
 
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = _env("OPENAI_API_KEY")
     if api_key:
         return (
             api_key,
-            os.environ.get("LLM_BASE_URL", OPENAI_DEFAULT_BASE_URL),
-            os.environ.get("LLM_MODEL", OPENAI_DEFAULT_MODEL),
+            _env("LLM_BASE_URL", OPENAI_DEFAULT_BASE_URL),
+            _env("LLM_MODEL", OPENAI_DEFAULT_MODEL),
             "openai",
         )
 
@@ -141,16 +152,23 @@ def health():
 @app.route("/ai/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Request body is required"}), 400
+        # silent=True so a non-JSON body doesn't 500 — we'd rather return 400.
+        data = request.get_json(silent=True) or {}
 
         message = data.get("message", "")
         session_history = data.get("sessionHistory", [])
         extra_context = data.get("context")
 
-        if not message:
+        # Reject non-string message up-front; without this it propagates into
+        # the tokenizer and crashes with an opaque 500.
+        if not isinstance(message, str):
+            return jsonify({"error": "message must be a string"}), 400
+        if not message.strip():
             return jsonify({"error": "message is required"}), 400
+
+        # Defensive: sessionHistory must be a list (the RAG engine iterates it).
+        if not isinstance(session_history, list):
+            session_history = []
 
         result = rag_engine.answer(
             query=message,
