@@ -375,12 +375,18 @@ public class AdminService {
             performedByRole = user.getRole().name();
         }
 
+        // The audit_log table only stores `entity_name`, but every caller
+        // currently passes a type label (e.g. "USER_ACCOUNT", "FYP_GRADE") in
+        // that slot. Echo it as `entityType` and leave `entityName` null so
+        // the audit-log UI doesn't render the redundant quoted "USER_ACCOUNT".
+        // If a caller later supplies a real label distinct from the type,
+        // surface it as the name.
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("auditId", log.getAuditId());
         dto.put("action", log.getAction());
         dto.put("entityType", log.getEntityName());
         dto.put("entityId", log.getEntityId());
-        dto.put("entityName", log.getEntityName());
+        dto.put("entityName", null);
         dto.put("performedBy", performedBy);
         dto.put("performedByName", performedByName);
         dto.put("performedByRole", performedByRole);
