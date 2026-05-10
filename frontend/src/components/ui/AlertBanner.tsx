@@ -45,12 +45,20 @@ const AlertBanner = forwardRef<HTMLDivElement, AlertBannerProps>(
       onDismiss?.()
     }
 
+    // Reset hidden when the message text changes. Without this, a parent
+    // that keeps the AlertBanner mounted across successive errors (e.g. a
+    // query that fails, gets dismissed, then fails again with a different
+    // message) would keep the banner hidden forever after the first dismiss.
+    useEffect(() => {
+      setHidden(false)
+    }, [title, description, variant])
+
     useEffect(() => {
       if (!autoDismissMs) return
       const t = setTimeout(dismiss, autoDismissMs)
       return () => clearTimeout(t)
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoDismissMs])
+    }, [autoDismissMs, title, description])
 
     if (hidden) return null
 
