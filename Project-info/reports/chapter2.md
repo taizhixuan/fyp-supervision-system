@@ -798,61 +798,95 @@ primary Java backend and, therefore, a service can be developed, tested
 and scaled independently. These Flask services will be communicated with
 the Java backend through the use of REST APIs.
 
-**2.4.3.2 TF-IDF and Cosine Similarity**
+<!--
+UPDATED 2026-05-10: Subsections 2.4.3.2-2.4.3.4 have been rewritten to
+reflect the actual AI techniques used in FYP2 implementation.
+- TF-IDF + Cosine Similarity (recommender) → replaced by Sentence-BERT
+  (BAAI/bge-base-en-v1.5) embeddings + a five-component weighted score.
+- spaCy → not used. Replaced by pure-Python rule-based NLP (Flesch-Kincaid,
+  Gunning Fog, regex-based section detection) in nlp_utils.py.
+- Rule-Based NLP Checks → kept and extended to mention the fine-tuned
+  DistilBERT regression head (chunk-and-averaged) and the optional
+  remote LLM (Groq Llama 3.3 / OpenAI) for richer feedback prose.
+- New 2.4.3.5 added on FAISS + retrieval-augmented generation for the
+  chatbot, since this technique was not previously covered.
+-->
 
-To process text-based matching tasks (e.g. matching proposals to the
-profiles of supervisors), the system will work with Term
-Frequency-Inverse Document Frequency (TF-IDF), which will convert
-documents into numerical vectors. The description of each proposal and
-supervisor research profile will be shown as a TF-IDF vector.
+**2.4.3.2 Sentence-BERT Embeddings and Weighted Scoring**
 
-Cosine similarity will be used to find the similarity between vectors of
-two pieces of text to measure the similarity. An increased cosine
-similarity means that more significant terms are shared between the
-texts and, therefore, they are similar. This method is fast enough
-computationally and can be effective with sparse text representations
-and is therefore appropriate to the supervisor recommendation part.
+For the supervisor recommendation task, the system uses pretrained
+Sentence-BERT embeddings (`BAAI/bge-base-en-v1.5`, 768-dim) rather than
+sparse TF-IDF vectors. Each student profile and each supervisor profile
+is converted into a single dense vector that captures the meaning of
+the text rather than only its surface terms, so a student whose
+interests include "natural language processing" matches a supervisor
+whose research areas include "computational linguistics" without
+requiring an exact term overlap. The supervisor profile passed to the
+embedding model also includes recent supervised project titles, so the
+match is grounded in the supervisor's actual past work rather than
+only self-described expertise.
 
-**2.4.3.3 spaCy (NLP Library)**
+The match score is a transparent weighted sum of five components:
+the cosine similarity between the two embeddings (weight 0.50), the
+Jaccard overlap of student interests with supervisor research areas
+(0.18), the Jaccard overlap of student skills with supervisor expertise
+(0.10), a programme-match flag (0.07), and an availability factor
+based on remaining quota (0.15). Supervisors who are at quota or
+marked unavailable are filtered out before scoring rather than ranked
+low, so the result list never contains a supervisor the student cannot
+actually request. The five-component breakdown is also returned to the
+frontend so each ranked result can be explained in terms the student
+understands.
 
-The project will adopt the use of the spaCy which is an open-source
-python library of industrial strength tools of natural language
-processing. spaCy provides fast and accurate natural language processing
-tools:
+**2.4.3.3 Rule-Based NLP Utilities for Proposal Structure**
 
-- tokenisation,
+The proposal analysis service relies on a pure-Python rule-based NLP
+layer rather than a heavyweight library such as spaCy. The
+`nlp_utils.py` module computes readability metrics (Flesch-Kincaid
+grade, Flesch reading ease, Gunning Fog), sentence-length statistics,
+lexical diversity, and a citation count, and uses regex-based section
+detection to verify the presence of the standard MMU FCI proposal
+sections (problem statement, objectives, scope, methodology). The
+output is four sub-scores — clarity, structure, scope, innovation —
+each on a 0-100 scale. This stage runs on every analysis request and
+does not depend on any model file being present, so the service is
+always able to return a baseline assessment.
 
-- part-of-speech tagging,
+**2.4.3.4 Fine-Tuned DistilBERT and Optional Remote LLM**
 
-- named entity recognition, and
+On top of the rule-based layer, the proposal analyser uses a
+fine-tuned DistilBERT regression head trained on the ASAP automated
+essay scoring dataset to produce an overall text-quality score on the
+same 0-100 scale. Because DistilBERT-base has a 512-token context
+window, long proposals are split into overlapping 480-token windows
+with 384-token stride and the per-chunk scores are combined into a
+length-weighted average. The earlier approach of truncating to the
+first ~400 words is therefore replaced with a measurement that covers
+the full proposal text.
 
-- dependency parsing.
+A third optional stage adds richer prose feedback (detailed strengths,
+weaknesses, and suggestions) by calling an OpenAI-compatible large
+language model — Groq's `llama-3.3-70b-versatile` is the default when
+a Groq API key is configured, and OpenAI's GPT models are supported
+as an alternative. When no API key is present, the analyser falls back
+to the rule-based layer's own short feedback strings, so the service
+is always usable without external credentials.
 
-To analyse the proposal, spaCy can assist in the parsing of the
-document, in the identification of essential phrases or technical
-terminologies and the examination of the sentence composition. This data
-may be utilized to verify the presence of critical areas (e.g. problem
-statement, objectives, methodology), as well as to aid more
-sophisticated rule-based or statistical tests of the quality of the
-proposal.
+**2.4.3.5 FAISS Retrieval-Augmented Generation for the Chatbot**
 
-**2.4.3.4 Rule-Based NLP Checks**
-
-In addition to statistical or machine learning models, the system will
-use rule-based NLP for straightforward validation tasks. Example rules
-include:
-
-- verifying that a proposal contains at least one sentence mentioning an
-  "objective" or "aim",
-
-- checking that the total word count exceeds a minimum threshold, or
-
-- flagging proposals that do not mention a problem context or proposed
-  solution.
-
-These rules act as a checklist to enforce basic requirements that do not
-necessarily require complex models. They complement TF-IDF and spaCy by
-providing deterministic constraints on proposal structure and content.
+The FYP chatbot uses retrieval-augmented generation over a curated
+knowledge base of fifteen FYP-related documents. Each document is
+chunked at index time, embedded with `all-MiniLM-L6-v2` (384-dim), and
+stored in a FAISS vector index. At query time, the user message is
+embedded with the same model and the top-five most similar chunks are
+retrieved. The retrieved context, together with the user message and
+recent session history, is then passed to the same OpenAI-compatible
+LLM described in §2.4.3.4. A confidence score is computed as the
+top-1 cosine similarity multiplied by a generator-path multiplier, and
+queries whose top-1 similarity falls below 0.30 are deemed
+out-of-scope and answered with a fixed reply rather than passed to
+the LLM. This guard prevents the chatbot from hallucinating answers
+to questions that are not covered by the knowledge base.
 
 ### 2.4.4 Integration
 
@@ -872,13 +906,23 @@ so that each part can be developed and maintained separately.
 
 ### 2.4.5 Summary
 
+<!--
+UPDATED 2026-05-10: Replaced the "TF-IDF, spaCy and rule-based checks"
+phrasing with the techniques actually used in FYP2 (Sentence-BERT,
+DistilBERT, FAISS RAG, optional remote LLM, plus rule-based NLP).
+-->
+
 To conclude, the system will use Spring boot and MySQL as a stable
 backend and data layer application, and React as a user-friendly web
-interface, whereas Python/Flask and Natural Language Processing (NLP)
-methods like TF-IDF, spaCy and rule-based checks will be utilized to
-give a system an intelligent support. Such a combination will suit
-building a modern maintainable FYP supervision system, both normal and
-AI enhanced functionality.
+interface, whereas Python/Flask and a layered set of natural-language
+processing techniques — pretrained Sentence-BERT embeddings for
+supervisor matching, a fine-tuned DistilBERT regression head together
+with rule-based NLP utilities for proposal analysis, and FAISS-backed
+retrieval-augmented generation with an optional remote large language
+model for the chatbot — will be utilised to give the system an
+intelligent support. Such a combination will suit building a modern
+maintainable FYP supervision system, with both normal and AI-enhanced
+functionality.
 
 ## 2.5 Proposed Solution
 
@@ -897,23 +941,43 @@ of the current scattered use of emails, spreadsheets and shared folders.
 By bringing information into a single system, the solution is meant to
 decrease confusion, duplicated effort and missing records.
 
+<!--
+UPDATED 2026-05-10: Module descriptions in this paragraph have been
+brought in line with the actual FYP2 implementation.
+- Recommender: TF-IDF/similarity → Sentence-BERT embeddings + a
+  five-component weighted score (semantic, interest, skill, programme,
+  availability).
+- Proposal analyser: now also describes the fine-tuned DistilBERT
+  regression head and the optional LLM stage, not just the structural
+  checks.
+- Chatbot: "retrieval-based NLP" → FAISS-backed retrieval-augmented
+  generation with a remote LLM (Groq Llama 3.3 / OpenAI) plus
+  out-of-scope guard.
+-->
+
 To solve individual problems of supervision, several AI modules will be
-used which are implemented as separate microservices in Python Flask and
-connected to the main system by using Rest. A Supervisor Recommendation
-module will use NLP (e.g. TF-IDF and similarity matching) to match a
-project description left by a student with the supervisor profiles and
-will offer suitable supervisors based on the interests of the research
-and on the past projects, which will decrease the amount of work of
-manual matching and will allow to evenly distribute the supervision
-load. A Proposal Analyzer module will be able to automatically verify if
-a submitted proposal contains important sections (problem statement,
-objectives, scope and methodology, etc.), and highlight sections that
-are missing or weak so that students can improve their work before their
-proposal is evaluated formally. In addition, a Chatbot Assistant,
-powered by retrieval-based NLP over the FYP handbook, briefing slides
-and FAQs will answer common questions regarding procedures, deadlines
-and requirements, reducing repetitive enquiries to supervisors and FYP
-coordinators.
+used which are implemented as separate microservices in Python Flask
+and connected to the main system by using REST. A Supervisor
+Recommendation module will encode each student profile and each
+supervisor profile (including recent supervised project titles) as
+Sentence-BERT embeddings and rank candidates with a transparent
+five-component weighted score that combines semantic similarity, two
+Jaccard overlaps, a programme-match flag, and an availability factor;
+supervisors who are at quota or marked unavailable are filtered out
+before scoring rather than being penalised after, so the result list
+never misleads the student. A Proposal Analyzer module combines a
+rule-based NLP layer (Flesch-Kincaid grade, Gunning Fog, section
+detection) with a fine-tuned DistilBERT regression head that scores
+the full proposal text via a chunk-and-average pass, and optionally
+augments the prose feedback through a remote large language model
+when an API key is configured; the result identifies missing or weak
+sections so that students can improve their work before formal review.
+In addition, a Chatbot Assistant uses retrieval-augmented generation
+over the FYP handbook, briefing slides, and FAQs — a FAISS vector
+index supplies the most relevant chunks at query time, and a remote
+language model (Groq's Llama 3.3 by default, OpenAI as alternative)
+generates the reply; an out-of-scope cut-off prevents the model from
+answering questions that the knowledge base does not cover.
 
 Overall, the complete solution of the proposed problems found in the
 current supervision process (fragmented communication, manual tracking,
