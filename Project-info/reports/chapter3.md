@@ -82,150 +82,94 @@ Table 3.3: Summary of User Requirements (by Actor)
 
 Table 3.4 Use Cases by Actor
 
-<table style="width:98%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 76%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Actor</strong></th>
-<th><strong>Use Cases</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td rowspan="16"><strong>Student</strong></td>
-<td>UC1 – Register and Log In</td>
-</tr>
-<tr>
-<td>UC2 – Manage Student Profile</td>
-</tr>
-<tr>
-<td>UC3 – View FYP Dashboard</td>
-</tr>
-<tr>
-<td>UC4 – Browse and Search Supervisors</td>
-</tr>
-<tr>
-<td>UC5 – View AI Supervisor Recommendations</td>
-</tr>
-<tr>
-<td>UC6 – Send Supervisor Request</td>
-</tr>
-<tr>
-<td>UC7 – Manage Proposal</td>
-</tr>
-<tr>
-<td>UC8 – View Proposal Status</td>
-</tr>
-<tr>
-<td>UC9 – View Project Registration Status</td>
-</tr>
-<tr>
-<td>UC10 – Manage Meeting Schedule</td>
-</tr>
-<tr>
-<td>UC11 – Manage Supervision Log</td>
-</tr>
-<tr>
-<td>UC12 – Upload and Manage FYP Documents</td>
-</tr>
-<tr>
-<td>UC13 – View FYP Guidelines, Rubrics and Deadlines</td>
-</tr>
-<tr>
-<td>UC14 – View Reminders and Notifications</td>
-</tr>
-<tr>
-<td>UC15 – Ask Questions Using the FYP Chatbot</td>
-</tr>
-<tr>
-<td><mark>UC35 – Grade Final Report (read finalised grade)</mark></td>
-</tr>
-<tr>
-<td rowspan="11"><strong>Supervisor</strong></td>
-<td>UC1 – Register and Log In</td>
-</tr>
-<tr>
-<td>UC16 – Manage Supervisor Profile</td>
-</tr>
-<tr>
-<td>UC17 – Review and Respond to Supervisor Requests</td>
-</tr>
-<tr>
-<td>UC18 – View Supervisee List and Project Details</td>
-</tr>
-<tr>
-<td>UC19 – Review Student Proposal</td>
-</tr>
-<tr>
-<td>UC20 – Manage Supervision Meetings</td>
-</tr>
-<tr>
-<td>UC21 – Review, Comment on and Sign Supervision Log</td>
-</tr>
-<tr>
-<td>UC22 – View Supervisee Progress Dashboard</td>
-</tr>
-<tr>
-<td>UC23 – Upload, Download and Review FYP Documents</td>
-</tr>
-<tr>
-<td>UC24 – Publish FYP Announcements</td>
-</tr>
-<tr>
-<td><mark>UC35 – Grade Final Report (grader)</mark></td>
-</tr>
-<tr>
-<td rowspan="7"><strong>FYP Committee</strong></td>
-<td>UC1 – Register and Log In</td>
-</tr>
-<tr>
-<td>UC24 – Publish FYP Announcements</td>
-</tr>
-<tr>
-<td>UC25 – View Proposal Review Queue</td>
-</tr>
-<tr>
-<td>UC26 – Review Proposal</td>
-</tr>
-<tr>
-<td>UC27 – Manage General FYP Documents</td>
-</tr>
-<tr>
-<td>UC28 – View FYP Project and Pairing Overview</td>
-</tr>
-<tr>
-<td>UC29 – Generate and Export FYP Reports</td>
-</tr>
-<tr>
-<td rowspan="9"><strong>System Administrator</strong></td>
-<td>UC1 – Register and Log In</td>
-</tr>
-<tr>
-<td>UC30 – Manage User Accounts and Roles</td>
-</tr>
-<tr>
-<td>UC31 – Configure System Parameters</td>
-</tr>
-<tr>
-<td>UC32 – Configure Integration and Export Settings</td>
-</tr>
-<tr>
-<td>UC33 – Perform System Maintenance</td>
-</tr>
-<tr>
-<td><mark>UC34 – Track FYP1 Pass Outcome</mark></td>
-</tr>
-<tr>
-<td><mark>UC35 – Grade Final Report (finaliser)</mark></td>
-</tr>
-<tr>
-<td><mark>UC36 – Manage FYP Cycle Lifecycle</mark></td>
-</tr>
-</tbody>
-</table>
++-------------------------+------------------------------------------------------------------------------------------+
+| **Actor**               | **Use Cases**                                                                            |
++=========================+==========================================================================================+
+| **Student**             | UC1 -- Register and Log In                                                               |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC2 -- Manage Student Profile                                                            |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC3 -- View FYP Dashboard                                                                |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC4 -- Browse and Search Supervisors                                                     |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC5 -- View AI Supervisor Recommendations                                                |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC6 -- Send Supervisor Request                                                           |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC7 -- Manage Proposal                                                                   |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC8 -- View Proposal Status                                                              |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC9 -- View Project Registration Status                                                  |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC10 -- Manage Meeting Schedule                                                          |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC11 -- Manage Supervision Log                                                           |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC12 -- Upload and Manage FYP Documents                                                  |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC13 -- View FYP Guidelines, Rubrics and Deadlines                                       |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC14 -- View Reminders and Notifications                                                 |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC15 -- Ask Questions Using the FYP Chatbot                                              |
+|                         +------------------------------------------------------------------------------------------+
+|                         | [UC35 -- Grade Final Report (read finalised grade)]{.mark}                               |
++-------------------------+------------------------------------------------------------------------------------------+
+| **Supervisor**          | UC1 -- Register and Log In                                                               |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC16 -- Manage Supervisor Profile                                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC17 -- Review and Respond to Supervisor Requests                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC18 -- View Supervisee List and Project Details                                         |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC19 -- Review Student Proposal                                                          |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC20 -- Manage Supervision Meetings                                                      |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC21 -- Review, Comment on and Sign Supervision Log                                      |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC22 -- View Supervisee Progress Dashboard                                               |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC23 -- Upload, Download and Review FYP Documents                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC24 -- Publish FYP Announcements                                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | [UC35 -- Grade Final Report (grader)]{.mark}                                             |
++-------------------------+------------------------------------------------------------------------------------------+
+| **FYP Committee**       | UC1 -- Register and Log In                                                               |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC24 -- Publish FYP Announcements                                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC25 -- View Proposal Review Queue                                                       |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC26 -- Review Proposal                                                                  |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC27 -- Manage General FYP Documents                                                     |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC28 -- View FYP Project and Pairing Overview                                            |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC29 -- Generate and Export FYP Reports                                                  |
++-------------------------+------------------------------------------------------------------------------------------+
+| **System                | UC1 -- Register and Log In                                                               |
+| Administrator**         |                                                                                          |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC30 -- Manage User Accounts and Roles                                                   |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC31 -- Configure System Parameters                                                      |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC32 -- Configure Integration and Export Settings                                        |
+|                         +------------------------------------------------------------------------------------------+
+|                         | UC33 -- Perform System Maintenance                                                       |
+|                         +------------------------------------------------------------------------------------------+
+|                         | [UC34 -- Track FYP1 Pass Outcome]{.mark}                                                 |
+|                         +------------------------------------------------------------------------------------------+
+|                         | [UC35 -- Grade Final Report (finaliser)]{.mark}                                          |
+|                         +------------------------------------------------------------------------------------------+
+|                         | [UC36 -- Manage FYP Cycle Lifecycle]{.mark}                                              |
++-------------------------+------------------------------------------------------------------------------------------+
 
 <img src="media/media/image2.jpeg" style="width:5.72014in;height:8.43452in" />
 
@@ -237,74 +181,80 @@ Register use case specification
 
 Table 3.5 UC1: Register and Log In
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th>Field</th>
-<th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC1</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Register and Log In</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student, Supervisor, FYP Committee, System Administrator</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Allows users to access the system through registration (for eligible users) and login. The system determines the user role and displays the authorised modules and dashboard accordingly.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>System is available. For registration: user has a valid MMU ID and is eligible to self-register (Student or Supervisor). For login: user account exists in the system.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>For registration: user account is created with an assigned role. For login: user is authenticated, a session is created, and the role-based dashboard and menus are displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>User opens the system access page (Register or Log In).</p></li>
-<li><p>If the user is a Student or Supervisor and does not have an account, the user selects Register.</p></li>
-<li><p>User enters required details (MMU ID, full name, email, phone) and accepts the terms.</p></li>
-<li><p>System validates details and creates the user account with role Student or Supervisor.</p></li>
-<li><p>System redirects the user to the login page.</p></li>
-<li><p>User enters MMU ID and password.</p></li>
-<li><p>System validates credentials.</p></li>
-<li><p>System retrieves the user role (Student, Supervisor, FYP Committee, or System Administrator) and permissions.</p></li>
-<li><p>System creates a session and redirects to the corresponding dashboard.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td><p>A1: User account already exists → system directs user to Log In page.</p>
-<p>A2: FYP Committee or System Administrator registration attempt → system blocks self-registration and informs that the account must be created by System Administrator.</p>
-<p>A3: Invalid registration inputs → system highlights errors and requests correction.</p>
-<p>A4: Invalid login credentials → system displays error and allows retry.</p>
-<p><mark>A5: Pre-approved roster match → during registration, the system checks the (mmu_id, email) pair against `approved_student_roster` or `approved_supervisor_roster`. When both fields match together, the account is created with status `ACTIVE` immediately and the student is auto-enrolled in the currently active FYP1 cycle (placeholder Project row created via `CycleLifecycleService.attachStudentToActiveFyp1`). The user can log in straight away without admin review.</mark></p>
-<p><mark>A6: Repeated failed login attempts → after five consecutive failed password matches, the system locks the account for fifteen minutes (`user_account.lockout_until`). Subsequent attempts during the lockout window return a "temporarily locked" message stating how long until the account is usable again. A successful login resets the counter.</mark></p></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td><p>E1: Duplicate MMU ID or email during registration → system prevents account creation and displays message.</p>
-<p>E2: Authentication service unavailable → system displays service unavailable message and logs the incident.</p>
-<p>E3: Database/server error → system terminates the process and does not create account or session.</p>
-<p><mark>E4: Authenticated account is `PENDING`, `SUSPENDED`, or `BLOCKED` → login is rejected with a status-specific message (e.g. "Your account is pending approval"). The JWT filter additionally re-reads account status on every authenticated request, so a status flip terminates active sessions on the user's next call.</mark></p></td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| Field                  | Details                                                                                    |
++========================+============================================================================================+
+| Use Case ID            | UC1                                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Register and Log In                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student, Supervisor, FYP Committee, System Administrator                                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Allows users to access the system through registration (for eligible users) and login. The |
+|                        | system determines the user role and displays the authorised modules and dashboard          |
+|                        | accordingly.                                                                               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | System is available. For registration: user has a valid MMU ID and is eligible to          |
+|                        | self-register (Student or Supervisor). For login: user account exists in the system.       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | For registration: user account is created with an assigned role. For login: user is        |
+|                        | authenticated, a session is created, and the role-based dashboard and menus are displayed. |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  User opens the system access page (Register or Log In).                                |
+|                        |                                                                                            |
+|                        | 2.  If the user is a Student or Supervisor and does not have an account, the user selects  |
+|                        |     Register.                                                                              |
+|                        |                                                                                            |
+|                        | 3.  User enters required details (MMU ID, full name, email, phone) and accepts the terms.  |
+|                        |                                                                                            |
+|                        | 4.  System validates details and creates the user account with role Student or Supervisor. |
+|                        |                                                                                            |
+|                        | 5.  System redirects the user to the login page.                                           |
+|                        |                                                                                            |
+|                        | 6.  User enters MMU ID and password.                                                       |
+|                        |                                                                                            |
+|                        | 7.  System validates credentials.                                                          |
+|                        |                                                                                            |
+|                        | 8.  System retrieves the user role (Student, Supervisor, FYP Committee, or System          |
+|                        |     Administrator) and permissions.                                                        |
+|                        |                                                                                            |
+|                        | 9.  System creates a session and redirects to the corresponding dashboard.                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: User account already exists → system directs user to Log In page.                      |
+|                        |                                                                                            |
+|                        | A2: FYP Committee or System Administrator registration attempt → system blocks             |
+|                        | self-registration and informs that the account must be created by System Administrator.    |
+|                        |                                                                                            |
+|                        | A3: Invalid registration inputs → system highlights errors and requests correction.        |
+|                        |                                                                                            |
+|                        | A4: Invalid login credentials → system displays error and allows retry.                    |
+|                        |                                                                                            |
+|                        | [A5: Pre-approved roster match → during registration, the system checks the (mmu_id,       |
+|                        | email) pair against \`approved_student_roster\` or \`approved_supervisor_roster\`. When    |
+|                        | both fields match together, the account is created with status \`ACTIVE\` immediately and  |
+|                        | the student is auto-enrolled in the currently active FYP1 cycle (placeholder Project row   |
+|                        | created via \`CycleLifecycleService.attachStudentToActiveFyp1\`). The user can log in      |
+|                        | straight away without admin review.]{.mark}                                                |
+|                        |                                                                                            |
+|                        | [A6: Repeated failed login attempts → after five consecutive failed password matches, the  |
+|                        | system locks the account for fifteen minutes (\`user_account.lockout_until\`). Subsequent  |
+|                        | attempts during the lockout window return a \"temporarily locked\" message stating how     |
+|                        | long until the account is usable again. A successful login resets the counter.]{.mark}     |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Duplicate MMU ID or email during registration → system prevents account creation and   |
+|                        | displays message.                                                                          |
+|                        |                                                                                            |
+|                        | E2: Authentication service unavailable → system displays service unavailable message and   |
+|                        | logs the incident.                                                                         |
+|                        |                                                                                            |
+|                        | E3: Database/server error → system terminates the process and does not create account or   |
+|                        | session.                                                                                   |
+|                        |                                                                                            |
+|                        | [E4: Authenticated account is \`PENDING\`, \`SUSPENDED\`, or \`BLOCKED\` → login is        |
+|                        | rejected with a status-specific message (e.g. \"Your account is pending approval\"). The   |
+|                        | JWT filter additionally re-reads account status on every authenticated request, so a       |
+|                        | status flip terminates active sessions on the user\'s next call.]{.mark}                   |
++------------------------+--------------------------------------------------------------------------------------------+
 
 ### 
 
@@ -312,843 +262,520 @@ Table 3.5 UC1: Register and Log In
 
 Table 3.6 UC2: Manage Student Profile
 
-<table style="width:97%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 74%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC2</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Student Profile</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student views and updates personal and academic profile.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Profile is updated and saved.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens profile page.</p></li>
-<li><p>Student edits profile fields.</p></li>
-<li><p>System validates inputs.</p></li>
-<li><p>System saves profile changes.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Student cancels changes → system discards edits.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Invalid input → system shows validation error messages.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+---------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                           |
++=========================+=======================================================================================+
+| Use Case ID             | UC2                                                                                   |
++-------------------------+---------------------------------------------------------------------------------------+
+| Use Case Name           | Manage Student Profile                                                                |
++-------------------------+---------------------------------------------------------------------------------------+
+| Actors                  | Student                                                                               |
++-------------------------+---------------------------------------------------------------------------------------+
+| Description             | Student views and updates personal and academic profile.                              |
++-------------------------+---------------------------------------------------------------------------------------+
+| Pre-condition           | Student is logged in.                                                                 |
++-------------------------+---------------------------------------------------------------------------------------+
+| Postcondition           | Profile is updated and saved.                                                         |
++-------------------------+---------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Student opens profile page.                                                       |
+|                         |                                                                                       |
+|                         | 2.  Student edits profile fields.                                                     |
+|                         |                                                                                       |
+|                         | 3.  System validates inputs.                                                          |
+|                         |                                                                                       |
+|                         | 4.  System saves profile changes.                                                     |
++-------------------------+---------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Student cancels changes → system discards edits.                                  |
++-------------------------+---------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Invalid input → system shows validation error messages.                           |
++-------------------------+---------------------------------------------------------------------------------------+
 
 Table 3.7 UC3: View FYP Dashboard
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC3</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View FYP Dashboard</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student views project status, deadlines, and notifications.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Dashboard is displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens dashboard.</p></li>
-<li><p>System loads proposal, meetings, logs, and documents summary.</p></li>
-<li><p>System displays dashboard cards and alerts.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Student has no project → system displays next steps and guidance.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Data retrieval error → system shows message and logs the error.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC3                                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | View FYP Dashboard                                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Student views project status, deadlines, and notifications.                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student is logged in.                                                                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Dashboard is displayed.                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Student opens dashboard.                                                               |
+|                        |                                                                                            |
+|                        | 2.  System loads proposal, meetings, logs, and documents summary.                          |
+|                        |                                                                                            |
+|                        | 3.  System displays dashboard cards and alerts.                                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Student has no project → system displays next steps and guidance.                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Data retrieval error → system shows message and logs the error.                        |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.8 UC4: Browse and Search Supervisors
 
-<table style="width:98%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 75%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC4</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Browse and Search Supervisors</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student searches supervisors by research area and availability.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Supervisor list and details are displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens supervisor directory.</p></li>
-<li><p>Student applies filters and keywords.</p></li>
-<li><p>System displays matching supervisors.</p></li>
-<li><p>Student views supervisor profile.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: No results → system suggests adjusting filters.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Directory service failure → system displays error banner.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-----------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                             |
++=========================+=========================================================================================+
+| Use Case ID             | UC4                                                                                     |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Use Case Name           | Browse and Search Supervisors                                                           |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Actors                  | Student                                                                                 |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Description             | Student searches supervisors by research area and availability.                         |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Pre-condition           | Student is logged in.                                                                   |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Postcondition           | Supervisor list and details are displayed.                                              |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Student opens supervisor directory.                                                 |
+|                         |                                                                                         |
+|                         | 2.  Student applies filters and keywords.                                               |
+|                         |                                                                                         |
+|                         | 3.  System displays matching supervisors.                                               |
+|                         |                                                                                         |
+|                         | 4.  Student views supervisor profile.                                                   |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Alternative Path        | A1: No results → system suggests adjusting filters.                                     |
++-------------------------+-----------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Directory service failure → system displays error banner.                           |
++-------------------------+-----------------------------------------------------------------------------------------+
 
 Table 3.9 UC5: View AI Supervisor Recommendations
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC5</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View AI Supervisor Recommendations</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student views recommended supervisors based on topic and profile.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in; topic keywords or draft proposal exists.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Recommendation list is displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens recommendations page.</p></li>
-<li><p>Student inputs topic or selects draft proposal.</p></li>
-<li><p>System calls AI service.</p></li>
-<li><p>System displays ranked recommendations.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Missing topic information → system prompts student to enter keywords.<br />
-<mark>A2: System filters out supervisors who are unavailable or over the supervision quota before displaying the ranked list, so only eligible supervisors are recommended.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: AI service timeout → system shows failure and allows retry.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC5                                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | View AI Supervisor Recommendations                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Student views recommended supervisors based on topic and profile.                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student is logged in; topic keywords or draft proposal exists.                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Recommendation list is displayed.                                                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Student opens recommendations page.                                                    |
+|                        |                                                                                            |
+|                        | 2.  Student inputs topic or selects draft proposal.                                        |
+|                        |                                                                                            |
+|                        | 3.  System calls AI service.                                                               |
+|                        |                                                                                            |
+|                        | 4.  System displays ranked recommendations.                                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Missing topic information → system prompts student to enter keywords.\                 |
+|                        | [A2: System filters out supervisors who are unavailable or over the supervision quota      |
+|                        | before displaying the ranked list, so only eligible supervisors are recommended.]{.mark}   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: AI service timeout → system shows failure and allows retry.                            |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.10 UC6: Send Supervisor Request
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC6</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Send Supervisor Request</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student requests supervision from a supervisor.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in; supervisor is selectable; request rules are satisfied.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Request is created and supervisor is notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student selects supervisor.</p></li>
-<li><p>Student enters message and topic.</p></li>
-<li><p>Student submits request.</p></li>
-<li><p>System records request as Pending and notifies supervisor.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Student withdraws pending request → status becomes Withdrawn.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Supervisor not accepting students → system blocks request and shows reason.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC6                                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Send Supervisor Request                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Student requests supervision from a supervisor.                                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student is logged in; supervisor is selectable; request rules are satisfied.               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Request is created and supervisor is notified.                                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Student selects supervisor.                                                            |
+|                        |                                                                                            |
+|                        | 2.  Student enters message and topic.                                                      |
+|                        |                                                                                            |
+|                        | 3.  Student submits request.                                                               |
+|                        |                                                                                            |
+|                        | 4.  System records request as Pending and notifies supervisor.                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Student withdraws pending request → status becomes Withdrawn.                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Supervisor not accepting students → system blocks request and shows reason.            |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.11 UC7: Manage Proposal
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC7</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Proposal</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student manages the proposal in a single workflow: create or edit proposal content (via form or file upload), optionally run the AI proposal checker to evaluate completeness/quality, and submit the proposal to the assigned supervisor for review. Version history is maintained for each saved or submitted proposal version.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Draft proposal is saved with version history.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens the proposal module.</p></li>
-<li><p>System displays the latest proposal draft (or an empty draft if none exists).</p></li>
-<li><p>Student creates/edits proposal content or uploads a proposal file.</p></li>
-<li><p>Student clicks Save Draft.</p></li>
-<li><p>System creates a new proposal version and stores content/file.</p></li>
-<li><p>Student clicks Run AI Checker.</p></li>
-<li><p>System analyses the latest version and displays a score, detected issues, missing sections, and suggested improvements.</p></li>
-<li><p>Student improves the proposal based on feedback and saves a new version if needed.</p></li>
-<li><p>Student clicks Submit to Supervisor.</p></li>
-<li><p>System updates proposal status to Submitted/Under Review, notifies the supervisor, and records the submission action.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: Student skips AI checker → Student saves draft and proceeds to submit directly (Steps 3–5, then Step 9–10).<br />
-A2: Student uploads file instead of form input → System extracts/stores file and creates a new version (Steps 3–5).<br />
-A3: Student edits after running AI checker → Student saves a new version, then runs AI checker again (repeat Steps 3–8) before submission.<br />
-A4: No supervisor assigned yet → System allows submission but routes to committee queue or prevents submission and prompts student to request/confirm supervisor (depends on your rules).<br />
-<mark>A5: Student runs AI checker on the overall proposal (not a specific version) → System aggregates the latest proposal content across versions and stores the AI result at proposal level for traceability, instead of attaching it to a single version.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Unsupported file type / upload error → System rejects upload and shows accepted formats/size limits.<br />
-E2: AI service unavailable / timeout → System shows error, keeps draft saved, and allows retry later.<br />
-E3: Missing mandatory proposal fields (e.g., title/objectives) → System blocks submission and highlights required sections.<br />
-E4: Duplicate submission attempt (already under review) → System prevents re-submit and instructs student to wait for review or create a new revision version.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC7                                                                                           |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | Manage Proposal                                                                               |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | Student                                                                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | Student manages the proposal in a single workflow: create or edit proposal content (via form  |
+|                     | or file upload), optionally run the AI proposal checker to evaluate completeness/quality, and |
+|                     | submit the proposal to the assigned supervisor for review. Version history is maintained for  |
+|                     | each saved or submitted proposal version.                                                     |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | Student is logged in.                                                                         |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | Draft proposal is saved with version history.                                                 |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Student opens the proposal module.                                                        |
+|                     |                                                                                               |
+|                     | 2.  System displays the latest proposal draft (or an empty draft if none exists).             |
+|                     |                                                                                               |
+|                     | 3.  Student creates/edits proposal content or uploads a proposal file.                        |
+|                     |                                                                                               |
+|                     | 4.  Student clicks Save Draft.                                                                |
+|                     |                                                                                               |
+|                     | 5.  System creates a new proposal version and stores content/file.                            |
+|                     |                                                                                               |
+|                     | 6.  Student clicks Run AI Checker.                                                            |
+|                     |                                                                                               |
+|                     | 7.  System analyses the latest version and displays a score, detected issues, missing         |
+|                     |     sections, and suggested improvements.                                                     |
+|                     |                                                                                               |
+|                     | 8.  Student improves the proposal based on feedback and saves a new version if needed.        |
+|                     |                                                                                               |
+|                     | 9.  Student clicks Submit to Supervisor.                                                      |
+|                     |                                                                                               |
+|                     | 10. System updates proposal status to Submitted/Under Review, notifies the supervisor, and    |
+|                     |     records the submission action.                                                            |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: Student skips AI checker → Student saves draft and proceeds to submit directly (Steps     |
+|                     | 3--5, then Step 9--10).\                                                                      |
+|                     | A2: Student uploads file instead of form input → System extracts/stores file and creates a    |
+|                     | new version (Steps 3--5).\                                                                    |
+|                     | A3: Student edits after running AI checker → Student saves a new version, then runs AI        |
+|                     | checker again (repeat Steps 3--8) before submission.\                                         |
+|                     | A4: No supervisor assigned yet → System allows submission but routes to committee queue or    |
+|                     | prevents submission and prompts student to request/confirm supervisor (depends on your        |
+|                     | rules).\                                                                                      |
+|                     | [A5: Student runs AI checker on the overall proposal (not a specific version) → System        |
+|                     | aggregates the latest proposal content across versions and stores the AI result at proposal   |
+|                     | level for traceability, instead of attaching it to a single version.]{.mark}                  |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Unsupported file type / upload error → System rejects upload and shows accepted           |
+|                     | formats/size limits.\                                                                         |
+|                     | E2: AI service unavailable / timeout → System shows error, keeps draft saved, and allows      |
+|                     | retry later.\                                                                                 |
+|                     | E3: Missing mandatory proposal fields (e.g., title/objectives) → System blocks submission and |
+|                     | highlights required sections.\                                                                |
+|                     | E4: Duplicate submission attempt (already under review) → System prevents re-submit and       |
+|                     | instructs student to wait for review or create a new revision version.                        |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.12 UC8: View Proposal Status
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC8</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Proposal Status</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student tracks proposal status and supervisor feedback.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Proposal status timeline is displayed, including the current status, AI proposal-checker results (score, missing sections, suggested improvements), and the full supervisor / committee review history with remarks and decisions.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens proposal status page.</p></li>
-<li><p>System displays status timeline and feedback.</p></li>
-<li><p>Student views required actions.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Revision requested → system displays required changes and edit link.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Proposal record not found → system displays support message and logs issue.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC8                                                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | View Proposal Status                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Student tracks proposal status and supervisor feedback.                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student is logged in.                                                                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [Proposal status timeline is displayed, including the current status, AI proposal-checker  |
+|                        | results (score, missing sections, suggested improvements), and the full supervisor /       |
+|                        | committee review history with remarks and decisions.]{.mark}                               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Student opens proposal status page.                                                    |
+|                        |                                                                                            |
+|                        | 2.  System displays status timeline and feedback.                                          |
+|                        |                                                                                            |
+|                        | 3.  Student views required actions.                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Revision requested → system displays required changes and edit link.                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Proposal record not found → system displays support message and logs issue.            |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.13 UC9: View Project Registration Status
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC9</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Project Registration Status</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student views registration and pairing status for FYP cycle.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Registration status is displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens registration status.</p></li>
-<li><p>System displays FYP stage and pairing info.</p></li>
-<li><p>System displays next steps if applicable.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Not registered → system displays registration guidance.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Status inconsistency → system warns user and logs warning.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                               |
++=========================+===========================================================================================+
+| Use Case ID             | UC9                                                                                       |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | View Project Registration Status                                                          |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | Student                                                                                   |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Student views registration and pairing status for FYP cycle.                              |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | Student is logged in.                                                                     |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Registration status is displayed.                                                         |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Student opens registration status.                                                    |
+|                         |                                                                                           |
+|                         | 2.  System displays FYP stage and pairing info.                                           |
+|                         |                                                                                           |
+|                         | 3.  System displays next steps if applicable.                                             |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Not registered → system displays registration guidance.                               |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Status inconsistency → system warns user and logs warning.                            |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.14 UC10: Manage Meeting Schedule
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC10</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Meeting Schedule</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student manages supervision meeting scheduling in one module: view upcoming and past meetings, propose new meeting slots with agenda, and update/cancel pending meeting requests before supervisor confirmation.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in; student is paired with a supervisor.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Meeting schedule is displayed, and/or a meeting request is created/updated with status Pending Confirmation and the supervisor is notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens the Meeting Schedule module.</p></li>
-<li><p>System displays a calendar/list view of upcoming and past meetings for the student’s project.</p></li>
-<li><p>Student clicks Request Meeting.</p></li>
-<li><p>Student proposes date/time (start–end), selects platform (e.g., Teams/Zoom/Face-to-face), and enters an agenda.</p></li>
-<li><p>Student submits the request.</p></li>
-<li><p>System creates the meeting record with status Proposed/Pending Confirmation and notifies the supervisor.</p></li>
-<li><p>Student returns to the schedule view and sees the pending meeting request.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: Edit pending request → Student opens a pending request, edits time/agenda/platform, and submits; system updates the meeting and re-notifies the supervisor.<br />
-A2: Cancel pending request → Student cancels a pending request; system updates status to Cancelled and notifies the supervisor.<br />
-A3: View meeting details → Student opens a meeting item to view full details (agenda, status, confirmed time if available).<br />
-A4: Export schedule → Student chooses export; system generates a calendar export file (e.g., .ics) or downloadable schedule output.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Proposed time violates policy (outside allowed hours / too short notice / clashes with deadline blackout period) → system blocks submission and displays allowed rules.<br />
-E2: Student not paired with supervisor → system disables request action and prompts student to complete supervisor pairing first.<br />
-E3: Schedule/notification service error → system shows error message, logs the issue, and keeps the request as unsent or retries based on system design.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC10                                                                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | Manage Meeting Schedule                                                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | Student                                                                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | Student manages supervision meeting scheduling in one module: view upcoming and past          |
+|                     | meetings, propose new meeting slots with agenda, and update/cancel pending meeting requests   |
+|                     | before supervisor confirmation.                                                               |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | Student is logged in; student is paired with a supervisor.                                    |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | Meeting schedule is displayed, and/or a meeting request is created/updated with status        |
+|                     | Pending Confirmation and the supervisor is notified.                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Student opens the Meeting Schedule module.                                                |
+|                     |                                                                                               |
+|                     | 2.  System displays a calendar/list view of upcoming and past meetings for the student's      |
+|                     |     project.                                                                                  |
+|                     |                                                                                               |
+|                     | 3.  Student clicks Request Meeting.                                                           |
+|                     |                                                                                               |
+|                     | 4.  Student proposes date/time (start--end), selects platform (e.g.,                          |
+|                     |     Teams/Zoom/Face-to-face), and enters an agenda.                                           |
+|                     |                                                                                               |
+|                     | 5.  Student submits the request.                                                              |
+|                     |                                                                                               |
+|                     | 6.  System creates the meeting record with status Proposed/Pending Confirmation and notifies  |
+|                     |     the supervisor.                                                                           |
+|                     |                                                                                               |
+|                     | 7.  Student returns to the schedule view and sees the pending meeting request.                |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: Edit pending request → Student opens a pending request, edits time/agenda/platform, and   |
+|                     | submits; system updates the meeting and re-notifies the supervisor.\                          |
+|                     | A2: Cancel pending request → Student cancels a pending request; system updates status to      |
+|                     | Cancelled and notifies the supervisor.\                                                       |
+|                     | A3: View meeting details → Student opens a meeting item to view full details (agenda, status, |
+|                     | confirmed time if available).\                                                                |
+|                     | A4: Export schedule → Student chooses export; system generates a calendar export file (e.g.,  |
+|                     | .ics) or downloadable schedule output.                                                        |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Proposed time violates policy (outside allowed hours / too short notice / clashes with    |
+|                     | deadline blackout period) → system blocks submission and displays allowed rules.\             |
+|                     | E2: Student not paired with supervisor → system disables request action and prompts student   |
+|                     | to complete supervisor pairing first.\                                                        |
+|                     | E3: Schedule/notification service error → system shows error message, logs the issue, and     |
+|                     | keeps the request as unsent or retries based on system design.                                |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.15 UC11: Manage Supervision Log
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC11</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Supervision Log</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student manages supervision logs in one module: view meeting log history, create or upload a meeting log for a meeting session, submit the log for supervisor review, and sign the log once it reaches the signing stage. The log becomes an official supervision record when both student and supervisor have signed and the log is locked.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in; Student has an active project and related meeting record exists.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Log is saved in the corresponding state (Draft, Submitted, Signed, or Locked) depending on the action performed. Once both the student and supervisor signatures have been recorded, the system locks the log and marks it as an immutable official supervision record.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens the Supervision Log module.</p></li>
-<li><p>System lists supervision logs by meeting (including status and signature progress).</p></li>
-<li><p>Student selects a meeting and clicks Create/Upload Log.</p></li>
-<li><p>Student fills in the log form (discussion summary, action items, next meeting date) and/or uploads the log file.</p></li>
-<li><p>Student saves the log as Draft or submits it as Submitted.</p></li>
-<li><p>System stores the log and notifies the supervisor for review/comments (if submitted).</p></li>
-<li><p>After the supervisor reviews and signs, the student is notified.</p></li>
-<li><p>Student opens the log and clicks Sign Log.</p></li>
-<li><p>System records the student signature. If both signatures exist, system locks the log and marks it as an official record.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: View only (history) → Student only views logs and action items; no upload/sign actions taken.<br />
-A2: Filter logs → Student filters logs by date range, meeting, or status (Draft/Submitted/Signed/Locked).<br />
-A3: Supervisor requests correction → Student receives feedback, edits the log, re-submits, and proceeds to signing after supervisor signs again.<br />
-A4: Save as draft → Student saves as Draft and continues editing later before submission.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Access to unauthorised log → System denies access and logs the attempt.<br />
-E2: Student attempts to edit locked log → System blocks the action and displays “Locked record cannot be edited”.<br />
-E3: Upload error / unsupported file type → System rejects upload and shows accepted formats/size limits.<br />
-E4: Signing stage not reached (supervisor has not reviewed/signed yet) → System prevents student signing and shows current status and required next step.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC11                                                                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | Manage Supervision Log                                                                        |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | Student                                                                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | Student manages supervision logs in one module: view meeting log history, create or upload a  |
+|                     | meeting log for a meeting session, submit the log for supervisor review, and sign the log     |
+|                     | once it reaches the signing stage. The log becomes an official supervision record when both   |
+|                     | student and supervisor have signed and the log is locked.                                     |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | Student is logged in; Student has an active project and related meeting record exists.        |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | [Log is saved in the corresponding state (Draft, Submitted, Signed, or Locked) depending on   |
+|                     | the action performed. Once both the student and supervisor signatures have been recorded, the |
+|                     | system locks the log and marks it as an immutable official supervision record.]{.mark}        |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Student opens the Supervision Log module.                                                 |
+|                     |                                                                                               |
+|                     | 2.  System lists supervision logs by meeting (including status and signature progress).       |
+|                     |                                                                                               |
+|                     | 3.  Student selects a meeting and clicks Create/Upload Log.                                   |
+|                     |                                                                                               |
+|                     | 4.  Student fills in the log form (discussion summary, action items, next meeting date)       |
+|                     |     and/or uploads the log file.                                                              |
+|                     |                                                                                               |
+|                     | 5.  Student saves the log as Draft or submits it as Submitted.                                |
+|                     |                                                                                               |
+|                     | 6.  System stores the log and notifies the supervisor for review/comments (if submitted).     |
+|                     |                                                                                               |
+|                     | 7.  After the supervisor reviews and signs, the student is notified.                          |
+|                     |                                                                                               |
+|                     | 8.  Student opens the log and clicks Sign Log.                                                |
+|                     |                                                                                               |
+|                     | 9.  System records the student signature. If both signatures exist, system locks the log and  |
+|                     |     marks it as an official record.                                                           |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: View only (history) → Student only views logs and action items; no upload/sign actions    |
+|                     | taken.\                                                                                       |
+|                     | A2: Filter logs → Student filters logs by date range, meeting, or status                      |
+|                     | (Draft/Submitted/Signed/Locked).\                                                             |
+|                     | A3: Supervisor requests correction → Student receives feedback, edits the log, re-submits,    |
+|                     | and proceeds to signing after supervisor signs again.\                                        |
+|                     | A4: Save as draft → Student saves as Draft and continues editing later before submission.     |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Access to unauthorised log → System denies access and logs the attempt.\                  |
+|                     | E2: Student attempts to edit locked log → System blocks the action and displays "Locked       |
+|                     | record cannot be edited".\                                                                    |
+|                     | E3: Upload error / unsupported file type → System rejects upload and shows accepted           |
+|                     | formats/size limits.\                                                                         |
+|                     | E4: Signing stage not reached (supervisor has not reviewed/signed yet) → System prevents      |
+|                     | student signing and shows current status and required next step.                              |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.16 UC12: Upload and Manage FYP Documents
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC12</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Upload and Manage FYP Documents</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student uploads reports, slides, and code archives by phase and type.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Document is stored and visible to authorised users.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens document module.</p></li>
-<li><p>Student selects document type and phase.</p></li>
-<li><p>Student uploads file.</p></li>
-<li><p>System stores file and updates list.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Replace document → system keeps version history.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: File exceeds limit or fails scan → system rejects and shows reason.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                               |
++=========================+===========================================================================================+
+| Use Case ID             | UC12                                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | Upload and Manage FYP Documents                                                           |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | Student                                                                                   |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Student uploads reports, slides, and code archives by phase and type.                     |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | Student is logged in.                                                                     |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Document is stored and visible to authorised users.                                       |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Student opens document module.                                                        |
+|                         |                                                                                           |
+|                         | 2.  Student selects document type and phase.                                              |
+|                         |                                                                                           |
+|                         | 3.  Student uploads file.                                                                 |
+|                         |                                                                                           |
+|                         | 4.  System stores file and updates list.                                                  |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Replace document → system keeps version history.                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: File exceeds limit or fails scan → system rejects and shows reason.                   |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.17 UC13: View FYP Guidelines, Rubrics and Deadlines
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Detail</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC13</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View FYP Guidelines, Rubrics and Deadlines</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student accesses official resources and deadlines.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Resources are displayed and downloadable.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens guidelines page.</p></li>
-<li><p>System displays resources by category.</p></li>
-<li><p>Student opens or downloads resource.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Keyword search across resources.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Missing resource file → system shows error and logs incident.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Detail**                                                                                |
++=========================+===========================================================================================+
+| Use Case ID             | UC13                                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | View FYP Guidelines, Rubrics and Deadlines                                                |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | Student                                                                                   |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Student accesses official resources and deadlines.                                        |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | Student is logged in.                                                                     |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Resources are displayed and downloadable.                                                 |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Student opens guidelines page.                                                        |
+|                         |                                                                                           |
+|                         | 2.  System displays resources by category.                                                |
+|                         |                                                                                           |
+|                         | 3.  Student opens or downloads resource.                                                  |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Keyword search across resources.                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Missing resource file → system shows error and logs incident.                         |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.18 UC14: View Reminders and Notifications
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td><mark>UC14</mark></td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Reminders and Notifications</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>System notifies student about meetings, deadlines, and announcements <mark>through configured channels (in-app inbox, email, and browser push), based on the student's notification preferences</mark>.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student account exists; notification rules configured.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Notification is delivered and recorded.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Trigger occurs (deadline, meeting update, announcement).</p></li>
-<li><mark><p>System reads the student's notification preferences (channels and categories enabled).</p></li></mark>
-<li><p>System sends notification <mark>through each enabled channel (in-app, email, browser push)</mark>.</p></li>
-<li><p>Student views notification in system.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Student <mark>opens notification preferences and customises which categories (meetings, proposals, announcements, deadlines) and channels (in-app / email / browser push, with the VAPID push subscription handled at the browser level and stored in `push_subscription`) to receive; the system stores the preferences and applies them to subsequent notifications</mark>.<br /><br /><mark>A2: Student opts in to browser push → frontend requests the browser to subscribe to the VAPID push service; on success, the resulting `endpoint`, `p256dh`, and `auth_key` are POSTed to `/notifications/push/subscribe` and stored as a new `PUSH_SUBSCRIPTION` row keyed by `endpoint`. Subsequent notifications eligible for push fan out through `PushService.sendToUser`.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Delivery failure → system retries and logs failure.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | [UC14]{.mark}                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | View Reminders and Notifications                                                           |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | System notifies student about meetings, deadlines, and announcements [through configured   |
+|                        | channels (in-app inbox, email, and browser push), based on the student\'s notification     |
+|                        | preferences]{.mark}.                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student account exists; notification rules configured.                                     |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Notification is delivered and recorded.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | Trigger occurs (deadline, meeting update, announcement).                                   |
+|                        |                                                                                            |
+|                        | []{.mark}                                                                                  |
+|                        |                                                                                            |
+|                        | System reads the student\'s notification preferences (channels and categories enabled).    |
+|                        |                                                                                            |
+|                        | System sends notification [through each enabled channel (in-app, email, browser            |
+|                        | push)]{.mark}.                                                                             |
+|                        |                                                                                            |
+|                        | Student views notification in system.                                                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Student [opens notification preferences and customises which categories (meetings,     |
+|                        | proposals, announcements, deadlines) and channels (in-app / email / browser push, with the |
+|                        | VAPID push subscription handled at the browser level and stored in \`push_subscription\`)  |
+|                        | to receive; the system stores the preferences and applies them to subsequent               |
+|                        | notifications]{.mark}.\                                                                    |
+|                        | \                                                                                          |
+|                        | [A2: Student opts in to browser push → frontend requests the browser to subscribe to the   |
+|                        | VAPID push service; on success, the resulting \`endpoint\`, \`p256dh\`, and \`auth_key\`   |
+|                        | are POSTed to \`/notifications/push/subscribe\` and stored as a new \`PUSH_SUBSCRIPTION\`  |
+|                        | row keyed by \`endpoint\`. Subsequent notifications eligible for push fan out through      |
+|                        | \`PushService.sendToUser\`.]{.mark}                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Delivery failure → system retries and logs failure.                                    |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.19 UC15: Ask Questions Using the FYP Chatbot
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td><mark>UC15</mark></td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Ask Questions Using the FYP Chatbot</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Student</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Student asks questions and receives chatbot guidance.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Student is logged in; chatbot service is available.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Answer is displayed; conversation is stored.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Student opens chatbot.</p></li>
-<li><p>Student asks question.</p></li>
-<li><p>System returns answer and reference source if available.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Low confidence → system suggests contacting FYP Committee and creates help request.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Chatbot unavailable → system displays fallback contact instructions.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | [UC15]{.mark}                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Ask Questions Using the FYP Chatbot                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Student                                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Student asks questions and receives chatbot guidance.                                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Student is logged in; chatbot service is available.                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Answer is displayed; conversation is stored.                                               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Student opens chatbot.                                                                 |
+|                        |                                                                                            |
+|                        | 2.  Student asks question.                                                                 |
+|                        |                                                                                            |
+|                        | 3.  System returns answer and reference source if available.                               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Low confidence → system suggests contacting FYP Committee and creates help request.    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Chatbot unavailable → system displays fallback contact instructions.                   |
++------------------------+--------------------------------------------------------------------------------------------+
 
 ### 
 
@@ -1156,1314 +783,862 @@ Table 3.19 UC15: Ask Questions Using the FYP Chatbot
 
 Table 3.20 UC16: Manage Supervisor Profile
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC16</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Supervisor Profile</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor updates research areas, quota, and availability.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Profile updates are saved and reflected in search and recommendations.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens profile.</p></li>
-<li><p>Supervisor edits fields.</p></li>
-<li><p>System validates and saves changes.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Set temporary unavailability dates.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Quota violates policy → system blocks save and shows constraints.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC16                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Manage Supervisor Profile                                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Supervisor                                                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Supervisor updates research areas, quota, and availability.                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Supervisor is logged in.                                                                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Profile updates are saved and reflected in search and recommendations.                     |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Supervisor opens profile.                                                              |
+|                        |                                                                                            |
+|                        | 2.  Supervisor edits fields.                                                               |
+|                        |                                                                                            |
+|                        | 3.  System validates and saves changes.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Set temporary unavailability dates.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Quota violates policy → system blocks save and shows constraints.                      |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.21 UC17: Review and Respond to Supervisor Requests
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC17</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Review and Respond to Supervisor Requests</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor accepts, rejects, or requests clarification for requests.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; pending requests exist.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Request status updated; student notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens request list.</p></li>
-<li><p>Supervisor views request details.</p></li>
-<li><p>Supervisor selects accept or reject or clarify.</p></li>
-<li><p>System updates status and notifies student.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Clarification requested → student replies, request remains pending.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Acceptance exceeds quota → system blocks acceptance.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC17                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Review and Respond to Supervisor Requests                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Supervisor                                                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Supervisor accepts, rejects, or requests clarification for requests.                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Supervisor logged in; pending requests exist.                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Request status updated; student notified.                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Supervisor opens request list.                                                         |
+|                        |                                                                                            |
+|                        | 2.  Supervisor views request details.                                                      |
+|                        |                                                                                            |
+|                        | 3.  Supervisor selects accept or reject or clarify.                                        |
+|                        |                                                                                            |
+|                        | 4.  System updates status and notifies student.                                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Clarification requested → student replies, request remains pending.                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Acceptance exceeds quota → system blocks acceptance.                                   |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.22 UC18: View Supervisee List and Project Details
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC18</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Supervisee List and Project Details</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor views supervisees and their project information.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Supervisee list and details are displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens supervisee list.</p></li>
-<li><p>System displays supervisees with status.</p></li>
-<li><p>Supervisor opens a supervisee’s project details.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Filter by FYP stage or risk status.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Access attempt to non-assigned student → system denies access.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                               |
++=========================+===========================================================================================+
+| Use Case ID             | UC18                                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | View Supervisee List and Project Details                                                  |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | Supervisor                                                                                |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Supervisor views supervisees and their project information.                               |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | Supervisor is logged in.                                                                  |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Supervisee list and details are displayed.                                                |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Supervisor opens supervisee list.                                                     |
+|                         |                                                                                           |
+|                         | 2.  System displays supervisees with status.                                              |
+|                         |                                                                                           |
+|                         | 3.  Supervisor opens a supervisee's project details.                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Filter by FYP stage or risk status.                                                   |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Access attempt to non-assigned student → system denies access.                        |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.23 UC19: Review Student Proposal
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC19</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Review Student Proposal</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor reviews the student’s submitted proposal in a single workflow screen. The supervisor can view proposal versions and AI checking results, provide comments, request revisions, or approve the proposal for project registration. All decisions and remarks are recorded for traceability.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; proposal is submitted for review.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Proposal review outcome is recorded. The proposal status is updated to Revision Required or Approved, and the student is notified. If approved, the project registration status is updated accordingly and the supervisor’s supervision load may be updated.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens the Proposal Review module.</p></li>
-<li><p>System lists submitted proposals from supervisees with current status.</p></li>
-<li><p>Supervisor selects a proposal to review.</p></li>
-<li><p>System displays proposal details, latest proposal version, and version history.</p></li>
-<li><p>System displays AI checking results (score, missing sections, suggested improvements) for the selected version (if available).</p></li>
-<li><p>Supervisor reviews the content and enters remarks/comments.</p></li>
-<li><p>Supervisor chooses an action: Request Revision or Approve.</p></li>
-<li><p>System records the review decision and remarks in the review history.</p></li>
-<li><p>System updates the proposal status accordingly and sends a notification to the student.</p></li>
-<li><p>If Approve, system updates the project registration status (e.g., Registered/Approved) and updates supervisor’s current supervision load if applicable.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: Review an older version → Supervisor selects a previous proposal version to compare changes; system shows the chosen version and its AI result<br />
-A2: Request multiple revisions → After student resubmits a new version, supervisor repeats review and requests revision again until acceptable.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Proposal not found / already withdrawn → System shows message and refreshes the list.<br />
-E2: Supervisor not authorised (proposal not under their supervisee list) → System denies access and logs the attempt.<br />
-E3: Missing required fields for decision (e.g., empty remarks when requesting revision if required) → System blocks submission and prompts for required input.<br />
-E4: System error during status update/notification → System saves the review record, shows error, and retries notification or logs for admin action.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC19                                                                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | Review Student Proposal                                                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | Supervisor                                                                                    |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | Supervisor reviews the student's submitted proposal in a single workflow screen. The          |
+|                     | supervisor can view proposal versions and AI checking results, provide comments, request      |
+|                     | revisions, or approve the proposal for project registration. All decisions and remarks are    |
+|                     | recorded for traceability.                                                                    |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | Supervisor logged in; proposal is submitted for review.                                       |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | Proposal review outcome is recorded. The proposal status is updated to Revision Required or   |
+|                     | Approved, and the student is notified. If approved, the project registration status is        |
+|                     | updated accordingly and the supervisor's supervision load may be updated.                     |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Supervisor opens the Proposal Review module.                                              |
+|                     |                                                                                               |
+|                     | 2.  System lists submitted proposals from supervisees with current status.                    |
+|                     |                                                                                               |
+|                     | 3.  Supervisor selects a proposal to review.                                                  |
+|                     |                                                                                               |
+|                     | 4.  System displays proposal details, latest proposal version, and version history.           |
+|                     |                                                                                               |
+|                     | 5.  System displays AI checking results (score, missing sections, suggested improvements) for |
+|                     |     the selected version (if available).                                                      |
+|                     |                                                                                               |
+|                     | 6.  Supervisor reviews the content and enters remarks/comments.                               |
+|                     |                                                                                               |
+|                     | 7.  Supervisor chooses an action: Request Revision or Approve.                                |
+|                     |                                                                                               |
+|                     | 8.  System records the review decision and remarks in the review history.                     |
+|                     |                                                                                               |
+|                     | 9.  System updates the proposal status accordingly and sends a notification to the student.   |
+|                     |                                                                                               |
+|                     | 10. If Approve, system updates the project registration status (e.g., Registered/Approved)    |
+|                     |     and updates supervisor's current supervision load if applicable.                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: Review an older version → Supervisor selects a previous proposal version to compare       |
+|                     | changes; system shows the chosen version and its AI result\                                   |
+|                     | A2: Request multiple revisions → After student resubmits a new version, supervisor repeats    |
+|                     | review and requests revision again until acceptable.                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Proposal not found / already withdrawn → System shows message and refreshes the list.\    |
+|                     | E2: Supervisor not authorised (proposal not under their supervisee list) → System denies      |
+|                     | access and logs the attempt.\                                                                 |
+|                     | E3: Missing required fields for decision (e.g., empty remarks when requesting revision if     |
+|                     | required) → System blocks submission and prompts for required input.\                         |
+|                     | E4: System error during status update/notification → System saves the review record, shows    |
+|                     | error, and retries notification or logs for admin action.                                     |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.24 UC20: Manage Supervision Meetings
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC20</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage Supervision Meetings</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor confirms, reschedules, or cancels meeting requests.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; meeting requests exist.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Meeting status updated; student notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens meeting requests.</p></li>
-<li><p>Supervisor selects request.</p></li>
-<li><p>Supervisor confirms or reschedules or cancels.</p></li>
-<li><p>System updates schedule and notifies student.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Suggest alternative times → student selects a new slot.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Time conflict detected → system blocks and suggests available slots.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC20                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Manage Supervision Meetings                                                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Supervisor                                                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Supervisor confirms, reschedules, or cancels meeting requests.                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Supervisor logged in; meeting requests exist.                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Meeting status updated; student notified.                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Supervisor opens meeting requests.                                                     |
+|                        |                                                                                            |
+|                        | 2.  Supervisor selects request.                                                            |
+|                        |                                                                                            |
+|                        | 3.  Supervisor confirms or reschedules or cancels.                                         |
+|                        |                                                                                            |
+|                        | 4.  System updates schedule and notifies student.                                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Suggest alternative times → student selects a new slot.                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Time conflict detected → system blocks and suggests available slots.                   |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.25 UC21: Review, Comment on and Sign Supervision Log
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC21</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Review, Comment on and Sign Supervision Log</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor reviews log, adds comments, and signs.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; student submitted meeting log.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Supervisor signature recorded; student prompted to sign; log locked after both signatures.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens submitted log.</p></li>
-<li><p>Supervisor adds comments.</p></li>
-<li><p>Supervisor signs log.</p></li>
-<li><p>System notifies student to sign.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Request correction before signing → status becomes Correction Required.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Log already locked → system blocks modifications.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC21                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Review, Comment on and Sign Supervision Log                                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Supervisor                                                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Supervisor reviews log, adds comments, and signs.                                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Supervisor logged in; student submitted meeting log.                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Supervisor signature recorded; student prompted to sign; log locked after both signatures. |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Supervisor opens submitted log.                                                        |
+|                        |                                                                                            |
+|                        | 2.  Supervisor adds comments.                                                              |
+|                        |                                                                                            |
+|                        | 3.  Supervisor signs log.                                                                  |
+|                        |                                                                                            |
+|                        | 4.  System notifies student to sign.                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Request correction before signing → status becomes Correction Required.                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Log already locked → system blocks modifications.                                      |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.26 UC22: View Supervisee Progress Dashboard
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC22</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Supervisee Progress Dashboard</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor views progress indicators for meetings, logs, documents, and deadlines.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Dashboard is displayed showing, for each supervisee: proposal status, total and recent meeting count, supervision-log compliance (submitted / signed / locked), document submission state per phase, and upcoming deadlines, with at-risk supervisees highlighted.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens progress dashboard.</p></li>
-<li><p>System aggregates supervisee progress data <mark>(proposal status, meeting count, log compliance, document submission state, upcoming deadlines)</mark>.</p></li>
-<li><p>System displays indicators and alerts <mark>and highlights supervisees who are at risk (e.g., overdue logs, missing documents, no recent meetings)</mark>.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Export progress summary report.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Metrics service failure → system shows partial results and logs issue.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC22                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | View Supervisee Progress Dashboard                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | Supervisor                                                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Supervisor views progress indicators for meetings, logs, documents, and deadlines.         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | Supervisor logged in.                                                                      |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [Dashboard is displayed showing, for each supervisee: proposal status, total and recent    |
+|                        | meeting count, supervision-log compliance (submitted / signed / locked), document          |
+|                        | submission state per phase, and upcoming deadlines, with at-risk supervisees               |
+|                        | highlighted.]{.mark}                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Supervisor opens progress dashboard.                                                   |
+|                        |                                                                                            |
+|                        | 2.  System aggregates supervisee progress data [(proposal status, meeting count, log       |
+|                        |     compliance, document submission state, upcoming deadlines)]{.mark}.                    |
+|                        |                                                                                            |
+|                        | 3.  System displays indicators and alerts [and highlights supervisees who are at risk      |
+|                        |     (e.g., overdue logs, missing documents, no recent meetings)]{.mark}.                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Export progress summary report.                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Metrics service failure → system shows partial results and logs issue.                 |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.27 UC23: Upload, Download and Review FYP Documents
 
-<table style="width:97%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 74%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC23</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Upload, Download and Review FYP Documents</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor reviews student documents and uploads feedback.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; documents exist.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Feedback files stored; student notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor opens student documents list.</p></li>
-<li><p>Supervisor downloads and reviews.</p></li>
-<li><p>Supervisor uploads feedback file.</p></li>
-<li><p>System notifies student.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Request resubmission with remarks.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Upload fails security scan → system rejects upload.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+---------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                           |
++=========================+=======================================================================================+
+| Use Case ID             | UC23                                                                                  |
++-------------------------+---------------------------------------------------------------------------------------+
+| Use Case Name           | Upload, Download and Review FYP Documents                                             |
++-------------------------+---------------------------------------------------------------------------------------+
+| Actors                  | Supervisor                                                                            |
++-------------------------+---------------------------------------------------------------------------------------+
+| Description             | Supervisor reviews student documents and uploads feedback.                            |
++-------------------------+---------------------------------------------------------------------------------------+
+| Pre-condition           | Supervisor logged in; documents exist.                                                |
++-------------------------+---------------------------------------------------------------------------------------+
+| Postcondition           | Feedback files stored; student notified.                                              |
++-------------------------+---------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Supervisor opens student documents list.                                          |
+|                         |                                                                                       |
+|                         | 2.  Supervisor downloads and reviews.                                                 |
+|                         |                                                                                       |
+|                         | 3.  Supervisor uploads feedback file.                                                 |
+|                         |                                                                                       |
+|                         | 4.  System notifies student.                                                          |
++-------------------------+---------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Request resubmission with remarks.                                                |
++-------------------------+---------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Upload fails security scan → system rejects upload.                               |
++-------------------------+---------------------------------------------------------------------------------------+
 
 Table 3.28 UC24: Publish FYP Announcements
 
-<table style="width:88%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 65%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC24</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Publish FYP Announcements</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>Supervisor</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Supervisor publishes announcements to supervisees.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>Supervisor logged in; supervisees exist.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Announcement published; recipients notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Supervisor creates announcement.</p></li>
-<li><p>Supervisor selects audience (supervisees).</p></li>
-<li><p>Supervisor publishes.</p></li>
-<li><p>System sends notifications.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Schedule announcement for a future date.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Invalid content (empty) → system blocks publish.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-----------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                 |
++=========================+=============================================================================+
+| Use Case ID             | UC24                                                                        |
++-------------------------+-----------------------------------------------------------------------------+
+| Use Case Name           | Publish FYP Announcements                                                   |
++-------------------------+-----------------------------------------------------------------------------+
+| Actors                  | Supervisor                                                                  |
++-------------------------+-----------------------------------------------------------------------------+
+| Description             | Supervisor publishes announcements to supervisees.                          |
++-------------------------+-----------------------------------------------------------------------------+
+| Pre-condition           | Supervisor logged in; supervisees exist.                                    |
++-------------------------+-----------------------------------------------------------------------------+
+| Postcondition           | Announcement published; recipients notified.                                |
++-------------------------+-----------------------------------------------------------------------------+
+| Basic Path              | 1.  Supervisor creates announcement.                                        |
+|                         |                                                                             |
+|                         | 2.  Supervisor selects audience (supervisees).                              |
+|                         |                                                                             |
+|                         | 3.  Supervisor publishes.                                                   |
+|                         |                                                                             |
+|                         | 4.  System sends notifications.                                             |
++-------------------------+-----------------------------------------------------------------------------+
+| Alternative Path        | A1: Schedule announcement for a future date.                                |
++-------------------------+-----------------------------------------------------------------------------+
+| Exceptional Path        | E1: Invalid content (empty) → system blocks publish.                        |
++-------------------------+-----------------------------------------------------------------------------+
 
 ### 3.5.3 FYP Committee Use Case Specifications
 
 Table 3.29 UC24: Publish FYP Announcements
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC24</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Publish FYP Announcements</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin publishes faculty-level announcements for selected users and cycles.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Announcement published and logged; recipients notified.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin creates announcement.</p></li>
-<li><p>Admin selects audience and cycle.</p></li>
-<li><p>Admin publishes.</p></li>
-<li><p>System sends notifications.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Schedule announcement release time.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Missing audience selection → system blocks publish.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC24                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Publish FYP Announcements                                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | FYP Committee                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Admin publishes faculty-level announcements for selected users and cycles.                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | FYP Committee logged in.                                                                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | Announcement published and logged; recipients notified.                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Admin creates announcement.                                                            |
+|                        |                                                                                            |
+|                        | 2.  Admin selects audience and cycle.                                                      |
+|                        |                                                                                            |
+|                        | 3.  Admin publishes.                                                                       |
+|                        |                                                                                            |
+|                        | 4.  System sends notifications.                                                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Schedule announcement release time.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Missing audience selection → system blocks publish.                                    |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.30 UC25: View Proposal Review Queue
 
-<table style="width:99%;">
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 76%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC25</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View Proposal Review Queue</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin views proposals awaiting committee review.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Queue list displayed.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin opens queue page.</p></li>
-<li><p>System lists proposals with status and filters.</p></li>
-<li><p>Admin opens a proposal record.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Filter by programme or supervisor or status.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Permission error → system denies access and logs attempt.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                              |
++=========================+==========================================================================================+
+| Use Case ID             | UC25                                                                                     |
++-------------------------+------------------------------------------------------------------------------------------+
+| Use Case Name           | View Proposal Review Queue                                                               |
++-------------------------+------------------------------------------------------------------------------------------+
+| Actors                  | FYP Committee                                                                            |
++-------------------------+------------------------------------------------------------------------------------------+
+| Description             | Admin views proposals awaiting committee review.                                         |
++-------------------------+------------------------------------------------------------------------------------------+
+| Pre-condition           | FYP Committee is logged in.                                                              |
++-------------------------+------------------------------------------------------------------------------------------+
+| Postcondition           | Queue list displayed.                                                                    |
++-------------------------+------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Admin opens queue page.                                                              |
+|                         |                                                                                          |
+|                         | 2.  System lists proposals with status and filters.                                      |
+|                         |                                                                                          |
+|                         | 3.  Admin opens a proposal record.                                                       |
++-------------------------+------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Filter by programme or supervisor or status.                                         |
++-------------------------+------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Permission error → system denies access and logs attempt.                            |
++-------------------------+------------------------------------------------------------------------------------------+
 
 Table 3.31 UC26: Review Proposal
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC26</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Review Proposal</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>FYP Committee reviews submitted proposals in a single workflow screen. The committee can view proposal versions and AI checking results, record remarks, and make a decision to approve, reject, or request revision. All decisions are stored for traceability and official record keeping.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee logged in; proposal exists in queue.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Committee decision is recorded. Proposal status is updated to Approved, Rejected, or Revision Required, and relevant parties (student and supervisor) are notified. If approved, project registration status is updated accordingly.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Committee member opens the Proposal Review Queue.</p></li>
-<li><p>System displays proposals pending committee action with filtering/sorting options.</p></li>
-<li><p>Committee member selects a proposal.</p></li>
-<li><p>System displays proposal details, latest version, and version history.</p></li>
-<li><p>System displays AI checking results (score, missing sections, suggested improvements) for the selected version (if available).</p></li>
-<li><p>Committee member reviews content and enters remarks/comments.</p></li>
-<li><p>Committee member selects a decision: Approve, Reject, or Request Revision.</p></li>
-<li><p>System records the decision and remarks in the review history.</p></li>
-<li><p>System updates proposal status and, if applicable, updates project registration status.</p></li>
-<li><p>System notifies the student and supervisor of the outcome.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: Review previous versions → Committee member opens earlier versions to compare changes; system displays selected version and related AI results if available.<br />
-A2: Request additional information → Committee member requests clarification and specifies required updates in remarks.<br />
-A3: Multiple revision cycles → Student resubmits a new version; proposal returns to the queue until decision is finalised.<br />
-A4: Assign to another committee member → Proposal remains in queue but reviewer changes.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Proposal not found / already finalised → System shows message and refreshes the queue.<br />
-E2: Committee member not authorised → System denies access and logs the attempt.<br />
-E3: Missing required remarks for revision/rejection → System blocks submission and prompts for mandatory remarks.<br />
-E4: System error during status update/notification → System saves the review record, shows error, and retries notification or logs for admin follow-up.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC26                                                                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | Review Proposal                                                                               |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | FYP Committee                                                                                 |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | FYP Committee reviews submitted proposals in a single workflow screen. The committee can view |
+|                     | proposal versions and AI checking results, record remarks, and make a decision to approve,    |
+|                     | reject, or request revision. All decisions are stored for traceability and official record    |
+|                     | keeping.                                                                                      |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | FYP Committee logged in; proposal exists in queue.                                            |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | Committee decision is recorded. Proposal status is updated to Approved, Rejected, or Revision |
+|                     | Required, and relevant parties (student and supervisor) are notified. If approved, project    |
+|                     | registration status is updated accordingly.                                                   |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Committee member opens the Proposal Review Queue.                                         |
+|                     |                                                                                               |
+|                     | 2.  System displays proposals pending committee action with filtering/sorting options.        |
+|                     |                                                                                               |
+|                     | 3.  Committee member selects a proposal.                                                      |
+|                     |                                                                                               |
+|                     | 4.  System displays proposal details, latest version, and version history.                    |
+|                     |                                                                                               |
+|                     | 5.  System displays AI checking results (score, missing sections, suggested improvements) for |
+|                     |     the selected version (if available).                                                      |
+|                     |                                                                                               |
+|                     | 6.  Committee member reviews content and enters remarks/comments.                             |
+|                     |                                                                                               |
+|                     | 7.  Committee member selects a decision: Approve, Reject, or Request Revision.                |
+|                     |                                                                                               |
+|                     | 8.  System records the decision and remarks in the review history.                            |
+|                     |                                                                                               |
+|                     | 9.  System updates proposal status and, if applicable, updates project registration status.   |
+|                     |                                                                                               |
+|                     | 10. System notifies the student and supervisor of the outcome.                                |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: Review previous versions → Committee member opens earlier versions to compare changes;    |
+|                     | system displays selected version and related AI results if available.\                        |
+|                     | A2: Request additional information → Committee member requests clarification and specifies    |
+|                     | required updates in remarks.\                                                                 |
+|                     | A3: Multiple revision cycles → Student resubmits a new version; proposal returns to the queue |
+|                     | until decision is finalised.\                                                                 |
+|                     | A4: Assign to another committee member → Proposal remains in queue but reviewer changes.      |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Proposal not found / already finalised → System shows message and refreshes the queue.\   |
+|                     | E2: Committee member not authorised → System denies access and logs the attempt.\             |
+|                     | E3: Missing required remarks for revision/rejection → System blocks submission and prompts    |
+|                     | for mandatory remarks.\                                                                       |
+|                     | E4: System error during status update/notification → System saves the review record, shows    |
+|                     | error, and retries notification or logs for admin follow-up.                                  |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.32 UC27: Manage General FYP Documents
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC27</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage General FYP Documents</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin uploads and maintains handbook, templates, rubrics, and forms.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Resources updated and published.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin opens resources module.</p></li>
-<li><p>Admin uploads or replaces files.</p></li>
-<li><p>Admin assigns category and publish settings.</p></li>
-<li><p>System makes resources available to users.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Archive old version for reference.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Invalid file type → system rejects upload.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                               |
++=========================+===========================================================================================+
+| Use Case ID             | UC27                                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | Manage General FYP Documents                                                              |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | FYP Committee                                                                             |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Admin uploads and maintains handbook, templates, rubrics, and forms.                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | FYP Committee logged in.                                                                  |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Resources updated and published.                                                          |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Admin opens resources module.                                                         |
+|                         |                                                                                           |
+|                         | 2.  Admin uploads or replaces files.                                                      |
+|                         |                                                                                           |
+|                         | 3.  Admin assigns category and publish settings.                                          |
+|                         |                                                                                           |
+|                         | 4.  System makes resources available to users.                                            |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Archive old version for reference.                                                    |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Invalid file type → system rejects upload.                                            |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.33 UC28: View FYP Project and Pairing Overview
 
-<table>
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 80%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC28</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>View FYP Project and Pairing Overview</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>FYP Committee monitors FYP projects and supervisor–student pairings across programmes and cycles in a single dashboard. The dashboard summarises project statuses and pairing progress, and highlights unpaired students and overloaded supervisors to support timely administrative actions.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Overview dashboard is displayed with pairing status, project status summaries, and highlighted exceptions (unpaired students / overloaded supervisors).</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Committee member opens the Project &amp; Pairing Overview dashboard.</p></li>
-<li><p>System retrieves and aggregates project and pairing data for the selected FYP cycle (default to current cycle).</p></li>
-<li><p>System displays overall statistics (e.g., total projects, paired vs unpaired students, supervisor load distribution).</p></li>
-<li><p>System lists key items, including: (a) unpaired students, (b) projects pending supervisor assignment, and (c) supervisors approaching/exceeding quota.</p></li>
-<li><p>Committee member uses filters (programme, specialisation, supervisor, status) to refine the view.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td style="text-align: left;">A1: Drill down by supervisor → Committee member selects a supervisor to view assigned students/projects and current load.<br />
-A2: Drill down by programme/specialisation → Committee member filters by programme/specialisation to view localised pairing progress and exceptions.<br />
-A3: Export overview → Committee member exports the list/summary (e.g., CSV/PDF report) for reporting purposes</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td style="text-align: left;">E1: Query timeout / dataset too large → System prompts the user to apply filters (e.g., cycle/programme) and retries with the refined query.<br />
-E2: No data available for selected cycle → System displays an empty-state message and suggests selecting another cycle or confirming cycle setup.<br />
-E3: Access not authorised → System denies access and logs the attempt.</td>
-</tr>
-</tbody>
-</table>
++---------------------+-----------------------------------------------------------------------------------------------+
+| **Field**           | **Details**                                                                                   |
++=====================+===============================================================================================+
+| Use Case ID         | UC28                                                                                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Use Case Name       | View FYP Project and Pairing Overview                                                         |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Actors              | FYP Committee                                                                                 |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Description         | FYP Committee monitors FYP projects and supervisor--student pairings across programmes and    |
+|                     | cycles in a single dashboard. The dashboard summarises project statuses and pairing progress, |
+|                     | and highlights unpaired students and overloaded supervisors to support timely administrative  |
+|                     | actions.                                                                                      |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Pre-condition       | FYP Committee logged in.                                                                      |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Postcondition       | Overview dashboard is displayed with pairing status, project status summaries, and            |
+|                     | highlighted exceptions (unpaired students / overloaded supervisors).                          |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Basic Path          | 1.  Committee member opens the Project & Pairing Overview dashboard.                          |
+|                     |                                                                                               |
+|                     | 2.  System retrieves and aggregates project and pairing data for the selected FYP cycle       |
+|                     |     (default to current cycle).                                                               |
+|                     |                                                                                               |
+|                     | 3.  System displays overall statistics (e.g., total projects, paired vs unpaired students,    |
+|                     |     supervisor load distribution).                                                            |
+|                     |                                                                                               |
+|                     | 4.  System lists key items, including: (a) unpaired students, (b) projects pending supervisor |
+|                     |     assignment, and (c) supervisors approaching/exceeding quota.                              |
+|                     |                                                                                               |
+|                     | 5.  Committee member uses filters (programme, specialisation, supervisor, status) to refine   |
+|                     |     the view.                                                                                 |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Alternative Path    | A1: Drill down by supervisor → Committee member selects a supervisor to view assigned         |
+|                     | students/projects and current load.\                                                          |
+|                     | A2: Drill down by programme/specialisation → Committee member filters by                      |
+|                     | programme/specialisation to view localised pairing progress and exceptions.\                  |
+|                     | A3: Export overview → Committee member exports the list/summary (e.g., CSV/PDF report) for    |
+|                     | reporting purposes                                                                            |
++---------------------+-----------------------------------------------------------------------------------------------+
+| Exceptional Path    | E1: Query timeout / dataset too large → System prompts the user to apply filters (e.g.,       |
+|                     | cycle/programme) and retries with the refined query.\                                         |
+|                     | E2: No data available for selected cycle → System displays an empty-state message and         |
+|                     | suggests selecting another cycle or confirming cycle setup.\                                  |
+|                     | E3: Access not authorised → System denies access and logs the attempt.                        |
++---------------------+-----------------------------------------------------------------------------------------------+
 
 Table 3.34 UC29: Generate and Export FYP Reports
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC29</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Generate and Export FYP Reports</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>FYP Committee</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin generates and exports reports such as pairing status and approved projects.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>FYP Committee logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Report file is produced in the requested format (CSV / PDF) and the report metadata (type, title, filters, format, file path, generated-by user, timestamp, expiry) is persisted in the system so it can be re-downloaded later from the report history.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin selects report type.</p></li>
-<li><p>Admin sets filters <mark>and chooses output format (CSV / PDF)</mark>.</p></li>
-<li><p>System generates report <mark>and stores the report metadata (filters, format, file path, generated-by user, timestamp) for later retrieval</mark>.</p></li>
-<li><p>Admin downloads output file <mark>or accesses it later from the report history list</mark>.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Save report configuration for reuse <mark>(stored as a reusable export preset with selected fields, filters, and schedule)</mark>.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Export generation failed → system displays error and logs incident.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC29                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Generate and Export FYP Reports                                                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | FYP Committee                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Admin generates and exports reports such as pairing status and approved projects.          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | FYP Committee logged in.                                                                   |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [Report file is produced in the requested format (CSV / PDF) and the report metadata       |
+|                        | (type, title, filters, format, file path, generated-by user, timestamp, expiry) is         |
+|                        | persisted in the system so it can be re-downloaded later from the report history.]{.mark}  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Admin selects report type.                                                             |
+|                        |                                                                                            |
+|                        | 2.  Admin sets filters [and chooses output format (CSV / PDF)]{.mark}.                     |
+|                        |                                                                                            |
+|                        | 3.  System generates report [and stores the report metadata (filters, format, file path,   |
+|                        |     generated-by user, timestamp) for later retrieval]{.mark}.                             |
+|                        |                                                                                            |
+|                        | 4.  Admin downloads output file [or accesses it later from the report history              |
+|                        |     list]{.mark}.                                                                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Save report configuration for reuse [(stored as a reusable export preset with selected |
+|                        | fields, filters, and schedule)]{.mark}.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Export generation failed → system displays error and logs incident.                    |
++------------------------+--------------------------------------------------------------------------------------------+
 
 ### 3.5.4 System Administrator Use Case Specifications
 
 Table 3.35 UC30: Manage User Accounts and Roles
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC30</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Manage User Accounts and Roles</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>System Administrator</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>System administrator manages accounts, roles, and access rights.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>System Administrator is logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>User account and role updates are applied.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin searches user.</p></li>
-<li><p>Admin edits role and status.</p></li>
-<li><p>System validates and saves changes.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Disable account for security reasons.<br />
-<mark>A2: Bulk-create user accounts from a CSV file → Admin uploads a CSV containing MMU ID, email, full name, and role; the system validates each row, creates the accounts in one batch, and reports successes and row-level errors.</mark><br /><br /><mark>A3: Admin uploads a pre-approved roster CSV (student or supervisor side) at `/admin/approved-roster` → matching self-registrations bypass the PENDING queue and become ACTIVE on first login. This decouples cohort admission from registration and removes the one-by-one approval load at the start of every cycle.</mark><br /><br /><mark>A4: Admin reviews the pending-registrations queue at `/admin/pending-registrations` → for each non-roster registration, the admin clicks Approve (status flips to `ACTIVE`, an in-app notification fires, the user can log in) or Reject (status flips to `BLOCKED` with an optional reason).</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Attempt to remove last System Administrator role → system blocks action.</td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC30                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Manage User Accounts and Roles                                                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | System Administrator                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | System administrator manages accounts, roles, and access rights.                           |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | System Administrator is logged in.                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | User account and role updates are applied.                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | 1.  Admin searches user.                                                                   |
+|                        |                                                                                            |
+|                        | 2.  Admin edits role and status.                                                           |
+|                        |                                                                                            |
+|                        | 3.  System validates and saves changes.                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Disable account for security reasons.\                                                 |
+|                        | [A2: Bulk-create user accounts from a CSV file → Admin uploads a CSV containing MMU ID,    |
+|                        | email, full name, and role; the system validates each row, creates the accounts in one     |
+|                        | batch, and reports successes and row-level errors.]{.mark}\                                |
+|                        | \                                                                                          |
+|                        | [A3: Admin uploads a pre-approved roster CSV (student or supervisor side) at               |
+|                        | \`/admin/approved-roster\` → matching self-registrations bypass the PENDING queue and      |
+|                        | become ACTIVE on first login. This decouples cohort admission from registration and        |
+|                        | removes the one-by-one approval load at the start of every cycle.]{.mark}\                 |
+|                        | \                                                                                          |
+|                        | [A4: Admin reviews the pending-registrations queue at \`/admin/pending-registrations\` →   |
+|                        | for each non-roster registration, the admin clicks Approve (status flips to \`ACTIVE\`, an |
+|                        | in-app notification fires, the user can log in) or Reject (status flips to \`BLOCKED\`     |
+|                        | with an optional reason).]{.mark}                                                          |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Attempt to remove last System Administrator role → system blocks action.               |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.36 UC31: Configure System Parameters
 
-<table>
-<colgroup>
-<col style="width: 22%" />
-<col style="width: 77%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC31</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Configure System Parameters</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>System Administrator</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin configures FYP cycles, sessions, and policy parameters.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>System Administrator logged in.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td>Settings saved and applied.</td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin opens settings.</p></li>
-<li><p>Admin updates parameters.</p></li>
-<li><p>System validates constraints.</p></li>
-<li><p>System saves configuration.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Preview setting impact before applying.</td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Invalid values → system blocks save and displays constraints.</td>
-</tr>
-</tbody>
-</table>
++-------------------------+-------------------------------------------------------------------------------------------+
+| **Field**               | **Details**                                                                               |
++=========================+===========================================================================================+
+| Use Case ID             | UC31                                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Use Case Name           | Configure System Parameters                                                               |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Actors                  | System Administrator                                                                      |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Description             | Admin configures FYP cycles, sessions, and policy parameters.                             |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Pre-condition           | System Administrator logged in.                                                           |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Postcondition           | Settings saved and applied.                                                               |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Basic Path              | 1.  Admin opens settings.                                                                 |
+|                         |                                                                                           |
+|                         | 2.  Admin updates parameters.                                                             |
+|                         |                                                                                           |
+|                         | 3.  System validates constraints.                                                         |
+|                         |                                                                                           |
+|                         | 4.  System saves configuration.                                                           |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Alternative Path        | A1: Preview setting impact before applying.                                               |
++-------------------------+-------------------------------------------------------------------------------------------+
+| Exceptional Path        | E1: Invalid values → system blocks save and displays constraints.                         |
++-------------------------+-------------------------------------------------------------------------------------------+
 
 Table 3.37 UC32: Configure Integration and Export Settings
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC32</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Configure Integration and Export Settings</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>System Administrator</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin configures integrations and export formats for faculty systems. <mark>The use case covers two related sub-flows: (a) Integration Settings — managing third-party endpoints (e.g., MMU SSO, email service, AI services) with credentials and test connections; and (b) Export Configurations — defining reusable export presets (data type, fields, filters, format, schedule) used by reporting and data-exchange features.</mark></td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>System Administrator logged in; integration info available.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>(a) Integration sub-flow: Integration record is stored with type, provider, endpoint, settings, and last-test result; connection is tested and status is recorded. (b) Export sub-flow: Export configuration record is stored with name, data type, format, included fields, filters, date format, and optional schedule, and is available as a reusable preset for report generation and data export.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><mark><p>Admin chooses to manage Integration Settings or Export Configurations.</p></li></mark>
-<li><p>Admin enters endpoints and credentials <mark>(integration sub-flow) or defines export name, data type, format, fields, filters, and schedule (export sub-flow)</mark>.</p></li>
-<li><p>Admin runs test connection <mark>(integration sub-flow) or previews a sample export (export sub-flow)</mark>.</p></li>
-<li><p>System saves settings <mark>and records the last-test result or last-export timestamp accordingly</mark>.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Disable integration temporarily.<br />
-<mark>A2: Edit an existing export configuration → Admin updates fields, filters, or schedule; system updates the preset and the next scheduled run uses the new definition.<br />
-A3: Run an export immediately from a saved configuration → System generates the file using the preset and updates the last-export path and timestamp.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Test connection fails → system blocks or saves as disabled with error note.<br />
-<mark>E2: Export configuration validation fails (e.g., unknown field, invalid date format) → System blocks save and displays the offending field.</mark></td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | UC32                                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | Configure Integration and Export Settings                                                  |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | System Administrator                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | Admin configures integrations and export formats for faculty systems. [The use case covers |
+|                        | two related sub-flows: (a) Integration Settings --- managing third-party endpoints (e.g.,  |
+|                        | MMU SSO, email service, AI services) with credentials and test connections; and (b) Export |
+|                        | Configurations --- defining reusable export presets (data type, fields, filters, format,   |
+|                        | schedule) used by reporting and data-exchange features.]{.mark}                            |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | System Administrator logged in; integration info available.                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [(a) Integration sub-flow: Integration record is stored with type, provider, endpoint,     |
+|                        | settings, and last-test result; connection is tested and status is recorded. (b) Export    |
+|                        | sub-flow: Export configuration record is stored with name, data type, format, included     |
+|                        | fields, filters, date format, and optional schedule, and is available as a reusable preset |
+|                        | for report generation and data export.]{.mark}                                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | []{.mark}                                                                                  |
+|                        |                                                                                            |
+|                        | Admin chooses to manage Integration Settings or Export Configurations.                     |
+|                        |                                                                                            |
+|                        | Admin enters endpoints and credentials [(integration sub-flow) or defines export name,     |
+|                        | data type, format, fields, filters, and schedule (export sub-flow)]{.mark}.                |
+|                        |                                                                                            |
+|                        | Admin runs test connection [(integration sub-flow) or previews a sample export (export     |
+|                        | sub-flow)]{.mark}.                                                                         |
+|                        |                                                                                            |
+|                        | System saves settings [and records the last-test result or last-export timestamp           |
+|                        | accordingly]{.mark}.                                                                       |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | A1: Disable integration temporarily.\                                                      |
+|                        | [A2: Edit an existing export configuration → Admin updates fields, filters, or schedule;   |
+|                        | system updates the preset and the next scheduled run uses the new definition.\             |
+|                        | A3: Run an export immediately from a saved configuration → System generates the file using |
+|                        | the preset and updates the last-export path and timestamp.]{.mark}                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | E1: Test connection fails → system blocks or saves as disabled with error note.\           |
+|                        | [E2: Export configuration validation fails (e.g., unknown field, invalid date format) →    |
+|                        | System blocks save and displays the offending field.]{.mark}                               |
++------------------------+--------------------------------------------------------------------------------------------+
 
 Table 3.38 UC33: Perform System Maintenance
 
-<table>
-<colgroup>
-<col style="width: 25%" />
-<col style="width: 74%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td>UC33</td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td>Perform System Maintenance</td>
-</tr>
-<tr>
-<td>Actors</td>
-<td>System Administrator</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Admin performs backup, restore, and monitoring tasks.</td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td>System Administrator logged in; maintenance permissions granted.</td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>A maintenance job record is created with job type, status (Pending / Running / Completed / Failed), start and completion timestamps, result message and structured result data, and the triggering administrator's identity. The job result is retained for auditing and visible in the maintenance job history.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><ol type="1">
-<li><p>Admin selects maintenance task <mark>(e.g., backup, cleanup, integrity check, cache reset)</mark>.</p></li>
-<li><p>Admin confirms execution.</p></li>
-<li><p>System <mark>creates a maintenance job record (status = Running, triggered-by user recorded), runs the task, and updates the record on completion with outcome status, result data, and timestamps</mark>.</p></li>
-</ol></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td>A1: Schedule automatic backup.<br />
-<mark>A2: View maintenance job history → Admin opens the job list, filters by job type or status, and inspects past runs and their result details.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td>E1: Backup fails due to storage issue → system alerts and logs critical error <mark>and marks the maintenance job as Failed with the error message captured in the job record</mark>.</td>
-</tr>
-</tbody>
-</table>
++-----------------------------+---------------------------------------------------------------------------------------+
+| **Field**                   | **Details**                                                                           |
++=============================+=======================================================================================+
+| Use Case ID                 | UC33                                                                                  |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Use Case Name               | Perform System Maintenance                                                            |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Actors                      | System Administrator                                                                  |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Description                 | Admin performs backup, restore, and monitoring tasks.                                 |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Pre-condition               | System Administrator logged in; maintenance permissions granted.                      |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Postcondition               | [A maintenance job record is created with job type, status (Pending / Running /       |
+|                             | Completed / Failed), start and completion timestamps, result message and structured   |
+|                             | result data, and the triggering administrator\'s identity. The job result is retained |
+|                             | for auditing and visible in the maintenance job history.]{.mark}                      |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Basic Path                  | 1.  Admin selects maintenance task [(e.g., backup, cleanup, integrity check, cache    |
+|                             |     reset)]{.mark}.                                                                   |
+|                             |                                                                                       |
+|                             | 2.  Admin confirms execution.                                                         |
+|                             |                                                                                       |
+|                             | 3.  System [creates a maintenance job record (status = Running, triggered-by user     |
+|                             |     recorded), runs the task, and updates the record on completion with outcome       |
+|                             |     status, result data, and timestamps]{.mark}.                                      |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Alternative Path            | A1: Schedule automatic backup.\                                                       |
+|                             | [A2: View maintenance job history → Admin opens the job list, filters by job type or  |
+|                             | status, and inspects past runs and their result details.]{.mark}                      |
++-----------------------------+---------------------------------------------------------------------------------------+
+| Exceptional Path            | E1: Backup fails due to storage issue → system alerts and logs critical error [and    |
+|                             | marks the maintenance job as Failed with the error message captured in the job        |
+|                             | record]{.mark}.                                                                       |
++-----------------------------+---------------------------------------------------------------------------------------+
 
 <mark>Table 3.39 UC34: Track FYP1 Pass Outcome</mark>
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td><mark>UC34</mark></td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td><mark>Track FYP1 Pass Outcome</mark></td>
-</tr>
-<tr>
-<td>Actors</td>
-<td><mark>System Administrator</mark></td>
-</tr>
-<tr>
-<td>Description</td>
-<td><mark>System Administrator records each student's FYP1 pass-or-fail decision against an externally produced grade list (eBwise / Clic). The system surfaces the meeting-log compliance count as a non-blocking soft warning so that students with fewer than the FCI-required six logs are visible at decision time without being auto-rejected.</mark></td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td><mark>FYP1 cycle is `ACTIVE` or `COMPLETED`; admin is logged in.</mark></td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Each project's `fyp1_passed` flag is set (TRUE / FALSE / NULL); passed students will be promoted to the next ACTIVE FYP2 cycle on their next login.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><mark><ol type="1">
-<li><p>Admin opens the FYP1 Pass Tracking page.</p></li>
-<li><p>System lists every project in the relevant cycle with a compliance badge (green when ≥ 6 LOCKED meeting logs for the FYP1 phase, yellow when below).</p></li>
-<li><p>Admin clicks Pass or Fail for each project.</p></li>
-<li><p>System writes `Project.fyp1_passed` and audit-records the decision (`FYP1_PASSED` / `FYP1_FAILED`).</p></li>
-</ol></mark></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td><mark>A1: Admin marks Pass when the badge is yellow → confirmation modal quotes the shortfall ("only 4 of 6 logs"); admin confirms or cancels.<br /><br />A2: Admin uploads a CSV of pass/fail decisions for batch processing (`POST /admin/projects/fyp1-passed/import`); the system validates each row, applies the outcomes, and reports successes and row-level errors.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td><mark>E1: Project has no supervisor or no Project row → system marks the row as ineligible and skips it.<br /><br />E2: Database write fails → system rolls back, audit-records the failure, and surfaces the error to the admin.</mark></td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | [UC34]{.mark}                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | [Track FYP1 Pass Outcome]{.mark}                                                           |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | [System Administrator]{.mark}                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | [System Administrator records each student\'s FYP1 pass-or-fail decision against an        |
+|                        | externally produced grade list (eBwise / Clic). The system surfaces the meeting-log        |
+|                        | compliance count as a non-blocking soft warning so that students with fewer than the       |
+|                        | FCI-required six logs are visible at decision time without being auto-rejected.]{.mark}    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | [FYP1 cycle is \`ACTIVE\` or \`COMPLETED\`; admin is logged in.]{.mark}                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [Each project\'s \`fyp1_passed\` flag is set (TRUE / FALSE / NULL); passed students will   |
+|                        | be promoted to the next ACTIVE FYP2 cycle on their next login.]{.mark}                     |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | []{.mark}                                                                                  |
+|                        |                                                                                            |
+|                        | 1.  Admin opens the FYP1 Pass Tracking page.                                               |
+|                        |                                                                                            |
+|                        | 2.  System lists every project in the relevant cycle with a compliance badge (green when ≥ |
+|                        |     6 LOCKED meeting logs for the FYP1 phase, yellow when below).                          |
+|                        |                                                                                            |
+|                        | 3.  Admin clicks Pass or Fail for each project.                                            |
+|                        |                                                                                            |
+|                        | 4.  System writes \`Project.fyp1_passed\` and audit-records the decision (\`FYP1_PASSED\`  |
+|                        |     / \`FYP1_FAILED\`).                                                                    |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | [A1: Admin marks Pass when the badge is yellow → confirmation modal quotes the shortfall   |
+|                        | (\"only 4 of 6 logs\"); admin confirms or cancels.\                                        |
+|                        | \                                                                                          |
+|                        | A2: Admin uploads a CSV of pass/fail decisions for batch processing (\`POST                |
+|                        | /admin/projects/fyp1-passed/import\`); the system validates each row, applies the          |
+|                        | outcomes, and reports successes and row-level errors.]{.mark}                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | [E1: Project has no supervisor or no Project row → system marks the row as ineligible and  |
+|                        | skips it.\                                                                                 |
+|                        | \                                                                                          |
+|                        | E2: Database write fails → system rolls back, audit-records the failure, and surfaces the  |
+|                        | error to the admin.]{.mark}                                                                |
++------------------------+--------------------------------------------------------------------------------------------+
 
 <mark>Table 3.40 UC35: Grade Final Report</mark>
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td><mark>UC35</mark></td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td><mark>Grade Final Report</mark></td>
-</tr>
-<tr>
-<td>Actors</td>
-<td><mark>Supervisor (grader), System Administrator (finaliser), Student (reader of finalised grade)</mark></td>
-</tr>
-<tr>
-<td>Description</td>
-<td><mark>Supervisor grades a student's FYP1 or FYP2 final report against a JSON rubric. The grade goes through `DRAFT → SUBMITTED → FINALISED`. Only FINALISED grades are visible to the student. The total score is the sum of the numeric criterion marks; the letter grade is derived against the MMU FCI scale.</mark></td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td><mark>Project exists and the student is paired; the grader is the assigned supervisor for the project (per-row ownership check).</mark></td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>One `FypGrade` row exists per (project, phase, grader); the FINALISED grade is visible to the student on their dashboard.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><mark><ol type="1">
-<li><p>Supervisor opens the supervisee's grading page.</p></li>
-<li><p>Supervisor enters criterion marks against the rubric and optional remarks.</p></li>
-<li><p>System derives `total_score` (sum of numeric criterion marks) and `letter_grade` (MMU FCI scale: ≥80 A, ≥75 A−, ≥70 B+, ≥65 B, ≥60 B−, ≥55 C+, ≥50 C, ≥45 C−, ≥40 D, otherwise F).</p></li>
-<li><p>Supervisor saves as `DRAFT` or submits as `SUBMITTED`.</p></li>
-<li><p>Admin opens the grade administration page and reviews submitted grades.</p></li>
-<li><p>Admin clicks Finalise → grade status flips to `FINALISED`; `finalised_by_user_id` and `finalised_at` are recorded.</p></li>
-<li><p>Student sees the FINALISED grade and the grader's remarks on their dashboard.</p></li>
-</ol></mark></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td><mark>A1: Supervisor saves as DRAFT and returns later → grade remains hidden from the admin's submitted-queue and from the student.<br /><br />A2: Multiple graders (supervisor + examiner) → separate `FypGrade` rows per grader; `UNIQUE (project_id, phase, grader_user_id)` enforces one row per grader per phase.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td><mark>E1: A non-assigned supervisor attempts to grade the project → system rejects with "You are not the assigned supervisor for this project" (per-row ownership check via `GradingService`).<br /><br />E2: Grader edits a FINALISED grade → system rejects; the admin must revert the grade to SUBMITTED first.</mark></td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | [UC35]{.mark}                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | [Grade Final Report]{.mark}                                                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | [Supervisor (grader), System Administrator (finaliser), Student (reader of finalised       |
+|                        | grade)]{.mark}                                                                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | [Supervisor grades a student\'s FYP1 or FYP2 final report against a JSON rubric. The grade |
+|                        | goes through \`DRAFT → SUBMITTED → FINALISED\`. Only FINALISED grades are visible to the   |
+|                        | student. The total score is the sum of the numeric criterion marks; the letter grade is    |
+|                        | derived against the MMU FCI scale.]{.mark}                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | [Project exists and the student is paired; the grader is the assigned supervisor for the   |
+|                        | project (per-row ownership check).]{.mark}                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [One \`FypGrade\` row exists per (project, phase, grader); the FINALISED grade is visible  |
+|                        | to the student on their dashboard.]{.mark}                                                 |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | []{.mark}                                                                                  |
+|                        |                                                                                            |
+|                        | 1.  Supervisor opens the supervisee\'s grading page.                                       |
+|                        |                                                                                            |
+|                        | 2.  Supervisor enters criterion marks against the rubric and optional remarks.             |
+|                        |                                                                                            |
+|                        | 3.  System derives \`total_score\` (sum of numeric criterion marks) and \`letter_grade\`   |
+|                        |     (MMU FCI scale: ≥80 A, ≥75 A−, ≥70 B+, ≥65 B, ≥60 B−, ≥55 C+, ≥50 C, ≥45 C−, ≥40 D,    |
+|                        |     otherwise F).                                                                          |
+|                        |                                                                                            |
+|                        | 4.  Supervisor saves as \`DRAFT\` or submits as \`SUBMITTED\`.                             |
+|                        |                                                                                            |
+|                        | 5.  Admin opens the grade administration page and reviews submitted grades.                |
+|                        |                                                                                            |
+|                        | 6.  Admin clicks Finalise → grade status flips to \`FINALISED\`; \`finalised_by_user_id\`  |
+|                        |     and \`finalised_at\` are recorded.                                                     |
+|                        |                                                                                            |
+|                        | 7.  Student sees the FINALISED grade and the grader\'s remarks on their dashboard.         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | [A1: Supervisor saves as DRAFT and returns later → grade remains hidden from the admin\'s  |
+|                        | submitted-queue and from the student.\                                                     |
+|                        | \                                                                                          |
+|                        | A2: Multiple graders (supervisor + examiner) → separate \`FypGrade\` rows per grader;      |
+|                        | \`UNIQUE (project_id, phase, grader_user_id)\` enforces one row per grader per             |
+|                        | phase.]{.mark}                                                                             |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | [E1: A non-assigned supervisor attempts to grade the project → system rejects with \"You   |
+|                        | are not the assigned supervisor for this project\" (per-row ownership check via            |
+|                        | \`GradingService\`).\                                                                      |
+|                        | \                                                                                          |
+|                        | E2: Grader edits a FINALISED grade → system rejects; the admin must revert the grade to    |
+|                        | SUBMITTED first.]{.mark}                                                                   |
++------------------------+--------------------------------------------------------------------------------------------+
 
 <mark>Table 3.41 UC36: Manage FYP Cycle Lifecycle</mark>
 
-<table>
-<colgroup>
-<col style="width: 21%" />
-<col style="width: 78%" />
-</colgroup>
-<thead>
-<tr>
-<th><strong>Field</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use Case ID</td>
-<td><mark>UC36</mark></td>
-</tr>
-<tr>
-<td>Use Case Name</td>
-<td><mark>Manage FYP Cycle Lifecycle</mark></td>
-</tr>
-<tr>
-<td>Actors</td>
-<td><mark>System Administrator</mark></td>
-</tr>
-<tr>
-<td>Description</td>
-<td><mark>System Administrator creates, activates, completes, and archives FYP cycles. Cycle activation triggers placeholder backfill for unenrolled students; cycle completion triggers notification fan-out and read-only mode for enrolled students. The invariant "at most one ACTIVE cycle per `cycle_type` (FYP1 or FYP2)" is enforced by `CycleLifecycleService`.</mark></td>
-</tr>
-<tr>
-<td>Pre-condition</td>
-<td><mark>System Administrator is logged in.</mark></td>
-</tr>
-<tr>
-<td>Postcondition</td>
-<td><mark>Cycle status reflects the requested transition (`PLANNING → ACTIVE → COMPLETED → ARCHIVED`); downstream side effects (placeholder rows, notifications, write-mode gating) are applied automatically.</mark></td>
-</tr>
-<tr>
-<td>Basic Path</td>
-<td><mark><ol type="1">
-<li><p>Admin creates a new cycle with type (FYP1 / FYP2), academic year, semester, start and end dates. Cycle status starts as `PLANNING`.</p></li>
-<li><p>Admin attaches deadlines to the cycle (proposal due, log compliance check, final report submission), each with a JSON array of reminder days.</p></li>
-<li><p>Admin activates the cycle. The system: (a) demotes any other ACTIVE cycle of the same type to `COMPLETED` and fans out notifications to all enrolled students; (b) for an FYP1 cycle, runs `backfillFyp1Placeholders` so every ACTIVE student without a Project row gets a placeholder one pinned to the new cycle.</p></li>
-<li><p>Cycle runs through the trimester. All student write endpoints work as normal.</p></li>
-<li><p>End of trimester: admin marks the cycle `COMPLETED`. The system fans out notifications to every enrolled student and switches student write endpoints to read-only — the cycle-active gate (`StudentAccessService.requireActiveCycle`) begins to throw 403 with a friendly "your cycle has ended" message.</p></li>
-<li><p>After the academic year closes, admin archives the cycle. It drops off default views but is preserved as a historical record.</p></li>
-</ol></mark></td>
-</tr>
-<tr>
-<td>Alternative Path</td>
-<td><mark>A1: Stale-placeholder special case → a student whose previous placeholder cycle just COMPLETED and who never picked a supervisor has their placeholder re-pointed to the next ACTIVE FYP1 cycle automatically. The student is not punished for missing the previous cycle.<br /><br />A2: FYP1 → FYP2 promotion → after a passed student's FYP1 cycle is COMPLETED and a new FYP2 cycle is ACTIVE, the student's `Project.stage` flips on next login (handled by `AuthService.refreshFyp1Status`).<br /><br />A3: Admin edits an existing PLANNING cycle (dates, deadlines) → changes apply directly; no notifications fire because the cycle is not yet visible to students.</mark></td>
-</tr>
-<tr>
-<td>Exceptional Path</td>
-<td><mark>E1: Two ACTIVE cycles of the same type would coexist → blocked by the invariant; admin must complete the existing one first.<br /><br />E2: Cycle activation fails after partial side-effect application → system rolls back the partial state, logs the failure, and surfaces the error to the admin.</mark></td>
-</tr>
-</tbody>
-</table>
++------------------------+--------------------------------------------------------------------------------------------+
+| **Field**              | **Details**                                                                                |
++========================+============================================================================================+
+| Use Case ID            | [UC36]{.mark}                                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Use Case Name          | [Manage FYP Cycle Lifecycle]{.mark}                                                        |
++------------------------+--------------------------------------------------------------------------------------------+
+| Actors                 | [System Administrator]{.mark}                                                              |
++------------------------+--------------------------------------------------------------------------------------------+
+| Description            | [System Administrator creates, activates, completes, and archives FYP cycles. Cycle        |
+|                        | activation triggers placeholder backfill for unenrolled students; cycle completion         |
+|                        | triggers notification fan-out and read-only mode for enrolled students. The invariant \"at |
+|                        | most one ACTIVE cycle per \`cycle_type\` (FYP1 or FYP2)\" is enforced by                   |
+|                        | \`CycleLifecycleService\`.]{.mark}                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Pre-condition          | [System Administrator is logged in.]{.mark}                                                |
++------------------------+--------------------------------------------------------------------------------------------+
+| Postcondition          | [Cycle status reflects the requested transition (\`PLANNING → ACTIVE → COMPLETED →         |
+|                        | ARCHIVED\`); downstream side effects (placeholder rows, notifications, write-mode gating)  |
+|                        | are applied automatically.]{.mark}                                                         |
++------------------------+--------------------------------------------------------------------------------------------+
+| Basic Path             | []{.mark}                                                                                  |
+|                        |                                                                                            |
+|                        | 1.  Admin creates a new cycle with type (FYP1 / FYP2), academic year, semester, start and  |
+|                        |     end dates. Cycle status starts as \`PLANNING\`.                                        |
+|                        |                                                                                            |
+|                        | 2.  Admin attaches deadlines to the cycle (proposal due, log compliance check, final       |
+|                        |     report submission), each with a JSON array of reminder days.                           |
+|                        |                                                                                            |
+|                        | 3.  Admin activates the cycle. The system: (a) demotes any other ACTIVE cycle of the same  |
+|                        |     type to \`COMPLETED\` and fans out notifications to all enrolled students; (b) for an  |
+|                        |     FYP1 cycle, runs \`backfillFyp1Placeholders\` so every ACTIVE student without a        |
+|                        |     Project row gets a placeholder one pinned to the new cycle.                            |
+|                        |                                                                                            |
+|                        | 4.  Cycle runs through the trimester. All student write endpoints work as normal.          |
+|                        |                                                                                            |
+|                        | 5.  End of trimester: admin marks the cycle \`COMPLETED\`. The system fans out             |
+|                        |     notifications to every enrolled student and switches student write endpoints to        |
+|                        |     read-only --- the cycle-active gate (\`StudentAccessService.requireActiveCycle\`)      |
+|                        |     begins to throw 403 with a friendly \"your cycle has ended\" message.                  |
+|                        |                                                                                            |
+|                        | 6.  After the academic year closes, admin archives the cycle. It drops off default views   |
+|                        |     but is preserved as a historical record.                                               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Alternative Path       | [A1: Stale-placeholder special case → a student whose previous placeholder cycle just      |
+|                        | COMPLETED and who never picked a supervisor has their placeholder re-pointed to the next   |
+|                        | ACTIVE FYP1 cycle automatically. The student is not punished for missing the previous      |
+|                        | cycle.\                                                                                    |
+|                        | \                                                                                          |
+|                        | A2: FYP1 → FYP2 promotion → after a passed student\'s FYP1 cycle is COMPLETED and a new    |
+|                        | FYP2 cycle is ACTIVE, the student\'s \`Project.stage\` flips on next login (handled by     |
+|                        | \`AuthService.refreshFyp1Status\`).\                                                       |
+|                        | \                                                                                          |
+|                        | A3: Admin edits an existing PLANNING cycle (dates, deadlines) → changes apply directly; no |
+|                        | notifications fire because the cycle is not yet visible to students.]{.mark}               |
++------------------------+--------------------------------------------------------------------------------------------+
+| Exceptional Path       | [E1: Two ACTIVE cycles of the same type would coexist → blocked by the invariant; admin    |
+|                        | must complete the existing one first.\                                                     |
+|                        | \                                                                                          |
+|                        | E2: Cycle activation fails after partial side-effect application → system rolls back the   |
+|                        | partial state, logs the failure, and surfaces the error to the admin.]{.mark}              |
++------------------------+--------------------------------------------------------------------------------------------+
 
 ##  3.6 Entity Relationship Diagram
 

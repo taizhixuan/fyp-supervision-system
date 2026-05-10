@@ -343,3 +343,7 @@ __pycache__/
 /Project-info/reports/_plans/
 /TODO/
 /Project-info/Demo-Walkthrough.md
+
+# Word lock / temp files (open-document marker)
+~$*.docx
+~$*.doc
