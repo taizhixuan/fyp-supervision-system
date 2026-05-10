@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react'
+import { forwardRef, useEffect, useState, type HTMLAttributes } from 'react'
 import {
   AlertCircle,
   CheckCircle2,
@@ -14,6 +14,11 @@ export interface AlertBannerProps extends HTMLAttributes<HTMLDivElement> {
   description?: string
   dismissible?: boolean
   onDismiss?: () => void
+  /**
+   * Milliseconds before the banner hides itself. Calls `onDismiss` (if any) on
+   * timeout. Set to 0 / undefined to keep the banner until clicked.
+   */
+  autoDismissMs?: number
 }
 
 const AlertBanner = forwardRef<HTMLDivElement, AlertBannerProps>(
@@ -25,11 +30,30 @@ const AlertBanner = forwardRef<HTMLDivElement, AlertBannerProps>(
       description,
       dismissible = false,
       onDismiss,
+      autoDismissMs,
       children,
       ...props
     },
     ref
   ) => {
+    // Internal hide state so the X button works even when callers don't pass
+    // `onDismiss`. Without this the dismiss icon is decorative and the banner
+    // stays on screen forever (e.g. mutation.isSuccess never flips back).
+    const [hidden, setHidden] = useState(false)
+    const dismiss = () => {
+      setHidden(true)
+      onDismiss?.()
+    }
+
+    useEffect(() => {
+      if (!autoDismissMs) return
+      const t = setTimeout(dismiss, autoDismissMs)
+      return () => clearTimeout(t)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [autoDismissMs])
+
+    if (hidden) return null
+
     const variants = {
       info: {
         container: 'bg-info-50 border-info-500 text-info-600',
@@ -75,7 +99,7 @@ const AlertBanner = forwardRef<HTMLDivElement, AlertBannerProps>(
         {dismissible && (
           <button
             type="button"
-            onClick={onDismiss}
+            onClick={dismiss}
             className="flex-shrink-0 p-0.5 rounded hover:bg-black/5 transition-colors"
             aria-label="Dismiss"
           >

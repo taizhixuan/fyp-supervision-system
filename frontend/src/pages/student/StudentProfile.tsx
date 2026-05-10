@@ -147,6 +147,12 @@ export function StudentProfile() {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
+      // Image upload is staged during edit (selectedImage holds the pending
+      // file from the preview modal). Commit it on Save so the avatar only
+      // changes when the user confirms — Cancel discards the file instead.
+      if (selectedImage) {
+        await uploadImage.mutateAsync(selectedImage)
+      }
       await updateProfile.mutateAsync({
         ...data,
         cgpa: data.cgpa ?? null,
@@ -154,6 +160,8 @@ export function StudentProfile() {
         skills,
         researchInterests: interests,
       })
+      setSelectedImage(null)
+      setImagePreview(null)
       setIsEditing(false)
     } catch (err) {
       // Error handled by mutation
@@ -176,6 +184,10 @@ export function StudentProfile() {
       setSkills(profile.skills ?? [])
       setInterests(profile.researchInterests ?? [])
     }
+    // Discard any staged-but-not-saved image so cancel actually reverts.
+    setSelectedImage(null)
+    setImagePreview(null)
+    setImageError(null)
     setIsEditing(false)
   }
 
@@ -239,17 +251,13 @@ export function StudentProfile() {
     event.target.value = ''
   }
 
-  const handleImageUpload = async () => {
+  // Stage the selection — the actual upload runs in onSubmit so the avatar
+  // change is gated on Save Changes (and revertible via Cancel). Without this,
+  // the file would commit immediately and Cancel would leave the new image
+  // on the server, surprising the user.
+  const handleImageUpload = () => {
     if (!selectedImage) return
-
-    try {
-      await uploadImage.mutateAsync(selectedImage)
-      setShowImageModal(false)
-      setSelectedImage(null)
-      setImagePreview(null)
-    } catch (err) {
-      setImageError('Failed to upload image. Please try again.')
-    }
+    setShowImageModal(false)
   }
 
   const handleCancelImageUpload = () => {
@@ -313,6 +321,8 @@ export function StudentProfile() {
           title="Failed to update profile"
           description="Please try again."
           dismissible
+          autoDismissMs={5000}
+          onDismiss={() => updateProfile.reset()}
         />
       )}
 
@@ -322,16 +332,25 @@ export function StudentProfile() {
           title="Profile updated"
           description="Your profile has been updated successfully."
           dismissible
+          autoDismissMs={5000}
+          onDismiss={() => updateProfile.reset()}
         />
       )}
 
       {/* Profile Header Card */}
       <Card>
         <div className="flex flex-col sm:flex-row items-start gap-6">
-          {/* Avatar */}
+          {/* Avatar — preview overrides actual while editing so the user can
+              see the staged file before it's committed on Save. */}
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-              {assetUrl(displayProfile.profileImageUrl) ? (
+              {isEditing && imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Pending profile picture"
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+              ) : assetUrl(displayProfile.profileImageUrl) ? (
                 <img
                   src={assetUrl(displayProfile.profileImageUrl)!}
                   alt={displayProfile.fullName}
@@ -860,10 +879,9 @@ export function StudentProfile() {
           <Button
             variant="primary"
             onClick={handleImageUpload}
-            isLoading={uploadImage.isPending}
             leftIcon={<Upload className="h-4 w-4" />}
           >
-            Upload
+            Use This Picture
           </Button>
         </ModalFooter>
       </Modal>
