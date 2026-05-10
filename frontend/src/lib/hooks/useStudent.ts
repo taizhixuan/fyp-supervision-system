@@ -320,6 +320,9 @@ export function useUploadProfileImage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentKeys.profile() })
       queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
+      // Header UserMenu reads from ['auth','me'] — invalidate so the avatar
+      // there refreshes alongside the profile page after a new upload.
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
     },
   })
 }
