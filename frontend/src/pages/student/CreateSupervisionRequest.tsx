@@ -247,6 +247,8 @@ export function CreateSupervisionRequest() {
               title="Failed to send request"
               description="Please try again later."
               dismissible
+              autoDismissMs={5000}
+              onDismiss={() => createRequest.reset()}
             />
           )}
 
