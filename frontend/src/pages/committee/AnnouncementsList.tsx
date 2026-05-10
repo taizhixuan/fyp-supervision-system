@@ -26,20 +26,31 @@ const priorityConfig: Record<AnnouncementPriority, { label: string; color: strin
   URGENT: { label: 'Urgent', color: 'text-rose-600', bgColor: 'bg-rose-100' },
 }
 
-const scopeConfig: Record<AnnouncementScope, { label: string }> = {
+// Backend can publish any AnnouncementService scope including ALL_SUPERVISEES
+// (supervisor-authored), ALL_STUDENTS, and PROGRAMME_<code> for any programme
+// the admin defined. Lookups fall back to FALLBACK_SCOPE so an unknown scope
+// renders as "Other" instead of crashing the page on .label.
+const scopeConfig: Record<string, { label: string }> = {
   ALL: { label: 'All Students' },
+  ALL_STUDENTS: { label: 'All Students' },
+  ALL_SUPERVISEES: { label: 'All Supervisees' },
+  SPECIFIC_STUDENTS: { label: 'Specific Students' },
   FYP1: { label: 'FYP1 Only' },
   FYP2: { label: 'FYP2 Only' },
   PROGRAMME_CS: { label: 'Computer Science' },
   PROGRAMME_SE: { label: 'Software Engineering' },
   PROGRAMME_DS: { label: 'Data Science' },
+  PROGRAMME_IT: { label: 'Information Technology' },
 }
+const FALLBACK_SCOPE = { label: 'Other' }
 
-const statusConfig: Record<AnnouncementStatus, { label: string; color: string; bgColor: string }> = {
+const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-100' },
   PUBLISHED: { label: 'Published', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   ARCHIVED: { label: 'Archived', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 }
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-stone-600', bgColor: 'bg-stone-100' }
+const FALLBACK_PRIORITY = { label: 'Normal', color: 'text-sky-600', bgColor: 'bg-sky-100' }
 
 export function AnnouncementsList() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -160,9 +171,9 @@ export function AnnouncementsList() {
       <div className="flex flex-col gap-4">
         {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
           filteredAnnouncements.map((announcement) => {
-            const priority = priorityConfig[announcement.priority]
-            const scope = scopeConfig[announcement.scope]
-            const status = statusConfig[announcement.status]
+            const priority = priorityConfig[announcement.priority] ?? FALLBACK_PRIORITY
+            const scope = scopeConfig[announcement.scope] ?? FALLBACK_SCOPE
+            const status = statusConfig[announcement.status] ?? FALLBACK_STATUS
             const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date()
 
             return (

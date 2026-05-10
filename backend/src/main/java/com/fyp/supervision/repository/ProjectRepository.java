@@ -31,6 +31,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p WHERE (p.stage IS NULL OR p.stage = 'FYP1' OR p.stage = 'FYP 1') AND p.student IS NOT NULL ORDER BY p.updatedAt DESC")
     List<Project> findFyp1Projects();
 
+    @Query("SELECT COUNT(p) FROM Project p WHERE (p.stage IS NULL OR p.stage = 'FYP1' OR p.stage = 'FYP 1') AND p.student IS NOT NULL")
+    long countFyp1Projects();
+
+    @Query("SELECT COUNT(p) FROM Project p WHERE (p.stage = 'FYP2' OR p.stage = 'FYP 2') AND p.student IS NOT NULL")
+    long countFyp2Projects();
+
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.student IS NOT NULL AND p.supervisor IS NULL")
+    long countUnpairedStudents();
+
     /**
      * Projects whose enrolled cycle is currently ACTIVE — used by supervisor/committee
      * lists so they don't surface students from cycles that have been COMPLETED/ARCHIVED.

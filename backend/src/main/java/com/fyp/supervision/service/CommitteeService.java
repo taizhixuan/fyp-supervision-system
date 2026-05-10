@@ -53,13 +53,13 @@ public class CommitteeService {
         stats.put("approvedProposals", approvedProposals);
         stats.put("rejectedProposals", rejectedProposals);
         stats.put("totalStudents", totalStudents);
-        stats.put("unpairedStudents", 0); // computed below if needed
+        stats.put("unpairedStudents", projectRepository.countUnpairedStudents());
         stats.put("totalSupervisors", totalSupervisors);
         stats.put("overloadedSupervisors", 0);
         stats.put("activeProjects", activeProjects);
         stats.put("completedProjects", completedProjects);
-        stats.put("fyp1Students", 0);
-        stats.put("fyp2Students", 0);
+        stats.put("fyp1Students", projectRepository.countFyp1Projects());
+        stats.put("fyp2Students", projectRepository.countFyp2Projects());
         stats.put("alerts", List.of());
         stats.put("recentActivities", List.of());
         return stats;
