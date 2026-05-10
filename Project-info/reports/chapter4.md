@@ -42,6 +42,14 @@ user's role. This design improves modularity by separating
 responsibilities by user type while maintaining consistent access
 control through a single authentication component.
 
+<!--
+UPDATED 2026-05-10: AI Microservices Layer labels in this diagram have
+been refreshed to reflect the actual implementation in FYP2.
+- "TF-IDF + Cosine Similarity" → "Sentence-BERT (BGE-base) + Weighted Scoring"
+- "NLP Rules/spaCy" → "Rule-based NLP + DistilBERT + Optional LLM"
+- Chatbot service tech stack added: "FAISS RAG + Remote LLM (Groq/OpenAI)"
+-->
+
 ```mermaid
 flowchart LR
   subgraph Clients["Client Layer (Web Browser)"]
@@ -70,9 +78,9 @@ flowchart LR
   end
 
   subgraph AI["AI Microservices Layer (Python/Flask)"]
-    REC["Supervisor Recommendation Service<br/>TF-IDF + Cosine Similarity"]
-    PA["Proposal Analyzer Service<br/>NLP Rules/spaCy"]
-    CB["FYP Chatbot Service"]
+    REC["Supervisor Recommendation Service<br/>Sentence-BERT (BGE-base) + Weighted Scoring"]
+    PA["Proposal Analyzer Service<br/>Rule-based NLP + DistilBERT + Optional LLM"]
+    CB["FYP Chatbot Service<br/>FAISS RAG + Remote LLM (Groq/OpenAI)"]
   end
 
   S --> I --> FE
