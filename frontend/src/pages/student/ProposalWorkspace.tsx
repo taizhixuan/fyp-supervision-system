@@ -520,6 +520,11 @@ export function ProposalWorkspace() {
           title="Proposal saved"
           description="Your changes have been saved successfully."
           dismissible
+          autoDismissMs={5000}
+          onDismiss={() => {
+            createProposal.reset()
+            updateProposal.reset()
+          }}
         />
       )}
 
