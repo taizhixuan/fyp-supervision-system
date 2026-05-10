@@ -100,6 +100,7 @@ export function MeetingLogReviewDetail() {
           variant="error"
           title="Failed to load meeting log"
           description="The meeting log could not be found or an error occurred."
+          dismissible
         />
         <Link to={ROUTES.SUPERVISOR.MEETING_LOGS}>
           <Button variant="secondary" leftIcon={<ArrowLeft className="h-4 w-4" />}>
