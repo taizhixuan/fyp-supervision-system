@@ -12,6 +12,7 @@ import {
   type PendingRegistration,
 } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
+import { avatarInitial } from '@/lib/utils/name'
 
 type Tab = 'STUDENT' | 'SUPERVISOR'
 
@@ -122,7 +123,7 @@ export function PendingRegistrations() {
             <Card key={reg.userId} className="p-4">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold flex-shrink-0">
-                  {reg.fullName.charAt(0).toUpperCase()}
+                  {avatarInitial(reg.fullName)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">

@@ -22,15 +22,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorDashboard, useSupervisorProfile } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-
-// Strip the academic title prefix ("Dr.", "Prof.", etc.) before pulling the
-// first name. Without this, the first space-separated token of "Dr. Tan Wei
-// Ming" is "Dr." and the greeting renders as "Welcome back, Dr."
-function firstNameOf(fullName?: string | null): string | undefined {
-  if (!fullName) return undefined
-  const stripped = fullName.replace(/^(Dr\.?|Prof\.?|Mr\.?|Mrs\.?|Ms\.?|Mdm\.?|Datuk|Dato'?|Datin)\s+/i, '').trim()
-  return stripped.split(' ')[0] || undefined
-}
+import { firstNameOf } from '@/lib/utils/name'
 
 export function SupervisorDashboard() {
   const { data: stats, isLoading: statsLoading } = useSupervisorDashboard()

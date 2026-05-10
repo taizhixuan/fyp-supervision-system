@@ -170,8 +170,17 @@ export function MaintenanceCenter() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          role="button"
+          tabIndex={0}
+          aria-label="Create backup"
           onClick={() => setShowBackupModal(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setShowBackupModal(true)
+            }
+          }}
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-amber-100 rounded-xl ring-1 ring-amber-200">
@@ -185,8 +194,17 @@ export function MaintenanceCenter() {
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          role="button"
+          tabIndex={0}
+          aria-label="Restore backup"
           onClick={() => setShowRestoreModal(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setShowRestoreModal(true)
+            }
+          }}
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-sky-100 rounded-xl ring-1 ring-sky-200">
@@ -200,8 +218,17 @@ export function MaintenanceCenter() {
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50"
+          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+          role="button"
+          tabIndex={0}
+          aria-label="System cleanup"
           onClick={() => setShowCleanupModal(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setShowCleanupModal(true)
+            }
+          }}
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-rose-100 rounded-xl ring-1 ring-rose-200">

@@ -21,6 +21,7 @@ import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
 import { useAdminUsers, useUpdateUser, useBulkUpdateUserStatus } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { avatarInitial } from '@/lib/utils/name'
 import type { UserRole, UserStatus } from '@/types'
 
 const roleConfig: Record<UserRole, { label: string; color: string; bgColor: string; borderColor: string }> = {
@@ -311,7 +312,7 @@ export function UserManagement() {
                       <Lock className="h-6 w-6 text-error-600" />
                     ) : (
                       <span className="text-lg font-semibold text-primary-600">
-                        {user.fullName.charAt(0).toUpperCase()}
+                        {avatarInitial(user.fullName)}
                       </span>
                     )}
                   </div>
