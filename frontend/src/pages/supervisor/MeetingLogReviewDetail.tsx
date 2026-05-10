@@ -455,12 +455,17 @@ export function MeetingLogReviewDetail() {
         </div>
       )}
 
-      {/* Error alerts */}
+      {/* Error alerts — dismissible + auto-clear so the banner doesn't pile
+          up on retries; reset() flips isError back to false so the next
+          failure can re-render a fresh banner. */}
       {signMutation.isError && (
         <AlertBanner
           variant="error"
           title="Failed to sign"
           description={signMutation.error?.message || 'An error occurred while signing.'}
+          dismissible
+          autoDismissMs={6000}
+          onDismiss={() => signMutation.reset()}
         />
       )}
       {addCommentsMutation.isError && (
@@ -468,6 +473,9 @@ export function MeetingLogReviewDetail() {
           variant="error"
           title="Failed to save comments"
           description={addCommentsMutation.error?.message || 'An error occurred.'}
+          dismissible
+          autoDismissMs={6000}
+          onDismiss={() => addCommentsMutation.reset()}
         />
       )}
       {requestCorrectionMutation.isError && (
@@ -475,6 +483,9 @@ export function MeetingLogReviewDetail() {
           variant="error"
           title="Failed to request correction"
           description={requestCorrectionMutation.error?.message || 'An error occurred.'}
+          dismissible
+          autoDismissMs={6000}
+          onDismiss={() => requestCorrectionMutation.reset()}
         />
       )}
     </div>
