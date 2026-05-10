@@ -103,8 +103,9 @@ flowchart LR
   AIClient -->|POST /ai/recommendations| REC
   AIClient -->|POST /ai/analyze-proposal| PA
   AIClient -->|POST /ai/chat| CB
-```Figure 4.2 Implementation Software
-Architecture (Layered System View)
+```
+
+Figure 4.2 Implementation Software Architecture (Layered System View)
 
 Figure 4.2 shows the deployed architecture in a layered structure. The
 Client Layer consists of web browsers used by students, supervisors, the
@@ -143,7 +144,7 @@ modules to be updated independently without disrupting the core system.
 ```mermaid
 graph TD
   Login["Register & Login Component"]
-  subgraph "Student Subsystem"
+  subgraph StudentSub["Student Subsystem"]
     Dashboard["Profile & Dashboard"]
     Search["Search & View Recommendations"]
     Requests["Send Supervisor Requests"]
@@ -156,7 +157,7 @@ graph TD
     Notifications["Receive Reminders/Notifications"]
     Chatbot["Ask Questions via Chatbot"]
   end
-  Login --> "Student Subsystem"
+  Login --> StudentSub
 ```
 
 Figure 4.3 Student Subsystem Architecture (Component View)
@@ -266,8 +267,9 @@ flowchart TB
   AIClient -->|recommend| REC
   AIClient -->|analyze| PA
   AIClient -->|chat| CB
-```Figure 4.4 Student Subsystem Architecture
-(Implementation Layer View)
+```
+
+Figure 4.4 Student Subsystem Architecture (Implementation Layer View)
 
 Figure 4.y illustrates the implementation of the Student subsystem where
 the Student Portal (React SPA) communicates with the Spring Boot Backend
@@ -282,7 +284,7 @@ features.
 ```mermaid
 graph TD
   Login["Register & Login Component"]
-  subgraph "Supervisor Subsystem"
+  subgraph SupervisorSub["Supervisor Subsystem"]
     Profile["Manage Profile"]
     Requests["Review & Respond to Requests"]
     Supervisees["View Supervisee Lists & Project Details"]
@@ -293,7 +295,7 @@ graph TD
     Documents["Upload/Download/Review Documents"]
     Announcements["Publish Announcements"]
   end
-  Login --> "Supervisor Subsystem"
+  Login --> SupervisorSub
 ```
 
 Figure 4.5 Supervisor Subsystem Architecture (Component View)
@@ -410,7 +412,7 @@ analysis.
 ```mermaid
 graph TD
   Login["Register & Login Component"]
-  subgraph "FYP Committee Subsystem"
+  subgraph CommitteeSub["FYP Committee Subsystem"]
     Announcements["Publish FYP Announcements"]
     Queue["View Proposal Review Queue"]
     Review["Review Proposals (Approve/Reject/Revision)"]
@@ -418,7 +420,7 @@ graph TD
     Overview["View Project & Pairing Overview"]
     Reports["Generate & Export FYP Reports"]
   end
-  Login --> "FYP Committee Subsystem"
+  Login --> CommitteeSub
 ```
 
 Figure 4.7 FYP Committee Subsystem Architecture (Component View)
@@ -522,15 +524,16 @@ results via the AI client for committee review.
 ```mermaid
 graph TD
   Login["Register & Login Component"]
-  subgraph "System Administrator Subsystem"
+  subgraph AdminSub["System Administrator Subsystem"]
     Users["Manage User Accounts & Roles"]
     Params["Configure System Parameters"]
     Integration["Configure Integration & Export Settings"]
     Maintenance["Perform System Maintenance Activities"]
   end
-  Login --> "System Administrator Subsystem"
-```Figure 4.9 System Administrator Subsystem
-Architecture (Component View)
+  Login --> AdminSub
+```
+
+Figure 4.9 System Administrator Subsystem Architecture (Component View)
 
 Figure 4.9 shows the System Administrator subsystem where access is
 provided through the Register and Login component. After logging in, the
