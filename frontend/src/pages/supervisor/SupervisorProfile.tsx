@@ -198,6 +198,7 @@ export function SupervisorProfile() {
           title="Profile updated successfully"
           description="Your changes have been saved and logged."
           dismissible
+          autoDismissMs={5000}
           onDismiss={() => setSaveSuccess(false)}
         />
       )}
@@ -207,6 +208,8 @@ export function SupervisorProfile() {
           title="Failed to update profile"
           description="Something went wrong. Please try again."
           dismissible
+          autoDismissMs={5000}
+          onDismiss={() => updateProfile.reset()}
         />
       )}
 

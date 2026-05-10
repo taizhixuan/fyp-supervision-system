@@ -122,7 +122,15 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
+      // Stage-then-commit: image is held in selectedImage until Save is
+      // clicked here. Without this, "Use This Picture" in the modal would
+      // commit immediately and Cancel wouldn't undo it.
+      if (selectedImage) {
+        await uploadImage.mutateAsync(selectedImage)
+      }
       await updateProfile.mutateAsync(data)
+      setSelectedImage(null)
+      setImagePreview(null)
       setIsEditing(false)
     } catch {
       // Error surface comes from updateProfile.isError below
@@ -131,6 +139,9 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
 
   const handleCancel = () => {
     reset({ email: profile.email, phone: profile.phone || '' })
+    setSelectedImage(null)
+    setImagePreview(null)
+    setImageError(null)
     setIsEditing(false)
   }
 
@@ -153,16 +164,11 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
     setShowImageModal(true)
   }
 
-  const handleImageUpload = async () => {
+  // Stage the file. Actual upload runs in onSubmit so the avatar only
+  // changes when the user clicks Save (and Cancel can roll it back).
+  const handleImageUpload = () => {
     if (!selectedImage) return
-    try {
-      await uploadImage.mutateAsync(selectedImage)
-      setShowImageModal(false)
-      setSelectedImage(null)
-      setImagePreview(null)
-    } catch {
-      setImageError('Failed to upload image. Please try again.')
-    }
+    setShowImageModal(false)
   }
 
   const handleCancelImage = () => {
@@ -209,10 +215,10 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
       </div>
 
       {updateProfile.isError && (
-        <AlertBanner variant="error" title="Failed to update profile" description="Please try again." dismissible />
+        <AlertBanner variant="error" title="Failed to update profile" description="Please try again." dismissible autoDismissMs={5000} onDismiss={() => updateProfile.reset()} />
       )}
       {updateProfile.isSuccess && (
-        <AlertBanner variant="success" title="Profile updated" description="Your profile has been saved." dismissible />
+        <AlertBanner variant="success" title="Profile updated" description="Your profile has been saved." dismissible autoDismissMs={5000} onDismiss={() => updateProfile.reset()} />
       )}
 
       {/* Profile Header Card */}
@@ -220,7 +226,9 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-              {profileImageUrl ? (
+              {isEditing && imagePreview ? (
+                <img src={imagePreview} alt="Pending profile picture" className="w-24 h-24 rounded-full object-cover" />
+              ) : profileImageUrl ? (
                 <img src={profileImageUrl} alt={profile.fullName} className="w-24 h-24 rounded-full object-cover" />
               ) : (
                 <span className="text-3xl font-bold text-primary-600">{initialsFromName(profile.fullName)}</span>
@@ -388,9 +396,8 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
             variant="primary"
             leftIcon={<Upload className="h-4 w-4" />}
             onClick={handleImageUpload}
-            isLoading={uploadImage.isPending}
           >
-            Upload
+            Use This Picture
           </Button>
         </ModalFooter>
       </Modal>
