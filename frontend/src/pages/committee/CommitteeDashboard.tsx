@@ -35,11 +35,12 @@ export function CommitteeDashboard() {
     )
   }
 
-  const { stats, alerts, recentActivities } = data || {
-    stats: null,
-    alerts: [],
-    recentActivities: [],
-  }
+  // Backend returns the stats fields at the top level alongside `alerts` and
+  // `recentActivities`. The mock used a nested `{ stats: {...} }` shape that
+  // the real API doesn't follow; reading `data.stats` left every widget at 0.
+  const stats = data ?? null
+  const alerts = data?.alerts ?? []
+  const recentActivities = data?.recentActivities ?? []
 
   const kpiCards = [
     {
