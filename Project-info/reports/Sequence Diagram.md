@@ -1,5 +1,9 @@
+> <mark>**FYP2 design evolution.** This document covers the sequence diagrams for UC1–UC36. UC34, UC35 and UC36 (§4.2.34–§4.2.36 at the end of the document) are FYP2 additions that capture the FYP1 pass-tracking, final-report grading and cycle-lifecycle flows, none of which existed in the FYP1 baseline. The existing UC1, UC14 and UC30 diagrams have also been extended with new `alt` branches to cover pre-approved roster auto-activation, login throttling, account-status guards, browser-push opt-in and pending-registration approval. Every FYP2 addition is highlighted with `<mark>` blocks and inline `%% NEW (FYP2)` comments inside the mermaid source. Implementation detail for each addition is documented in Chapter 5.</mark>
 
 ## 4.2.1 UC1 Register and Log In (All Roles)
+
+<mark>**FYP2 update:** added pre-approved roster lookup (UC1 A5) and login-throttle lockout (UC1 A6) as new alt branches; account-status guard (UC1 E4) now also runs on every authenticated request.</mark>
+
 ```mermaid
 sequenceDiagram
   title UC1 Register and Log In (All Roles)
@@ -25,12 +29,21 @@ sequenceDiagram
       FE-->>U: Show duplicate error
     else Not duplicate
       alt Role is Student or Supervisor
-        BE->>DB: Create user account
-        DB-->>BE: Account created
-        BE->>AUD: Log registration success
-        AUD-->>BE: Logged
-        BE-->>FE: Registration success
-        FE-->>U: Redirect to login
+        %% NEW (FYP2 A5): pre-approved roster lookup
+        BE->>DB: Lookup approved_student_roster / approved_supervisor_roster by (mmu_id, email)
+        DB-->>BE: Match or no match
+        alt Roster match
+          BE->>DB: Create user account with status ACTIVE
+          BE->>DB: Attach to active FYP1 cycle (placeholder Project row, FYP1 only)
+          BE->>AUD: Log REGISTER_AUTO_ACTIVATED
+          BE-->>FE: Registration success and ready to log in
+          FE-->>U: Show success, can log in immediately
+        else No roster match
+          BE->>DB: Create user account with status PENDING
+          BE->>AUD: Log REGISTER_PENDING
+          BE-->>FE: Registration success, pending approval
+          FE-->>U: Show pending-approval screen
+        end
       else Role is FYP Committee or System Admin
         BE-->>FE: Registration blocked
         FE-->>U: Inform admin-created account required
@@ -38,23 +51,45 @@ sequenceDiagram
     end
 
   else Log In
-    U->>FE: Enter MMU ID and password
+    U->>FE: Enter MMU ID or email and password
     FE->>BE: POST /auth/login
     BE->>AUTH: Validate credentials
-    AUTH->>DB: Load user by MMU ID
-    DB-->>AUTH: User record
-    alt Invalid credentials
-      AUTH-->>BE: Fail
-      BE-->>FE: Login rejected
-      FE-->>U: Show error and retry
-    else Valid credentials
-      AUTH-->>BE: Success with role
-      BE->>AUD: Log login success
-      AUD-->>BE: Logged
-      BE-->>FE: Return token and role
-      FE-->>U: Redirect to role dashboard
+    AUTH->>DB: Load user by MMU ID or email
+    DB-->>AUTH: User record (with login_attempts, lockout_until, status)
+    %% NEW (FYP2 A6): lockout window guard
+    alt Account currently locked (lockout_until > now)
+      AUTH-->>BE: Locked
+      BE->>AUD: Log LOGIN_REJECTED_LOCKED
+      BE-->>FE: 429 Account temporarily locked
+      FE-->>U: Show "Try again in N minutes" message
+    else Not locked
+      %% NEW (FYP2 E4): account status guard
+      alt Status is PENDING / SUSPENDED / BLOCKED
+        AUTH-->>BE: Status not active
+        BE->>AUD: Log LOGIN_REJECTED_STATUS
+        BE-->>FE: 401 Status-specific message
+        FE-->>U: Show "pending approval" / "suspended" / "blocked"
+      else Status ACTIVE
+        alt Invalid credentials
+          AUTH-->>BE: Fail
+          %% NEW (FYP2 A6): increment counter, lock at 5
+          BE->>DB: Increment login_attempts; if >= 5 set lockout_until = now + 15 min and reset counter
+          BE->>AUD: Log LOGIN_FAILURE (or LOGIN_LOCKOUT_TRIGGERED)
+          BE-->>FE: 401 Invalid credentials
+          FE-->>U: Show error and retry
+        else Valid credentials
+          AUTH-->>BE: Success with role
+          BE->>DB: Reset login_attempts and lockout_until
+          BE->>AUD: Log LOGIN_SUCCESS
+          BE-->>FE: Return JWT and role
+          FE-->>U: Redirect to role dashboard
+        end
+      end
     end
   end
+
+  %% NEW (FYP2 E4): every subsequent authenticated request re-reads user.status
+  Note over BE,DB: On every authenticated request, JwtAuthenticationFilter re-loads UserAccount; if status flipped to non-ACTIVE the filter rejects with 401.
 ```
 
 
@@ -316,7 +351,7 @@ sequenceDiagram
 
   alt Student has proposal topic
     BE->>REC: Request recommendations using student data
-    REC->>AI: POST /recommendSupervisor
+    REC->>AI: POST /ai/recommendations
     AI-->>REC: Recommended supervisors with scores
     %% NEW (FYP2): filter by availability_status and supervision_quota vs current_load
     REC->>DB: Load supervisor availability and load
@@ -504,7 +539,7 @@ sequenceDiagram
     BE->>AUTH: Validate token and role
     AUTH-->>BE: Authorized
     BE->>AIClient: Request proposal analysis (proposal-level)
-    AIClient->>AI: POST /analyzeProposal
+    AIClient->>AI: POST /ai/analyze-proposal
     AI-->>AIClient: Analysis result
     AIClient-->>BE: Analysis result
     BE->>PROP: Save analysis result at proposal level
@@ -526,7 +561,7 @@ sequenceDiagram
     PROP-->>BE: Submitted
 
     BE->>AIClient: Request proposal analysis
-    AIClient->>AI: POST /analyzeProposal
+    AIClient->>AI: POST /ai/analyze-proposal
     AI-->>AIClient: Analysis result
     AIClient-->>BE: Analysis result
     BE->>PROP: Save analysis result
@@ -1139,7 +1174,7 @@ sequenceDiagram
 
 ## 4.2.14 UC14 View Reminders and Notifications (Student)
 
-<mark>**FYP2 update:** notifications are now filtered by per-user preferences (`user_notification_preferences`) before delivery and dispatched to the configured channels (in-app inbox + email).</mark>
+<mark>**FYP2 update:** notifications are now filtered by per-user preferences (`user_notification_preferences`) before delivery and dispatched to the configured channels (in-app inbox, email, **and browser push (UC14 A2)** via VAPID-signed payloads).</mark>
 
 **Figure 4.24 UC14 View Reminders and Notifications Sequence Diagram**
 
@@ -1149,10 +1184,12 @@ sequenceDiagram
 sequenceDiagram
   autonumber
   actor STU as Student
+  participant BR as Browser
   participant TRG as Trigger Event
   participant NOTI as Notification Service
   participant DB as MySQL
   participant MAIL as Email Service
+  participant PUSH as Push Service (VAPID)
   participant FE as React SPA
   participant BE as Spring Boot API
   participant AUTH as Auth and RBAC
@@ -1161,7 +1198,7 @@ sequenceDiagram
   TRG->>NOTI: Deadline meeting update announcement event
   %% NEW (FYP2): load user preferences before delivery
   NOTI->>DB: Load user_notification_preferences (channels, categories)
-  DB-->>NOTI: Preferences (in-app, email enabled per category)
+  DB-->>NOTI: Preferences (in-app, email, browser push enabled per category)
 
   alt Category disabled by user
     NOTI->>NOTI: Skip notification per user preference
@@ -1172,6 +1209,16 @@ sequenceDiagram
     alt Email channel enabled
       NOTI->>MAIL: Send email notification
       MAIL-->>NOTI: Email queued or sent
+    end
+    %% NEW (FYP2 A2): browser push channel
+    alt Browser push channel enabled
+      NOTI->>DB: Load push_subscription rows for user
+      DB-->>NOTI: Endpoints + p256dh + auth_key per device
+      NOTI->>PUSH: Sign and dispatch push payload (VAPID) to each endpoint
+      PUSH-->>NOTI: Per-endpoint result (delivered / gone)
+      alt Endpoint marked gone (HTTP 404 / 410)
+        NOTI->>DB: Delete stale push_subscription row
+      end
     end
   end
 
@@ -1199,6 +1246,20 @@ sequenceDiagram
     DB-->>BE: Saved
     BE-->>FE: 200 Updated
     FE-->>STU: Show updated preferences
+  end
+
+  %% NEW (FYP2 A2): browser opt-in to push
+  alt Student opts in to browser push (A2)
+    STU->>FE: Click Enable browser push
+    FE->>BR: Request push subscription (VAPID public key)
+    BR-->>FE: Subscription (endpoint, p256dh, auth_key)
+    FE->>BE: POST /notifications/push/subscribe
+    BE->>AUTH: Validate token and role
+    AUTH-->>BE: Authorized
+    BE->>DB: Upsert push_subscription row keyed by endpoint
+    DB-->>BE: Saved
+    BE-->>FE: 201 Created
+    FE-->>STU: Show push enabled
   end
 ```
 
@@ -1259,7 +1320,7 @@ sequenceDiagram
 
   alt Chatbot available
     BE->>AIClient: Send question to chatbot
-    AIClient->>AI: POST /chatbotQuery
+    AIClient->>AI: POST /ai/chat
     AI-->>AIClient: Answer and reference
     AIClient-->>BE: Answer and reference
     BE->>CHAT: Save bot reply
@@ -1575,7 +1636,7 @@ sequenceDiagram
     SUP->>FE: Click refresh analysis
     FE->>BE: POST /supervisor/proposals/{proposalId}/analyze
     BE->>AIClient: Request proposal analysis
-    AIClient->>AI: POST /analyzeProposal
+    AIClient->>AI: POST /ai/analyze-proposal
     AI-->>AIClient: Analysis result
     AIClient-->>BE: Analysis result
     BE->>PROP: Save analysis result
@@ -2380,7 +2441,7 @@ sequenceDiagram
 ---
 ## 4.2.30 UC30 Manage User Accounts and Roles (System Administrator)
 
-<mark>**FYP2 update:** added bulk CSV import (UC30 A2) with row-level validation.</mark>
+<mark>**FYP2 update:** added bulk CSV import (UC30 A2) with row-level validation, pre-approved roster CSV upload (UC30 A3) and pending-registration approve/reject queue (UC30 A4).</mark>
 
 **Figure 4.40 UC30 Manage User Accounts and Roles Sequence Diagram**
 
@@ -2471,6 +2532,57 @@ sequenceDiagram
     FE-->>ADM: Show created count and per-row errors
   end
 
+  %% NEW (FYP2 A3): pre-approved roster CSV upload
+  alt Upload pre-approved roster CSV (A3)
+    ADM->>FE: Upload student or supervisor roster CSV
+    FE->>BE: POST /admin/roster/students/import or /admin/roster/supervisors/import
+    BE->>AUTH: Validate token and admin role
+    AUTH-->>BE: Authorized
+    BE->>UMS: Parse and validate roster CSV (mmu_id, email, programme/department, ...)
+    UMS->>DB: Upsert into approved_student_roster or approved_supervisor_roster
+    DB-->>UMS: Inserted / updated counts
+    UMS-->>BE: Summary
+    BE->>AUD: Log ROSTER_UPLOADED
+    AUD-->>BE: Logged
+    BE-->>FE: 200 Roster summary
+    FE-->>ADM: Show added/updated counts
+    Note over BE,DB: Future self-registrations whose (mmu_id, email) match a roster row will auto-activate (see UC1 A5).
+  end
+
+  %% NEW (FYP2 A4): pending-registration approve/reject queue
+  alt Review pending registrations (A4)
+    ADM->>FE: Open Pending Registrations page
+    FE->>BE: GET /admin/users/pending
+    BE->>UMS: List PENDING accounts
+    UMS->>DB: SELECT user_account WHERE status = 'PENDING'
+    DB-->>UMS: Pending list
+    UMS-->>BE: List
+    BE-->>FE: 200 Pending list
+    FE-->>ADM: Display pending registrations
+    alt Admin clicks Approve
+      ADM->>FE: Click Approve on a row
+      FE->>BE: POST /admin/users/{id}/approve
+      BE->>UMS: Set status ACTIVE
+      UMS->>DB: UPDATE user_account.status = 'ACTIVE'
+      DB-->>UMS: Updated
+      UMS->>NOTI: Notify user of approval
+      NOTI-->>UMS: Notified
+      BE->>AUD: Log USER_APPROVED
+      BE-->>FE: 200 OK
+      FE-->>ADM: Refresh queue
+    else Admin clicks Reject
+      ADM->>FE: Click Reject and enter reason
+      FE->>BE: POST /admin/users/{id}/reject
+      BE->>UMS: Set status BLOCKED with reason
+      UMS->>DB: UPDATE user_account.status = 'BLOCKED'
+      DB-->>UMS: Updated
+      UMS->>NOTI: Notify user of rejection (optional)
+      BE->>AUD: Log USER_REJECTED
+      BE-->>FE: 200 OK
+      FE-->>ADM: Refresh queue
+    end
+  end
+
   alt Service or database error
     BE->>AUD: Log user management error
     AUD-->>BE: Logged
@@ -2489,11 +2601,15 @@ sequenceDiagram
     
 4. If valid, the account is created, notification is sent, and the action is logged.
     
-5. Admin may update a user’s role or status; system validates and updates **MySQL**, then logs the action.
+5. Admin may update a user's role or status; system validates and updates **MySQL**, then logs the action.
     
 <mark>6. Admin may bulk-import users by uploading a CSV (A2); the system validates each row, inserts valid rows in batch, and returns a per-row success/error summary.</mark>
+
+<mark>7. Admin may upload a pre-approved roster CSV (A3) to the student or supervisor roster table; matching future self-registrations bypass the PENDING queue and auto-activate on first login (cross-reference UC1 A5).</mark>
+
+<mark>8. Admin may review the pending-registration queue (A4) and Approve (status flips to ACTIVE; user notified) or Reject (status flips to BLOCKED with optional reason); each decision is audit-logged.</mark>
     
-7. Errors are logged and displayed.
+9. Errors are logged and displayed.
     
 
 ---
@@ -2815,3 +2931,342 @@ sequenceDiagram
 <mark>7. Admin may open Maintenance Job History (A2) to filter past jobs by type or status and inspect their result details.</mark>
     
 8. Any maintenance failure is logged and displayed.
+
+---
+
+<mark>## 4.2.34 UC34 Track FYP1 Pass Outcome (System Administrator)</mark>
+
+<mark>**FYP2 addition:** new use case introduced during FYP2 implementation to record the externally-produced FYP1 pass/fail decision and to surface the meeting-log compliance count as a non-blocking soft warning at decision time.</mark>
+
+<mark>**Figure 4.44 UC34 Track FYP1 Pass Outcome Sequence Diagram**</mark>
+
+### Mermaid
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ADM as System Administrator
+  participant FE as React SPA
+  participant BE as Spring Boot API
+  participant AUTH as Auth and RBAC
+  participant PS as Project Service
+  participant CS as MeetingLogComplianceService
+  participant DB as MySQL
+  participant AUD as Audit Log
+
+  ADM->>FE: Open FYP1 Pass Tracking page
+  FE->>BE: GET /admin/projects/fyp1-pass
+  BE->>AUTH: Validate token and admin role
+  AUTH-->>BE: Authorized
+  BE->>PS: List FYP1 projects in active or recently-completed cycle
+  PS->>DB: SELECT projects with student, supervisor, fyp1_passed
+  DB-->>PS: Project rows
+  PS->>CS: For each project, count LOCKED meeting logs (FYP1 phase)
+  CS->>DB: SELECT COUNT(*) WHERE status='LOCKED' AND fyp_phase='FYP1'
+  DB-->>CS: Compliance count per project
+  CS-->>PS: Counts
+  PS-->>BE: Project rows with compliance badge (green ≥6, yellow <6)
+  BE-->>FE: 200 List
+  FE-->>ADM: Display table with compliance badges
+
+  alt Admin marks Pass when badge is green
+    ADM->>FE: Click Pass on project row
+    FE->>BE: POST /admin/projects/{id}/fyp1-passed (passed=true)
+    BE->>PS: Update project.fyp1_passed = true
+    PS->>DB: UPDATE project SET fyp1_passed = true
+    DB-->>PS: Updated
+    PS-->>BE: Saved
+    BE->>AUD: Log FYP1_PASSED
+    BE-->>FE: 200 OK
+    FE-->>ADM: Refresh row
+  else Admin marks Pass when badge is yellow (A1)
+    ADM->>FE: Click Pass on a yellow row
+    FE-->>ADM: Show confirmation modal quoting shortfall ("only 4 of 6 logs")
+    alt Admin confirms
+      FE->>BE: POST /admin/projects/{id}/fyp1-passed (passed=true)
+      BE->>PS: Update with override note
+      PS->>DB: UPDATE project SET fyp1_passed = true
+      DB-->>PS: Updated
+      BE->>AUD: Log FYP1_PASSED_BELOW_COMPLIANCE
+      BE-->>FE: 200 OK
+      FE-->>ADM: Refresh row
+    else Admin cancels
+      FE-->>ADM: No change
+    end
+  else Admin marks Fail
+    ADM->>FE: Click Fail on project row
+    FE->>BE: POST /admin/projects/{id}/fyp1-passed (passed=false)
+    BE->>PS: Update project.fyp1_passed = false
+    PS->>DB: UPDATE project SET fyp1_passed = false
+    DB-->>PS: Updated
+    BE->>AUD: Log FYP1_FAILED
+    BE-->>FE: 200 OK
+    FE-->>ADM: Refresh row
+  end
+
+  alt Bulk CSV import of decisions (A2)
+    ADM->>FE: Upload pass/fail CSV
+    FE->>BE: POST /admin/projects/fyp1-passed/import
+    BE->>PS: Validate and apply each row
+    loop Each row
+      PS->>DB: UPDATE project SET fyp1_passed = ?
+      DB-->>PS: Updated or error
+    end
+    PS-->>BE: Summary (applied count, error rows)
+    BE->>AUD: Log FYP1_BATCH_IMPORTED
+    BE-->>FE: 200 Summary
+    FE-->>ADM: Show applied count and per-row errors
+  end
+
+  alt Project ineligible (E1)
+    PS-->>BE: Skip — project has no Project row or no supervisor
+    BE-->>FE: Row marked ineligible
+  end
+```
+
+### Report (numbered)
+
+1. <mark>System Administrator opens the **FYP1 Pass Tracking** page.</mark>
+2. <mark>Backend validates admin access and asks Project Service for every FYP1 project in the relevant cycle.</mark>
+3. <mark>For each project, MeetingLogComplianceService counts the LOCKED meeting logs in the FYP1 phase; the result is rendered as a coloured badge (green ≥ 6, yellow < 6).</mark>
+4. <mark>Admin clicks Pass or Fail per row; system updates `Project.fyp1_passed` and audit-records the decision.</mark>
+5. <mark>If the badge is yellow when the admin marks Pass (A1), the system shows a confirmation modal quoting the shortfall before proceeding. The action is recorded as `FYP1_PASSED_BELOW_COMPLIANCE` in the audit log.</mark>
+6. <mark>Alternatively (A2), the admin uploads a CSV of decisions for batch processing; the system validates each row, applies the outcomes, and returns a per-row summary.</mark>
+7. <mark>Projects without a supervisor or without a Project row are skipped (E1) and reported back to the admin.</mark>
+
+---
+
+<mark>## 4.2.35 UC35 Grade Final Report (Supervisor + System Administrator + Student)</mark>
+
+<mark>**FYP2 addition:** new use case introduced during FYP2 implementation. The grader (assigned supervisor) submits a JSON-based rubric that flows through `DRAFT → SUBMITTED → FINALISED`; only FINALISED grades reach the student.</mark>
+
+<mark>**Figure 4.45 UC35 Grade Final Report Sequence Diagram**</mark>
+
+### Mermaid
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor SUP as Supervisor
+  actor ADM as System Administrator
+  actor STU as Student
+  participant FE as React SPA
+  participant BE as Spring Boot API
+  participant AUTH as Auth and RBAC
+  participant GS as GradingService
+  participant DB as MySQL
+  participant AUD as Audit Log
+
+  %% Step 1 — Supervisor enters and submits grade
+  SUP->>FE: Open supervisee grading page
+  FE->>BE: GET /supervisor/grades?projectId=...&phase=FYP1
+  BE->>AUTH: Validate token and supervisor role
+  AUTH-->>BE: Authorized
+  BE->>GS: Load grade for (project, phase, grader)
+  GS->>DB: SELECT fyp_grade WHERE project_id, phase, grader_user_id
+  DB-->>GS: Existing draft (or none)
+  GS-->>BE: Grade DTO
+  BE-->>FE: 200 Grade DTO
+  FE-->>SUP: Display rubric form
+
+  SUP->>FE: Enter criterion marks and remarks
+  FE->>BE: POST /supervisor/grades (status=DRAFT or SUBMITTED)
+  BE->>AUTH: Validate token and per-row ownership
+  AUTH-->>BE: Authorized
+  BE->>GS: Per-row ownership check (assigned supervisor for project?)
+  alt Not assigned supervisor (E1)
+    GS-->>BE: Reject with ForbiddenException
+    BE->>AUD: Log GRADE_FORBIDDEN
+    BE-->>FE: 403 You are not the assigned supervisor
+    FE-->>SUP: Show error
+  else Authorised
+    GS->>GS: Derive total_score and letter_grade from rubric
+    GS->>DB: INSERT or UPDATE fyp_grade (status DRAFT or SUBMITTED)
+    DB-->>GS: Saved
+    GS-->>BE: Saved DTO
+    BE->>AUD: Log GRADE_SUBMITTED (or GRADE_DRAFTED)
+    BE-->>FE: 200 OK
+    FE-->>SUP: Show saved
+  end
+
+  %% Step 2 — Admin finalises
+  ADM->>FE: Open Admin Grades page
+  FE->>BE: GET /admin/grades?status=SUBMITTED
+  BE->>AUTH: Validate token and admin role
+  AUTH-->>BE: Authorized
+  BE->>GS: List submitted grades
+  GS->>DB: SELECT fyp_grade WHERE status='SUBMITTED'
+  DB-->>GS: Submitted grades
+  GS-->>BE: List
+  BE-->>FE: 200 List
+  FE-->>ADM: Display submitted-grade queue
+
+  ADM->>FE: Click Finalise on a row
+  FE->>BE: POST /admin/grades/{gradeId}/finalise
+  BE->>GS: Finalise grade
+  alt Already FINALISED (E2)
+    GS-->>BE: Reject
+    BE-->>FE: 400 Cannot finalise non-SUBMITTED grade
+    FE-->>ADM: Show error
+  else Eligible
+    GS->>DB: UPDATE fyp_grade SET status='FINALISED', finalised_by_user_id, finalised_at
+    DB-->>GS: Updated
+    GS-->>BE: Updated DTO
+    BE->>AUD: Log GRADE_FINALISED
+    BE-->>FE: 200 OK
+    FE-->>ADM: Refresh queue
+  end
+
+  %% Step 3 — Student reads finalised grade
+  STU->>FE: Open dashboard or grades page
+  FE->>BE: GET /student/grades
+  BE->>AUTH: Validate token and student role
+  AUTH-->>BE: Authorized
+  BE->>GS: List finalised grades for student's project
+  GS->>DB: SELECT fyp_grade WHERE project_id and status='FINALISED'
+  DB-->>GS: Finalised rows
+  GS-->>BE: Grades DTO
+  BE-->>FE: 200 Finalised grades
+  FE-->>STU: Display total_score, letter_grade, remarks
+```
+
+### Report (numbered)
+
+1. <mark>Supervisor opens the supervisee grading page.</mark>
+2. <mark>System validates token and looks up any existing draft grade for `(project, phase, grader)`.</mark>
+3. <mark>Supervisor fills in the criterion marks and optional remarks; system derives `total_score` (sum) and `letter_grade` (MMU FCI scale).</mark>
+4. <mark>Per-row ownership check confirms the grader is the assigned supervisor for the project; if not (E1), `ForbiddenException` is returned and the action is audit-logged as `GRADE_FORBIDDEN`.</mark>
+5. <mark>Otherwise the grade row is upserted in `fyp_grade` with status `DRAFT` or `SUBMITTED`, audit-logged accordingly.</mark>
+6. <mark>System Administrator opens the Admin Grades page, sees the SUBMITTED queue, and clicks Finalise on a row.</mark>
+7. <mark>If the grade is already FINALISED (E2) the action is rejected; otherwise `status` flips to `FINALISED` and `finalised_by_user_id`/`finalised_at` are recorded. The action is audit-logged as `GRADE_FINALISED`.</mark>
+8. <mark>Student opens their dashboard; system returns only FINALISED grades for the student's project, with total score, letter grade and remarks.</mark>
+
+---
+
+<mark>## 4.2.36 UC36 Manage FYP Cycle Lifecycle (System Administrator)</mark>
+
+<mark>**FYP2 addition:** new use case introduced during FYP2 implementation. `CycleLifecycleService` enforces the "at most one ACTIVE cycle per `cycle_type`" invariant and runs the automatic side-effects (placeholder backfill on activation, notification fan-out on completion, FYP1 → FYP2 promotion on next login).</mark>
+
+<mark>**Figure 4.46 UC36 Manage FYP Cycle Lifecycle Sequence Diagram**</mark>
+
+### Mermaid
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ADM as System Administrator
+  participant FE as React SPA
+  participant BE as Spring Boot API
+  participant AUTH as Auth and RBAC
+  participant CLS as CycleLifecycleService
+  participant DB as MySQL
+  participant NOTI as Notification Service
+  participant AUD as Audit Log
+
+  %% Step 1 — Create cycle
+  ADM->>FE: Open Cycle Management; click New Cycle
+  FE-->>ADM: Show cycle form
+  ADM->>FE: Enter cycle_code, type, year, semester, dates
+  FE->>BE: POST /admin/cycles
+  BE->>AUTH: Validate token and admin role
+  AUTH-->>BE: Authorized
+  BE->>CLS: Create cycle in PLANNING
+  CLS->>DB: INSERT fyp_cycle (status='PLANNING')
+  DB-->>CLS: Created
+  BE->>AUD: Log CYCLE_CREATED
+  BE-->>FE: 201 Created
+  FE-->>ADM: Show new cycle
+
+  %% Step 2 — Attach deadlines
+  ADM->>FE: Add deadlines (proposal, log compliance, final report)
+  FE->>BE: POST /admin/deadlines (per deadline)
+  BE->>DB: INSERT deadline rows with reminder_days JSON
+  DB-->>BE: Saved
+  BE-->>FE: 201 Created
+  FE-->>ADM: Show deadline list
+
+  %% Step 3 — Activate cycle (the load-bearing transition)
+  ADM->>FE: Click Activate on PLANNING cycle
+  FE->>BE: POST /admin/cycles/{id}/activate
+  BE->>AUTH: Validate token and admin role
+  AUTH-->>BE: Authorized
+  BE->>CLS: setCycleStatus(id, ACTIVE)
+
+  alt Another ACTIVE cycle of same type exists (E1 invariant)
+    CLS->>DB: SELECT fyp_cycle WHERE cycle_type=? AND status='ACTIVE'
+    DB-->>CLS: Existing ACTIVE row
+    CLS->>DB: UPDATE existing → status='COMPLETED'
+    DB-->>CLS: Demoted
+    CLS->>NOTI: Fan-out to all enrolled students in demoted cycle
+    NOTI-->>CLS: Notifications dispatched
+    BE->>AUD: Log CYCLE_AUTO_DEMOTED
+  end
+
+  CLS->>DB: UPDATE target cycle → status='ACTIVE'
+  DB-->>CLS: Activated
+
+  %% Side-effect: placeholder backfill (FYP1 only)
+  alt cycle_type = FYP1
+    CLS->>DB: SELECT students with status='ACTIVE' and no Project row
+    DB-->>CLS: List
+    loop Each student
+      CLS->>DB: INSERT placeholder Project (no supervisor, title='(Pending — awaiting supervisor)') pinned to new cycle
+      DB-->>CLS: Created
+    end
+    Note over CLS,DB: Stale placeholders from a recently-COMPLETED cycle are also re-pointed to the new ACTIVE cycle.
+  end
+
+  BE->>AUD: Log CYCLE_ACTIVATED
+  BE-->>FE: 200 OK
+  FE-->>ADM: Show cycle as ACTIVE
+
+  %% Step 4 — Cycle runs through trimester (no admin action)
+
+  %% Step 5 — Complete cycle
+  ADM->>FE: Click Complete on ACTIVE cycle
+  FE->>BE: POST /admin/cycles/{id}/complete
+  BE->>CLS: setCycleStatus(id, COMPLETED)
+  CLS->>DB: UPDATE fyp_cycle → status='COMPLETED'
+  DB-->>CLS: Completed
+  CLS->>NOTI: Fan-out cycle-ended notification to all enrolled students
+  NOTI-->>CLS: Notifications dispatched
+  BE->>AUD: Log CYCLE_COMPLETED
+  BE-->>FE: 200 OK
+  FE-->>ADM: Show cycle as COMPLETED
+  Note over BE,DB: From now on, StudentAccessService.requireActiveCycle throws ForbiddenException for write endpoints; reads stay open.
+
+  %% Step 6 — FYP1 → FYP2 promotion (A2)
+  Note over BE: On a passed student's next login, AuthService.refreshFyp1Status flips Project.stage from FYP1 to FYP2 (handled inside UC1 Log In flow).
+
+  %% Step 7 — Archive cycle
+  ADM->>FE: Click Archive on COMPLETED cycle
+  FE->>BE: POST /admin/cycles/{id}/archive
+  BE->>CLS: setCycleStatus(id, ARCHIVED)
+  CLS->>DB: UPDATE fyp_cycle → status='ARCHIVED'
+  DB-->>CLS: Archived
+  BE->>AUD: Log CYCLE_ARCHIVED
+  BE-->>FE: 200 OK
+  FE-->>ADM: Cycle removed from default views
+
+  %% Exception path
+  alt Activation fails after partial side-effects (E2)
+    CLS->>DB: ROLLBACK transaction
+    BE->>AUD: Log CYCLE_ACTIVATION_FAILED
+    BE-->>FE: 500 Activation failed
+    FE-->>ADM: Show error
+  end
+```
+
+### Report (numbered)
+
+1. <mark>Admin creates a new cycle (type, year, semester, dates); status starts as `PLANNING`.</mark>
+2. <mark>Admin attaches per-cycle deadlines, each with reminder days encoded as JSON.</mark>
+3. <mark>Admin activates the cycle. If another cycle of the same type is already ACTIVE, `CycleLifecycleService` demotes it to COMPLETED first and fans out notifications to all enrolled students (invariant E1).</mark>
+4. <mark>For FYP1 cycle activation, `backfillFyp1Placeholders` runs: every active student without a Project row gets a placeholder one pinned to the new cycle. Stale placeholders from the previous cycle are re-pointed to the new ACTIVE cycle (A1).</mark>
+5. <mark>Cycle runs through the trimester. All student write endpoints work as normal.</mark>
+6. <mark>Admin marks the cycle as COMPLETED. Notifications fan out to every enrolled student. From this point, `StudentAccessService.requireActiveCycle` throws `ForbiddenException` on write endpoints, while reads remain open.</mark>
+7. <mark>For passed students, `AuthService.refreshFyp1Status` flips `Project.stage` from FYP1 to FYP2 on their next login when both prerequisites are met (A2; the flip is part of UC1 Log In).</mark>
+8. <mark>Admin archives the cycle once the academic year closes; the cycle drops off default views but remains as a historical record.</mark>
+9. <mark>If activation fails after partial side-effects (E2), the system rolls back, audit-logs the failure, and surfaces the error to the admin.</mark>
+
+

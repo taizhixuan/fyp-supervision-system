@@ -20,6 +20,8 @@ The Functional requirements define what the system must do to support the FYP su
 
 To keep the report concise, only a summary of the functional requirement groups is presented in this section. The complete functional requirements list (FR1–FR47) is provided in Appendix D (Table D.1) for reference and traceability.
 
+> <mark>**FYP2 design evolution.** The functional requirements catalogued in this section capture the FYP1 design baseline (FR1–FR47). Additional features added during FYP2 implementation — pre-approved roster auto-activation, login throttling, Web Push subscriptions, FYP1 pass tracking, final-report grading, and explicit FYP cycle lifecycle management — are documented as new use cases UC34–UC36 (Section 3.5.4) and as new alternative paths in UC1, UC14 and UC30. The matching sequence diagrams appear in the Sequence Diagram document (§4.2.1, §4.2.14, §4.2.30, and the new §4.2.34–§4.2.36). Implementation detail for each addition is documented in Chapter 5.</mark>
+
 Table 3.1 summarises the major functional modules and the most important requirement IDs that drive the system design.
 
 Table 3.1: Summary of Functional Requirements (Main Modules)
@@ -93,7 +95,7 @@ Table 3.4 Use Cases by Actor
 </thead>
 <tbody>
 <tr>
-<td rowspan="15"><strong>Student</strong></td>
+<td rowspan="16"><strong>Student</strong></td>
 <td>UC1 – Register and Log In</td>
 </tr>
 <tr>
@@ -139,7 +141,10 @@ Table 3.4 Use Cases by Actor
 <td>UC15 – Ask Questions Using the FYP Chatbot</td>
 </tr>
 <tr>
-<td rowspan="10"><strong>Supervisor</strong></td>
+<td><mark>UC35 – Grade Final Report (read finalised grade)</mark></td>
+</tr>
+<tr>
+<td rowspan="11"><strong>Supervisor</strong></td>
 <td>UC1 – Register and Log In</td>
 </tr>
 <tr>
@@ -170,6 +175,9 @@ Table 3.4 Use Cases by Actor
 <td>UC24 – Publish FYP Announcements</td>
 </tr>
 <tr>
+<td><mark>UC35 – Grade Final Report (grader)</mark></td>
+</tr>
+<tr>
 <td rowspan="7"><strong>FYP Committee</strong></td>
 <td>UC1 – Register and Log In</td>
 </tr>
@@ -192,7 +200,7 @@ Table 3.4 Use Cases by Actor
 <td>UC29 – Generate and Export FYP Reports</td>
 </tr>
 <tr>
-<td rowspan="5"><strong>System Administrator</strong></td>
+<td rowspan="9"><strong>System Administrator</strong></td>
 <td>UC1 – Register and Log In</td>
 </tr>
 <tr>
@@ -206,6 +214,15 @@ Table 3.4 Use Cases by Actor
 </tr>
 <tr>
 <td>UC33 – Perform System Maintenance</td>
+</tr>
+<tr>
+<td><mark>UC34 – Track FYP1 Pass Outcome</mark></td>
+</tr>
+<tr>
+<td><mark>UC35 – Grade Final Report (finaliser)</mark></td>
+</tr>
+<tr>
+<td><mark>UC36 – Manage FYP Cycle Lifecycle</mark></td>
 </tr>
 </tbody>
 </table>
@@ -275,13 +292,16 @@ Table 3.5 UC1: Register and Log In
 <td><p>A1: User account already exists → system directs user to Log In page.</p>
 <p>A2: FYP Committee or System Administrator registration attempt → system blocks self-registration and informs that the account must be created by System Administrator.</p>
 <p>A3: Invalid registration inputs → system highlights errors and requests correction.</p>
-<p>A4: Invalid login credentials → system displays error and allows retry.</p></td>
+<p>A4: Invalid login credentials → system displays error and allows retry.</p>
+<p><mark>A5: Pre-approved roster match → during registration, the system checks the (mmu_id, email) pair against `approved_student_roster` or `approved_supervisor_roster`. When both fields match together, the account is created with status `ACTIVE` immediately and the student is auto-enrolled in the currently active FYP1 cycle (placeholder Project row created via `CycleLifecycleService.attachStudentToActiveFyp1`). The user can log in straight away without admin review.</mark></p>
+<p><mark>A6: Repeated failed login attempts → after five consecutive failed password matches, the system locks the account for fifteen minutes (`user_account.lockout_until`). Subsequent attempts during the lockout window return a "temporarily locked" message stating how long until the account is usable again. A successful login resets the counter.</mark></p></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
 <td><p>E1: Duplicate MMU ID or email during registration → system prevents account creation and displays message.</p>
 <p>E2: Authentication service unavailable → system displays service unavailable message and logs the incident.</p>
-<p>E3: Database/server error → system terminates the process and does not create account or session.</p></td>
+<p>E3: Database/server error → system terminates the process and does not create account or session.</p>
+<p><mark>E4: Authenticated account is `PENDING`, `SUSPENDED`, or `BLOCKED` → login is rejected with a status-specific message (e.g. "Your account is pending approval"). The JWT filter additionally re-reads account status on every authenticated request, so a status flip terminates active sessions on the user's next call.</mark></p></td>
 </tr>
 </tbody>
 </table>
@@ -1043,7 +1063,7 @@ Table 3.18 UC14: View Reminders and Notifications
 </tr>
 <tr>
 <td>Description</td>
-<td>System notifies student about meetings, deadlines, and announcements <mark>through configured channels (in-app inbox and email), based on the student's notification preferences</mark>.</td>
+<td>System notifies student about meetings, deadlines, and announcements <mark>through configured channels (in-app inbox, email, and browser push), based on the student's notification preferences</mark>.</td>
 </tr>
 <tr>
 <td>Pre-condition</td>
@@ -1058,13 +1078,13 @@ Table 3.18 UC14: View Reminders and Notifications
 <td><ol type="1">
 <li><p>Trigger occurs (deadline, meeting update, announcement).</p></li>
 <li><mark><p>System reads the student's notification preferences (channels and categories enabled).</p></li></mark>
-<li><p>System sends notification <mark>through each enabled channel (in-app, email)</mark>.</p></li>
+<li><p>System sends notification <mark>through each enabled channel (in-app, email, browser push)</mark>.</p></li>
 <li><p>Student views notification in system.</p></li>
 </ol></td>
 </tr>
 <tr>
 <td>Alternative Path</td>
-<td>A1: Student <mark>opens notification preferences and customises which categories (meetings, proposals, announcements, deadlines) and channels (in-app / email) to receive; the system stores the preferences and applies them to subsequent notifications</mark>.</td>
+<td>A1: Student <mark>opens notification preferences and customises which categories (meetings, proposals, announcements, deadlines) and channels (in-app / email / browser push, with the VAPID push subscription handled at the browser level and stored in `push_subscription`) to receive; the system stores the preferences and applies them to subsequent notifications</mark>.<br /><br /><mark>A2: Student opts in to browser push → frontend requests the browser to subscribe to the VAPID push service; on success, the resulting `endpoint`, `p256dh`, and `auth_key` are POSTed to `/notifications/push/subscribe` and stored as a new `PUSH_SUBSCRIPTION` row keyed by `endpoint`. Subsequent notifications eligible for push fan out through `PushService.sendToUser`.</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -2080,7 +2100,7 @@ Table 3.35 UC30: Manage User Accounts and Roles
 <tr>
 <td>Alternative Path</td>
 <td>A1: Disable account for security reasons.<br />
-<mark>A2: Bulk-create user accounts from a CSV file → Admin uploads a CSV containing MMU ID, email, full name, and role; the system validates each row, creates the accounts in one batch, and reports successes and row-level errors.</mark></td>
+<mark>A2: Bulk-create user accounts from a CSV file → Admin uploads a CSV containing MMU ID, email, full name, and role; the system validates each row, creates the accounts in one batch, and reports successes and row-level errors.</mark><br /><br /><mark>A3: Admin uploads a pre-approved roster CSV (student or supervisor side) at `/admin/approved-roster` → matching self-registrations bypass the PENDING queue and become ACTIVE on first login. This decouples cohort admission from registration and removes the one-by-one approval load at the start of every cycle.</mark><br /><br /><mark>A4: Admin reviews the pending-registrations queue at `/admin/pending-registrations` → for each non-roster registration, the admin clicks Approve (status flips to `ACTIVE`, an in-app notification fires, the user can log in) or Reject (status flips to `BLOCKED` with an optional reason).</mark></td>
 </tr>
 <tr>
 <td>Exceptional Path</td>
@@ -2262,6 +2282,185 @@ Table 3.38 UC33: Perform System Maintenance
 <tr>
 <td>Exceptional Path</td>
 <td>E1: Backup fails due to storage issue → system alerts and logs critical error <mark>and marks the maintenance job as Failed with the error message captured in the job record</mark>.</td>
+</tr>
+</tbody>
+</table>
+
+<mark>Table 3.39 UC34: Track FYP1 Pass Outcome</mark>
+
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use Case ID</td>
+<td><mark>UC34</mark></td>
+</tr>
+<tr>
+<td>Use Case Name</td>
+<td><mark>Track FYP1 Pass Outcome</mark></td>
+</tr>
+<tr>
+<td>Actors</td>
+<td><mark>System Administrator</mark></td>
+</tr>
+<tr>
+<td>Description</td>
+<td><mark>System Administrator records each student's FYP1 pass-or-fail decision against an externally produced grade list (eBwise / Clic). The system surfaces the meeting-log compliance count as a non-blocking soft warning so that students with fewer than the FCI-required six logs are visible at decision time without being auto-rejected.</mark></td>
+</tr>
+<tr>
+<td>Pre-condition</td>
+<td><mark>FYP1 cycle is `ACTIVE` or `COMPLETED`; admin is logged in.</mark></td>
+</tr>
+<tr>
+<td>Postcondition</td>
+<td><mark>Each project's `fyp1_passed` flag is set (TRUE / FALSE / NULL); passed students will be promoted to the next ACTIVE FYP2 cycle on their next login.</mark></td>
+</tr>
+<tr>
+<td>Basic Path</td>
+<td><mark><ol type="1">
+<li><p>Admin opens the FYP1 Pass Tracking page.</p></li>
+<li><p>System lists every project in the relevant cycle with a compliance badge (green when ≥ 6 LOCKED meeting logs for the FYP1 phase, yellow when below).</p></li>
+<li><p>Admin clicks Pass or Fail for each project.</p></li>
+<li><p>System writes `Project.fyp1_passed` and audit-records the decision (`FYP1_PASSED` / `FYP1_FAILED`).</p></li>
+</ol></mark></td>
+</tr>
+<tr>
+<td>Alternative Path</td>
+<td><mark>A1: Admin marks Pass when the badge is yellow → confirmation modal quotes the shortfall ("only 4 of 6 logs"); admin confirms or cancels.<br /><br />A2: Admin uploads a CSV of pass/fail decisions for batch processing (`POST /admin/projects/fyp1-passed/import`); the system validates each row, applies the outcomes, and reports successes and row-level errors.</mark></td>
+</tr>
+<tr>
+<td>Exceptional Path</td>
+<td><mark>E1: Project has no supervisor or no Project row → system marks the row as ineligible and skips it.<br /><br />E2: Database write fails → system rolls back, audit-records the failure, and surfaces the error to the admin.</mark></td>
+</tr>
+</tbody>
+</table>
+
+<mark>Table 3.40 UC35: Grade Final Report</mark>
+
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use Case ID</td>
+<td><mark>UC35</mark></td>
+</tr>
+<tr>
+<td>Use Case Name</td>
+<td><mark>Grade Final Report</mark></td>
+</tr>
+<tr>
+<td>Actors</td>
+<td><mark>Supervisor (grader), System Administrator (finaliser), Student (reader of finalised grade)</mark></td>
+</tr>
+<tr>
+<td>Description</td>
+<td><mark>Supervisor grades a student's FYP1 or FYP2 final report against a JSON rubric. The grade goes through `DRAFT → SUBMITTED → FINALISED`. Only FINALISED grades are visible to the student. The total score is the sum of the numeric criterion marks; the letter grade is derived against the MMU FCI scale.</mark></td>
+</tr>
+<tr>
+<td>Pre-condition</td>
+<td><mark>Project exists and the student is paired; the grader is the assigned supervisor for the project (per-row ownership check).</mark></td>
+</tr>
+<tr>
+<td>Postcondition</td>
+<td><mark>One `FypGrade` row exists per (project, phase, grader); the FINALISED grade is visible to the student on their dashboard.</mark></td>
+</tr>
+<tr>
+<td>Basic Path</td>
+<td><mark><ol type="1">
+<li><p>Supervisor opens the supervisee's grading page.</p></li>
+<li><p>Supervisor enters criterion marks against the rubric and optional remarks.</p></li>
+<li><p>System derives `total_score` (sum of numeric criterion marks) and `letter_grade` (MMU FCI scale: ≥80 A, ≥75 A−, ≥70 B+, ≥65 B, ≥60 B−, ≥55 C+, ≥50 C, ≥45 C−, ≥40 D, otherwise F).</p></li>
+<li><p>Supervisor saves as `DRAFT` or submits as `SUBMITTED`.</p></li>
+<li><p>Admin opens the grade administration page and reviews submitted grades.</p></li>
+<li><p>Admin clicks Finalise → grade status flips to `FINALISED`; `finalised_by_user_id` and `finalised_at` are recorded.</p></li>
+<li><p>Student sees the FINALISED grade and the grader's remarks on their dashboard.</p></li>
+</ol></mark></td>
+</tr>
+<tr>
+<td>Alternative Path</td>
+<td><mark>A1: Supervisor saves as DRAFT and returns later → grade remains hidden from the admin's submitted-queue and from the student.<br /><br />A2: Multiple graders (supervisor + examiner) → separate `FypGrade` rows per grader; `UNIQUE (project_id, phase, grader_user_id)` enforces one row per grader per phase.</mark></td>
+</tr>
+<tr>
+<td>Exceptional Path</td>
+<td><mark>E1: A non-assigned supervisor attempts to grade the project → system rejects with "You are not the assigned supervisor for this project" (per-row ownership check via `GradingService`).<br /><br />E2: Grader edits a FINALISED grade → system rejects; the admin must revert the grade to SUBMITTED first.</mark></td>
+</tr>
+</tbody>
+</table>
+
+<mark>Table 3.41 UC36: Manage FYP Cycle Lifecycle</mark>
+
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr>
+<th><strong>Field</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use Case ID</td>
+<td><mark>UC36</mark></td>
+</tr>
+<tr>
+<td>Use Case Name</td>
+<td><mark>Manage FYP Cycle Lifecycle</mark></td>
+</tr>
+<tr>
+<td>Actors</td>
+<td><mark>System Administrator</mark></td>
+</tr>
+<tr>
+<td>Description</td>
+<td><mark>System Administrator creates, activates, completes, and archives FYP cycles. Cycle activation triggers placeholder backfill for unenrolled students; cycle completion triggers notification fan-out and read-only mode for enrolled students. The invariant "at most one ACTIVE cycle per `cycle_type` (FYP1 or FYP2)" is enforced by `CycleLifecycleService`.</mark></td>
+</tr>
+<tr>
+<td>Pre-condition</td>
+<td><mark>System Administrator is logged in.</mark></td>
+</tr>
+<tr>
+<td>Postcondition</td>
+<td><mark>Cycle status reflects the requested transition (`PLANNING → ACTIVE → COMPLETED → ARCHIVED`); downstream side effects (placeholder rows, notifications, write-mode gating) are applied automatically.</mark></td>
+</tr>
+<tr>
+<td>Basic Path</td>
+<td><mark><ol type="1">
+<li><p>Admin creates a new cycle with type (FYP1 / FYP2), academic year, semester, start and end dates. Cycle status starts as `PLANNING`.</p></li>
+<li><p>Admin attaches deadlines to the cycle (proposal due, log compliance check, final report submission), each with a JSON array of reminder days.</p></li>
+<li><p>Admin activates the cycle. The system: (a) demotes any other ACTIVE cycle of the same type to `COMPLETED` and fans out notifications to all enrolled students; (b) for an FYP1 cycle, runs `backfillFyp1Placeholders` so every ACTIVE student without a Project row gets a placeholder one pinned to the new cycle.</p></li>
+<li><p>Cycle runs through the trimester. All student write endpoints work as normal.</p></li>
+<li><p>End of trimester: admin marks the cycle `COMPLETED`. The system fans out notifications to every enrolled student and switches student write endpoints to read-only — the cycle-active gate (`StudentAccessService.requireActiveCycle`) begins to throw 403 with a friendly "your cycle has ended" message.</p></li>
+<li><p>After the academic year closes, admin archives the cycle. It drops off default views but is preserved as a historical record.</p></li>
+</ol></mark></td>
+</tr>
+<tr>
+<td>Alternative Path</td>
+<td><mark>A1: Stale-placeholder special case → a student whose previous placeholder cycle just COMPLETED and who never picked a supervisor has their placeholder re-pointed to the next ACTIVE FYP1 cycle automatically. The student is not punished for missing the previous cycle.<br /><br />A2: FYP1 → FYP2 promotion → after a passed student's FYP1 cycle is COMPLETED and a new FYP2 cycle is ACTIVE, the student's `Project.stage` flips on next login (handled by `AuthService.refreshFyp1Status`).<br /><br />A3: Admin edits an existing PLANNING cycle (dates, deadlines) → changes apply directly; no notifications fire because the cycle is not yet visible to students.</mark></td>
+</tr>
+<tr>
+<td>Exceptional Path</td>
+<td><mark>E1: Two ACTIVE cycles of the same type would coexist → blocked by the invariant; admin must complete the existing one first.<br /><br />E2: Cycle activation fails after partial side-effect application → system rolls back the partial state, logs the failure, and surfaces the error to the admin.</mark></td>
 </tr>
 </tbody>
 </table>

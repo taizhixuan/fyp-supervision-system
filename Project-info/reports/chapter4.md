@@ -100,9 +100,9 @@ flowchart LR
   DOCS --> FS
   BE --> FS
 
-  AIClient -->|/recommendSupervisor| REC
-  AIClient -->|/analyzeProposal| PA
-  AIClient -->|/chatbotQuery| CB
+  AIClient -->|POST /ai/recommendations| REC
+  AIClient -->|POST /ai/analyze-proposal| PA
+  AIClient -->|POST /ai/chat| CB
 ```Figure 4.2 Implementation Software
 Architecture (Layered System View)
 

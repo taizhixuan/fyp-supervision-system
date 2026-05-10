@@ -15,8 +15,8 @@ This section describes all database tables used in the FYP Supervision System. E
 | USER_ACCOUNT | email | VARCHAR | Email format | 100 | User email address | "john.doe@student.mmu.edu.my" |
 | USER_ACCOUNT | full_name | VARCHAR | Text | 150 | User full name | "John Doe" |
 | USER_ACCOUNT | phone | VARCHAR | Phone format | 20 | Contact number (optional) | "+60123456789" |
-| USER_ACCOUNT | role | VARCHAR | Enumeration | 20 | User role in the system | "STUDENT", "SUPERVISOR", "FYP_ADMIN", "SYS_ADMIN" |
-| USER_ACCOUNT | status | VARCHAR | Enumeration | 15 | Account status | "ACTIVE", "INACTIVE", "SUSPENDED" |
+| USER_ACCOUNT | role | VARCHAR | Enumeration | 20 | User role in the system | <mark>"STUDENT", "SUPERVISOR", "FYP_COMMITTEE", "SYSTEM_ADMIN"</mark> |
+| USER_ACCOUNT | status | VARCHAR | Enumeration | 15 | Account status | <mark>"PENDING", "ACTIVE", "SUSPENDED", "BLOCKED"</mark> |
 | USER_ACCOUNT | last_login_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp of last login | "2025-01-15 14:30:00" |
 | USER_ACCOUNT | created_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Account creation timestamp | "2024-09-01 09:00:00" |
 | USER_ACCOUNT | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Last update timestamp | "2025-01-10 16:45:00" |
@@ -68,7 +68,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | FYP_CYCLE | cycle_code | VARCHAR | Alphanumeric | 10 | Cycle label/code | "T2530", "T2630" |
 | FYP_CYCLE | start_date | DATE | YYYY-MM-DD | - | Cycle start date | "2025-01-15" |
 | FYP_CYCLE | end_date | DATE | YYYY-MM-DD | - | Cycle end date | "2025-12-31" |
-| FYP_CYCLE | status | VARCHAR | Enumeration | 15 | Cycle status | "ACTIVE", "CLOSED", "UPCOMING" |
+| FYP_CYCLE | status | VARCHAR | Enumeration | 15 | Cycle status | <mark>"PLANNING", "ACTIVE", "COMPLETED", "ARCHIVED"</mark> |
 
 ---
 
@@ -81,7 +81,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | SUPERVISOR_REQUEST | supervisor_user_id | BIGINT | Numeric | 20 | Supervisor receiving the request (Foreign Key) | 2001 |
 | SUPERVISOR_REQUEST | topic_summary | TEXT | Text | 500 | Short topic/proposal summary | "AI-based Student Performance Prediction System" |
 | SUPERVISOR_REQUEST | message | TEXT | Text | 2000 | Request message from student | "I am interested in your research area..." |
-| SUPERVISOR_REQUEST | status | VARCHAR | Enumeration | 15 | Request status | "PENDING", "ACCEPTED", "REJECTED" |
+| SUPERVISOR_REQUEST | status | VARCHAR | Enumeration | 15 | Request status | <mark>"PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN", "EXPIRED"</mark> |
 | SUPERVISOR_REQUEST | submitted_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp when request was submitted | "2025-01-10 09:15:00" |
 | SUPERVISOR_REQUEST | responded_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp when supervisor responded | "2025-01-12 14:30:00" |
 
@@ -100,7 +100,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROJECT | specialisation | VARCHAR | Text | 100 | Specialisation/category alignment | "Software Engineering" |
 | PROJECT | category | VARCHAR | Text | 50 | Project category/type | "Application Development", "Research" |
 | PROJECT | stage | VARCHAR | Enumeration | 10 | Current FYP stage | "FYP1", "FYP2" |
-| PROJECT | status | VARCHAR | Enumeration | 15 | Project status | "DRAFT", "REGISTERED", "ACTIVE", "COMPLETED" |
+| PROJECT | status | VARCHAR | Enumeration | 15 | Project status | <mark>"ACTIVE", "COMPLETED", "SUSPENDED", "DROPPED"</mark> |
 | PROJECT | registered_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Registration timestamp | "2025-01-20 10:00:00" |
 | PROJECT | updated_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Last update timestamp | "2025-01-25 15:30:00" |
 
@@ -154,8 +154,9 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROPOSAL_CHECK_RESULT | suggested_improvements | TEXT | Text | 3000 | AI-generated improvement suggestions | "Consider adding more specific objectives..." |
 | <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>strengths</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>AI-detected strengths of the proposal</mark> | <mark>"Strong technical foundation; clear objectives"</mark> |
 | <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>weaknesses</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>AI-detected weaknesses of the proposal</mark> | <mark>"Methodology lacks evaluation metrics"</mark> |
-| <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>plagiarism_score</mark> | <mark>DECIMAL</mark> | <mark>Numeric (5,2)</mark> | <mark>6</mark> | <mark>Plagiarism similarity percentage (nullable)</mark> | <mark>12.50</mark> |
 | <mark>PROPOSAL_CHECK_RESULT</mark> | <mark>remarks</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>2000</mark> | <mark>Additional remarks attached to the check result</mark> | <mark>"Run on submitted v3"</mark> |
+<!-- The plagiarism_score column added in V10 was dropped in V31 (2026-05-10) because the analyser never produced a real signal for it. -->
+
 | PROPOSAL_CHECK_RESULT | checked_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Timestamp of check | "2025-01-22 11:20:00" |
 
 ---
@@ -167,7 +168,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | PROPOSAL_REVIEW | review_id | BIGINT | Numeric | 20 | Unique review record identifier (Primary Key) | 8001 |
 | PROPOSAL_REVIEW | proposal_id | BIGINT | Numeric | 20 | Proposal being reviewed (Foreign Key) | 4001 |
 | PROPOSAL_REVIEW | reviewer_user_id | BIGINT | Numeric | 20 | Reviewer user ID (Foreign Key) | 2001 |
-| PROPOSAL_REVIEW | reviewer_role | VARCHAR | Enumeration | 15 | Role of reviewer | "SUPERVISOR", "FYP_ADMIN" |
+| PROPOSAL_REVIEW | reviewer_role | VARCHAR | Enumeration | 30 | Role of reviewer | <mark>"SUPERVISOR", "FYP_COMMITTEE"</mark> |
 | PROPOSAL_REVIEW | decision | VARCHAR | Enumeration | 20 | Review decision | "APPROVE", "REJECT", "REQUEST_REVISION" |
 | PROPOSAL_REVIEW | remarks | TEXT | Text | 3000 | Review comments and feedback | "Good proposal, minor revisions needed..." |
 | <mark>PROPOSAL_REVIEW</mark> | <mark>internal_notes</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>3000</mark> | <mark>Internal reviewer notes (not shown to student)</mark> | <mark>"Coordinate with second supervisor on scope"</mark> |
@@ -204,7 +205,7 @@ This section describes all database tables used in the FYP Supervision System. E
 | MEETING_LOG | action_items | TEXT | Text | 3000 | Action items and next steps | "1. Complete literature review\n2. Draft Chapter 1" |
 | MEETING_LOG | next_meeting_date | DATE | YYYY-MM-DD | - | Planned next meeting date | "2025-02-15" |
 | MEETING_LOG | supervisor_comments | TEXT | Text | 2000 | Supervisor feedback/comments | "Good progress, continue with current pace" |
-| MEETING_LOG | status | VARCHAR | Enumeration | 15 | Log status | "DRAFT", "SUBMITTED", "LOCKED" |
+| MEETING_LOG | status | VARCHAR | Enumeration | 25 | Log status | <mark>"DRAFT", "SUBMITTED", "CORRECTION_REQUIRED", "SUPERVISOR_SIGNED", "LOCKED"</mark> |
 | MEETING_LOG | submitted_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Submission timestamp | "2025-02-01 15:00:00" |
 | MEETING_LOG | locked_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Lock timestamp when finalised | "2025-02-02 10:00:00" |
 
@@ -321,7 +322,7 @@ This section describes all database tables used in the FYP Supervision System. E
 |-------|------------|-----------|-------------|------------|-------------|---------|
 | CHAT_MESSAGE | message_id | BIGINT | Numeric | 20 | Unique chat message identifier (Primary Key) | 19001 |
 | CHAT_MESSAGE | session_id | BIGINT | Numeric | 20 | Session reference (Foreign Key) | 18001 |
-| CHAT_MESSAGE | sender | VARCHAR | Enumeration | 10 | Message sender type | "USER", "BOT", "SYSTEM" |
+| CHAT_MESSAGE | sender | VARCHAR | Enumeration | 20 | Message sender type | <mark>"user", "assistant"</mark> |
 | CHAT_MESSAGE | content | TEXT | Text | 5000 | Message text content | "What are the requirements for FYP proposal?" |
 | CHAT_MESSAGE | confidence_score | DECIMAL | Numeric (4,3) | 5 | AI confidence score (0.000-1.000) | 0.925 |
 | CHAT_MESSAGE | sent_at | DATETIME | YYYY-MM-DD HH:MM:SS | - | Sent timestamp | "2025-01-26 09:05:00" |
@@ -372,7 +373,7 @@ This section describes all database tables used in the FYP Supervision System. E
 |-------|------------|-----------|-------------|------------|-------------|---------|
 | AUDIT_LOG | audit_id | BIGINT | Numeric | 20 | Unique audit record identifier (Primary Key) | 22001 |
 | AUDIT_LOG | user_id | BIGINT | Numeric | 20 | User who performed action (Foreign Key, nullable for system actions) | 1001 |
-| AUDIT_LOG | action | VARCHAR | Enumeration | 20 | Action type | "CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT" |
+| AUDIT_LOG | action | VARCHAR | Enumeration | 100 | Action type — SCREAMING_CASE business event codes | <mark>"LOGIN_SUCCESS", "LOGIN_FAILURE", "LOGIN_LOCKOUT_TRIGGERED", "USER_APPROVED", "CYCLE_ACTIVATED", "GRADE_FINALISED", …</mark> |
 | AUDIT_LOG | entity_name | VARCHAR | Text | 50 | Entity/table affected | "PROJECT", "PROPOSAL", "MEETING" |
 | AUDIT_LOG | entity_id | BIGINT | Numeric | 20 | Affected record ID | 3001 |
 | <mark>AUDIT_LOG</mark> | <mark>old_value</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Snapshot of the affected record before the change</mark> | <mark>"{\"status\":\"DRAFT\"}"</mark> |
@@ -446,6 +447,127 @@ This section describes all database tables used in the FYP Supervision System. E
 
 ---
 
+<mark>### DEADLINE_REMINDER_LOG (V17 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>DEADLINE_REMINDER_LOG</mark> | <mark>deadline_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Deadline reference (Composite Primary Key, Foreign Key → DEADLINE)</mark> | <mark>14001</mark> |
+| <mark>DEADLINE_REMINDER_LOG</mark> | <mark>days_before</mark> | <mark>INT</mark> | <mark>Numeric</mark> | <mark>3</mark> | <mark>Reminder offset in days that has fired (Composite Primary Key)</mark> | <mark>7</mark> |
+| <mark>DEADLINE_REMINDER_LOG</mark> | <mark>fired_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Timestamp the reminder was dispatched</mark> | <mark>"2026-04-21 09:00:00"</mark> |
+
+---
+
+<mark>### PASSWORD_RESET_TOKEN (V19, V21 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique token row identifier (Primary Key)</mark> | <mark>60001</mark> |
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Token owner (Foreign Key, ON DELETE CASCADE)</mark> | <mark>1001</mark> |
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>token_hash</mark> | <mark>VARCHAR</mark> | <mark>Hex string</mark> | <mark>64</mark> | <mark>SHA-256 hex hash of the raw token (Unique Key). The raw token itself is sent only via email; only the hash is stored.</mark> | <mark>"6b3a..."</mark> |
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>expires_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Token expiry timestamp</mark> | <mark>"2026-04-22 11:00:00"</mark> |
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>used_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Timestamp the token was consumed (nullable)</mark> | <mark>"2026-04-22 10:35:00"</mark> |
+| <mark>PASSWORD_RESET_TOKEN</mark> | <mark>created_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Token issuance timestamp</mark> | <mark>"2026-04-22 10:00:00"</mark> |
+
+---
+
+<mark>### PUSH_SUBSCRIPTION (V20 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique subscription identifier (Primary Key)</mark> | <mark>70001</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Subscribing user (Foreign Key, ON DELETE CASCADE)</mark> | <mark>1001</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>endpoint</mark> | <mark>VARCHAR</mark> | <mark>URL</mark> | <mark>500</mark> | <mark>Push gateway endpoint URL (Unique Key — uniquely identifies a browser/device subscription)</mark> | <mark>"https://fcm.googleapis.com/fcm/send/..."</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>p256dh</mark> | <mark>VARCHAR</mark> | <mark>Base64 string</mark> | <mark>255</mark> | <mark>Subscriber public key (P-256 ECDH)</mark> | <mark>"BL...="</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>auth_key</mark> | <mark>VARCHAR</mark> | <mark>Base64 string</mark> | <mark>255</mark> | <mark>Authentication secret used by the push protocol</mark> | <mark>"k8...="</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>user_agent</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>255</mark> | <mark>User agent string at subscription time (nullable)</mark> | <mark>"Mozilla/5.0 ..."</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>created_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Subscription creation timestamp</mark> | <mark>"2026-04-15 10:00:00"</mark> |
+| <mark>PUSH_SUBSCRIPTION</mark> | <mark>last_used_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last successful push delivery (nullable)</mark> | <mark>"2026-04-22 09:30:00"</mark> |
+
+---
+
+<mark>### APPROVED_STUDENT_ROSTER (V22, V23 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>roster_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique roster row identifier (Primary Key)</mark> | <mark>80001</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>mmu_id</mark> | <mark>VARCHAR</mark> | <mark>Alphanumeric</mark> | <mark>20</mark> | <mark>MMU ID of the pre-approved student (Unique Key)</mark> | <mark>"1211234567"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>email</mark> | <mark>VARCHAR</mark> | <mark>Email format</mark> | <mark>255</mark> | <mark>Student email (Unique Key). Self-registration auto-activates only when both `mmu_id` and `email` match.</mark> | <mark>"alice@student.mmu.edu.my"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>full_name</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled name (optional)</mark> | <mark>"Alice Tan"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>programme</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled programme</mark> | <mark>"Bachelor of Computer Science (Hons.)"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>specialisation</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled specialisation (added in V23)</mark> | <mark>"Software Engineering"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>faculty</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled faculty</mark> | <mark>"FCI"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>intake_year</mark> | <mark>INT</mark> | <mark>Numeric (4)</mark> | <mark>4</mark> | <mark>Pre-filled intake year</mark> | <mark>2024</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>uploaded_by</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Admin who uploaded the roster row (Foreign Key, ON DELETE SET NULL)</mark> | <mark>3001</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>uploaded_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Upload timestamp</mark> | <mark>"2026-03-01 09:00:00"</mark> |
+| <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>updated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last update timestamp</mark> | <mark>"2026-03-01 09:00:05"</mark> |
+
+---
+
+<mark>### APPROVED_SUPERVISOR_ROSTER (V22 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>roster_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique roster row identifier (Primary Key)</mark> | <mark>80101</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>mmu_id</mark> | <mark>VARCHAR</mark> | <mark>Alphanumeric</mark> | <mark>20</mark> | <mark>MMU ID of the pre-approved supervisor (Unique Key)</mark> | <mark>"2001234567"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>email</mark> | <mark>VARCHAR</mark> | <mark>Email format</mark> | <mark>255</mark> | <mark>Supervisor email (Unique Key)</mark> | <mark>"j.doe@mmu.edu.my"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>full_name</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled name</mark> | <mark>"Dr. Jane Doe"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>department</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled department</mark> | <mark>"Software Engineering"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>faculty</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Pre-filled faculty</mark> | <mark>"FCI"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>position</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>100</mark> | <mark>Pre-filled academic position</mark> | <mark>"Senior Lecturer"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>uploaded_by</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Admin who uploaded the roster row (Foreign Key, ON DELETE SET NULL)</mark> | <mark>3001</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>uploaded_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Upload timestamp</mark> | <mark>"2026-03-01 09:00:00"</mark> |
+| <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>updated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last update timestamp</mark> | <mark>"2026-03-01 09:00:05"</mark> |
+
+---
+
+<mark>### ANNOUNCEMENT_ATTACHMENT (V26 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>attachment_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique attachment identifier (Primary Key)</mark> | <mark>90001</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>announcement_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Parent announcement (Foreign Key, ON DELETE CASCADE)</mark> | <mark>15001</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>file_name</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>255</mark> | <mark>Original file name</mark> | <mark>"FYP_Briefing_Slides.pdf"</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>file_path</mark> | <mark>VARCHAR</mark> | <mark>File path</mark> | <mark>500</mark> | <mark>Stored file path</mark> | <mark>"uploads/announcement/15001/abcd-briefing.pdf"</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>file_size</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>File size in bytes</mark> | <mark>1048576</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>mime_type</mark> | <mark>VARCHAR</mark> | <mark>MIME</mark> | <mark>100</mark> | <mark>MIME type of the file</mark> | <mark>"application/pdf"</mark> |
+| <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>uploaded_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Upload timestamp</mark> | <mark>"2026-04-01 10:00:00"</mark> |
+
+---
+
+<mark>### ANNOUNCEMENT_LINK (V26 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>ANNOUNCEMENT_LINK</mark> | <mark>link_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique link identifier (Primary Key)</mark> | <mark>91001</mark> |
+| <mark>ANNOUNCEMENT_LINK</mark> | <mark>announcement_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Parent announcement (Foreign Key, ON DELETE CASCADE)</mark> | <mark>15001</mark> |
+| <mark>ANNOUNCEMENT_LINK</mark> | <mark>label</mark> | <mark>VARCHAR</mark> | <mark>Text</mark> | <mark>200</mark> | <mark>Display label for the link</mark> | <mark>"Briefing Recording"</mark> |
+| <mark>ANNOUNCEMENT_LINK</mark> | <mark>url</mark> | <mark>VARCHAR</mark> | <mark>URL</mark> | <mark>500</mark> | <mark>External URL</mark> | <mark>"https://teams.microsoft.com/recording/..."</mark> |
+
+---
+
+<mark>### FYP_GRADE (V30 — FYP2 addition)</mark>
+
+| Table | Field Name | Data Type | Data Format | Field Size | Description | Example |
+|-------|------------|-----------|-------------|------------|-------------|---------|
+| <mark>FYP_GRADE</mark> | <mark>grade_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Unique grade identifier (Primary Key)</mark> | <mark>100001</mark> |
+| <mark>FYP_GRADE</mark> | <mark>project_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Graded project (Foreign Key)</mark> | <mark>3001</mark> |
+| <mark>FYP_GRADE</mark> | <mark>phase</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>10</mark> | <mark>FYP phase the grade applies to</mark> | <mark>"FYP1", "FYP2"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>grader_user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Grader user (Foreign Key)</mark> | <mark>2001</mark> |
+| <mark>FYP_GRADE</mark> | <mark>grader_role</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>20</mark> | <mark>Role that the grader played</mark> | <mark>"SUPERVISOR", "EXAMINER"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>rubric_json</mark> | <mark>TEXT</mark> | <mark>JSON/Text</mark> | <mark>5000</mark> | <mark>Rubric criteria → marks as JSON. Schema-flexible so the committee can change the rubric without DB migrations.</mark> | <mark>"{\"problem_statement\":18,\"methodology\":15}"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>total_score</mark> | <mark>DECIMAL</mark> | <mark>Numeric (5,2)</mark> | <mark>6</mark> | <mark>Sum of numeric criterion marks (derived)</mark> | <mark>78.50</mark> |
+| <mark>FYP_GRADE</mark> | <mark>letter_grade</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>5</mark> | <mark>MMU FCI letter grade derived from total_score</mark> | <mark>"A-", "B+", "C", "F"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>remarks</mark> | <mark>TEXT</mark> | <mark>Text</mark> | <mark>3000</mark> | <mark>Grader remarks visible to the student once finalised</mark> | <mark>"Strong methodology; expand evaluation."</mark> |
+| <mark>FYP_GRADE</mark> | <mark>status</mark> | <mark>VARCHAR</mark> | <mark>Enumeration</mark> | <mark>20</mark> | <mark>Grade lifecycle status</mark> | <mark>"DRAFT", "SUBMITTED", "FINALISED"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>finalised_by_user_id</mark> | <mark>BIGINT</mark> | <mark>Numeric</mark> | <mark>20</mark> | <mark>Admin who locked the grade (Foreign Key, nullable)</mark> | <mark>3001</mark> |
+| <mark>FYP_GRADE</mark> | <mark>finalised_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Time the grade was finalised (nullable)</mark> | <mark>"2026-06-15 16:00:00"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>created_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Created timestamp</mark> | <mark>"2026-06-10 10:00:00"</mark> |
+| <mark>FYP_GRADE</mark> | <mark>updated_at</mark> | <mark>DATETIME</mark> | <mark>YYYY-MM-DD HH:MM:SS</mark> | <mark>-</mark> | <mark>Last update timestamp</mark> | <mark>"2026-06-15 16:00:00"</mark> |
+
+> <mark>**Composite uniqueness:** `UNIQUE (project_id, phase, grader_user_id)` so one grader has at most one row per `(project, phase)`. Multiple graders (e.g. supervisor + examiner) get separate rows.</mark>
+
+---
+
 ## Summary of Database Tables
 
 | No. | Table Name | Description | Total Fields |
@@ -478,6 +600,14 @@ This section describes all database tables used in the FYP Supervision System. E
 | <mark>26</mark> | <mark>GENERATED_REPORT</mark> | <mark>Persisted metadata of generated committee reports (UC29)</mark> | <mark>9</mark> |
 | <mark>27</mark> | <mark>EXPORT_CONFIG</mark> | <mark>Reusable export presets used by reporting / data exchange (UC32)</mark> | <mark>13</mark> |
 | <mark>28</mark> | <mark>MAINTENANCE_JOB</mark> | <mark>Tracks maintenance / cleanup jobs and outcomes (UC33)</mark> | <mark>9</mark> |
+| <mark>29</mark> | <mark>DEADLINE_REMINDER_LOG</mark> | <mark>Idempotency record for the deadline-reminder dispatcher (UC14)</mark> | <mark>3</mark> |
+| <mark>30</mark> | <mark>PASSWORD_RESET_TOKEN</mark> | <mark>Single-use SHA-256-hashed password-reset tokens (UC1)</mark> | <mark>6</mark> |
+| <mark>31</mark> | <mark>PUSH_SUBSCRIPTION</mark> | <mark>Per-browser Web Push endpoints (UC14)</mark> | <mark>8</mark> |
+| <mark>32</mark> | <mark>APPROVED_STUDENT_ROSTER</mark> | <mark>Pre-authorisation list — matching student self-registrations auto-activate (UC1, UC30)</mark> | <mark>11</mark> |
+| <mark>33</mark> | <mark>APPROVED_SUPERVISOR_ROSTER</mark> | <mark>Pre-authorisation list — matching supervisor self-registrations auto-activate (UC1, UC30)</mark> | <mark>10</mark> |
+| <mark>34</mark> | <mark>ANNOUNCEMENT_ATTACHMENT</mark> | <mark>File attachments on announcements (UC24)</mark> | <mark>7</mark> |
+| <mark>35</mark> | <mark>ANNOUNCEMENT_LINK</mark> | <mark>External links on announcements (UC24)</mark> | <mark>4</mark> |
+| <mark>36</mark> | <mark>FYP_GRADE</mark> | <mark>Final-report grading rubric and lifecycle (UC35)</mark> | <mark>14</mark> |
 
-**Total Tables: <mark>28</mark>**
-**Total Fields: 169**
+**Total Tables: <mark>36</mark>** <mark>(8 new tables added during FYP2 implementation, V17 / V19 / V20 / V22 / V23 / V26 / V30; the previous total of 24 from FYP1 plus 4 added with V11–V14 plus these 8 = 36)</mark>
+**Total Fields: <mark>232</mark>** <mark>(8 new tables contribute 63 new fields; the V31 drop of `proposal_check_result.plagiarism_score` removes one)</mark>

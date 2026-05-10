@@ -476,12 +476,11 @@ able to capture the topical structure of proposals in a way that aligns
 well with expert judgement. These clustered groupings of proposals can
 be useful in finding trends in proposals or ensuring that similar
 project ideas are considered in a consistent manner. Other NLP
-applications in proposal analysis are plagiarism detection and
-originality checks, automated readability or quality evaluation and
-extraction of information for decision support. For example, NLP-based
-plagiarism detection systems are becoming more and more advanced in the
-ability to compare the text, and detect the overlaps, which could be
-used to check that student proposals are original.
+applications in proposal analysis include automated readability and
+quality evaluation, structural completeness checking, and the
+extraction of information for decision support — all of which can
+shorten the supervisor's first-pass review by surfacing structural
+gaps before the supervisor reads the proposal in full.
 
 ![](media/media/image11.png)Figure 2.11 Overview of the NLP-based
 semi-supervised clustering methodology for research proposal
@@ -897,9 +896,10 @@ system using HTTP and JSON:
   to perform operations such as login, project registration, proposal
   submission and meeting management.
 
-- The Flask AI services will have endpoints such as /analyzeProposal,
-  /recommendSupervisor and /chatbotQuery. These endpoints will be called
-  by the backend when there is a need to process the AI.
+- The Flask AI services will have endpoints such as
+  <mark>`POST /ai/analyze-proposal`, `POST /ai/recommendations` and
+  `POST /ai/chat`</mark>. These endpoints will be called by the backend
+  when there is a need to process the AI.
 
 This design keeps the frontend, backend and AI modules loosely coupled
 so that each part can be developed and maintained separately.

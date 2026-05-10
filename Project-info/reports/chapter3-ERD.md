@@ -13,7 +13,7 @@
 - <mark>`PROJECT` — `description`.</mark>
 - <mark>`PROPOSAL` — `title`, `current_version`.</mark>
 - <mark>`PROPOSAL_VERSION` — `file_name`.</mark>
-- <mark>`PROPOSAL_CHECK_RESULT` — `proposal_id` (FK, nullable), `checked_by`, `feasibility_score`, `innovation_score`, `clarity_score`, `scope_score`, `strengths`, `weaknesses`, `plagiarism_score`, `remarks`. `version_id` is now **nullable**.</mark>
+- <mark>`PROPOSAL_CHECK_RESULT` — `proposal_id` (FK, nullable), `checked_by`, `feasibility_score`, `innovation_score`, `clarity_score`, `scope_score`, `strengths`, `weaknesses`, `remarks`. `version_id` is now **nullable**. (The `plagiarism_score` column added in V10 was dropped in V31 because the analyser never produced a real signal for it.)</mark>
 - <mark>`PROPOSAL_REVIEW` — `internal_notes`.</mark>
 - <mark>`SYSTEM_PARAMETER` — `param_type`, `category`, `label`, `description`, `default_value`, `is_editable`, `validation_rules`.</mark>
 - <mark>`INTEGRATION_SETTING` — `integration_type`, `provider`, `description`, `settings_json`, `last_tested_at`, `last_test_result`.</mark>
@@ -25,6 +25,48 @@
 - <mark>`USER_ACCOUNT ||--o{ GENERATED_REPORT : generates`</mark>
 - <mark>`USER_ACCOUNT ||--o{ MAINTENANCE_JOB : triggers`</mark>
 - <mark>`PROPOSAL ||--o{ PROPOSAL_CHECK_RESULT : aggregated_check` (proposal-level AI checks; co-exists with the existing version-level relationship which is now optional on both sides)</mark>
+
+<mark>**Further FYP2 schema additions (V15-V31):**</mark>
+
+<mark>**New entities (8) — added during FYP2 implementation:**</mark>
+
+- <mark>`DEADLINE_REMINDER_LOG` (V17) — idempotency record for the deadline reminder dispatcher; composite PK `(deadline_id, days_before)` so the same reminder cannot fire twice.</mark>
+- <mark>`PASSWORD_RESET_TOKEN` (V19, V21) — single-use password-reset tokens. Only the SHA-256 hash of the raw token is stored.</mark>
+- <mark>`PUSH_SUBSCRIPTION` (V20) — Web Push subscriptions per browser/device endpoint.</mark>
+- <mark>`APPROVED_STUDENT_ROSTER` (V22, V23) — pre-authorisation list. Matching student self-registrations auto-activate.</mark>
+- <mark>`APPROVED_SUPERVISOR_ROSTER` (V22) — same pre-authorisation pattern, supervisor side.</mark>
+- <mark>`ANNOUNCEMENT_ATTACHMENT` (V26) — file attachments on announcements.</mark>
+- <mark>`ANNOUNCEMENT_LINK` (V26) — external links on announcements.</mark>
+- <mark>`FYP_GRADE` (V30) — final-report grading rubric. One row per `(project, phase, grader)`; status flow `DRAFT → SUBMITTED → FINALISED`.</mark>
+
+<mark>**Further attribute additions to existing entities:**</mark>
+
+- <mark>`USER_ACCOUNT` — `password_hash`, `profile_image_path`, `login_attempts` (V27), `lockout_until` (V27).</mark>
+- <mark>`STUDENT_PROFILE` — `faculty`, `intake_year`, `expected_graduation`, `skills`, `bio`, `linkedin_url`, `github_url`, `portfolio_url`.</mark>
+- <mark>`FYP_CYCLE` — `cycle_type`, `academic_year`, `semester`, `created_at`, `updated_at`.</mark>
+- <mark>`SUPERVISOR_REQUEST` — `proposed_title`, `response_message`, `expires_at`.</mark>
+- <mark>`PROJECT` — `fyp1_passed` (V15, BOOLEAN nullable).</mark>
+- <mark>`MEETING` — `title`, `meeting_type`, `location`, `meeting_url`, `duration_minutes`, `notes`, `cancel_reason`, `alternative_datetimes`, `created_at`.</mark>
+- <mark>`MEETING_LOG` — `student_user_id`, `supervisor_user_id`, `meeting_date`, `meeting_number`, `meeting_mode`, `fyp_phase`, `tasks_json`, `work_done_details`, `work_to_be_done`, `problems_and_solutions`, `correction_reason`, `created_at`, `updated_at`.</mark>
+- <mark>`MEETING_LOG_SIGNATURE` — `signature_image_url`, `signature_sha256` (SHA-256 hash of the signature image bytes; lets a verifier prove the stored signature has not been altered).</mark>
+- <mark>`ANNOUNCEMENT` — `priority`, `status`, `expires_at`, `view_count`, `updated_at`.</mark>
+- <mark>`ANNOUNCEMENT_AUDIENCE` — `target_student_user_id` (V26, supports `SPECIFIC_STUDENTS` scope).</mark>
+- <mark>`NOTIFICATION` — `target_route` (deep-link to the relevant page).</mark>
+- <mark>`CHAT_MESSAGE` — `references_json`, `feedback` (V28), `feedback_at` (V28).</mark>
+- <mark>`RESOURCE_DOCUMENT` — `description`, `file_name`, `file_size`, `download_count`.</mark>
+- <mark>`DEADLINE` — `deadline_type`, `reminder_days`, `is_extendable`, `extended_date`, `created_at`, `updated_at`.</mark>
+
+<mark>**Further new relationships:**</mark>
+
+- <mark>`USER_ACCOUNT ||--o{ PASSWORD_RESET_TOKEN : owns`</mark>
+- <mark>`USER_ACCOUNT ||--o{ PUSH_SUBSCRIPTION : owns`</mark>
+- <mark>`DEADLINE ||--o{ DEADLINE_REMINDER_LOG : has_fired`</mark>
+- <mark>`ANNOUNCEMENT ||--o{ ANNOUNCEMENT_ATTACHMENT : carries`</mark>
+- <mark>`ANNOUNCEMENT ||--o{ ANNOUNCEMENT_LINK : carries`</mark>
+- <mark>`USER_ACCOUNT ||--o{ ANNOUNCEMENT_AUDIENCE : targeted_as_student` (V26 added per-student targeting)</mark>
+- <mark>`PROJECT ||--o{ FYP_GRADE : graded_by`</mark>
+- <mark>`USER_ACCOUNT ||--o{ FYP_GRADE : grades_as_grader`</mark>
+- <mark>`USER_ACCOUNT ||--o{ FYP_GRADE : finalises_as_admin`</mark>
 
 <mark>**Relationship corrections (FK source clarified):**</mark>
 
@@ -150,7 +192,6 @@ erDiagram
     TEXT suggested_improvements
     TEXT strengths
     TEXT weaknesses
-    DECIMAL plagiarism_score
     TEXT remarks
     DATETIME checked_at
   }
@@ -365,6 +406,95 @@ erDiagram
     TEXT details
   }
 
+  %% ===== FYP2 schema additions (V15-V31) =====
+
+  DEADLINE_REMINDER_LOG {
+    BIGINT deadline_id PK
+    INT days_before PK
+    DATETIME fired_at
+  }
+
+  PASSWORD_RESET_TOKEN {
+    BIGINT id PK
+    BIGINT user_id FK
+    VARCHAR token_hash UK
+    DATETIME expires_at
+    DATETIME used_at
+    DATETIME created_at
+  }
+
+  PUSH_SUBSCRIPTION {
+    BIGINT id PK
+    BIGINT user_id FK
+    VARCHAR endpoint UK
+    VARCHAR p256dh
+    VARCHAR auth_key
+    VARCHAR user_agent
+    DATETIME created_at
+    DATETIME last_used_at
+  }
+
+  APPROVED_STUDENT_ROSTER {
+    BIGINT roster_id PK
+    VARCHAR mmu_id UK
+    VARCHAR email UK
+    VARCHAR full_name
+    VARCHAR programme
+    VARCHAR specialisation
+    VARCHAR faculty
+    INT intake_year
+    BIGINT uploaded_by FK
+    DATETIME uploaded_at
+    DATETIME updated_at
+  }
+
+  APPROVED_SUPERVISOR_ROSTER {
+    BIGINT roster_id PK
+    VARCHAR mmu_id UK
+    VARCHAR email UK
+    VARCHAR full_name
+    VARCHAR department
+    VARCHAR faculty
+    VARCHAR position
+    BIGINT uploaded_by FK
+    DATETIME uploaded_at
+    DATETIME updated_at
+  }
+
+  ANNOUNCEMENT_ATTACHMENT {
+    BIGINT attachment_id PK
+    BIGINT announcement_id FK
+    VARCHAR file_name
+    VARCHAR file_path
+    BIGINT file_size
+    VARCHAR mime_type
+    DATETIME uploaded_at
+  }
+
+  ANNOUNCEMENT_LINK {
+    BIGINT link_id PK
+    BIGINT announcement_id FK
+    VARCHAR label
+    VARCHAR url
+  }
+
+  FYP_GRADE {
+    BIGINT grade_id PK
+    BIGINT project_id FK
+    VARCHAR phase
+    BIGINT grader_user_id FK
+    VARCHAR grader_role
+    TEXT rubric_json
+    DECIMAL total_score
+    VARCHAR letter_grade
+    TEXT remarks
+    VARCHAR status
+    BIGINT finalised_by_user_id FK
+    DATETIME finalised_at
+    DATETIME created_at
+    DATETIME updated_at
+  }
+
     %% Relationships (Crow's Foot)
 
   %% User and role profiles (optional one-to-one extensions of USER_ACCOUNT)
@@ -429,4 +559,17 @@ erDiagram
 
   %% Audit logging
   USER_ACCOUNT ||--o{ AUDIT_LOG : causes
+
+  %% ===== FYP2 schema additions (V15-V31) =====
+  USER_ACCOUNT ||--o{ PASSWORD_RESET_TOKEN : owns
+  USER_ACCOUNT ||--o{ PUSH_SUBSCRIPTION : owns
+  USER_ACCOUNT ||--o{ APPROVED_STUDENT_ROSTER : uploads
+  USER_ACCOUNT ||--o{ APPROVED_SUPERVISOR_ROSTER : uploads
+  DEADLINE ||--o{ DEADLINE_REMINDER_LOG : has_fired
+  ANNOUNCEMENT ||--o{ ANNOUNCEMENT_ATTACHMENT : carries
+  ANNOUNCEMENT ||--o{ ANNOUNCEMENT_LINK : carries
+  USER_ACCOUNT ||--o{ ANNOUNCEMENT_AUDIENCE : targeted_as_student
+  PROJECT ||--o{ FYP_GRADE : graded_by
+  USER_ACCOUNT ||--o{ FYP_GRADE : grades_as_grader
+  USER_ACCOUNT ||--o{ FYP_GRADE : finalises_as_admin
 ```
