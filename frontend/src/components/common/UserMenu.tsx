@@ -5,11 +5,18 @@ import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 import { avatarInitials } from '@/lib/utils/name'
+import { assetUrl } from '@/lib/utils/assetUrl'
+import { useUserProfile } from '@/lib/hooks/useUserProfile'
 
 export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const { user, logout } = useAuth()
+  const { user: authUser, logout } = useAuth()
+  // Pull the live profile from the React Query cache so a fresh avatar upload
+  // (which invalidates ['auth','me']) flows through here without a full page
+  // reload. AuthContext.user is only set on login/refresh and would stay stale.
+  const { data: liveUser } = useUserProfile()
+  const user = liveUser ?? authUser
   const navigate = useNavigate()
 
   // Close menu when clicking outside
@@ -78,8 +85,18 @@ export function UserMenu() {
         aria-haspopup="true"
       >
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-medium">
-          {user ? getInitials(user.fullName) : <User className="h-4 w-4" />}
+        <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-medium overflow-hidden">
+          {user && assetUrl(user.profileImagePath) ? (
+            <img
+              src={assetUrl(user.profileImagePath)!}
+              alt={user.fullName}
+              className="w-full h-full object-cover"
+            />
+          ) : user ? (
+            getInitials(user.fullName)
+          ) : (
+            <User className="h-4 w-4" />
+          )}
         </div>
 
         {/* Name (hidden on mobile) */}
