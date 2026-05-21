@@ -41,113 +41,6 @@ interface Resource {
   updatedAt: string
 }
 
-// Sample data
-const SAMPLE_RESOURCES: Resource[] = [
-  {
-    resourceId: '1',
-    title: 'FYP Guidelines 2024/2025',
-    description: 'Complete guidelines for Final Year Project including timeline, requirements, and assessment criteria.',
-    type: 'GUIDELINE',
-    category: 'GENERAL',
-    fileUrl: '/resources/fyp-guidelines.pdf',
-    fileSize: 2456789,
-    isFeatured: true,
-    viewCount: 1250,
-    createdAt: '2024-09-01T00:00:00Z',
-    updatedAt: '2024-09-15T00:00:00Z',
-  },
-  {
-    resourceId: '2',
-    title: 'Proposal Template',
-    description: 'Official FYP proposal template with all required sections and formatting guidelines.',
-    type: 'TEMPLATE',
-    category: 'PROPOSAL',
-    fileUrl: '/resources/proposal-template.docx',
-    fileSize: 456789,
-    isFeatured: true,
-    viewCount: 890,
-    createdAt: '2024-09-01T00:00:00Z',
-    updatedAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    resourceId: '3',
-    title: 'How to Write a Problem Statement',
-    description: 'Video tutorial on crafting an effective problem statement for your FYP.',
-    type: 'VIDEO',
-    category: 'PROPOSAL',
-    externalUrl: 'https://youtube.com/watch?v=example',
-    duration: '15:30',
-    isFeatured: false,
-    viewCount: 456,
-    createdAt: '2024-10-15T00:00:00Z',
-    updatedAt: '2024-10-15T00:00:00Z',
-  },
-  {
-    resourceId: '4',
-    title: 'Final Report Template',
-    description: 'Complete template for FYP final report with chapter structure and formatting.',
-    type: 'TEMPLATE',
-    category: 'REPORT',
-    fileUrl: '/resources/report-template.docx',
-    fileSize: 567890,
-    isFeatured: true,
-    viewCount: 678,
-    createdAt: '2024-09-01T00:00:00Z',
-    updatedAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    resourceId: '5',
-    title: 'Presentation Guidelines',
-    description: 'Guidelines for FYP presentation including time limits, format, and Q&A tips.',
-    type: 'GUIDELINE',
-    category: 'PRESENTATION',
-    fileUrl: '/resources/presentation-guidelines.pdf',
-    fileSize: 234567,
-    isFeatured: false,
-    viewCount: 345,
-    createdAt: '2024-11-01T00:00:00Z',
-    updatedAt: '2024-11-01T00:00:00Z',
-  },
-  {
-    resourceId: '6',
-    title: 'Literature Review Writing Guide',
-    description: 'Step-by-step guide on conducting and writing a comprehensive literature review.',
-    type: 'DOCUMENT',
-    category: 'REPORT',
-    fileUrl: '/resources/literature-review-guide.pdf',
-    fileSize: 345678,
-    isFeatured: false,
-    viewCount: 567,
-    createdAt: '2024-10-01T00:00:00Z',
-    updatedAt: '2024-10-01T00:00:00Z',
-  },
-  {
-    resourceId: '7',
-    title: 'Citation & Referencing Guide',
-    description: 'Complete guide on IEEE citation format with examples.',
-    type: 'DOCUMENT',
-    category: 'GENERAL',
-    fileUrl: '/resources/citation-guide.pdf',
-    fileSize: 189012,
-    isFeatured: false,
-    viewCount: 890,
-    createdAt: '2024-09-15T00:00:00Z',
-    updatedAt: '2024-09-15T00:00:00Z',
-  },
-  {
-    resourceId: '8',
-    title: 'Turnitin Submission Guide',
-    description: 'How to submit your work through Turnitin and interpret the similarity report.',
-    type: 'LINK',
-    category: 'SUBMISSION',
-    externalUrl: 'https://turnitin.com/guides',
-    isFeatured: false,
-    viewCount: 234,
-    createdAt: '2024-10-20T00:00:00Z',
-    updatedAt: '2024-10-20T00:00:00Z',
-  },
-]
-
 const typeConfig: Record<ResourceType, { label: string; color: string; bgColor: string; icon: typeof FileText }> = {
   GUIDELINE: { label: 'Guideline', color: 'bg-amber-100 text-amber-700', bgColor: 'bg-amber-500', icon: BookOpen },
   TEMPLATE: { label: 'Template', color: 'bg-emerald-100 text-emerald-700', bgColor: 'bg-emerald-500', icon: FileText },
@@ -178,7 +71,7 @@ export function ResourcesHub() {
   const { data, isLoading } = useResources()
 
   // Use sample data
-  const resources = data?.resources || SAMPLE_RESOURCES
+  const resources = data?.resources ?? []
 
   const filteredResources = resources.filter((res) => {
     const matchesType = typeFilter === 'all' || res.type === typeFilter

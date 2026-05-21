@@ -15,6 +15,11 @@ public interface ResourceDocumentRepository extends JpaRepository<ResourceDocume
     Page<ResourceDocument> findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(String category, Pageable pageable);
     Page<ResourceDocument> findByVisibilityAndIsActiveTrueOrderByPublishedAtDesc(String visibility, Pageable pageable);
 
+    Page<ResourceDocument> findByVisibilityInAndIsActiveTrueOrderByPublishedAtDesc(
+            java.util.Collection<String> visibilities, Pageable pageable);
+    Page<ResourceDocument> findByCategoryAndVisibilityInAndIsActiveTrueOrderByPublishedAtDesc(
+            String category, java.util.Collection<String> visibilities, Pageable pageable);
+
     @Query("SELECT DISTINCT r.category FROM ResourceDocument r WHERE r.isActive = true")
     List<String> findDistinctCategories();
 }
