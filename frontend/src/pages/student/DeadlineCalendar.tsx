@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Calendar,
   Clock,
@@ -17,9 +16,8 @@ import {
   Target,
   AlertTriangle,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner } from '@/components/ui'
+import { Card, Badge, Spinner } from '@/components/ui'
 import { useDeadlines } from '@/lib/hooks/useStudent'
-import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { Deadline } from '@/types'
 
@@ -213,25 +211,14 @@ export function DeadlineCalendar() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-              <CalendarDays className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Deadlines & Calendar</h1>
-              <p className="text-primary-200 mt-0.5">Track important dates and submissions</p>
-            </div>
+        <div className="relative flex items-center gap-4">
+          <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
+            <CalendarDays className="h-7 w-7 text-white" />
           </div>
-          <Link to={ROUTES.STUDENT.RESOURCES}>
-            <Button
-              variant="secondary"
-              leftIcon={<FileText className="h-4 w-4" />}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              Resources
-            </Button>
-          </Link>
+          <div>
+            <h1 className="text-2xl font-bold">Deadlines & Calendar</h1>
+            <p className="text-primary-200 mt-0.5">Track important dates and submissions</p>
+          </div>
         </div>
       </div>
 
