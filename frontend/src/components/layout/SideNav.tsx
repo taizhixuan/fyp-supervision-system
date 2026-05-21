@@ -25,6 +25,7 @@ import {
   Inbox,
   Lock,
   ShieldCheck,
+  Library,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
@@ -104,6 +105,11 @@ const studentNavItems: NavItem[] = [
     label: 'Announcements',
     href: ROUTES.STUDENT.ANNOUNCEMENTS,
     icon: <Megaphone className="h-5 w-5" />,
+  },
+  {
+    label: 'Resources',
+    href: ROUTES.STUDENT.RESOURCES,
+    icon: <Library className="h-5 w-5" />,
   },
 ]
 
