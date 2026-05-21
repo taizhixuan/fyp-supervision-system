@@ -111,6 +111,11 @@ const studentNavItems: NavItem[] = [
     href: ROUTES.STUDENT.RESOURCES,
     icon: <Library className="h-5 w-5" />,
   },
+  {
+    label: 'Deadlines',
+    href: ROUTES.STUDENT.DEADLINES,
+    icon: <Clock className="h-5 w-5" />,
+  },
 ]
 
 const supervisorNavItems: NavItem[] = [
