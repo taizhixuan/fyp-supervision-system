@@ -26,6 +26,11 @@ public class Announcement {
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private UserAccount createdBy;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cycle_id")
+    private FypCycle cycle;
+
     @Column(nullable = false, length = 50)
     private String scope;
 

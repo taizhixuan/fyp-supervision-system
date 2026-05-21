@@ -15,6 +15,7 @@ import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementRepository;
+import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
@@ -50,6 +51,7 @@ public class AnnouncementService {
     private final ProjectRepository projectRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final UserAccountRepository userAccountRepository;
+    private final FypCycleRepository fypCycleRepository;
     private final FileStorageService fileStorageService;
     private final ObjectMapper objectMapper;
 
@@ -157,8 +159,19 @@ public class AnnouncementService {
         String title = requireString(payload, "title");
         String content = requireString(payload, "content");
 
+        // Stamp the active cycle of the matching type so the audience filter can
+        // pin this announcement to a specific cohort. Falls back to NULL for
+        // ALL / PROGRAMME_* / SPECIFIC_STUDENTS scopes (no cycle dependency).
+        FypCycle scopedCycle = null;
+        if ("FYP1".equalsIgnoreCase(scope) || "FYP2".equalsIgnoreCase(scope)) {
+            scopedCycle = fypCycleRepository
+                    .findFirstByCycleTypeAndStatusOrderByStartDateDesc(scope.toUpperCase(Locale.ROOT), CycleStatus.ACTIVE)
+                    .orElse(null);
+        }
+
         Announcement announcement = Announcement.builder()
                 .createdBy(creator)
+                .cycle(scopedCycle)
                 .scope(scope)
                 .title(title)
                 .content(content)
@@ -300,7 +313,7 @@ public class AnnouncementService {
     private boolean matchesAudience(Announcement a, StudentContext ctx) {
         String scope = a.getScope() == null ? "ALL" : a.getScope().trim().toUpperCase(Locale.ROOT);
 
-        // Pure broadcast — every student sees this.
+        // Pure broadcast — every student sees this (regardless of cycle status).
         if ("ALL".equals(scope) || "ALL_STUDENTS".equals(scope) || "ALL_SUPERVISEES".equals(scope)) {
             // ALL_SUPERVISEES is supervisor-side and only relevant if the student is paired
             // with this announcement's author. Treat as broadcast for now (committee hides
@@ -314,6 +327,18 @@ public class AnnouncementService {
             return true;
         }
 
+        // Cohort-bound scopes (FYP1 / FYP2 / PROGRAMME_*) must respect cycle ownership
+        // once the student's cycle has ended — otherwise an alumnus of last year's FYP2
+        // would keep receiving the new cohort's content.
+        boolean cohortBound = "FYP1".equals(scope) || "FYP2".equals(scope) || scope.startsWith("PROGRAMME_");
+        if (cohortBound && ctx.cycleStatus != null
+                && (ctx.cycleStatus == CycleStatus.COMPLETED || ctx.cycleStatus == CycleStatus.ARCHIVED)) {
+            Long annCycleId = a.getCycle() != null ? a.getCycle().getCycleId() : null;
+            if (annCycleId == null || !annCycleId.equals(ctx.cycleId)) {
+                return false;
+            }
+        }
+
         // Phase scope: FYP1 / FYP2.
         if ("FYP1".equals(scope) || "FYP2".equals(scope)) {
             if (ctx.cycleType == null) return false;
@@ -323,7 +348,12 @@ public class AnnouncementService {
                     && Objects.equals(a.getCreatedBy().getUserId(), ctx.supervisorUserId)) {
                 return scope.equalsIgnoreCase(ctx.cycleType);
             }
-            // Committee-side phase scope — visible to every student in that phase.
+            // Prefer cycle-id matching when the announcement is pinned to a specific cycle;
+            // fall back to cycleType for legacy rows with NULL cycle_id.
+            Long annCycleId = a.getCycle() != null ? a.getCycle().getCycleId() : null;
+            if (annCycleId != null) {
+                return annCycleId.equals(ctx.cycleId);
+            }
             return scope.equalsIgnoreCase(ctx.cycleType);
         }
 
@@ -373,6 +403,7 @@ public class AnnouncementService {
             Project p = projectOpt.get();
             FypCycle cycle = p.getCycle();
             if (cycle != null) {
+                ctx.cycleId = cycle.getCycleId();
                 ctx.cycleType = cycle.getCycleType();
                 ctx.cycleStatus = cycle.getStatus();
             }
@@ -390,6 +421,7 @@ public class AnnouncementService {
 
     private static class StudentContext {
         Long userId;
+        Long cycleId;
         String cycleType;          // FYP1 / FYP2
         CycleStatus cycleStatus;
         Long supervisorUserId;

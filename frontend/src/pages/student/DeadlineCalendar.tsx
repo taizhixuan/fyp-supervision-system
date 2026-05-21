@@ -441,7 +441,7 @@ export function DeadlineCalendar() {
                     {/* Deadline Items */}
                     <div className="space-y-1">
                       {dateDeadlines.slice(0, 2).map((d) => {
-                        const config = typeConfig[d.type as DeadlineType]
+                        const config = typeConfig[d.type as DeadlineType] ?? typeConfig.OTHER
                         return (
                           <div
                             key={d.deadlineId}
@@ -471,7 +471,7 @@ export function DeadlineCalendar() {
                     {hasDeadlines && dateDeadlines.length <= 2 && (
                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                         {dateDeadlines.map((d) => {
-                          const config = typeConfig[d.type as DeadlineType]
+                          const config = typeConfig[d.type as DeadlineType] ?? typeConfig.OTHER
                           const colorClass = config.color.split(' ')[0].replace('bg-', '').replace('-100', '-500')
                           return (
                             <span
@@ -582,8 +582,8 @@ export function DeadlineCalendar() {
 }
 
 function DeadlineCard({ deadline }: { deadline: Deadline }) {
-  const config = typeConfig[deadline.type as DeadlineType]
-  const priority = priorityConfig[deadline.priority as keyof typeof priorityConfig]
+  const config = typeConfig[deadline.type as DeadlineType] ?? typeConfig.OTHER
+  const priority = priorityConfig[deadline.priority as keyof typeof priorityConfig] ?? priorityConfig.LOW
   const Icon = config.icon
   const daysUntil = getDaysUntil(deadline.dueDate)
   const isOverdue = daysUntil < 0 && !deadline.isCompleted

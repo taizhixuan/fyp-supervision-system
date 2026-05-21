@@ -529,18 +529,23 @@ public class StudentService {
 
     public Map<String, Object> getDeadlinesDto(Long userId) {
         Optional<Project> projectOpt = projectRepository.findByStudent_UserId(userId);
-        String stage = projectOpt.map(Project::getStage).filter(s -> s != null && !s.isBlank()).orElse("FYP1");
-        String normalisedStage = stage.replace(" ", "").toUpperCase();
-        List<Deadline> deadlines = deadlineRepository
-                .findByCycle_CycleTypeAndAudienceAndDueDateAfterOrderByDueDateAsc(normalisedStage, "STUDENT", LocalDate.now());
-        if (deadlines.isEmpty()) {
-            deadlines = deadlineRepository.findByCycle_CycleTypeAndDueDateAfterOrderByDueDateAsc(normalisedStage, LocalDate.now());
-        }
-        if (deadlines.isEmpty()) {
+        Long cycleId = projectOpt.map(Project::getCycle).map(c -> c.getCycleId()).orElse(null);
+
+        // Scope strictly to the student's enrolled cycle. Once that cycle is COMPLETED
+        // or ARCHIVED the per-cycle query naturally returns nothing for future dates,
+        // which is the correct behaviour — they should not see the next cohort's plan.
+        List<Deadline> deadlines;
+        if (cycleId != null) {
+            deadlines = deadlineRepository
+                    .findByCycle_CycleIdAndAudienceAndDueDateAfterOrderByDueDateAsc(cycleId, "STUDENT", LocalDate.now());
+            if (deadlines.isEmpty()) {
+                deadlines = deadlineRepository
+                        .findByCycle_CycleIdAndDueDateAfterOrderByDueDateAsc(cycleId, LocalDate.now());
+            }
+        } else {
+            // No project / cycle yet (fresh student before enrolment) — fall back to the
+            // generic STUDENT audience so onboarding deadlines still show up.
             deadlines = deadlineRepository.findByAudienceAndDueDateAfterOrderByDueDateAsc("STUDENT", LocalDate.now());
-        }
-        if (deadlines.isEmpty()) {
-            deadlines = deadlineRepository.findByDueDateAfterOrderByDueDateAsc(LocalDate.now());
         }
         List<Map<String, Object>> dtos = deadlines.stream().map(this::buildDeadlineDto).toList();
         return Map.of("deadlines", dtos);

@@ -17,6 +17,8 @@ public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
     List<Deadline> findByAudienceAndDueDateAfterOrderByDueDateAsc(String audience, LocalDate date);
     List<Deadline> findByCycle_CycleTypeAndDueDateAfterOrderByDueDateAsc(String cycleType, LocalDate date);
     List<Deadline> findByCycle_CycleTypeAndAudienceAndDueDateAfterOrderByDueDateAsc(String cycleType, String audience, LocalDate date);
+    List<Deadline> findByCycle_CycleIdAndAudienceAndDueDateAfterOrderByDueDateAsc(Long cycleId, String audience, LocalDate date);
+    List<Deadline> findByCycle_CycleIdAndDueDateAfterOrderByDueDateAsc(Long cycleId, LocalDate date);
 
     @Modifying
     @Query("delete from Deadline d where d.cycle.cycleId = :cycleId")
