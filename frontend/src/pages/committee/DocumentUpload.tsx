@@ -151,7 +151,7 @@ export function DocumentUpload() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* File Upload */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">
             {isEditing ? 'Upload New Version (Optional)' : 'Select File *'}
           </h3>
@@ -211,7 +211,7 @@ export function DocumentUpload() {
         </Card>
 
         {/* Document Details */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">Document Details</h3>
 
           <div className="space-y-4">

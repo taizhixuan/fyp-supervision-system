@@ -76,7 +76,7 @@ export function ExportOverview() {
       </div>
 
       {/* Export Type Selection */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary-600" />
           Select Data to Export
@@ -121,7 +121,7 @@ export function ExportOverview() {
       </Card>
 
       {/* Filters */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <Filter className="h-5 w-5 text-primary-600" />
           Filters
@@ -182,7 +182,7 @@ export function ExportOverview() {
       </Card>
 
       {/* Format Selection */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5 text-primary-600" />
           Export Format
@@ -246,7 +246,7 @@ export function ExportOverview() {
       </Card>
 
       {/* Export Summary */}
-      <Card className="p-6 bg-neutral-50">
+      <Card className="bg-neutral-50">
         <h3 className="font-semibold text-neutral-900 mb-3">Export Summary</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

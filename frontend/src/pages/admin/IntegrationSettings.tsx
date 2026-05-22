@@ -146,7 +146,7 @@ export function IntegrationSettings() {
           const Icon = config.icon
 
           return (
-            <Card key={type} className="p-6 hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
+            <Card key={type} className="hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={cn('p-2 rounded-lg', config.color)}>
@@ -342,7 +342,7 @@ export function IntegrationSettings() {
       </div>
 
       {/* API Keys Section */}
-      <Card className="p-6 border-l-4 border-l-amber-500">
+      <Card className="border-l-4 border-l-amber-500">
         <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
           <div className="p-2 bg-amber-100 rounded-lg">
             <Key className="h-5 w-5 text-amber-700" />

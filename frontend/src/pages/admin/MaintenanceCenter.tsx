@@ -170,7 +170,7 @@ export function MaintenanceCenter() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
           role="button"
           tabIndex={0}
           aria-label="Create backup"
@@ -194,7 +194,7 @@ export function MaintenanceCenter() {
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
           role="button"
           tabIndex={0}
           aria-label="Restore backup"
@@ -218,7 +218,7 @@ export function MaintenanceCenter() {
         </Card>
 
         <Card
-          className="p-6 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
+          className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 focus:outline-none focus:ring-2 focus:ring-rose-500"
           role="button"
           tabIndex={0}
           aria-label="System cleanup"
@@ -243,7 +243,7 @@ export function MaintenanceCenter() {
       </div>
 
       {/* Health Checks Detail */}
-      <Card className="p-6 border-stone-200">
+      <Card className="border-stone-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-stone-900 flex items-center gap-2">
             <Shield className="h-5 w-5 text-amber-600" />
@@ -303,7 +303,7 @@ export function MaintenanceCenter() {
       </Card>
 
       {/* Recent Backups */}
-      <Card className="p-6 border-stone-200">
+      <Card className="border-stone-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-stone-900 flex items-center gap-2">
             <Database className="h-5 w-5 text-amber-600" />
@@ -392,7 +392,7 @@ export function MaintenanceCenter() {
       </Card>
 
       {/* Scheduled Maintenance */}
-      <Card className="p-6 border-stone-200">
+      <Card className="border-stone-200">
         <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-amber-600" />
           Scheduled Maintenance
@@ -449,7 +449,7 @@ export function MaintenanceCenter() {
       {/* Backup Modal */}
       {showBackupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-md p-6 border-stone-200">
+          <Card className="w-full max-w-md border-stone-200">
             <h2 className="text-lg font-semibold text-stone-900 mb-4">Create Backup</h2>
             <p className="text-sm text-stone-600 mb-4">
               Select the type of backup to create:
@@ -504,7 +504,7 @@ export function MaintenanceCenter() {
       {/* Restore Modal */}
       {showRestoreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-lg p-6 border-stone-200">
+          <Card className="w-full max-w-lg border-stone-200">
             <h2 className="text-lg font-semibold text-stone-900 mb-4">Restore Backup</h2>
 
             {selectedBackup ? (
@@ -592,7 +592,7 @@ export function MaintenanceCenter() {
       {/* Cleanup Modal */}
       {showCleanupModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-md p-6 border-stone-200">
+          <Card className="w-full max-w-md border-stone-200">
             <h2 className="text-lg font-semibold text-stone-900 mb-4">System Cleanup</h2>
             <p className="text-sm text-stone-600 mb-4">
               Select items to clean up:

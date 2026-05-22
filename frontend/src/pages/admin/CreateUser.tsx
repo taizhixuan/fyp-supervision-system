@@ -147,7 +147,7 @@ export function CreateUser() {
         {/* Left column: form fields */}
         <div className="lg:col-span-7 space-y-6">
         {/* Basic Information */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <User className="h-5 w-5 text-primary-600" />
             Basic Information
@@ -240,7 +240,7 @@ export function CreateUser() {
         </Card>
 
         {/* Role Selection */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary-600" />
             User Role *
@@ -273,7 +273,7 @@ export function CreateUser() {
         </Card>
 
         {/* Account Setup */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <Key className="h-5 w-5 text-primary-600" />
             Account Setup

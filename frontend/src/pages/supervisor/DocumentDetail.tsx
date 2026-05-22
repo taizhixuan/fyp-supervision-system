@@ -124,7 +124,7 @@ export function DocumentDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <Card className="p-6">
+          <Card>
             <div className="text-center">
               <div className={cn('w-20 h-20 rounded-lg flex items-center justify-center mx-auto mb-4', type.bgColor)}>
                 <FileText className={cn('h-10 w-10', type.color)} />
@@ -178,7 +178,7 @@ export function DocumentDetail() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Uploaded By</h3>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
@@ -194,13 +194,13 @@ export function DocumentDetail() {
 
         <div className="lg:col-span-2 space-y-6">
           {document.description && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Description</h3>
               <p className="text-neutral-600 whitespace-pre-wrap">{document.description}</p>
             </Card>
           )}
 
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-neutral-400" />
               Provide Feedback

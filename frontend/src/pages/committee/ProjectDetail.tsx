@@ -129,7 +129,7 @@ export function ProjectDetail() {
       </div>
 
       {/* Progress Overview */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary-600" />
           Progress Overview
@@ -204,7 +204,7 @@ export function ProjectDetail() {
       {/* Student & Supervisor Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Student Card */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary-600" />
             Student Information
@@ -233,7 +233,7 @@ export function ProjectDetail() {
         </Card>
 
         {/* Supervisor Card */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <User className="h-5 w-5 text-primary-600" />
             Supervisor Information
@@ -286,7 +286,7 @@ export function ProjectDetail() {
 
       {/* Project Description */}
       {project.description && (
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary-600" />
             Project Description
@@ -298,7 +298,7 @@ export function ProjectDetail() {
       {/* Activity & Meetings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Recent Meetings */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary-600" />
             Recent Meetings
@@ -331,7 +331,7 @@ export function ProjectDetail() {
         </Card>
 
         {/* Submissions */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary-600" />
             Recent Submissions
@@ -367,7 +367,7 @@ export function ProjectDetail() {
 
       {/* Risk Factors */}
       {project.riskFactors && project.riskFactors.length > 0 && (
-        <Card className="p-6 border-l-4 border-l-warning-500">
+        <Card className="border-l-4 border-l-warning-500">
           <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning-600" />
             Risk Factors

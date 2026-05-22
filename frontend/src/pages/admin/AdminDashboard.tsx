@@ -229,7 +229,7 @@ export function AdminDashboard() {
       {/* System Resources & Health Checks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* System Resources */}
-        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <h3 className="font-semibold text-stone-900 mb-5 flex items-center gap-2">
             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
               <Activity className="h-5 w-5 text-amber-600" />
@@ -335,7 +335,7 @@ export function AdminDashboard() {
         </Card>
 
         {/* Health Checks */}
-        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-semibold text-stone-900 flex items-center gap-2">
               <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -405,7 +405,7 @@ export function AdminDashboard() {
       {/* Quick Actions & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
-        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <h3 className="font-semibold text-stone-900 mb-5 flex items-center gap-2">
             <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center">
               <Settings className="h-5 w-5 text-stone-600" />
@@ -472,7 +472,7 @@ export function AdminDashboard() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-semibold text-stone-900 flex items-center gap-2">
               <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center">

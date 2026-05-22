@@ -98,7 +98,7 @@ export function Fyp1PassTracking() {
           FYP1 Pass Tracking
         </h1>
         <p className="text-neutral-600 mt-1">
-          Mark each student&apos;s FYP1 result based on what was entered in eBwise/Clic. Passed
+          Mark each student&apos;s FYP1 result based on what was entered in eBwise/CLiC. Passed
           students automatically advance to FYP2 on their next login (when an FYP2 cycle is active).
         </p>
       </div>

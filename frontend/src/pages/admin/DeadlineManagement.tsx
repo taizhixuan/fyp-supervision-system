@@ -419,7 +419,7 @@ export function DeadlineManagement() {
       ) : (
         <div className="space-y-6">
           {Object.entries(getCalendarData()).map(([month, deadlines]) => (
-            <Card key={month} className="p-6">
+            <Card key={month}>
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary-600" />
                 {month}
@@ -469,7 +469,7 @@ export function DeadlineManagement() {
       {/* Create/Edit Modal */}
       {(showCreateModal || editingDeadline) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <Card className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-neutral-900">
                 {editingDeadline ? 'Edit Deadline' : 'Create Deadline'}

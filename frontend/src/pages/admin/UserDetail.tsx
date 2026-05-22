@@ -214,7 +214,7 @@ export function UserDetail() {
       {/* User Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Info */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <User className="h-5 w-5 text-primary-600" />
             Account Information
@@ -249,7 +249,7 @@ export function UserDetail() {
         </Card>
 
         {/* Security Info */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary-600" />
             Security Information
@@ -296,7 +296,7 @@ export function UserDetail() {
       </div>
 
       {/* Active Sessions */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <Monitor className="h-5 w-5 text-primary-600" />
           Active Sessions ({user.sessions.length})
@@ -338,7 +338,7 @@ export function UserDetail() {
       </Card>
 
       {/* Recent Activity */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary-600" />
           Recent Activity
@@ -377,14 +377,14 @@ export function UserDetail() {
 
       {/* Notes */}
       {user.notes && (
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-2">Admin Notes</h3>
           <p className="text-sm text-neutral-600">{user.notes}</p>
         </Card>
       )}
 
       {/* Actions */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4">Account Actions</h3>
 
         <div className="flex flex-wrap gap-3">
@@ -479,7 +479,7 @@ export function UserDetail() {
       {/* Suspend Confirmation Modal */}
       {showConfirmSuspend && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md mx-4">
+          <Card className="max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-warning-100 rounded-full">
                 <AlertTriangle className="h-6 w-6 text-warning-600" />
@@ -513,7 +513,7 @@ export function UserDetail() {
       {/* Delete Confirmation Modal */}
       {showConfirmDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md mx-4">
+          <Card className="max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-error-100 rounded-full">
                 <Trash2 className="h-6 w-6 text-error-600" />

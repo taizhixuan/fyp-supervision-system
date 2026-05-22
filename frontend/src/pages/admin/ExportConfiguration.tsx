@@ -335,7 +335,7 @@ export function ExportConfigurationPage() {
       </div>
 
       {/* Quick Export Section */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <Download className="h-5 w-5 text-amber-600" />
           Quick Export

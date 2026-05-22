@@ -130,7 +130,7 @@ export function ProposalReviewDetail() {
         <div className="lg:col-span-1 space-y-6">
           {/* AI Analysis */}
           {proposal.aiAnalysis && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
                 <Brain className="h-5 w-5 text-primary-500" />
                 AI Analysis
@@ -319,19 +319,19 @@ export function ProposalReviewDetail() {
         {/* Right Column - Proposal Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Background */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Background</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.background}</p>
           </Card>
 
           {/* Problem Statement */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Problem Statement</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.problemStatement}</p>
           </Card>
 
           {/* Objectives */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Objectives</h3>
             <ul className="space-y-2">
               {proposal.content.objectives.map((obj, index) => (
@@ -346,32 +346,32 @@ export function ProposalReviewDetail() {
           </Card>
 
           {/* Scope */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Scope</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.scope}</p>
           </Card>
 
           {/* Methodology */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Methodology</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.methodology}</p>
           </Card>
 
           {/* Expected Outcomes */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Expected Outcomes</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.expectedOutcomes}</p>
           </Card>
 
           {/* Timeline */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Timeline</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.timeline}</p>
           </Card>
 
           {/* Feedback Form */}
           {canReview && (
-            <Card className="p-6 bg-neutral-50">
+            <Card className="bg-neutral-50">
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-neutral-400" />
                 Provide Feedback

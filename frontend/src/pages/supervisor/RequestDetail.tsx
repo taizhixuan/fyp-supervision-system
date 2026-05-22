@@ -152,7 +152,7 @@ export function RequestDetail() {
         {/* Left Column - Student Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* Student Profile Card */}
-          <Card className="p-6">
+          <Card>
             <div className="text-center">
               <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <GraduationCap className="h-10 w-10 text-primary-600" />
@@ -196,7 +196,7 @@ export function RequestDetail() {
           </Card>
 
           {/* Research Area */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-neutral-400" />
               Research Area
@@ -208,7 +208,7 @@ export function RequestDetail() {
 
           {/* Response Details (if responded) */}
           {request.respondedAt && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Response Details</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
@@ -235,7 +235,7 @@ export function RequestDetail() {
         {/* Right Column - Project Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Proposed Project */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <FileText className="h-5 w-5 text-neutral-400" />
               Proposed Project
@@ -245,7 +245,7 @@ export function RequestDetail() {
           </Card>
 
           {/* Motivation */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-neutral-400" />
               Motivation
@@ -255,7 +255,7 @@ export function RequestDetail() {
 
           {/* Attachments */}
           {request.attachments && request.attachments.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4">Attachments</h3>
               <div className="space-y-2">
                 {request.attachments.map((attachment) => (
@@ -283,7 +283,7 @@ export function RequestDetail() {
 
           {/* Quick Actions */}
           {canRespond && (
-            <Card className="p-6 bg-neutral-50">
+            <Card className="bg-neutral-50">
               <h3 className="font-semibold text-neutral-900 mb-4">Actions</h3>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -322,7 +322,7 @@ export function RequestDetail() {
       {/* Rejection Modal */}
       {showRejectModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
+          <Card className="w-full max-w-md">
             <h3 className="text-lg font-semibold text-neutral-900 mb-4">Reject Request</h3>
             <p className="text-neutral-600 mb-4">
               Please provide a reason for rejecting this supervision request. This will be shared with the student.

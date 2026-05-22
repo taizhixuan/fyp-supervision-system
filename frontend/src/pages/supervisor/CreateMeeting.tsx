@@ -140,7 +140,7 @@ export function CreateMeeting() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Student Selection */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-neutral-400" />
             Select Student
@@ -165,7 +165,7 @@ export function CreateMeeting() {
         </Card>
 
         {/* Meeting Details */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">Meeting Details</h3>
 
           <div className="space-y-4">
