@@ -81,7 +81,7 @@ export function DocumentVersions() {
       </div>
 
       {/* Current Document Info */}
-      <Card className="p-6">
+      <Card>
         <div className="flex items-start gap-4">
           <div className="p-3 bg-primary-50 rounded-lg">
             <FileText className="h-6 w-6 text-primary-600" />
@@ -100,7 +100,7 @@ export function DocumentVersions() {
       </Card>
 
       {/* Version Timeline */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-6">All Versions</h3>
 
         <div className="relative">

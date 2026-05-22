@@ -189,7 +189,7 @@ export function CreateAnnouncement() {
         {/* Left column: form fields */}
         <div className="lg:col-span-7 space-y-6">
         {/* Basic Info */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">Announcement Details</h3>
 
           <div className="space-y-4">
@@ -258,7 +258,7 @@ export function CreateAnnouncement() {
         </Card>
 
         {/* Target Audience */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <Users className="h-5 w-5 text-neutral-400" />
             Target Audience
@@ -299,7 +299,7 @@ export function CreateAnnouncement() {
         </Card>
 
         {/* Attachments + external links */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
             <Paperclip className="h-5 w-5 text-neutral-400" />
             Attachments &amp; Links
@@ -372,7 +372,7 @@ export function CreateAnnouncement() {
         </Card>
 
         {/* Schedule */}
-        <Card className="p-6">
+        <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">Schedule</h3>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -410,7 +410,7 @@ export function CreateAnnouncement() {
           <div className="lg:sticky lg:top-6 space-y-4">
 
         {/* Preview */}
-        <Card className="p-6 bg-neutral-50">
+        <Card className="bg-neutral-50">
           <h3 className="font-semibold text-neutral-900 mb-1 flex items-center gap-2">
             <Eye className="h-5 w-5 text-neutral-400" />
             Live Preview

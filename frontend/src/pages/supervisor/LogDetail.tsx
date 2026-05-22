@@ -144,7 +144,7 @@ export function LogDetail() {
         {/* Left Column - Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           {/* Student Info */}
-          <Card className="p-6">
+          <Card>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <GraduationCap className="h-8 w-8 text-primary-600" />
@@ -155,7 +155,7 @@ export function LogDetail() {
           </Card>
 
           {/* Week Info */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Log Information</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export function LogDetail() {
 
           {/* Attachments */}
           {log.attachments && log.attachments.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4">Attachments</h3>
               <div className="space-y-2">
                 {log.attachments.map((attachment) => (
@@ -221,7 +221,7 @@ export function LogDetail() {
         {/* Right Column - Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Activities */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-neutral-400" />
               Activities This Week
@@ -230,14 +230,14 @@ export function LogDetail() {
           </Card>
 
           {/* Progress Summary */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Progress Summary</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{log.progressSummary}</p>
           </Card>
 
           {/* Challenges */}
           {log.challenges && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-warning-500" />
                 Challenges Encountered
@@ -247,14 +247,14 @@ export function LogDetail() {
           )}
 
           {/* Next Week Plan */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Plan for Next Week</h3>
             <p className="text-neutral-600 whitespace-pre-wrap">{log.nextWeekPlan}</p>
           </Card>
 
           {/* Supervisor Comment (if any) */}
           {log.supervisorComment && (
-            <Card className="p-6 bg-primary-50">
+            <Card className="bg-primary-50">
               <h3 className="font-semibold text-primary-900 mb-3 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Your Previous Comment
@@ -265,7 +265,7 @@ export function LogDetail() {
 
           {/* Review Form */}
           {canReview && (
-            <Card className="p-6 bg-neutral-50">
+            <Card className="bg-neutral-50">
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-neutral-400" />
                 Review This Log
@@ -307,7 +307,7 @@ export function LogDetail() {
       {/* Sign Modal */}
       {showSignModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
+          <Card className="w-full max-w-md">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <PenTool className="h-8 w-8 text-primary-600" />

@@ -25,11 +25,13 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       outlined: 'bg-white border-2 border-neutral-200',
     }
 
+    // Density-tightened defaults (2026-05): md was p-6, lg was p-8.
+    // Mobile keeps comfortable touch padding; desktop tightens for info density.
     const paddings = {
       none: '',
-      sm: 'p-4',
-      md: 'p-6',
-      lg: 'p-8',
+      sm: 'p-3 sm:p-4',
+      md: 'p-4 sm:p-5',
+      lg: 'p-5 sm:p-7',
     }
 
     return (

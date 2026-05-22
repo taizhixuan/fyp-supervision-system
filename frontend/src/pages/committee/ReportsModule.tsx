@@ -292,7 +292,7 @@ export function ReportsModule() {
 
       {/* Selected Report Preview */}
       {selectedReport && (
-        <Card className="p-6 border-l-4 border-l-amber-500 bg-amber-50/30">
+        <Card className="border-l-4 border-l-amber-500 bg-amber-50/30">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-semibold text-stone-800">

@@ -109,7 +109,7 @@ export function SuperviseeDetail() {
         {/* Left Column - Student Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* Profile Card */}
-          <Card className="p-6">
+          <Card>
             <div className="text-center">
               <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <GraduationCap className="h-10 w-10 text-primary-600" />
@@ -174,7 +174,7 @@ export function SuperviseeDetail() {
           </Card>
 
           {/* Timeline Card */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Timeline</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -223,7 +223,7 @@ export function SuperviseeDetail() {
           </Card>
 
           {/* Quick Actions */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Quick Actions</h3>
             <div className="space-y-2">
               <Link to={ROUTES.SUPERVISOR.MEETING_NEW} className="block">
@@ -249,7 +249,7 @@ export function SuperviseeDetail() {
         {/* Right Column - Project Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Project Info */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Project Information</h3>
             <h4 className="text-lg font-medium text-neutral-800">{supervisee.projectTitle}</h4>
 
@@ -275,7 +275,7 @@ export function SuperviseeDetail() {
           </Card>
 
           {/* Progress Overview */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-neutral-400" />
               Progress Overview
@@ -327,7 +327,7 @@ export function SuperviseeDetail() {
 
           {/* Action Items */}
           {supervisee.pendingLogs > 0 && (
-            <Card className="p-6 bg-warning-50 border-warning-200">
+            <Card className="bg-warning-50 border-warning-200">
               <h3 className="font-semibold text-warning-800 mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
                 Action Required
@@ -345,7 +345,7 @@ export function SuperviseeDetail() {
           )}
 
           {/* Recent Activity - Placeholder */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Recent Activity</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">

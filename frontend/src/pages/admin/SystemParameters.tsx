@@ -219,7 +219,7 @@ export function SystemParameters() {
           const config = getCategoryConfig(category)
           const Icon = config.icon
           return (
-            <Card key={category} className="p-6 border-stone-200 hover:shadow-lg transition-shadow duration-200">
+            <Card key={category} className="border-stone-200 hover:shadow-lg transition-shadow duration-200">
               <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
                 <div className={cn('p-2 rounded-lg border', config.bgColor)}>
                   <Icon className={cn('h-5 w-5', config.color)} />
@@ -247,7 +247,7 @@ export function SystemParameters() {
           )
         })
       ) : (
-        <Card className="p-6 border-stone-200 hover:shadow-lg transition-shadow duration-200">
+        <Card className="border-stone-200 hover:shadow-lg transition-shadow duration-200">
           <div className="space-y-4">
             {filteredParams?.map((param) => (
               <ParameterRow

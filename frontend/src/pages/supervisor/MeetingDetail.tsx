@@ -216,7 +216,7 @@ export function MeetingDetail() {
         {/* Left Column */}
         <div className="lg:col-span-1 space-y-6">
           {/* Student Info */}
-          <Card className="p-6">
+          <Card>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <GraduationCap className="h-8 w-8 text-primary-600" />
@@ -233,7 +233,7 @@ export function MeetingDetail() {
           </Card>
 
           {/* Meeting Details */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Meeting Details</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -278,7 +278,7 @@ export function MeetingDetail() {
 
           {/* Cancellation Reason (only when CANCELLED) */}
           {meeting.status === 'CANCELLED' && meeting.cancelReason && (
-            <Card className="p-6 border-l-4 border-l-error-500 bg-error-50/30">
+            <Card className="border-l-4 border-l-error-500 bg-error-50/30">
               <h3 className="font-semibold text-neutral-900 mb-2 flex items-center gap-2">
                 <XCircle className="h-5 w-5 text-error-600" />
                 Cancellation Reason
@@ -289,7 +289,7 @@ export function MeetingDetail() {
 
           {/* Online Meeting Link Card */}
           {meeting.meetingUrl && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <Video className="h-5 w-5 text-neutral-400" />
                 Online Meeting
@@ -361,7 +361,7 @@ export function MeetingDetail() {
 
           {/* Alternative Times (if pending) */}
           {canRespond && meeting.alternativeDateTimes && meeting.alternativeDateTimes.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4">Alternative Times</h3>
               <div className="space-y-2">
                 {meeting.alternativeDateTimes.map((dt, index) => (
@@ -391,7 +391,7 @@ export function MeetingDetail() {
 
           {/* Actions */}
           {canCancel && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4">Actions</h3>
               <div className="space-y-2">
                 {canRespond && (
@@ -420,13 +420,13 @@ export function MeetingDetail() {
         {/* Right Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Meeting Title */}
-          <Card className="p-6">
+          <Card>
             <h2 className="text-xl font-semibold text-neutral-900">{meeting.title}</h2>
           </Card>
 
           {/* Agenda */}
           {meeting.agenda && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <FileText className="h-5 w-5 text-neutral-400" />
                 Agenda
@@ -437,7 +437,7 @@ export function MeetingDetail() {
 
           {/* Meeting Notes (if completed) */}
           {meeting.notes && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-neutral-400" />
                 Meeting Notes
@@ -448,7 +448,7 @@ export function MeetingDetail() {
 
           {/* Action Items (if completed) */}
           {meeting.actionItems && meeting.actionItems.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Action Items</h3>
               <ul className="space-y-2">
                 {meeting.actionItems.map((item, index) => (
@@ -466,7 +466,7 @@ export function MeetingDetail() {
       {/* Reschedule Modal */}
       {showRescheduleModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
+          <Card className="w-full max-w-md">
             <h3 className="text-lg font-semibold text-neutral-900 mb-4">Reschedule Meeting</h3>
             <div className="space-y-4">
               <div>
@@ -505,7 +505,7 @@ export function MeetingDetail() {
       {/* Complete Meeting Modal */}
       {showCompleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg p-6">
+          <Card className="w-full max-w-lg">
             <h3 className="text-lg font-semibold text-neutral-900 mb-4">Complete Meeting</h3>
             <div className="space-y-4">
               <div>

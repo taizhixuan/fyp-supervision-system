@@ -142,7 +142,7 @@ export function SupervisorLoadDetail() {
       </div>
 
       {/* Expertise */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary-600" />
           Expertise Areas
@@ -160,7 +160,7 @@ export function SupervisorLoadDetail() {
       </Card>
 
       {/* Students List */}
-      <Card className="p-6">
+      <Card>
         <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
           <GraduationCap className="h-5 w-5 text-primary-600" />
           Supervised Students ({supervisor.students.length})
@@ -242,7 +242,7 @@ export function SupervisorLoadDetail() {
 
       {/* Warning Card for Overloaded */}
       {supervisor.isOverloaded && (
-        <Card className="p-6 border-l-4 border-l-error-500 bg-error-50">
+        <Card className="border-l-4 border-l-error-500 bg-error-50">
           <div className="flex items-start gap-4">
             <AlertTriangle className="h-6 w-6 text-error-600 flex-shrink-0" />
             <div>

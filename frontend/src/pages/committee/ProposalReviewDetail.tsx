@@ -111,7 +111,7 @@ export function ProposalReviewDetail() {
         {/* Left Column - Proposal Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Proposal Header */}
-          <Card className="p-6">
+          <Card>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -166,14 +166,14 @@ export function ProposalReviewDetail() {
 
           {/* Abstract & Content */}
           {proposal.abstract && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Abstract</h3>
               <p className="text-neutral-600 leading-relaxed">{proposal.abstract}</p>
             </Card>
           )}
 
           {proposal.objectives && proposal.objectives.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Objectives</h3>
               <ul className="space-y-2">
                 {proposal.objectives.map((obj, index) => (
@@ -189,7 +189,7 @@ export function ProposalReviewDetail() {
           )}
 
           {proposal.methodology && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Methodology</h3>
               <p className="text-neutral-600">{proposal.methodology}</p>
             </Card>
@@ -197,7 +197,7 @@ export function ProposalReviewDetail() {
 
           {/* AI Analysis */}
           {proposal.aiAnalysis && (
-            <Card className="p-6 border-2 border-accent-200">
+            <Card className="border-2 border-accent-200">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-5 w-5 text-accent-600" />
                 <h3 className="font-semibold text-neutral-900">AI Analysis</h3>
@@ -321,7 +321,7 @@ export function ProposalReviewDetail() {
 
           {/* Review History */}
           {proposal.reviewHistory.length > 0 && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
                 <History className="h-5 w-5 text-neutral-400" />
                 Review History
@@ -360,7 +360,7 @@ export function ProposalReviewDetail() {
         {/* Right Column - Review Form */}
         <div className="space-y-6">
           {/* Quick Info */}
-          <Card className="p-6">
+          <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Submission Info</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -395,7 +395,7 @@ export function ProposalReviewDetail() {
 
           {/* Review Form */}
           {canReview && (
-            <Card className="p-6">
+            <Card>
               <h3 className="font-semibold text-neutral-900 mb-4">Submit Review</h3>
 
               {/* Decision Buttons */}
@@ -504,7 +504,7 @@ export function ProposalReviewDetail() {
 
           {/* Already Reviewed */}
           {!canReview && (
-            <Card className="p-6 bg-neutral-50">
+            <Card className="bg-neutral-50">
               <div className="text-center">
                 <StatusIcon className={cn('h-12 w-12 mx-auto mb-3', status.color)} />
                 <h3 className="font-medium text-neutral-900">Proposal {status.label}</h3>
