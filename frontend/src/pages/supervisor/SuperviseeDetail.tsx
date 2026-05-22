@@ -78,7 +78,7 @@ export function SuperviseeDetail() {
   const risk = riskConfig[supervisee.riskLevel] ?? FALLBACK_STATUS
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.SUPERVISEES}>
@@ -107,7 +107,7 @@ export function SuperviseeDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Student Info */}
-        <div className="lg:col-span-1 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-1 space-y-3 lg:space-y-4">
           {/* Profile Card */}
           <Card>
             <div className="text-center">
@@ -247,7 +247,7 @@ export function SuperviseeDetail() {
         </div>
 
         {/* Right Column - Project Details */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Project Info */}
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Project Information</h3>

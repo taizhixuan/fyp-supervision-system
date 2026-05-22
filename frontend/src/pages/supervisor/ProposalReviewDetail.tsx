@@ -80,7 +80,7 @@ export function ProposalReviewDetail() {
   const canReview = proposal.status === 'SUBMITTED' || proposal.status === 'UNDER_REVIEW'
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.PROPOSALS}>
@@ -127,7 +127,7 @@ export function ProposalReviewDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Sidebar */}
-        <div className="lg:col-span-1 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-1 space-y-3 lg:space-y-4">
           {/* AI Analysis */}
           {proposal.aiAnalysis && (
             <Card>
@@ -317,7 +317,7 @@ export function ProposalReviewDetail() {
         </div>
 
         {/* Right Column - Proposal Content */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Background */}
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-3">Background</h3>
