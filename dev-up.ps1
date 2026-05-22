@@ -24,6 +24,22 @@ if ($StopOnly) {
     exit 0
 }
 
+# Load project-root .env so host-run backend (mvn spring-boot:run) sees the same
+# vars the Dockerised stack would inject (mail creds, JWT secret, LLM keys, etc).
+# Child processes spawned via Start-Process inherit this shell's environment.
+$EnvFile = Join-Path $Root ".env"
+if (Test-Path $EnvFile) {
+    Write-Host "Loading .env into shell environment..." -ForegroundColor Cyan
+    Get-Content $EnvFile | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -and -not $line.StartsWith("#") -and $line -match "^([^=]+)=(.*)$") {
+            $key = $matches[1].Trim()
+            $val = $matches[2].Trim().Trim('"').Trim("'")
+            Set-Item -Path "env:$key" -Value $val
+        }
+    }
+}
+
 Write-Host "Starting infra: db + 3 AI services..." -ForegroundColor Cyan
 docker compose -f "$Root\docker-compose.yml" up -d db ai-recommendation ai-proposal-analyzer ai-chatbot
 
