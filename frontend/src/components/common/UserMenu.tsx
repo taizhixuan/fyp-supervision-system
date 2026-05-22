@@ -129,7 +129,7 @@ export function UserMenu() {
       {isOpen && (
         <div
           className={cn(
-            'absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-neutral-200',
+            'absolute right-0 top-full mt-3 w-56 bg-white rounded-lg shadow-lg border border-neutral-200',
             'animate-fade-in origin-top-right z-50'
           )}
           role="menu"
