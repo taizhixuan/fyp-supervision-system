@@ -91,7 +91,7 @@ export function JobHistory() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -121,7 +121,7 @@ export function JobHistory() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-sm text-neutral-500">Total Jobs</p>
-          <p className="text-2xl font-bold text-neutral-900">{stats.total}</p>
+          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{stats.total}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-neutral-500">Completed</p>
@@ -342,9 +342,9 @@ export function JobHistory() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <History className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No jobs found</h3>
+            <h3 className="font-medium text-neutral-900">No jobs found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || typeFilter !== 'ALL' || statusFilter !== 'ALL'
                 ? 'Try adjusting your filters'

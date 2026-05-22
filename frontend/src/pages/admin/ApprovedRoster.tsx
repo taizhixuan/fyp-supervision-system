@@ -97,7 +97,7 @@ export function ApprovedRoster() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
           <ShieldCheck className="h-7 w-7 text-primary-600" />
@@ -269,7 +269,7 @@ function RosterTable({
 }) {
   if (rows.length === 0) {
     return (
-      <Card className="p-12 text-center">
+      <Card className="text-center py-8">
         <ShieldCheck className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
         <p className="text-neutral-500">{empty}</p>
       </Card>

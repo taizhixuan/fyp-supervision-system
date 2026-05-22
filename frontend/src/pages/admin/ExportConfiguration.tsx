@@ -162,10 +162,10 @@ export function ExportConfigurationPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -177,7 +177,7 @@ export function ExportConfigurationPage() {
                 Export Configuration
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </h1>
-              <p className="text-stone-300 mt-1">
+              <p className="text-stone-300 text-xs">
                 Configure data exports and scheduled reports
               </p>
             </div>
@@ -193,7 +193,7 @@ export function ExportConfigurationPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-amber-500">
           <p className="text-sm text-neutral-500">Total Exports</p>
-          <p className="text-2xl font-bold text-neutral-900">{data?.configs.length || 0}</p>
+          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{data?.configs.length || 0}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-emerald-500">
           <p className="text-sm text-neutral-500">Scheduled</p>
@@ -320,9 +320,9 @@ export function ExportConfigurationPage() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <Download className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No export configurations</h3>
+            <h3 className="font-medium text-neutral-900">No export configurations</h3>
             <p className="text-neutral-500 mt-1">
               Create your first export configuration to get started
             </p>
@@ -385,7 +385,7 @@ export function ExportConfigurationPage() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit(handleCreate)} className="p-6 space-y-4 lg:space-y-5">
+            <form onSubmit={handleSubmit(handleCreate)} className="p-6 space-y-3 lg:space-y-4">
               {/* Basic Info */}
               <div className="space-y-4">
                 <div>

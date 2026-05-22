@@ -113,9 +113,9 @@ export function UserManagement() {
   const allSelected = data?.users && data.users.length > 0 && selectedUsers.size === data.users.length
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -128,7 +128,7 @@ export function UserManagement() {
                 User Management
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </h1>
-              <p className="text-stone-300 mt-1">
+              <p className="text-stone-300 text-xs">
                 Manage user accounts, roles, and permissions
               </p>
             </div>
@@ -267,7 +267,7 @@ export function UserManagement() {
       )}
 
       {/* Select All + Users List */}
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
         {data?.users && data.users.length > 0 && (
           <div className="flex items-center gap-3 px-1">
             <input
@@ -423,9 +423,9 @@ export function UserManagement() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No users found</h3>
+            <h3 className="font-medium text-neutral-900">No users found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || roleFilter !== 'ALL' || statusFilter !== 'ALL'
                 ? 'Try adjusting your filters'

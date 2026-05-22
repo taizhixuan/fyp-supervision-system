@@ -32,7 +32,7 @@ export function AdminGrades() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
           <Award className="h-7 w-7 text-primary-600" />

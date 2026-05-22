@@ -231,7 +231,7 @@ export function DeadlineManagement() {
   const selectableCycles = cycles.filter((c) => c.status === 'PLANNING' || c.status === 'ACTIVE')
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -405,9 +405,9 @@ export function DeadlineManagement() {
               )
             })
           ) : (
-            <Card className="p-12 text-center">
+            <Card className="text-center py-8">
               <Clock className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-neutral-900">No deadlines found</h3>
+              <h3 className="font-medium text-neutral-900">No deadlines found</h3>
               <p className="text-neutral-500 mt-1">
                 {searchQuery || typeFilter !== 'ALL' || statusFilter !== 'ALL' || cycleFilter
                   ? 'Try adjusting your filters'
@@ -417,7 +417,7 @@ export function DeadlineManagement() {
           )}
         </div>
       ) : (
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {Object.entries(getCalendarData()).map(([month, deadlines]) => (
             <Card key={month}>
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
@@ -432,7 +432,7 @@ export function DeadlineManagement() {
                   return (
                     <div key={deadline.deadlineId} className="flex items-center gap-4 p-3 bg-neutral-50 rounded-lg">
                       <div className="text-center min-w-[50px]">
-                        <p className="text-2xl font-bold text-neutral-900">
+                        <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">
                           {new Date(deadline.dueDate).getDate()}
                         </p>
                         <p className="text-xs text-neutral-500 uppercase">
@@ -471,7 +471,7 @@ export function DeadlineManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-neutral-900">
+              <h2 className="font-medium text-neutral-900">
                 {editingDeadline ? 'Edit Deadline' : 'Create Deadline'}
               </h2>
               <button type="button" onClick={closeModals} className="p-1 hover:bg-neutral-100 rounded">

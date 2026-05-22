@@ -106,9 +106,9 @@ export function MaintenanceCenter() {
   const overallHealth = healthData?.checks ? getHealthStatus(healthData.checks) : 'UNKNOWN'
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -121,7 +121,7 @@ export function MaintenanceCenter() {
                 Maintenance Center
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </h1>
-              <p className="text-stone-300 mt-1">
+              <p className="text-stone-300 text-xs">
                 System backups, health checks, and maintenance operations
               </p>
             </div>

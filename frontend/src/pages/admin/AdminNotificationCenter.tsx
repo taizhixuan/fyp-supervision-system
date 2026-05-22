@@ -45,10 +45,10 @@ export function AdminNotificationCenter() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Notifications</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Notifications</h1>
           <p className="text-neutral-600 mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
           </p>
