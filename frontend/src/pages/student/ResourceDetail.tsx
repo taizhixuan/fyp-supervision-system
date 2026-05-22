@@ -17,40 +17,10 @@ import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useResourceDetail } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 
 type ResourceType = 'GUIDELINE' | 'TEMPLATE' | 'VIDEO' | 'DOCUMENT' | 'LINK'
 type ResourceCategory = 'GENERAL' | 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'SUBMISSION'
-
-// Sample data
-const SAMPLE_RESOURCE = {
-  resourceId: '1',
-  title: 'FYP Guidelines 2024/2025',
-  description: 'Complete guidelines for Final Year Project including timeline, requirements, and assessment criteria. This document covers everything you need to know about your FYP journey from start to finish.',
-  type: 'GUIDELINE' as ResourceType,
-  category: 'GENERAL' as ResourceCategory,
-  fileUrl: '/resources/fyp-guidelines.pdf',
-  fileSize: 2456789,
-  isFeatured: true,
-  viewCount: 1250,
-  createdAt: '2024-09-01T00:00:00Z',
-  updatedAt: '2024-09-15T00:00:00Z',
-  content: {
-    sections: [
-      { title: 'Introduction', description: 'Overview of FYP requirements and objectives' },
-      { title: 'Timeline', description: 'Important dates and milestones throughout the academic year' },
-      { title: 'Supervision', description: 'Guidelines for supervisor selection and meetings' },
-      { title: 'Proposal Requirements', description: 'What to include in your FYP proposal' },
-      { title: 'Report Writing', description: 'Structure and formatting guidelines for final report' },
-      { title: 'Presentation', description: 'Requirements for final presentation and viva' },
-      { title: 'Assessment Criteria', description: 'How your FYP will be evaluated' },
-    ],
-    relatedResources: [
-      { id: '2', title: 'Proposal Template', type: 'TEMPLATE' },
-      { id: '4', title: 'Final Report Template', type: 'TEMPLATE' },
-      { id: '5', title: 'Presentation Guidelines', type: 'GUIDELINE' },
-    ],
-  },
-}
 
 const typeConfig: Record<ResourceType, { label: string; color: string; icon: typeof FileText }> = {
   GUIDELINE: { label: 'Guideline', color: 'bg-primary-100 text-primary-700', icon: BookOpen },
@@ -79,11 +49,6 @@ export function ResourceDetail() {
 
   const { data: resource, isLoading } = useResourceDetail(id || '')
 
-  // Use sample data
-  const displayResource = resource || SAMPLE_RESOURCE
-  const config = typeConfig[displayResource.type]
-  const Icon = config.icon
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -91,6 +56,33 @@ export function ResourceDetail() {
       </div>
     )
   }
+
+  if (!resource) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <Link
+          to={ROUTES.STUDENT.RESOURCES}
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Resources
+        </Link>
+        <Card className="text-center py-16">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-2">Resource not found</h2>
+          <p className="text-neutral-500">It may have been removed or you don't have access.</p>
+        </Card>
+      </div>
+    )
+  }
+
+  const displayResource = resource
+  const config = typeConfig[displayResource.type as ResourceType] ?? typeConfig.DOCUMENT
+  const Icon = config.icon
+  const categoryLabel = categoryConfig[displayResource.category as ResourceCategory] ?? displayResource.category ?? 'General'
+  const fileHref = assetUrl(displayResource.fileUrl)
+  const updatedAtLabel = displayResource.updatedAt
+    ? new Date(displayResource.updatedAt).toLocaleDateString('en-MY')
+    : null
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -117,7 +109,7 @@ export function ResourceDetail() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={config.color}>{config.label}</Badge>
-            <Badge variant="default">{categoryConfig[displayResource.category]}</Badge>
+            <Badge variant="default">{categoryLabel}</Badge>
           </div>
         </div>
       </div>
@@ -197,7 +189,7 @@ export function ResourceDetail() {
               <h2 className="text-lg font-semibold text-neutral-900 mb-4">Related Resources</h2>
               <div className="space-y-2">
                 {displayResource.content.relatedResources.map((related) => {
-                  const relatedConfig = typeConfig[related.type as ResourceType]
+                  const relatedConfig = typeConfig[related.type as ResourceType] ?? typeConfig.DOCUMENT
                   const RelatedIcon = relatedConfig.icon
                   return (
                     <Link
@@ -227,8 +219,8 @@ export function ResourceDetail() {
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-3">Actions</h3>
             <div className="space-y-2">
-              {displayResource.fileUrl && (
-                <a href={displayResource.fileUrl} download>
+              {fileHref && (
+                <a href={fileHref} download>
                   <Button variant="primary" className="w-full" leftIcon={<Download className="h-4 w-4" />}>
                     Download
                   </Button>
@@ -253,7 +245,7 @@ export function ResourceDetail() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">{displayResource.viewCount.toLocaleString()} views</span>
+                <span className="text-neutral-600">{(displayResource.viewCount ?? 0).toLocaleString()} views</span>
               </div>
               {displayResource.fileSize && (
                 <div className="flex items-center gap-2">
@@ -267,12 +259,12 @@ export function ResourceDetail() {
                   <span className="text-neutral-600">{displayResource.duration}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">
-                  Updated {new Date(displayResource.updatedAt).toLocaleDateString('en-MY')}
-                </span>
-              </div>
+              {updatedAtLabel && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-neutral-400" />
+                  <span className="text-neutral-600">Updated {updatedAtLabel}</span>
+                </div>
+              )}
             </div>
           </Card>
 
