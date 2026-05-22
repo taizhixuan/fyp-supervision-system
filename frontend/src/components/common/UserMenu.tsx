@@ -156,11 +156,11 @@ export function UserMenu() {
           </div>
 
           {/* Appearance */}
-          <div className="border-t border-neutral-100 px-4 py-3">
-            <p className="text-xs font-medium text-neutral-500 mb-2 uppercase tracking-wide">
+          <div className="border-t border-neutral-100 px-4 py-4">
+            <p className="text-xs font-medium text-neutral-500 mb-3 uppercase tracking-wide">
               Appearance
             </p>
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               {themeOptions.map((option) => {
                 const Icon = option.icon
                 const active = theme === option.value
@@ -170,7 +170,7 @@ export function UserMenu() {
                     type="button"
                     onClick={() => setTheme(option.value)}
                     className={cn(
-                      'flex-1 flex flex-col items-center gap-1 py-2 rounded-md text-xs font-medium transition-colors',
+                      'flex-1 flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-md text-xs font-medium transition-colors',
                       active
                         ? 'bg-primary-50 text-primary-700'
                         : 'text-neutral-600 hover:bg-neutral-50'
