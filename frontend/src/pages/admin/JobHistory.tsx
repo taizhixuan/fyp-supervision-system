@@ -92,54 +92,50 @@ export function JobHistory() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to={ROUTES.ADMIN.MAINTENANCE}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-              <History className="h-7 w-7 text-primary-600" />
-              Job History
-            </h1>
-            <p className="text-neutral-600 mt-1">
-              View maintenance job execution history and logs
-            </p>
-          </div>
-        </div>
-        <Button variant="secondary" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+      {/* Back */}
+      <Link to={ROUTES.ADMIN.MAINTENANCE} className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-amber-700">
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Maintenance
+      </Link>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Total Jobs</p>
-          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{stats.total}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Completed</p>
-          <p className="text-2xl font-bold text-success-600">{stats.completed}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Failed</p>
-          <p className="text-2xl font-bold text-error-600">{stats.failed}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Running</p>
-          <p className="text-2xl font-bold text-info-600">{stats.running}</p>
-        </Card>
+      {/* Compact hero with inline stat chips */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <History className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Job History</h1>
+              <p className="text-stone-300 text-xs">View maintenance job execution history and logs</p>
+            </div>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Stat chips */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: 'Total', value: stats.total, color: 'text-stone-200' },
+            { label: 'Completed', value: stats.completed, color: 'text-emerald-300' },
+            { label: 'Failed', value: stats.failed, color: 'text-rose-300' },
+            { label: 'Running', value: stats.running, color: 'text-sky-300' },
+          ].map((chip) => (
+            <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
+              <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+              <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <Card padding="sm">
+        <div className="flex flex-col lg:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input

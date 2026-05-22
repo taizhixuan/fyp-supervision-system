@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Award, Upload, Check, X, Clock, Search, Download, AlertTriangle } from 'lucide-react'
+import { Award, Upload, Check, Search, Download, AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -92,56 +92,47 @@ export function Fyp1PassTracking() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-          <Award className="h-7 w-7 text-primary-600" />
-          FYP1 Pass Tracking
-        </h1>
-        <p className="text-neutral-600 mt-1">
-          Mark each student&apos;s FYP1 result based on what was entered in eBwise/CLiC. Passed
-          students automatically advance to FYP2 on their next login (when an FYP2 cycle is active).
-        </p>
-      </div>
+      {/* Compact hero with inline stat chips */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+            <Award className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">FYP1 Pass Tracking</h1>
+            <p className="text-stone-300 text-xs">Passed students auto-advance to FYP2 on next login when an FYP2 cycle is active</p>
+          </div>
+        </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Total FYP1</p>
-          <p className="text-2xl font-bold text-neutral-900 mt-1">{data?.total ?? 0}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-500">
-          <p className="text-sm text-neutral-500 flex items-center gap-1">
-            <Check className="h-3.5 w-3.5 text-emerald-600" /> Passed
-          </p>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{data?.passedCount ?? 0}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-rose-500">
-          <p className="text-sm text-neutral-500 flex items-center gap-1">
-            <X className="h-3.5 w-3.5 text-rose-600" /> Failed
-          </p>
-          <p className="text-2xl font-bold text-rose-700 mt-1">{data?.failedCount ?? 0}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-orange-500">
-          <p className="text-sm text-neutral-500 flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5 text-orange-600" /> Pending
-          </p>
-          <p className="text-2xl font-bold text-orange-700 mt-1">{data?.pendingCount ?? 0}</p>
-        </Card>
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: 'Total', value: data?.total ?? 0, color: 'text-stone-200' },
+            { label: 'Passed', value: data?.passedCount ?? 0, color: 'text-emerald-300' },
+            { label: 'Failed', value: data?.failedCount ?? 0, color: 'text-rose-300' },
+            { label: 'Pending', value: data?.pendingCount ?? 0, color: 'text-orange-300' },
+          ].map((chip) => (
+            <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
+              <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+              <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Toolbar */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-1.5">
             {(['ALL', 'PASSED', 'FAILED', 'PENDING'] as Filter[]).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
                 className={cn(
-                  'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                  'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                   filter === f
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-amber-600 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 )}
               >
@@ -149,19 +140,19 @@ export function Fyp1PassTracking() {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or ID"
-                className="pl-9 w-64"
+                placeholder="Search…"
+                className="pl-8 h-8 w-48 text-sm"
               />
             </div>
-            <Button variant="secondary" size="sm" onClick={downloadTemplate}>
-              <Download className="h-4 w-4 mr-1" />
-              CSV template
+            <Button variant="secondary" size="sm" onClick={downloadTemplate} className="h-8 px-2 text-xs">
+              <Download className="h-3.5 w-3.5 mr-0.5" />
+              Template
             </Button>
             <input
               ref={fileInputRef}
@@ -177,8 +168,9 @@ export function Fyp1PassTracking() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={importMutation.isPending}
+              className="h-8 px-2 text-xs"
             >
-              {importMutation.isPending ? <Spinner size="sm" className="mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+              {importMutation.isPending ? <Spinner size="sm" className="mr-0.5" /> : <Upload className="h-3.5 w-3.5 mr-0.5" />}
               Import CSV
             </Button>
           </div>
@@ -187,35 +179,35 @@ export function Fyp1PassTracking() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-8">
           <Spinner size="lg" />
         </div>
       ) : filtered.length === 0 ? (
         <Card className="text-center py-8">
-          <Award className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-          <p className="text-neutral-500">No projects match the current filter.</p>
+          <Award className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <p className="text-sm text-neutral-500">No projects match the current filter.</p>
         </Card>
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <Card className="overflow-x-auto" padding="sm">
+          <table className="w-full text-xs">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-neutral-700">Student</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-700">Project</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-700">Supervisor</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-700">Result</th>
+                <th className="text-left px-2.5 py-1.5 font-semibold text-neutral-700 uppercase tracking-wide text-[10px]">Student</th>
+                <th className="text-left px-2.5 py-1.5 font-semibold text-neutral-700 uppercase tracking-wide text-[10px]">Project</th>
+                <th className="text-left px-2.5 py-1.5 font-semibold text-neutral-700 uppercase tracking-wide text-[10px]">Supervisor</th>
+                <th className="text-left px-2.5 py-1.5 font-semibold text-neutral-700 uppercase tracking-wide text-[10px]">Result</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {filtered.map((p) => (
                 <tr key={p.projectId} className="hover:bg-neutral-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-neutral-900 flex items-center gap-2">
+                  <td className="px-2.5 py-1.5">
+                    <div className="font-medium text-neutral-900 flex items-center gap-1.5">
                       {p.studentName}
                       {p.meetingLogsRequired != null && (
                         <span
                           className={cn(
-                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium',
+                            'inline-flex items-center gap-0.5 px-1.5 py-0 rounded text-[10px] font-medium',
                             p.meetsMeetingLogMinimum
                               ? 'bg-emerald-50 text-emerald-700'
                               : 'bg-amber-50 text-amber-700',
@@ -225,30 +217,30 @@ export function Fyp1PassTracking() {
                             : `Below the ${p.meetingLogsRequired}-log FYP1 minimum`}
                         >
                           {p.meetsMeetingLogMinimum ? (
-                            <Check className="h-3 w-3" />
+                            <Check className="h-2.5 w-2.5" />
                           ) : (
-                            <AlertTriangle className="h-3 w-3" />
+                            <AlertTriangle className="h-2.5 w-2.5" />
                           )}
-                          {p.meetingLogsCompleted ?? 0}/{p.meetingLogsRequired} logs
+                          {p.meetingLogsCompleted ?? 0}/{p.meetingLogsRequired}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-neutral-500">{p.studentId}</div>
+                    <div className="text-[10px] text-neutral-500">{p.studentId}</div>
                   </td>
-                  <td className="px-4 py-3 max-w-xs">
+                  <td className="px-2.5 py-1.5 max-w-xs">
                     <div className="line-clamp-2 text-neutral-700">{p.projectTitle}</div>
                   </td>
-                  <td className="px-4 py-3 text-neutral-700">
+                  <td className="px-2.5 py-1.5 text-neutral-700">
                     {p.supervisorName || <span className="text-neutral-400">Unassigned</span>}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                  <td className="px-2.5 py-1.5">
+                    <div className="flex items-center gap-0.5">
                       <button
                         type="button"
                         onClick={() => handleSet(p, true)}
                         disabled={setMutation.isPending}
                         className={cn(
-                          'px-2.5 py-1 text-xs rounded font-medium transition-colors',
+                          'px-2 py-0.5 text-[11px] rounded font-medium transition-colors',
                           p.fyp1Passed === true
                             ? 'bg-emerald-600 text-white'
                             : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -261,7 +253,7 @@ export function Fyp1PassTracking() {
                         onClick={() => handleSet(p, false)}
                         disabled={setMutation.isPending}
                         className={cn(
-                          'px-2.5 py-1 text-xs rounded font-medium transition-colors',
+                          'px-2 py-0.5 text-[11px] rounded font-medium transition-colors',
                           p.fyp1Passed === false
                             ? 'bg-rose-600 text-white'
                             : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -274,7 +266,7 @@ export function Fyp1PassTracking() {
                         onClick={() => handleSet(p, null)}
                         disabled={setMutation.isPending}
                         className={cn(
-                          'px-2.5 py-1 text-xs rounded font-medium transition-colors',
+                          'px-2 py-0.5 text-[11px] rounded font-medium transition-colors',
                           p.fyp1Passed === null
                             ? 'bg-orange-500 text-white'
                             : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'

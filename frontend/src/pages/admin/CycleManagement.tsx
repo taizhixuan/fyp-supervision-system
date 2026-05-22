@@ -224,85 +224,103 @@ export function CycleManagement() {
     )
   }
 
+  const statChips = [
+    { key: 'ALL', label: 'Total', value: stats.total, color: 'text-stone-200' },
+    { key: 'ACTIVE', label: 'Active', value: stats.active, color: 'text-emerald-300' },
+    { key: 'PLANNING', label: 'Planning', value: stats.planning, color: 'text-amber-300' },
+    { key: 'COMPLETED', label: 'Completed', value: stats.completed, color: 'text-stone-300' },
+  ] as const
+
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Compact hero with inline stat chips */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500/20 rounded-xl ring-1 ring-amber-500/30 flex items-center justify-center">
-              <Calendar className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Calendar className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                FYP Cycle Management
-                <Sparkles className="h-5 w-5 text-amber-400" />
-              </h1>
-              <p className="text-stone-300 text-xs">
-                One active FYP1 and one active FYP2 cycle at a time. Activating a cycle attaches every existing student to it.
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">FYP Cycle Management</h1>
+              <p className="text-stone-300 text-xs">One active FYP1 + one active FYP2 cycle at a time. Activating attaches all students.</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Button
               type="button"
+              size="sm"
               onClick={() => {
                 setTplForm(emptyForm())
                 setTemplateOpen(true)
               }}
               className="bg-emerald-500 hover:bg-emerald-600 text-white border-0"
             >
-              <Sparkles className="h-4 w-4 mr-2" />
-              From Template
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Template
             </Button>
             <Button
               type="button"
+              size="sm"
               onClick={() => {
                 setCreateForm(emptyForm())
                 setCreateOpen(true)
               }}
               className="bg-amber-500 hover:bg-amber-600 text-white border-0"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Cycle
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Create
             </Button>
           </div>
+        </div>
+
+        {/* Inline stat chips */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {statChips.map((chip) => {
+            const active = statusFilter === chip.key
+            return (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setStatusFilter(chip.key === statusFilter && chip.key !== 'ALL' ? 'ALL' : (chip.key as CycleStatus | 'ALL'))}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 ring-1 transition-colors text-left',
+                  active ? 'bg-amber-500/30 ring-amber-300/50' : 'bg-stone-700/40 ring-stone-600/40 hover:bg-stone-700/60'
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+                  <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Active cycle banners */}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2">
         <ActiveCycleBanner cycle={activeFyp1} type="FYP1" />
         <ActiveCycleBanner cycle={activeFyp2} type="FYP2" />
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total Cycles" value={stats.total} active={statusFilter === 'ALL'} onClick={() => setStatusFilter('ALL')} />
-        <StatCard label="Active" value={stats.active} valueClass="text-emerald-700" active={statusFilter === 'ACTIVE'} onClick={() => setStatusFilter(statusFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')} />
-        <StatCard label="Planning" value={stats.planning} valueClass="text-amber-700" active={statusFilter === 'PLANNING'} onClick={() => setStatusFilter(statusFilter === 'PLANNING' ? 'ALL' : 'PLANNING')} />
-        <StatCard label="Completed" value={stats.completed} valueClass="text-stone-700" active={statusFilter === 'COMPLETED'} onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')} />
-      </div>
-
       {/* Search & Filters */}
-      <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
             <Input
               type="text"
               placeholder="Search by code, name, or academic year..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-8 h-9 text-sm"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as CycleStatus | 'ALL')}
-            className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+            className="px-2.5 h-9 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500"
           >
             <option value="ALL">All Status</option>
             <option value="PLANNING">Planning</option>
@@ -311,10 +329,10 @@ export function CycleManagement() {
             <option value="ARCHIVED">Archived</option>
           </select>
         </div>
-      </div>
+      </Card>
 
       {/* Cycles List */}
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         {filteredCycles.length > 0 ? (
           filteredCycles.map((cycle) => {
             const status = getStatusConfig(cycle.status)
@@ -323,60 +341,60 @@ export function CycleManagement() {
             const busy = activateMutation.isPending || completeMutation.isPending || archiveMutation.isPending || deleteMutation.isPending
 
             return (
-              <Card key={cycle.cycleId} className="p-5 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className={cn('p-3 rounded-lg', status.bgColor)}>
-                      <StatusIcon className={cn('h-6 w-6', status.color)} />
+              <Card key={cycle.cycleId} padding="sm" className="hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className={cn('p-1.5 rounded-md flex-shrink-0', status.bgColor)}>
+                      <StatusIcon className={cn('h-4 w-4', status.color)} />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-neutral-900">{cycle.cycleCode || cycle.name}</h3>
-                        <span className={cn('px-2 py-0.5 rounded-xl text-xs font-medium border', status.bgColor, status.color, status.borderColor)}>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-sm font-semibold text-neutral-900">{cycle.cycleCode || cycle.name}</h3>
+                        <span className={cn('px-1.5 py-0 rounded text-[10px] font-medium border', status.bgColor, status.color, status.borderColor)}>
                           {status.label}
                         </span>
-                        <span className={cn('px-2 py-0.5 rounded-xl text-xs font-medium', type.bgColor, type.color)}>
+                        <span className={cn('px-1.5 py-0 rounded text-[10px] font-medium', type.bgColor, type.color)}>
                           {type.label}
                         </span>
                       </div>
-                      <p className="text-sm text-neutral-500 mt-1">
-                        {cycle.academicYear} • Semester {cycle.semester}
+                      <p className="text-[11px] text-neutral-500">
+                        {cycle.academicYear} · Semester {cycle.semester}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-neutral-600">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-600">
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="h-3 w-3" />
                           {cycle.startDate ? new Date(cycle.startDate).toLocaleDateString() : '—'} →{' '}
                           {cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : '—'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 mt-3">
-                        <Stat icon={<Users className="h-4 w-4 text-neutral-400" />} value={cycle.totalStudents} label="students" />
-                        <Stat icon={<CheckCircle className="h-4 w-4 text-neutral-400" />} value={cycle.pairedStudents} label="paired" />
-                        <Stat icon={<CalendarIcon className="h-4 w-4 text-neutral-400" />} value={cycle.deadlineCount} label="deadlines" />
+                      <div className="flex items-center gap-2 mt-1">
+                        <Stat icon={<Users className="h-3 w-3 text-neutral-400" />} value={cycle.totalStudents} label="students" />
+                        <Stat icon={<CheckCircle className="h-3 w-3 text-neutral-400" />} value={cycle.pairedStudents} label="paired" />
+                        <Stat icon={<CalendarIcon className="h-3 w-3 text-neutral-400" />} value={cycle.deadlineCount} label="deadlines" />
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     {cycle.status === 'PLANNING' && (
                       <>
-                        <Button variant="secondary" size="sm" onClick={() => handleActivate(cycle)} disabled={busy}>
-                          <Play className="h-4 w-4 mr-1" />
+                        <Button variant="secondary" size="sm" onClick={() => handleActivate(cycle)} disabled={busy} className="h-7 px-2 text-xs">
+                          <Play className="h-3.5 w-3.5 mr-0.5" />
                           Start
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cycle)} disabled={busy} className="text-rose-600">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cycle)} disabled={busy} className="text-rose-600 px-1.5">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </>
                     )}
                     {cycle.status === 'ACTIVE' && (
-                      <Button variant="secondary" size="sm" onClick={() => handleComplete(cycle)} disabled={busy}>
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                      <Button variant="secondary" size="sm" onClick={() => handleComplete(cycle)} disabled={busy} className="h-7 px-2 text-xs">
+                        <CheckCircle className="h-3.5 w-3.5 mr-0.5" />
                         Complete
                       </Button>
                     )}
                     {cycle.status === 'COMPLETED' && (
-                      <Button variant="secondary" size="sm" onClick={() => handleArchive(cycle)} disabled={busy}>
-                        <Archive className="h-4 w-4 mr-1" />
+                      <Button variant="secondary" size="sm" onClick={() => handleArchive(cycle)} disabled={busy} className="h-7 px-2 text-xs">
+                        <Archive className="h-3.5 w-3.5 mr-0.5" />
                         Archive
                       </Button>
                     )}
@@ -384,8 +402,8 @@ export function CycleManagement() {
                 </div>
 
                 {cycle.status === 'ACTIVE' && cycle.deadlineCount === 0 && (
-                  <div className="mt-4 p-3 bg-warning-50 rounded-lg flex items-center gap-2 text-sm text-warning-700">
-                    <AlertTriangle className="h-4 w-4" />
+                  <div className="mt-2 px-2 py-1.5 bg-amber-50 rounded-md flex items-center gap-1.5 text-[11px] text-amber-700">
+                    <AlertTriangle className="h-3 w-3" />
                     No deadlines configured for this cycle. Students won&apos;t see clear submission dates.
                   </div>
                 )}
@@ -394,22 +412,23 @@ export function CycleManagement() {
           })
         ) : (
           <Card className="text-center py-8">
-            <Calendar className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="font-medium text-neutral-900">No cycles found</h3>
-            <p className="text-neutral-500 mt-1">
+            <Calendar className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-neutral-900">No cycles found</h3>
+            <p className="text-xs text-neutral-500 mt-1">
               {searchQuery || statusFilter !== 'ALL'
                 ? 'Try adjusting your filters'
                 : 'Create your first FYP cycle to get started'}
             </p>
             {!searchQuery && statusFilter === 'ALL' && (
               <Button
-                className="mt-4"
+                size="sm"
+                className="mt-3"
                 onClick={() => {
                   setCreateForm(emptyForm())
                   setCreateOpen(true)
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3.5 w-3.5 mr-1" />
                 Create Cycle
               </Button>
             )}
@@ -504,62 +523,47 @@ function ActiveCycleBanner({ cycle, type }: { cycle: FYPCycle | undefined; type:
   const typeStyle = getTypeConfig(type)
   if (!cycle) {
     return (
-      <Card className="p-4 border border-dashed border-neutral-300 bg-neutral-50">
-        <div className="flex items-center gap-3">
-          <div className={cn('p-2 rounded-lg', typeStyle.bgColor)}>
-            <Calendar className={cn('h-5 w-5', typeStyle.color)} />
+      <Card padding="sm" className="border border-dashed border-neutral-300 bg-neutral-50">
+        <div className="flex items-center gap-2">
+          <div className={cn('p-1 rounded', typeStyle.bgColor)}>
+            <Calendar className={cn('h-3.5 w-3.5', typeStyle.color)} />
           </div>
           <div>
-            <p className="text-sm font-medium text-neutral-700">No active {typeStyle.label} cycle</p>
-            <p className="text-xs text-neutral-500">Activate a PLANNING cycle to attach students.</p>
+            <p className="text-xs font-medium text-neutral-700">No active {typeStyle.label} cycle</p>
+            <p className="text-[10px] text-neutral-500">Activate a PLANNING cycle to attach students.</p>
           </div>
         </div>
       </Card>
     )
   }
   return (
-    <Card className="p-4 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-200 rounded-lg">
-            <Play className="h-5 w-5 text-emerald-700" />
+    <Card padding="sm" className="border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-emerald-200">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1 bg-emerald-200 rounded">
+            <Play className="h-3.5 w-3.5 text-emerald-700" />
           </div>
-          <div>
-            <h3 className="font-semibold text-neutral-900">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-neutral-900 truncate">
               Active {typeStyle.label}: {cycle.cycleCode || cycle.name}
             </h3>
-            <p className="text-sm text-neutral-600">
-              {cycle.academicYear} • Semester {cycle.semester}
+            <p className="text-[11px] text-neutral-600">
+              {cycle.academicYear} · Semester {cycle.semester}
             </p>
           </div>
         </div>
-        <div className="text-right text-sm text-neutral-600">
-          <div><span className="font-medium">{cycle.totalStudents}</span> students</div>
-          <div className="text-xs text-neutral-500">{cycle.deadlineCount} deadlines</div>
+        <div className="text-right text-[11px] text-neutral-600 flex-shrink-0">
+          <div><span className="font-bold">{cycle.totalStudents}</span> students</div>
+          <div className="text-[10px] text-neutral-500">{cycle.deadlineCount} deadlines</div>
         </div>
       </div>
     </Card>
   )
 }
 
-function StatCard({ label, value, valueClass, active, onClick }: { label: string; value: number; valueClass?: string; active: boolean; onClick: () => void }) {
-  return (
-    <Card
-      className={cn(
-        'p-4 cursor-pointer transition-colors',
-        active ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
-      )}
-      onClick={onClick}
-    >
-      <p className="text-sm text-neutral-500">{label}</p>
-      <p className={cn('text-2xl font-bold text-neutral-900', valueClass)}>{value}</p>
-    </Card>
-  )
-}
-
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-sm">
+    <div className="flex items-center gap-1 text-[11px]">
       {icon}
       <span className="font-medium text-neutral-900">{value}</span>
       <span className="text-neutral-500">{label}</span>

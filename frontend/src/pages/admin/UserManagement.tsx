@@ -9,7 +9,6 @@ import {
   Clock,
   Lock,
   Unlock,
-  Sparkles,
   CheckCircle,
   XCircle,
 } from 'lucide-react'
@@ -112,97 +111,77 @@ export function UserManagement() {
 
   const allSelected = data?.users && data.users.length > 0 && selectedUsers.size === data.users.length
 
+  const statusChips: { key: UserStatus | 'ALL'; label: string; value: number; tone: string }[] = [
+    { key: 'ALL', label: 'Total', value: stats.total, tone: 'amber' },
+    { key: 'ACTIVE', label: 'Active', value: stats.active, tone: 'emerald' },
+    { key: 'PENDING', label: 'Pending', value: stats.pending, tone: 'sky' },
+    { key: 'SUSPENDED', label: 'Suspended', value: stats.suspended, tone: 'orange' },
+  ]
+
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Compact hero with inline stat chips */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-amber-500/20 rounded-xl ring-1 ring-amber-500/30 flex items-center justify-center">
-              <Users className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Users className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                User Management
-                <Sparkles className="h-5 w-5 text-amber-400" />
-              </h1>
-              <p className="text-stone-300 text-xs">
-                Manage user accounts, roles, and permissions
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">User Management</h1>
+              <p className="text-stone-300 text-xs">Manage user accounts, roles, and permissions</p>
             </div>
           </div>
           <Link to={ROUTES.ADMIN.USER_NEW}>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white border-none">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white border-none">
+              <Plus className="h-3.5 w-3.5 mr-1" />
               Create User
             </Button>
           </Link>
         </div>
+
+        {/* Stat chips inline */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {statusChips.map((chip) => {
+            const active = statusFilter === chip.key
+            return (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setStatusFilter(chip.key === statusFilter && chip.key !== 'ALL' ? 'ALL' : chip.key)}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 ring-1 transition-colors text-left',
+                  active ? 'bg-amber-500/30 ring-amber-300/50' : 'bg-stone-700/40 ring-stone-600/40 hover:bg-stone-700/60'
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-base font-bold leading-none">{chip.value}</div>
+                  <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors border-l-4 border-l-amber-500',
-            statusFilter === 'ALL' ? 'ring-2 ring-amber-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter('ALL')}
-        >
-          <p className="text-sm text-neutral-500">Total Users</p>
-          <p className="text-2xl font-bold text-amber-700">{stats.total}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors border-l-4 border-l-emerald-500',
-            statusFilter === 'ACTIVE' ? 'ring-2 ring-emerald-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')}
-        >
-          <p className="text-sm text-neutral-500">Active</p>
-          <p className="text-2xl font-bold text-emerald-600">{stats.active}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors border-l-4 border-l-sky-500',
-            statusFilter === 'PENDING' ? 'ring-2 ring-sky-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'PENDING' ? 'ALL' : 'PENDING')}
-        >
-          <p className="text-sm text-neutral-500">Pending</p>
-          <p className="text-2xl font-bold text-sky-600">{stats.pending}</p>
-        </Card>
-        <Card
-          className={cn(
-            'p-4 cursor-pointer transition-colors border-l-4 border-l-orange-500',
-            statusFilter === 'SUSPENDED' ? 'ring-2 ring-orange-500' : 'hover:bg-neutral-50'
-          )}
-          onClick={() => setStatusFilter(statusFilter === 'SUSPENDED' ? 'ALL' : 'SUSPENDED')}
-        >
-          <p className="text-sm text-neutral-500">Suspended</p>
-          <p className="text-2xl font-bold text-orange-600">{stats.suspended}</p>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filters — compact */}
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
             <Input
               type="text"
               placeholder="Search by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-8 h-9 text-sm"
             />
           </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as UserRole | 'ALL')}
-            className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+            className="px-2.5 h-9 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500"
           >
             <option value="ALL">All Roles</option>
             <option value="STUDENT">Students</option>
@@ -213,7 +192,7 @@ export function UserManagement() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as UserStatus | 'ALL')}
-            className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+            className="px-2.5 h-9 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -222,161 +201,135 @@ export function UserManagement() {
             <option value="BLOCKED">Blocked</option>
           </select>
         </div>
-      </div>
+      </Card>
 
       {/* Bulk Action Bar */}
       {selectedUsers.size > 0 && (
-        <Card className="p-3 bg-primary-50 border-primary-200">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <span className="text-sm font-medium text-primary-900">
-              {selectedUsers.size} user(s) selected
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleBulkAction('ACTIVE')}
-                disabled={bulkMutation.isPending}
-              >
-                {bulkMutation.isPending ? (
-                  <Spinner size="sm" className="mr-1" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                )}
-                Activate
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="text-warning-600 border-warning-300 hover:bg-warning-50"
-                onClick={() => handleBulkAction('SUSPENDED')}
-                disabled={bulkMutation.isPending}
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                Suspend
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setSelectedUsers(new Set())}
-              >
-                Clear
-              </Button>
-            </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 py-2 rounded-md border border-amber-200 bg-amber-50">
+          <span className="text-sm font-medium text-amber-900">
+            {selectedUsers.size} user(s) selected
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => handleBulkAction('ACTIVE')} disabled={bulkMutation.isPending}>
+              {bulkMutation.isPending ? (
+                <Spinner size="sm" className="mr-1" />
+              ) : (
+                <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              )}
+              Activate
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="text-orange-700 border-orange-300 hover:bg-orange-50"
+              onClick={() => handleBulkAction('SUSPENDED')}
+              disabled={bulkMutation.isPending}
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Suspend
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedUsers(new Set())}>
+              Clear
+            </Button>
           </div>
-        </Card>
+        </div>
       )}
 
-      {/* Select All + Users List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-        {data?.users && data.users.length > 0 && (
-          <div className="flex items-center gap-3 px-1">
-            <input
-              type="checkbox"
-              checked={!!allSelected}
-              onChange={toggleSelectAll}
-              className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-            />
-            <span className="text-sm text-neutral-500">
-              {allSelected ? 'Deselect all' : 'Select all'}
-            </span>
-          </div>
-        )}
+      {/* Select all toggle */}
+      {data?.users && data.users.length > 0 && (
+        <div className="flex items-center gap-2 px-1">
+          <input
+            type="checkbox"
+            checked={!!allSelected}
+            onChange={toggleSelectAll}
+            className="h-3.5 w-3.5 rounded border-neutral-300 text-amber-600 focus:ring-amber-500"
+          />
+          <span className="text-xs text-neutral-500">
+            {allSelected ? 'Deselect all' : 'Select all'}
+          </span>
+        </div>
+      )}
 
-        {data?.users && data.users.length > 0 ? (
-          data.users.map((user) => {
+      {/* Users grid */}
+      {data?.users && data.users.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {data.users.map((user) => {
             const role = roleConfig[user.role]
             const status = statusConfig[user.status]
 
             return (
-              <Card
-                key={user.userId}
-                className="p-4 hover:shadow-md transition-all duration-300"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Checkbox */}
+              <Card key={user.userId} padding="sm" className="hover:shadow-md transition-all">
+                <div className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={selectedUsers.has(user.userId)}
                     onChange={() => toggleSelectUser(user.userId)}
-                    className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
+                    className="h-3.5 w-3.5 rounded border-neutral-300 text-amber-600 focus:ring-amber-500 flex-shrink-0"
                   />
 
-                  {/* Avatar */}
                   <div
                     className={cn(
-                      'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0',
-                      user.isLocked ? 'bg-error-100' : 'bg-primary-100'
+                      'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0',
+                      user.isLocked ? 'bg-rose-100' : 'bg-amber-100'
                     )}
                   >
                     {user.isLocked ? (
-                      <Lock className="h-6 w-6 text-error-600" />
+                      <Lock className="h-4 w-4 text-rose-600" />
                     ) : (
-                      <span className="text-lg font-semibold text-primary-600">
+                      <span className="text-sm font-bold text-amber-700">
                         {avatarInitial(user.fullName)}
                       </span>
                     )}
                   </div>
 
-                  {/* Content (clickable for navigation) */}
                   <div
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={() => navigate(ROUTES.ADMIN.USER_DETAIL.replace(':id', user.userId))}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-neutral-900">{user.fullName}</h3>
-                        <div className="flex items-center gap-2 text-sm text-neutral-500">
-                          <Mail className="h-4 w-4" />
-                          {user.email}
-                        </div>
-                      </div>
+                    <h3 className="text-sm font-semibold text-neutral-900 leading-tight truncate">{user.fullName}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-neutral-500 truncate">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{user.email}</span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
                       <span className={cn(
-                        'px-2 py-0.5 rounded-xl text-xs font-medium border',
-                        role.bgColor,
-                        role.color,
-                        role.borderColor
+                        'px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                        role.bgColor, role.color, role.borderColor
                       )}>
                         {role.label}
                       </span>
                       <span className={cn(
-                        'px-2 py-0.5 rounded-xl text-xs font-medium border',
-                        status.bgColor,
-                        status.color,
-                        status.borderColor
+                        'px-1.5 py-0.5 rounded text-[10px] font-medium border',
+                        status.bgColor, status.color, status.borderColor
                       )}>
                         {status.label}
                       </span>
                       {user.department && (
-                        <span className="px-2 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded-xl text-xs">
+                        <span className="px-1.5 py-0.5 bg-stone-100 text-stone-600 border border-stone-200 rounded text-[10px]">
                           {user.department}
                         </span>
                       )}
                       {user.isLocked && (
-                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-medium flex items-center gap-1">
-                          <Lock className="h-3 w-3" />
+                        <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded text-[10px] font-medium flex items-center gap-0.5">
+                          <Lock className="h-2.5 w-2.5" />
                           Locked
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        Created: {new Date(user.createdAt).toLocaleDateString()}
+                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-neutral-500">
+                      <span className="flex items-center gap-0.5">
+                        <Clock className="h-2.5 w-2.5" />
+                        {new Date(user.createdAt).toLocaleDateString()}
                       </span>
                       {user.lastLoginAt && (
-                        <span>
-                          Last login: {new Date(user.lastLoginAt).toLocaleDateString()}
-                        </span>
+                        <span>· last: {new Date(user.lastLoginAt).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Quick Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
                     {user.status === 'PENDING' && (
                       <Button
                         size="sm"
@@ -384,8 +337,9 @@ export function UserManagement() {
                         title="Approve"
                         onClick={() => handleQuickStatusChange(user.userId, 'ACTIVE', user.fullName)}
                         disabled={updateMutation.isPending}
+                        className="px-1.5"
                       >
-                        <CheckCircle className="h-4 w-4 text-success-600" />
+                        <CheckCircle className="h-4 w-4 text-emerald-600" />
                       </Button>
                     )}
                     {user.status === 'ACTIVE' && (
@@ -395,8 +349,9 @@ export function UserManagement() {
                         title="Suspend"
                         onClick={() => handleQuickStatusChange(user.userId, 'SUSPENDED', user.fullName)}
                         disabled={updateMutation.isPending}
+                        className="px-1.5"
                       >
-                        <XCircle className="h-4 w-4 text-warning-600" />
+                        <XCircle className="h-4 w-4 text-amber-600" />
                       </Button>
                     )}
                     {user.status === 'SUSPENDED' && (
@@ -406,44 +361,41 @@ export function UserManagement() {
                         title="Reactivate"
                         onClick={() => handleQuickStatusChange(user.userId, 'ACTIVE', user.fullName)}
                         disabled={updateMutation.isPending}
+                        className="px-1.5"
                       >
-                        <Unlock className="h-4 w-4 text-info-600" />
+                        <Unlock className="h-4 w-4 text-sky-600" />
                       </Button>
                     )}
                     <button
                       type="button"
-                      className="p-1 text-neutral-400 hover:text-neutral-600"
+                      className="p-0.5 text-neutral-400 hover:text-neutral-600"
                       onClick={() => navigate(ROUTES.ADMIN.USER_DETAIL.replace(':id', user.userId))}
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
               </Card>
             )
-          })
-        ) : (
-          <Card className="text-center py-8">
-            <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="font-medium text-neutral-900">No users found</h3>
-            <p className="text-neutral-500 mt-1">
-              {searchQuery || roleFilter !== 'ALL' || statusFilter !== 'ALL'
-                ? 'Try adjusting your filters'
-                : 'Create your first user to get started'}
-            </p>
-          </Card>
-        )}
-      </div>
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-8">
+          <Users className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="font-medium text-neutral-900 text-sm">No users found</h3>
+          <p className="text-xs text-neutral-500 mt-1">
+            {searchQuery || roleFilter !== 'ALL' || statusFilter !== 'ALL'
+              ? 'Try adjusting your filters'
+              : 'Create your first user to get started'}
+          </p>
+        </Card>
+      )}
 
       {/* Summary */}
       {data && data.users.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-neutral-600">
-              Showing {data.users.length} of {data.total} users
-            </span>
-          </div>
-        </Card>
+        <div className="text-xs text-neutral-500 px-1">
+          Showing {data.users.length} of {data.total} users
+        </div>
       )}
     </div>
   )

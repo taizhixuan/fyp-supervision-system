@@ -98,21 +98,23 @@ export function ApprovedRoster() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-          <ShieldCheck className="h-7 w-7 text-primary-600" />
-          Approved Roster
-        </h1>
-        <p className="text-neutral-600 mt-1">
-          Upload the official list of students or supervisors. Anyone whose registration matches a
-          row here is auto-approved instead of waiting for manual review. Pending users with
-          matching MMU&nbsp;ID and email are activated immediately on upload.
-        </p>
+      {/* Compact hero */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+            <ShieldCheck className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Approved Roster</h1>
+            <p className="text-stone-300 text-xs">Upload official student/supervisor lists. Matching signups are auto-approved instead of waiting for manual review.</p>
+          </div>
+        </div>
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="flex gap-2">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+          <div className="flex gap-1.5">
             {(['STUDENT', 'SUPERVISOR'] as Tab[]).map((t) => (
               <button
                 key={t}
@@ -122,9 +124,9 @@ export function ApprovedRoster() {
                   setLastResult(null)
                 }}
                 className={cn(
-                  'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                  'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                   tab === t
-                    ? 'bg-primary-600 text-white'
+                    ? 'bg-amber-600 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 )}
               >
@@ -132,19 +134,19 @@ export function ApprovedRoster() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, ID, email"
-                className="pl-9 w-64"
+                placeholder="Search…"
+                className="pl-8 h-8 w-48 text-sm"
               />
             </div>
-            <Button variant="secondary" size="sm" onClick={downloadTemplate}>
-              <Download className="h-4 w-4 mr-1" />
-              CSV template
+            <Button variant="secondary" size="sm" onClick={downloadTemplate} className="h-8 px-2 text-xs">
+              <Download className="h-3.5 w-3.5 mr-0.5" />
+              Template
             </Button>
             <input
               ref={fileInputRef}
@@ -160,13 +162,14 @@ export function ApprovedRoster() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
+              className="h-8 px-2 text-xs"
             >
-              {importing ? <Spinner size="sm" className="mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+              {importing ? <Spinner size="sm" className="mr-0.5" /> : <Upload className="h-3.5 w-3.5 mr-0.5" />}
               Import CSV
             </Button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-neutral-500">
+        <p className="mt-2 text-[11px] text-neutral-500">
           {isStudent
             ? 'Columns: mmuId, email, fullName, programme, specialisation, faculty, intakeYear. Email must end with @student.mmu.edu.my.'
             : 'Columns: mmuId, email, fullName, department, faculty, position. Email must end with @mmu.edu.my.'}
@@ -174,18 +177,17 @@ export function ApprovedRoster() {
       </Card>
 
       {lastResult && (
-        <Card className="p-4 border-l-4 border-l-emerald-500">
+        <div className="px-3 py-2 rounded-md border-l-4 border-l-emerald-500 bg-emerald-50/60">
           <p className="text-sm font-medium text-neutral-900">
-            Imported {lastResult.imported}, updated {lastResult.updated}, auto-approved{' '}
-            {lastResult.autoApproved}.
+            Imported {lastResult.imported}, updated {lastResult.updated}, auto-approved {lastResult.autoApproved}.
           </p>
           {lastResult.errorCount > 0 && (
-            <div className="mt-2">
+            <div className="mt-1">
               <p className="text-xs font-semibold text-amber-700 flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5" />
+                <AlertTriangle className="h-3 w-3" />
                 {lastResult.errorCount} row{lastResult.errorCount === 1 ? '' : 's'} skipped
               </p>
-              <ul className="mt-1 text-xs text-amber-700 list-disc pl-5 space-y-0.5">
+              <ul className="mt-0.5 text-[11px] text-amber-700 list-disc pl-5 space-y-0.5">
                 {lastResult.errors.slice(0, 8).map((err, i) => (
                   <li key={i}>{err}</li>
                 ))}
@@ -195,11 +197,11 @@ export function ApprovedRoster() {
               </ul>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-8">
           <Spinner size="lg" />
         </div>
       ) : isStudent ? (
@@ -270,18 +272,18 @@ function RosterTable({
   if (rows.length === 0) {
     return (
       <Card className="text-center py-8">
-        <ShieldCheck className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-        <p className="text-neutral-500">{empty}</p>
+        <ShieldCheck className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+        <p className="text-sm text-neutral-500">{empty}</p>
       </Card>
     )
   }
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <Card className="overflow-x-auto" padding="sm">
+      <table className="w-full text-xs">
         <thead className="bg-neutral-50 border-b border-neutral-200">
           <tr>
             {headers.map((h) => (
-              <th key={h} className="text-left px-4 py-3 font-medium text-neutral-700">
+              <th key={h} className="text-left px-2.5 py-1.5 font-semibold text-neutral-700 uppercase tracking-wide text-[10px]">
                 {h}
               </th>
             ))}
@@ -291,18 +293,18 @@ function RosterTable({
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-neutral-50">
               {row.cells.map((c, i) => (
-                <td key={i} className="px-4 py-3 text-neutral-700">
+                <td key={i} className="px-2.5 py-1.5 text-neutral-700">
                   {c}
                 </td>
               ))}
-              <td className="px-4 py-3 text-right">
+              <td className="px-2.5 py-1.5 text-right">
                 <button
                   type="button"
                   onClick={() => onDelete(row.id, row.label)}
                   className="text-rose-600 hover:text-rose-800"
                   aria-label={`Remove ${row.label}`}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </td>
             </tr>
