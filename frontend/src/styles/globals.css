@@ -330,3 +330,173 @@
 .dark .hover\:shadow-md:hover {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.55);
 }
+
+/* ---------------------------------------------------------------------------
+   bg-white opacity variants (sticky footers, glassy headers)
+--------------------------------------------------------------------------- */
+.dark .bg-white\/95 { background-color: rgba(17, 24, 39, 0.95) !important; }
+.dark .bg-white\/80 { background-color: rgba(17, 24, 39, 0.8) !important; }
+.dark .bg-white\/70 { background-color: rgba(17, 24, 39, 0.7) !important; }
+.dark .bg-white\/60 { background-color: rgba(17, 24, 39, 0.6) !important; }
+.dark .bg-white\/50 { background-color: rgba(17, 24, 39, 0.5) !important; }
+
+/* Stone scale used widely on student pages */
+.dark .bg-stone-200 { background-color: #334155 !important; }
+.dark .bg-stone-300 { background-color: #475569 !important; }
+.dark .text-stone-600 { color: #94a3b8 !important; }
+.dark .text-stone-300 { color: #475569 !important; }
+.dark .border-stone-300 { border-color: #475569 !important; }
+.dark .border-l-stone-200 { border-left-color: #334155 !important; }
+
+/* Shadow tints used on cards (e.g. shadow-stone-300/30) — soften so the
+   shadow doesn't shine through the dark page bg as a bright halo. */
+.dark .shadow-stone-300\/30,
+.dark .shadow-stone-300\/40,
+.dark .shadow-blue-100\/50,
+.dark .shadow-blue-100\/60,
+.dark .shadow-primary-500\/20,
+.dark .shadow-primary-500\/25 {
+  --tw-shadow-color: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Gradient stop overrides.
+
+   Tailwind from-/via-/to- utilities set --tw-gradient-from/via/to. Many cards
+   in the app use pastel gradients (`from-stone-50 to-neutral-50`,
+   `from-success-50 to-white`, `from-primary-50 to-primary-100`, ...). Under
+   dark we remap each stop so the gradient renders as a deep slate band with
+   an optional tinted hue, instead of staying bright.
+--------------------------------------------------------------------------- */
+
+/* Helper: the "open" stops sequence Tailwind v3 expects.
+   When we override `--tw-gradient-from` we also reset `--tw-gradient-to` and
+   `--tw-gradient-stops` so a fresh dark band paints cleanly. */
+
+.dark .from-white {
+  --tw-gradient-from: #111827 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(17 24 39 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .via-white {
+  --tw-gradient-via: #1f2937 var(--tw-gradient-via-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+.dark .to-white { --tw-gradient-to: #1f2937 var(--tw-gradient-to-position) !important; }
+
+.dark .from-stone-50 {
+  --tw-gradient-from: #0f172a var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .via-stone-50 {
+  --tw-gradient-via: #0f172a var(--tw-gradient-via-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+.dark .to-stone-50 { --tw-gradient-to: #0f172a var(--tw-gradient-to-position) !important; }
+
+.dark .from-stone-100 {
+  --tw-gradient-from: #111827 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(17 24 39 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-stone-100 { --tw-gradient-to: #111827 var(--tw-gradient-to-position) !important; }
+
+.dark .from-neutral-50 {
+  --tw-gradient-from: #0f172a var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-neutral-50 { --tw-gradient-to: #0f172a var(--tw-gradient-to-position) !important; }
+
+.dark .from-neutral-100 {
+  --tw-gradient-from: #111827 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(17 24 39 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-neutral-100 { --tw-gradient-to: #111827 var(--tw-gradient-to-position) !important; }
+
+/* Tinted semantic gradients — keep a hint of color but dark enough to read */
+.dark .from-primary-50 {
+  --tw-gradient-from: rgba(59, 130, 246, 0.15) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(59, 130, 246, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-primary-50 { --tw-gradient-to: rgba(59, 130, 246, 0.15) var(--tw-gradient-to-position) !important; }
+.dark .from-primary-100 {
+  --tw-gradient-from: rgba(59, 130, 246, 0.22) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(59, 130, 246, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-primary-100 { --tw-gradient-to: rgba(59, 130, 246, 0.22) var(--tw-gradient-to-position) !important; }
+
+.dark .from-success-50 {
+  --tw-gradient-from: rgba(34, 197, 94, 0.15) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(34, 197, 94, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-success-50 { --tw-gradient-to: rgba(34, 197, 94, 0.15) var(--tw-gradient-to-position) !important; }
+.dark .from-success-100 {
+  --tw-gradient-from: rgba(34, 197, 94, 0.22) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(34, 197, 94, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-success-100 { --tw-gradient-to: rgba(34, 197, 94, 0.22) var(--tw-gradient-to-position) !important; }
+
+.dark .from-warning-50,
+.dark .from-amber-50 {
+  --tw-gradient-from: rgba(234, 179, 8, 0.15) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(234, 179, 8, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-warning-50,
+.dark .to-amber-50 { --tw-gradient-to: rgba(234, 179, 8, 0.15) var(--tw-gradient-to-position) !important; }
+.dark .from-warning-100,
+.dark .from-amber-100 {
+  --tw-gradient-from: rgba(234, 179, 8, 0.22) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(234, 179, 8, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-warning-100,
+.dark .to-amber-100 { --tw-gradient-to: rgba(234, 179, 8, 0.22) var(--tw-gradient-to-position) !important; }
+
+.dark .from-error-50 {
+  --tw-gradient-from: rgba(239, 68, 68, 0.15) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(239, 68, 68, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-error-50 { --tw-gradient-to: rgba(239, 68, 68, 0.15) var(--tw-gradient-to-position) !important; }
+.dark .from-error-100 {
+  --tw-gradient-from: rgba(239, 68, 68, 0.22) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(239, 68, 68, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-error-100 { --tw-gradient-to: rgba(239, 68, 68, 0.22) var(--tw-gradient-to-position) !important; }
+
+.dark .from-info-50 {
+  --tw-gradient-from: rgba(14, 165, 233, 0.15) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(14, 165, 233, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-info-50 { --tw-gradient-to: rgba(14, 165, 233, 0.15) var(--tw-gradient-to-position) !important; }
+.dark .from-info-100 {
+  --tw-gradient-from: rgba(14, 165, 233, 0.22) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(14, 165, 233, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark .to-info-100 { --tw-gradient-to: rgba(14, 165, 233, 0.22) var(--tw-gradient-to-position) !important; }
+
+/* Border colors used alongside tinted gradients */
+.dark .border-stone-200 { border-color: #334155 !important; }
+.dark .border-l-success-500 { border-left-color: #22c55e !important; }
+.dark .border-l-primary-500 { border-left-color: #3b82f6 !important; }
+.dark .border-l-warning-500 { border-left-color: #eab308 !important; }
+.dark .border-l-amber-500 { border-left-color: #f59e0b !important; }
+.dark .border-l-error-500 { border-left-color: #ef4444 !important; }
+.dark .border-l-info-500 { border-left-color: #0ea5e9 !important; }
+
+/* Tinted text often used on top of these gradient cards */
+.dark .text-amber-800,
+.dark .text-amber-700 { color: #fcd34d !important; }
+.dark .text-amber-600 { color: #fbbf24 !important; }
