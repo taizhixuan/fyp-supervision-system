@@ -122,7 +122,7 @@ export function CreateUser() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 lg:max-w-5xl lg:mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.ADMIN.USERS}>
@@ -143,7 +143,9 @@ export function CreateUser() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
+        {/* Left column: form fields */}
+        <div className="lg:col-span-7 space-y-6">
         {/* Basic Information */}
         <Card className="p-6">
           <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
@@ -326,54 +328,96 @@ export function CreateUser() {
             )}
           </div>
         </Card>
+        </div>
 
-        {/* Summary */}
-        <Card className="p-4 bg-neutral-50">
-          <h4 className="font-medium text-neutral-900 mb-2">Summary</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Role:</span>
-              <span className="font-medium text-neutral-900">
-                {roleOptions.find((r) => r.value === selectedRole)?.label}
-              </span>
-            </div>
-            {watch('mmuId') && (
-              <div className="flex justify-between">
-                <span className="text-neutral-500">MMU ID:</span>
-                <span className="font-medium text-neutral-900">{watch('mmuId')}</span>
+        {/* Right column: sticky live summary + actions */}
+        <aside className="lg:col-span-5">
+          <div className="lg:sticky lg:top-6 space-y-4">
+            {/* Summary preview */}
+            <Card className="p-5 bg-neutral-50">
+              <h4 className="font-semibold text-neutral-900 mb-1 flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-primary-600" />
+                Account Summary
+              </h4>
+              <p className="text-xs text-neutral-500 mb-4">
+                Updates as you fill in the form on the left.
+              </p>
+
+              <dl className="space-y-2.5 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-neutral-500 flex-shrink-0">Name</dt>
+                  <dd className="font-medium text-neutral-900 text-right truncate">
+                    {watch('fullName') || <span className="text-neutral-400 italic font-normal">Not provided</span>}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-neutral-500 flex-shrink-0">Email</dt>
+                  <dd className="font-medium text-neutral-900 text-right truncate">
+                    {watch('email') || <span className="text-neutral-400 italic font-normal">Not provided</span>}
+                  </dd>
+                </div>
+                {watch('mmuId') && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-500 flex-shrink-0">MMU ID</dt>
+                    <dd className="font-medium text-neutral-900 text-right truncate">{watch('mmuId')}</dd>
+                  </div>
+                )}
+                {watch('phone') && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-500 flex-shrink-0">Phone</dt>
+                    <dd className="font-medium text-neutral-900 text-right truncate">{watch('phone')}</dd>
+                  </div>
+                )}
+                {watch('department') && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-500 flex-shrink-0">Department</dt>
+                    <dd className="font-medium text-neutral-900 text-right truncate">{watch('department')}</dd>
+                  </div>
+                )}
+              </dl>
+
+              <div className="mt-4 pt-4 border-t border-neutral-200">
+                <p className="text-xs uppercase tracking-wide text-neutral-500 mb-1.5">Role</p>
+                <p className="font-semibold text-neutral-900">
+                  {roleOptions.find((r) => r.value === selectedRole)?.label}
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {roleOptions.find((r) => r.value === selectedRole)?.description}
+                </p>
               </div>
-            )}
-            {watch('phone') && (
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Phone:</span>
-                <span className="font-medium text-neutral-900">{watch('phone')}</span>
+
+              <div className="mt-4 pt-4 border-t border-neutral-200 flex items-start gap-2">
+                {sendInviteEmail ? (
+                  <Send className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <Key className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                )}
+                <div className="text-xs text-neutral-600">
+                  {sendInviteEmail
+                    ? 'An invitation email will be sent so the user can set their own password.'
+                    : 'You\'ll set an initial password — share it with the user securely.'}
+                </div>
               </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Account Setup:</span>
-              <span className="font-medium text-neutral-900">
-                {sendInviteEmail ? 'Email invitation' : 'Manual password'}
-              </span>
+            </Card>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <Link to={ROUTES.ADMIN.USERS}>
+                <Button variant="secondary" type="button">
+                  Cancel
+                </Button>
+              </Link>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? (
+                  <Spinner size="sm" className="mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Create User
+              </Button>
             </div>
           </div>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <Link to={ROUTES.ADMIN.USERS}>
-            <Button variant="secondary" type="button">
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? (
-              <Spinner size="sm" className="mr-2" />
-            ) : (
-              <CheckCircle className="h-4 w-4 mr-2" />
-            )}
-            Create User
-          </Button>
-        </div>
+        </aside>
       </form>
     </div>
   )
