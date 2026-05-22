@@ -103,8 +103,6 @@ export const ROUTES = {
     DOCUMENTS: '/supervisor/documents',
     DOCUMENT_DETAIL: '/supervisor/documents/:id',
     DOCUMENT_FEEDBACK: '/supervisor/documents/:id/feedback',
-    // Final-report grading (FYP1 + FYP2)
-    GRADES: '/supervisor/grades',
     // Announcements
     ANNOUNCEMENTS: '/supervisor/announcements',
     ANNOUNCEMENT_NEW: '/supervisor/announcements/new',
@@ -159,8 +157,6 @@ export const ROUTES = {
     APPROVED_ROSTER: '/admin/roster',
     // FYP1 pass tracking (sourced from external eBwise/Clic results)
     FYP1_PASS: '/admin/fyp1-pass',
-    // Submitted grades awaiting finalisation
-    GRADES: '/admin/grades',
     // System Parameters (UC31)
     PARAMETERS: '/admin/parameters',
     PARAMETER_EDIT: '/admin/parameters/:id',
