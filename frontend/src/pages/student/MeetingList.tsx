@@ -9,7 +9,6 @@ import {
   Filter,
   Download,
   CalendarCheck,
-  Users,
   CheckCircle,
   AlertCircle,
   User,
@@ -117,29 +116,38 @@ export function MeetingList() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact hero: title + stats + actions all in one band */}
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-xl p-3 sm:p-4 text-white overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-              <CalendarCheck className="h-7 w-7 text-white" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-white/10 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0">
+              <CalendarCheck className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Meetings</h1>
-              <p className="text-primary-200 mt-0.5">Schedule and manage supervisor meetings</p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold leading-tight">Meetings</h1>
+              <p className="text-primary-200 text-xs">Schedule and manage supervisor meetings</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 flex-shrink-0">
+            <Link to={ROUTES.STUDENT.MEETING_LOGS}>
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<ClipboardList className="h-3.5 w-3.5" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 whitespace-nowrap"
+              >
+                Logs
+              </Button>
+            </Link>
             <Link to={ROUTES.STUDENT.MEETING_EXPORT}>
               <Button
                 variant="secondary"
-                leftIcon={<Download className="h-4 w-4" />}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                size="sm"
+                leftIcon={<Download className="h-3.5 w-3.5" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 whitespace-nowrap"
               >
                 Export
               </Button>
@@ -147,110 +155,52 @@ export function MeetingList() {
             <Link to={ROUTES.STUDENT.MEETING_NEW}>
               <Button
                 variant="primary"
-                leftIcon={<Plus className="h-4 w-4" />}
-                className="bg-white text-primary-900 hover:bg-primary-50 border-0 shadow-lg"
+                size="sm"
+                leftIcon={<Plus className="h-3.5 w-3.5" />}
+                className="bg-white text-primary-900 hover:bg-primary-50 border-0 shadow whitespace-nowrap"
               >
-                Request Meeting
+                Request
               </Button>
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="relative overflow-hidden border-l-4 border-l-info-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-info-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-info-600">{upcomingMeetings.length}</div>
-              <p className="text-sm text-neutral-600">Upcoming</p>
-            </div>
+        {/* Stats inline */}
+        <div className="relative mt-3 grid grid-cols-4 gap-2 text-center">
+          <div className={cn('rounded-md px-2 py-1.5', upcomingMeetings.length > 0 ? 'bg-info-500/30 ring-1 ring-info-300/50' : 'bg-white/10')}>
+            <div className="text-lg font-bold leading-none">{upcomingMeetings.length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Upcoming</p>
           </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-success-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-success-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-success-600">
-                {meetings.filter((m) => m.status === 'CONFIRMED').length}
-              </div>
-              <p className="text-sm text-neutral-600">Confirmed</p>
-            </div>
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{meetings.filter((m) => m.status === 'CONFIRMED').length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Confirmed</p>
           </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-warning-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-warning-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-warning-600">
-                {meetings.filter((m) => m.status === 'PENDING').length}
-              </div>
-              <p className="text-sm text-neutral-600">Pending</p>
-            </div>
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{meetings.filter((m) => m.status === 'PENDING').length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Pending</p>
           </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-stone-400">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center">
-              <Users className="h-5 w-5 text-stone-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-stone-600">{meetings.length}</div>
-              <p className="text-sm text-neutral-600">Total</p>
-            </div>
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{meetings.length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Total</p>
           </div>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <ClipboardList className="h-5 w-5 text-primary-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-primary-900">Supervision Logs</h3>
-              <p className="text-sm text-primary-600">Record and manage your meeting logs in MMU FCI format</p>
-            </div>
-          </div>
-          <Link to={ROUTES.STUDENT.MEETING_LOGS}>
-            <Button
-              variant="primary"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-            >
-              View Logs
-            </Button>
-          </Link>
         </div>
-      </Card>
+      </div>
 
-      {/* Filters */}
-      <Card className="bg-gradient-to-r from-stone-50 to-neutral-50 border-stone-200">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-stone-200 rounded-lg flex items-center justify-center">
-              <Filter className="h-4 w-4 text-stone-600" />
-            </div>
-            <span className="text-sm font-semibold text-stone-700">Filter:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      {/* Filters — single compact row */}
+      <Card padding="sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="h-4 w-4 text-stone-500 flex-shrink-0" />
+          <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Filter</span>
+          <div className="flex flex-wrap gap-1">
             {['all', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
+                  'px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap',
                   statusFilter === status
-                    ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25'
-                    : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-neutral-100 text-stone-600 hover:bg-neutral-200'
                 )}
               >
                 {status === 'all' ? 'All' : statusConfig[status as MeetingStatus]?.label}
@@ -262,17 +212,15 @@ export function MeetingList() {
 
       {/* Upcoming Meetings */}
       {upcomingMeetings.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-info-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-4 w-4 text-info-600" />
-            </div>
-            <h2 className="text-lg font-bold text-stone-800">Upcoming Meetings</h2>
-            <span className="px-2.5 py-0.5 bg-info-100 text-info-700 text-sm font-semibold rounded-full">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-4 w-4 text-info-600" />
+            <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Upcoming Meetings</h2>
+            <span className="px-1.5 py-0 bg-info-100 text-info-700 text-[10px] font-semibold rounded-full">
               {upcomingMeetings.length}
             </span>
           </div>
-          <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
             {upcomingMeetings.map((meeting) => (
               <MeetingCard key={meeting.meetingId} meeting={meeting} />
             ))}
@@ -282,17 +230,15 @@ export function MeetingList() {
 
       {/* Past Meetings */}
       {pastMeetings.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-4 w-4 text-stone-500" />
-            </div>
-            <h2 className="text-lg font-bold text-stone-800">Past Meetings</h2>
-            <span className="px-2.5 py-0.5 bg-stone-100 text-stone-600 text-sm font-semibold rounded-full">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-stone-500" />
+            <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Past Meetings</h2>
+            <span className="px-1.5 py-0 bg-stone-100 text-stone-600 text-[10px] font-semibold rounded-full">
               {pastMeetings.length}
             </span>
           </div>
-          <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
             {pastMeetings.map((meeting) => (
               <MeetingCard key={meeting.meetingId} meeting={meeting} />
             ))}
@@ -301,18 +247,16 @@ export function MeetingList() {
       )}
 
       {filteredMeetings.length === 0 && (
-        <Card className="text-center py-16 bg-gradient-to-br from-stone-50 to-neutral-50">
-          <div className="w-16 h-16 bg-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Calendar className="h-8 w-8 text-stone-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-stone-800 mb-2">No meetings found</h3>
-          <p className="text-stone-500 mb-6">
+        <Card className="text-center py-8">
+          <Calendar className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="font-medium text-stone-800 mb-1">No meetings found</h3>
+          <p className="text-sm text-stone-500 mb-3">
             {statusFilter === 'all'
               ? 'Schedule your first meeting with your supervisor'
               : 'No meetings match the selected filter'}
           </p>
           <Link to={ROUTES.STUDENT.MEETING_NEW}>
-            <Button variant="primary">
+            <Button variant="primary" size="sm">
               Request Meeting
             </Button>
           </Link>
@@ -331,89 +275,87 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
 
   return (
     <Link to={ROUTES.STUDENT.MEETING_DETAIL.replace(':id', meeting.meetingId)}>
-      <Card className={cn(
-        'transition-all duration-200 hover:shadow-lg group p-5',
-        isUpcoming && meeting.status === 'CONFIRMED' && 'border-l-4 border-l-success-500',
-        isUpcoming && meeting.status === 'PENDING' && 'border-l-4 border-l-warning-500',
-        meeting.status === 'CANCELLED' && 'border-l-4 border-l-error-500 opacity-70',
-        meeting.status === 'COMPLETED' && 'border-l-4 border-l-stone-300',
-        !isUpcoming && meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' && 'border-l-4 border-l-stone-300'
-      )}>
-        <div className="flex flex-col sm:flex-row gap-5">
-          {/* Date Box */}
-          <div className="flex-shrink-0">
-            <div className="w-20 bg-gradient-to-br from-primary-800 to-primary-900 rounded-xl p-3 text-center shadow-lg group-hover:scale-105 transition-transform">
-              <p className="text-[10px] text-primary-300 font-semibold uppercase tracking-wider">
-                {meetingDate.toLocaleDateString('en-MY', { month: 'short' })}
-              </p>
-              <p className="text-3xl font-bold text-white">
-                {meetingDate.getDate()}
-              </p>
-              <p className="text-[10px] text-primary-200 font-semibold">
-                {meetingDate.toLocaleDateString('en-MY', { weekday: 'short' })}
-              </p>
-            </div>
+      <Card
+        padding="sm"
+        className={cn(
+          'transition-all hover:shadow-md group',
+          isUpcoming && meeting.status === 'CONFIRMED' && 'border-l-4 border-l-success-500',
+          isUpcoming && meeting.status === 'PENDING' && 'border-l-4 border-l-warning-500',
+          meeting.status === 'CANCELLED' && 'border-l-4 border-l-error-500 opacity-70',
+          meeting.status === 'COMPLETED' && 'border-l-4 border-l-stone-300',
+          !isUpcoming && meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' && 'border-l-4 border-l-stone-300'
+        )}
+      >
+        <div className="flex items-start gap-2.5">
+          {/* Date Box — compact */}
+          <div className="w-12 bg-gradient-to-br from-primary-800 to-primary-900 rounded-md p-1.5 text-center shadow flex-shrink-0">
+            <p className="text-[8px] text-primary-300 font-semibold uppercase leading-none tracking-wider">
+              {meetingDate.toLocaleDateString('en-MY', { month: 'short' })}
+            </p>
+            <p className="text-xl font-bold text-white leading-tight mt-0.5">
+              {meetingDate.getDate()}
+            </p>
+            <p className="text-[8px] text-primary-200 font-semibold leading-none">
+              {meetingDate.toLocaleDateString('en-MY', { weekday: 'short' })}
+            </p>
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-bold text-stone-800 group-hover:text-primary-700 transition-colors">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-sm text-stone-800 group-hover:text-primary-700 transition-colors leading-tight truncate">
                   {meeting.title}
                 </h3>
-                <p className="text-sm text-stone-500 flex items-center gap-1.5 mt-0.5">
-                  <User className="h-3.5 w-3.5" />
-                  with {meeting.supervisor.fullName}
+                <p className="text-[11px] text-stone-500 inline-flex items-center gap-0.5 mt-0.5 truncate">
+                  <User className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{meeting.supervisor.fullName}</span>
                 </p>
               </div>
               <div className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm',
+                'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-semibold text-[11px] flex-shrink-0',
                 config.bgColor,
                 config.color
               )}>
-                <StatusIcon className="h-4 w-4" />
+                <StatusIcon className="h-3 w-3" />
                 {config.label}
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-lg text-sm text-stone-600 font-medium">
-                <Clock className="h-4 w-4" />
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-stone-100 rounded-md text-stone-600 font-medium">
+                <Clock className="h-3 w-3" />
                 {meetingDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })}
-                <span className="text-stone-400 mx-1">•</span>
-                {meeting.duration} min
+                <span className="text-stone-400">·</span>
+                {meeting.duration}m
               </span>
               <span className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium',
+                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md font-medium truncate max-w-[200px]',
                 meeting.platform === 'IN_PERSON'
                   ? 'bg-success-100 text-success-700'
                   : 'bg-info-100 text-info-700'
               )}>
-                <PlatformIcon className="h-4 w-4" />
-                {meeting.platform === 'IN_PERSON' ? meeting.location : meeting.platform.replace('_', ' ')}
+                <PlatformIcon className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">
+                  {meeting.platform === 'IN_PERSON' ? meeting.location : meeting.platform.replace('_', ' ')}
+                </span>
               </span>
             </div>
 
             {meeting.agenda && (
-              <p className="mt-3 text-sm text-stone-600 line-clamp-1 bg-stone-50 rounded-lg p-3 border border-stone-100">
-                {meeting.agenda}
+              <p className="mt-1.5 text-[11px] text-stone-600 line-clamp-1 leading-snug">
+                <span className="font-semibold text-stone-500">Agenda:</span> {meeting.agenda}
               </p>
             )}
 
             {meeting.notes && meeting.status === 'COMPLETED' && (
-              <p className="mt-3 text-sm text-stone-500 line-clamp-1 bg-stone-50 rounded-lg p-3 border border-stone-100">
+              <p className="mt-1 text-[11px] text-stone-500 line-clamp-1 leading-snug">
                 <span className="font-semibold">Notes:</span> {meeting.notes}
               </p>
             )}
           </div>
 
-          {/* Arrow */}
-          <div className="hidden sm:flex items-center">
-            <div className="w-10 h-10 rounded-xl bg-stone-100 group-hover:bg-primary-100 flex items-center justify-center transition-colors">
-              <ArrowRight className="h-5 w-5 text-stone-400 group-hover:text-primary-600 transition-colors" />
-            </div>
-          </div>
+          <ArrowRight className="h-4 w-4 text-stone-300 group-hover:text-primary-600 transition-colors flex-shrink-0 mt-0.5" />
         </div>
       </Card>
     </Link>
