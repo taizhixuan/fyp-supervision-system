@@ -23,6 +23,11 @@ public class ResourceDocument {
     @JoinColumn(name = "uploaded_by_user_id", nullable = false)
     private UserAccount uploadedBy;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cycle_id")
+    private FypCycle cycle;
+
     @Column(length = 100)
     private String category;
 

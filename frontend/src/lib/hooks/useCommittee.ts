@@ -890,6 +890,7 @@ export function useUploadGeneralDocument() {
       formData.append('visibility', data.visibility)
       if (data.description) formData.append('description', data.description)
       if (data.changeNotes) formData.append('changeNotes', data.changeNotes)
+      if (data.cycleScope) formData.append('cycleScope', data.cycleScope)
       const { data: responseData } = await apiClient.post('/committee/documents', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })

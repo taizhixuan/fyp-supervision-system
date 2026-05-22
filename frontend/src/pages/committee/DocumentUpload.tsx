@@ -23,6 +23,7 @@ const documentSchema = z.object({
   description: z.string().max(1000, 'Description is too long').optional(),
   category: z.enum(['TEMPLATE', 'RUBRIC', 'HANDBOOK', 'GUIDELINE', 'FORM', 'OTHER']),
   visibility: z.enum(['PUBLIC', 'STUDENTS_ONLY', 'SUPERVISORS_ONLY', 'COMMITTEE_ONLY']),
+  cycleScope: z.enum(['EVERGREEN', 'FYP1', 'FYP2']),
   changeNotes: z.string().max(500, 'Change notes too long').optional(),
 })
 
@@ -50,14 +51,17 @@ export function DocumentUpload() {
       description: existingDocument.description || '',
       category: existingDocument.category,
       visibility: existingDocument.visibility,
+      cycleScope: (existingDocument as { cycleType?: 'FYP1' | 'FYP2' | null }).cycleType ?? 'EVERGREEN',
     } : {
       category: 'TEMPLATE',
       visibility: 'PUBLIC',
+      cycleScope: 'EVERGREEN',
     },
   })
 
   const selectedCategory = watch('category')
   const selectedVisibility = watch('visibility')
+  const selectedCycleScope = watch('cycleScope')
 
   const onSubmit = async (data: DocumentFormData) => {
     try {
@@ -113,6 +117,12 @@ export function DocumentUpload() {
     { value: 'STUDENTS_ONLY', label: 'Students Only', description: 'Only FYP students can view' },
     { value: 'SUPERVISORS_ONLY', label: 'Supervisors Only', description: 'Only supervisors can view' },
     { value: 'COMMITTEE_ONLY', label: 'Committee Only', description: 'Only committee members can view' },
+  ]
+
+  const cycleScopeOptions = [
+    { value: 'EVERGREEN', label: 'All cycles (evergreen)', description: 'General handbook, writing tips — every cohort sees this' },
+    { value: 'FYP1', label: 'Current FYP1 cycle', description: 'Pinned to the active FYP1 cohort; hidden from past or future cycles' },
+    { value: 'FYP2', label: 'Current FYP2 cycle', description: 'Pinned to the active FYP2 cohort; hidden from past or future cycles' },
   ]
 
   return (
@@ -284,6 +294,35 @@ export function DocumentUpload() {
                     <input
                       type="radio"
                       {...register('visibility')}
+                      value={option.value}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-medium text-neutral-900">{option.label}</span>
+                    <span className="text-xs text-neutral-500 mt-0.5">{option.description}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Cycle scope */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Cycle scope *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {cycleScopeOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      'flex flex-col p-3 rounded-lg cursor-pointer border transition-colors',
+                      selectedCycleScope === option.value
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-neutral-200 hover:bg-neutral-50'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      {...register('cycleScope')}
                       value={option.value}
                       className="sr-only"
                     />
