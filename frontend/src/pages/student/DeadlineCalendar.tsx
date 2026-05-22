@@ -13,7 +13,6 @@ import {
   Filter,
   CalendarDays,
   ListTodo,
-  Target,
   AlertTriangle,
 } from 'lucide-react'
 import { Card, Badge, Spinner } from '@/components/ui'
@@ -203,186 +202,148 @@ export function DeadlineCalendar() {
     )
   }
 
+  const isCalendar = viewMode === 'calendar'
+
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Header — single bar that holds title + stats + filter + view toggle */}
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-xl p-3 sm:p-4 text-white overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-            <CalendarDays className="h-7 w-7 text-white" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-white/10 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0">
+              <CalendarDays className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold leading-tight">Deadlines & Calendar</h1>
+              <p className="text-primary-200 text-xs">Track important dates and submissions</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Deadlines & Calendar</h1>
-            <p className="text-primary-200 mt-0.5">Track important dates and submissions</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Urgent Alert */}
-      {urgentCount > 0 && (
-        <div className="bg-gradient-to-r from-error-50 to-error-100 border border-error-200 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-error-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-error-500/25">
-              <AlertTriangle className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-error-900">
-                {urgentCount} deadline{urgentCount > 1 ? 's' : ''} due within 7 days
-              </p>
-              <p className="text-sm text-error-700">
-                Make sure to complete your submissions on time
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="relative overflow-hidden border-l-4 border-l-primary-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-primary-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-primary-600">{upcomingDeadlines.length}</div>
-              <p className="text-sm text-neutral-600">Upcoming</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-error-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-error-100 rounded-lg flex items-center justify-center">
-              <AlertCircle className="h-5 w-5 text-error-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-error-600">{urgentCount}</div>
-              <p className="text-sm text-neutral-600">This Week</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-success-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-success-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-success-600">
-                {deadlines.filter((d) => d.isCompleted).length}
-              </div>
-              <p className="text-sm text-neutral-600">Completed</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-primary-500">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <Target className="h-5 w-5 text-primary-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-primary-600">{deadlines.length}</div>
-              <p className="text-sm text-neutral-600">Total</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters & View Toggle */}
-      <Card className="bg-gradient-to-r from-stone-50 to-neutral-50 border-stone-200">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-stone-200 rounded-lg flex items-center justify-center">
-              <Filter className="h-4 w-4 text-stone-600" />
+          {/* Filter + View toggle inline in the hero */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 text-primary-200">
+              <Filter className="h-3.5 w-3.5" />
+              <span className="text-xs">Type</span>
             </div>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
+              className="px-2.5 py-1.5 rounded-md border border-white/20 bg-white/10 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/30 [&>option]:text-stone-700"
             >
               <option value="all">All Types</option>
               {Object.entries(typeConfig).map(([key, config]) => (
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
-          </div>
-          <div className="flex bg-stone-200/50 rounded-xl p-1.5 gap-1">
-            <button
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                viewMode === 'list'
-                  ? 'bg-white shadow-md text-stone-900'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-white/50'
-              )}
-            >
-              <ListTodo className="h-4 w-4" />
-              List
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                viewMode === 'calendar'
-                  ? 'bg-white shadow-md text-stone-900'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-white/50'
-              )}
-            >
-              <CalendarDays className="h-4 w-4" />
-              Calendar
-            </button>
-          </div>
-        </div>
-      </Card>
-
-      {viewMode === 'calendar' ? (
-        /* Calendar View - Modern Design */
-        <Card className="overflow-hidden p-0 border-0 shadow-lg">
-          {/* Calendar Header */}
-          <div className="bg-gradient-to-r from-primary-800 to-primary-900 px-6 py-5">
-            <div className="flex items-center justify-between">
+            <div className="flex bg-white/10 rounded-md p-0.5 gap-0.5">
               <button
-                onClick={() => navigateMonth(-1)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-200 hover:scale-105"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all',
+                  viewMode === 'list'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-primary-100 hover:bg-white/10'
+                )}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ListTodo className="h-3.5 w-3.5" />
+                List
               </button>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-white">
-                  {currentDate.toLocaleDateString('en-MY', { month: 'long' })}
-                </h2>
-                <p className="text-primary-300 text-sm">{currentDate.getFullYear()}</p>
-              </div>
               <button
-                onClick={() => navigateMonth(1)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-200 hover:scale-105"
+                onClick={() => setViewMode('calendar')}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all',
+                  viewMode === 'calendar'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-primary-100 hover:bg-white/10'
+                )}
               >
-                <ChevronRight className="h-5 w-5" />
+                <CalendarDays className="h-3.5 w-3.5" />
+                Cal
               </button>
             </div>
-            {/* Today Button */}
-            <div className="flex justify-center mt-4">
+          </div>
+        </div>
+
+        {/* Inline stats row in hero — only when on Calendar view to save vertical space */}
+        <div className="relative mt-3 grid grid-cols-4 gap-2 text-center">
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{upcomingDeadlines.length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Upcoming</p>
+          </div>
+          <div className={cn('rounded-md px-2 py-1.5', urgentCount > 0 ? 'bg-error-500/30 ring-1 ring-error-300/50' : 'bg-white/10')}>
+            <div className="text-lg font-bold leading-none">{urgentCount}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">This Week</p>
+          </div>
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{deadlines.filter((d) => d.isCompleted).length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Completed</p>
+          </div>
+          <div className="bg-white/10 rounded-md px-2 py-1.5">
+            <div className="text-lg font-bold leading-none">{deadlines.length}</div>
+            <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Total</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Urgent alert — only render when not the empty case AND when in list view (calendar shows urgency on cells) */}
+      {urgentCount > 0 && !isCalendar && (
+        <div className="flex items-center gap-3 bg-gradient-to-r from-error-50 to-error-100 border border-error-200 rounded-lg px-3 py-2 shadow-sm">
+          <div className="w-8 h-8 bg-error-500 rounded-lg flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="h-4 w-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-error-900">
+              {urgentCount} deadline{urgentCount > 1 ? 's' : ''} due within 7 days
+            </p>
+            <p className="text-xs text-error-700">Make sure to complete your submissions on time</p>
+          </div>
+        </div>
+      )}
+
+      {isCalendar ? (
+        /* Calendar View - Compact */
+        <Card padding="none" className="overflow-hidden border-0 shadow-md">
+          {/* Calendar Header — single tight row */}
+          <div className="bg-gradient-to-r from-primary-800 to-primary-900 px-3 py-2.5 flex items-center justify-between gap-2">
+            <button
+              onClick={() => navigateMonth(-1)}
+              className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white transition-colors"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">
+                {currentDate.toLocaleDateString('en-MY', { month: 'long' })}{' '}
+                <span className="text-primary-300 font-normal">{currentDate.getFullYear()}</span>
+              </h2>
               <button
                 onClick={() => setCurrentDate(new Date())}
-                className="px-4 py-1.5 text-sm font-medium text-primary-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200"
+                className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors flex-shrink-0"
               >
                 Today
               </button>
             </div>
+            <button
+              onClick={() => navigateMonth(1)}
+              className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white transition-colors"
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Calendar Body */}
-          <div className="p-4 bg-white">
+          {/* Calendar Body — slimmer */}
+          <div className="p-2 sm:p-3 bg-white">
             {/* Day Headers */}
-            <div className="grid grid-cols-7 mb-2">
+            <div className="grid grid-cols-7">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
                 <div
                   key={day}
                   className={cn(
-                    'text-center text-xs font-bold uppercase tracking-widest py-3',
+                    'text-center text-[10px] font-bold uppercase tracking-wider py-1.5',
                     i === 0 || i === 6 ? 'text-rose-400' : 'text-stone-400'
                   )}
                 >
@@ -391,8 +352,8 @@ export function DeadlineCalendar() {
               ))}
             </div>
 
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1.5">
+            {/* Calendar Grid — cells reduced from 100px → 64px */}
+            <div className="grid grid-cols-7 gap-1">
               {monthDays.map(({ date, isCurrentMonth }, index) => {
                 const dateDeadlines = getDeadlinesForDate(date)
                 const isToday = date.toDateString() === new Date().toDateString()
@@ -404,52 +365,48 @@ export function DeadlineCalendar() {
                   <div
                     key={index}
                     className={cn(
-                      'relative min-h-[100px] p-2 rounded-xl transition-all duration-200 group cursor-pointer',
+                      'relative min-h-[64px] sm:min-h-[72px] p-1 rounded-md transition-colors group cursor-pointer',
                       !isCurrentMonth && 'bg-stone-50/50',
-                      isCurrentMonth && !isToday && 'bg-white hover:bg-stone-50 hover:shadow-md',
-                      isToday && 'bg-gradient-to-br from-primary-700 to-primary-900 shadow-lg shadow-primary-900/30',
+                      isCurrentMonth && !isToday && 'bg-white hover:bg-stone-50',
+                      isToday && 'bg-gradient-to-br from-primary-700 to-primary-900 shadow-md shadow-primary-900/20',
                       hasDeadlines && !isToday && 'ring-1 ring-inset ring-stone-200'
                     )}
                   >
                     {/* Date Number */}
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between">
                       <span className={cn(
-                        'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all',
+                        'inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold',
                         !isCurrentMonth && 'text-stone-300',
                         isCurrentMonth && !isToday && isWeekend && 'text-rose-400',
-                        isCurrentMonth && !isToday && !isWeekend && 'text-stone-700 group-hover:bg-stone-200',
+                        isCurrentMonth && !isToday && !isWeekend && 'text-stone-700',
                         isToday && 'bg-white text-primary-700 shadow-sm'
                       )}>
                         {date.getDate()}
                       </span>
-                      {/* Deadline Count Badge */}
-                      {hasDeadlines && !isToday && (
+                      {hasDeadlines && (
                         <span className={cn(
-                          'w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center',
+                          'w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center',
+                          isToday ? 'bg-white text-primary-700' :
                           hasUrgent ? 'bg-error-500 text-white' : 'bg-warning-500 text-white'
                         )}>
                           {dateDeadlines.length}
                         </span>
                       )}
-                      {hasDeadlines && isToday && (
-                        <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white text-primary-700">
-                          {dateDeadlines.length}
-                        </span>
-                      )}
                     </div>
 
-                    {/* Deadline Items */}
-                    <div className="space-y-1">
-                      {dateDeadlines.slice(0, 2).map((d) => {
+                    {/* Deadline Items — show 1 (or 2 on sm+) */}
+                    <div className="mt-1 space-y-0.5">
+                      {dateDeadlines.slice(0, 2).map((d, i) => {
                         const config = typeConfig[d.type as DeadlineType] ?? typeConfig.OTHER
                         return (
                           <div
                             key={d.deadlineId}
                             className={cn(
-                              'text-[10px] px-2 py-1 rounded-md truncate font-semibold transition-all',
+                              'text-[9px] px-1 py-0.5 rounded truncate font-semibold leading-tight',
+                              i === 1 && 'hidden sm:block',
                               isToday
-                                ? 'bg-white/90 text-stone-700 shadow-sm'
-                                : cn(config.color, 'hover:scale-[1.02]'),
+                                ? 'bg-white/90 text-stone-700'
+                                : config.color,
                               d.isCompleted && 'opacity-50 line-through'
                             )}
                           >
@@ -459,52 +416,25 @@ export function DeadlineCalendar() {
                       })}
                       {dateDeadlines.length > 2 && (
                         <p className={cn(
-                          'text-[10px] font-semibold text-center',
+                          'text-[9px] font-semibold text-center hidden sm:block',
                           isToday ? 'text-white/80' : 'text-stone-400'
                         )}>
-                          +{dateDeadlines.length - 2} more
+                          +{dateDeadlines.length - 2}
                         </p>
                       )}
                     </div>
-
-                    {/* Hover Effect Dot Indicators */}
-                    {hasDeadlines && dateDeadlines.length <= 2 && (
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                        {dateDeadlines.map((d) => {
-                          const config = typeConfig[d.type as DeadlineType] ?? typeConfig.OTHER
-                          const colorClass = config.color.split(' ')[0].replace('bg-', '').replace('-100', '-500')
-                          return (
-                            <span
-                              key={d.deadlineId}
-                              className={cn(
-                                'w-1.5 h-1.5 rounded-full',
-                                isToday ? 'bg-white/60' : `bg-${colorClass}`
-                              )}
-                              style={{
-                                backgroundColor: isToday ? undefined :
-                                  d.type === 'PROPOSAL' ? '#f59e0b' :
-                                  d.type === 'REPORT' ? '#0ea5e9' :
-                                  d.type === 'PRESENTATION' ? '#8b5cf6' :
-                                  d.type === 'LOG' ? '#10b981' :
-                                  d.type === 'MEETING' ? '#f43f5e' : '#78716c'
-                              }}
-                            />
-                          )
-                        })}
-                      </div>
-                    )}
                   </div>
                 )
               })}
             </div>
 
-            {/* Legend */}
-            <div className="mt-6 pt-4 border-t border-stone-100">
-              <div className="flex flex-wrap items-center justify-center gap-4">
+            {/* Legend — compact one-line */}
+            <div className="mt-2 pt-2 border-t border-stone-100">
+              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
                 {Object.entries(typeConfig).map(([key, config]) => (
-                  <div key={key} className="flex items-center gap-2">
+                  <div key={key} className="flex items-center gap-1">
                     <span
-                      className="w-3 h-3 rounded-full"
+                      className="w-2 h-2 rounded-full"
                       style={{
                         backgroundColor:
                           key === 'PROPOSAL' ? '#f59e0b' :
@@ -514,7 +444,7 @@ export function DeadlineCalendar() {
                           key === 'MEETING' ? '#f43f5e' : '#78716c'
                       }}
                     />
-                    <span className="text-xs font-medium text-stone-600">{config.label}</span>
+                    <span className="text-[10px] font-medium text-stone-500">{config.label}</span>
                   </div>
                 ))}
               </div>
