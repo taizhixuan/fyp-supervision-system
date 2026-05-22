@@ -84,37 +84,62 @@ export function DocumentsManagement() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+      {/* Compact Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <FolderOpen className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <FolderOpen className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">General Documents</h1>
-              <p className="text-stone-300 mt-1">
-                Manage templates, rubrics, handbooks, and guidelines
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">General Documents</h1>
+              <p className="text-stone-300 text-xs">Manage templates, rubrics, handbooks, and guidelines</p>
             </div>
           </div>
           <Link to={ROUTES.COMMITTEE.DOCUMENT_UPLOAD}>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Document
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap">
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              Upload
             </Button>
           </Link>
+        </div>
+
+        {/* Category chips inline */}
+        <div className="relative mt-3 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+          {(Object.keys(categoryConfig) as CommitteeDocumentCategory[]).map((category) => {
+            const config = categoryConfig[category]
+            const count = data?.documents.filter((d) => d.category === category).length ?? 0
+            const Icon = config.icon
+            const active = categoryFilter === category
+            return (
+              <button
+                key={category}
+                onClick={() => setCategoryFilter(active ? 'ALL' : category)}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 ring-1 transition-colors',
+                  active ? 'bg-amber-500/30 ring-amber-300/40' : 'bg-stone-700/40 ring-stone-600/40 hover:bg-stone-700/60'
+                )}
+              >
+                <div className={cn('p-1 rounded flex-shrink-0', config.bgColor)}>
+                  <Icon className={cn('h-3.5 w-3.5', config.color)} />
+                </div>
+                <div className="text-left min-w-0">
+                  <p className="text-base font-bold leading-none">{count}</p>
+                  <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{config.label}</p>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
             <Input
               type="text"
               placeholder="Search documents..."
@@ -123,186 +148,109 @@ export function DocumentsManagement() {
               className="pl-9"
             />
           </div>
-          <div className="flex gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as CommitteeDocumentCategory | 'ALL')}
-              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
-            >
-              <option value="ALL">All Categories</option>
-              <option value="TEMPLATE">Templates</option>
-              <option value="RUBRIC">Rubrics</option>
-              <option value="HANDBOOK">Handbooks</option>
-              <option value="GUIDELINE">Guidelines</option>
-              <option value="FORM">Forms</option>
-              <option value="OTHER">Other</option>
-            </select>
-            <select
-              value={visibilityFilter}
-              onChange={(e) => setVisibilityFilter(e.target.value as DocumentVisibility | 'ALL')}
-              className="px-3 py-2 border border-stone-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-white"
-            >
-              <option value="ALL">All Visibility</option>
-              <option value="PUBLIC">Public</option>
-              <option value="STUDENTS_ONLY">Students Only</option>
-              <option value="SUPERVISORS_ONLY">Supervisors Only</option>
-              <option value="COMMITTEE_ONLY">Committee Only</option>
-            </select>
-          </div>
+          <select
+            value={visibilityFilter}
+            onChange={(e) => setVisibilityFilter(e.target.value as DocumentVisibility | 'ALL')}
+            className="px-2.5 py-1.5 border border-stone-200 rounded-md text-xs focus:ring-2 focus:ring-amber-500 bg-white whitespace-nowrap"
+          >
+            <option value="ALL">All Visibility</option>
+            <option value="PUBLIC">Public</option>
+            <option value="STUDENTS_ONLY">Students</option>
+            <option value="SUPERVISORS_ONLY">Supervisors</option>
+            <option value="COMMITTEE_ONLY">Committee</option>
+          </select>
         </div>
       </Card>
 
-      {/* Category Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {(Object.keys(categoryConfig) as CommitteeDocumentCategory[]).map((category) => {
-          const config = categoryConfig[category]
-          const count = data?.documents.filter((d) => d.category === category).length ?? 0
-          const Icon = config.icon
-          return (
-            <button
-              key={category}
-              onClick={() => setCategoryFilter(categoryFilter === category ? 'ALL' : category)}
-              className={cn(
-                'p-3 rounded-xl border transition-all duration-300 text-center',
-                categoryFilter === category
-                  ? 'border-amber-500 bg-amber-50 shadow-sm'
-                  : 'border-stone-200 hover:bg-stone-50 hover:border-stone-300'
-              )}
-            >
-              <Icon className={cn('h-5 w-5 mx-auto mb-1', config.color)} />
-              <p className="text-lg font-bold text-stone-800">{count}</p>
-              <p className="text-xs text-stone-500 font-medium">{config.label}</p>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Documents List */}
-      <div className="flex flex-col gap-4">
-        {filteredDocuments && filteredDocuments.length > 0 ? (
-          filteredDocuments.map((document) => {
+      {/* Documents List — 2-col grid */}
+      {filteredDocuments && filteredDocuments.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {filteredDocuments.map((document) => {
             const category = categoryConfig[document.category]
             const visibility = visibilityConfig[document.visibility]
             const Icon = category.icon
 
             return (
-              <Card key={document.documentId} className="group p-4 hover:shadow-lg transition-all duration-300 border-l-4 border-l-stone-300">
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className={cn('p-3 rounded-xl shadow-sm', category.bgColor)}>
-                    <Icon className={cn('h-6 w-6', category.color)} />
+              <Card key={document.documentId} padding="sm" className="group hover:shadow-md transition-all border-l-4 border-l-stone-300">
+                <div className="flex items-start gap-2.5">
+                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', category.bgColor)}>
+                    <Icon className={cn('h-4 w-4', category.color)} />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">{document.title}</h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-stone-800 group-hover:text-amber-700 leading-tight truncate">{document.title}</h3>
                         {document.description && (
-                          <p className="text-sm text-neutral-500 mt-0.5 line-clamp-1">
-                            {document.description}
-                          </p>
+                          <p className="text-[11px] text-neutral-500 line-clamp-1">{document.description}</p>
                         )}
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className={cn(
-                            'px-2 py-0.5 rounded-full text-xs font-medium',
-                            category.bgColor,
-                            category.color
-                          )}>
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', category.bgColor, category.color)}>
                             {category.label}
                           </span>
-                          <span className={cn('text-xs font-medium', visibility.color)}>
+                          <span className={cn('text-[10px] font-medium', visibility.color)}>
                             {visibility.label}
                           </span>
-                          <span className="text-xs text-neutral-500">
-                            v{document.version}
-                          </span>
-                          {!document.isActive && (
-                            <span className="text-xs text-error-600">Inactive</span>
-                          )}
+                          <span className="text-[10px] text-neutral-500">v{document.version}</span>
+                          {!document.isActive && <span className="text-[10px] text-error-600">Inactive</span>}
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
                         <Link to={ROUTES.COMMITTEE.DOCUMENT_VERSIONS.replace(':id', String(document.documentId))}>
-                          <Button variant="ghost" size="sm" title="Version History">
-                            <History className="h-4 w-4" />
-                          </Button>
+                          <button className="p-1 rounded hover:bg-stone-100 transition-colors" title="History">
+                            <History className="h-3.5 w-3.5" />
+                          </button>
                         </Link>
                         <Link to={ROUTES.COMMITTEE.DOCUMENT_DETAIL.replace(':id', String(document.documentId))}>
-                          <Button variant="ghost" size="sm" title="Edit">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <button className="p-1 rounded hover:bg-stone-100 transition-colors" title="Edit">
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
                         </Link>
-                        <Button variant="ghost" size="sm" title="Download">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Delete"
+                        <button className="p-1 rounded hover:bg-stone-100 transition-colors" title="Download">
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                        <button
                           onClick={() => handleDelete(document.documentId)}
                           disabled={deleteMutation.isPending}
+                          className="p-1 rounded hover:bg-rose-100 hover:text-rose-700 transition-colors disabled:opacity-50"
+                          title="Delete"
                         >
-                          <Trash2 className="h-4 w-4 text-error-500" />
-                        </Button>
+                          <Trash2 className="h-3.5 w-3.5 text-error-500" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* File Info */}
-                    <div className="flex items-center gap-4 mt-3 text-xs text-neutral-500">
-                      <span>{document.fileName}</span>
-                      <span>{formatFileSize(document.fileSize)}</span>
-                      <span className="flex items-center gap-1">
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-neutral-500 flex-wrap">
+                      <span className="truncate max-w-[120px]">{document.fileName}</span>
+                      <span>· {formatFileSize(document.fileSize)}</span>
+                      <span className="inline-flex items-center gap-0.5">
                         <Download className="h-3 w-3" />
-                        {document.downloadCount} downloads
+                        {document.downloadCount}
                       </span>
-                      <span>
-                        Updated {new Date(document.updatedAt).toLocaleDateString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
+                      <span>· {new Date(document.updatedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
                     </div>
                   </div>
                 </div>
               </Card>
             )
-          })
-        ) : (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FolderOpen className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-stone-800">No documents found</h3>
-            <p className="text-neutral-500 mt-1">
-              {searchQuery || categoryFilter !== 'ALL' || visibilityFilter !== 'ALL'
-                ? 'Try adjusting your filters'
-                : 'Upload your first document to get started'}
-            </p>
-            <Link to={ROUTES.COMMITTEE.DOCUMENT_UPLOAD}>
-              <Button className="mt-4">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </Link>
-          </Card>
-        )}
-      </div>
-
-      {/* Summary */}
-      {data && data.documents.length > 0 && (
-        <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-stone-600 font-medium">
-              Showing {filteredDocuments?.length ?? 0} of {data.total} documents
-            </span>
-            <span className="text-stone-500">
-              Total downloads: <span className="font-semibold text-amber-600">{data.documents.reduce((sum, d) => sum + d.downloadCount, 0)}</span>
-            </span>
-          </div>
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-8">
+          <FolderOpen className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="font-medium text-stone-800 mb-1">No documents found</h3>
+          <p className="text-sm text-neutral-500 mb-3">
+            {searchQuery || categoryFilter !== 'ALL' || visibilityFilter !== 'ALL'
+              ? 'Try adjusting your filters'
+              : 'Upload your first document to get started'}
+          </p>
+          <Link to={ROUTES.COMMITTEE.DOCUMENT_UPLOAD}>
+            <Button size="sm">
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              Upload Document
+            </Button>
+          </Link>
         </Card>
       )}
     </div>
