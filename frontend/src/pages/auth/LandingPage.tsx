@@ -327,10 +327,17 @@ export function LandingPage() {
         <section className="py-16 sm:py-20 px-4 bg-stone-100">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold text-stone-800 mb-4">
-                Streamline Your FYP Experience
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-700 text-sm font-medium mb-5 border border-blue-100">
+                <Sparkles className="h-4 w-4" />
+                <span>Platform highlights</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-stone-800 mb-4 tracking-tight leading-[1.15]">
+                Streamline Your{' '}
+                <span className="bg-gradient-to-r from-[#1e3a5f] to-blue-600 bg-clip-text text-transparent">
+                  FYP Experience
+                </span>
               </h2>
-              <p className="text-lg text-stone-600 max-w-2xl mx-auto">
+              <p className="text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed">
                 Built for FCI students, supervisors, and the FYP committee to manage the entire final year project lifecycle.
               </p>
             </div>
@@ -355,14 +362,17 @@ export function LandingPage() {
         {/* CTA Section */}
         <section className="py-16 sm:py-20 px-4 bg-gradient-to-br from-[#1e3a5f] to-[#0f1f33]">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full text-green-300 text-sm font-medium mb-6 border border-green-500/20">
-              <CheckCircle2 className="h-4 w-4" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-blue-200 text-sm font-medium mb-6 border border-white/15">
+              <CheckCircle2 className="h-4 w-4 text-sky-300" />
               <span>Used by FCI students and supervisors</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Ready to Begin Your FYP?
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight leading-[1.15]">
+              Ready to Begin Your{' '}
+              <span className="bg-gradient-to-r from-blue-200 to-sky-300 bg-clip-text text-transparent">
+                FYP?
+              </span>
             </h2>
-            <p className="text-lg text-blue-200/70 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-blue-100/80 mb-8 max-w-2xl mx-auto leading-relaxed">
               Register with your MMU student or staff account to access supervisor matching, proposal submission, and progress tracking.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
