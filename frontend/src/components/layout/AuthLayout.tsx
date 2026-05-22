@@ -38,9 +38,12 @@ export function AuthLayout({
         <header className="py-3 px-4 sm:px-6">
           <Link
             to={backLinkTo}
-            className="group inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-stone-700 hover:text-primary-900 bg-white hover:bg-primary-50 border border-stone-200 hover:border-primary-300 rounded-full shadow-sm hover:shadow transition-all duration-200"
+            aria-label={backLinkText}
+            className="group inline-flex items-center gap-2 pl-1.5 pr-4 py-1.5 text-sm font-medium text-stone-700 hover:text-primary-900 bg-white/85 hover:bg-white border border-stone-200/80 hover:border-primary-200 rounded-full shadow-sm hover:shadow-md backdrop-blur-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100"
           >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-50 group-hover:bg-primary-100 transition-colors">
+              <ArrowLeft className="h-3.5 w-3.5 text-primary-700 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            </span>
             {backLinkText}
           </Link>
         </header>
