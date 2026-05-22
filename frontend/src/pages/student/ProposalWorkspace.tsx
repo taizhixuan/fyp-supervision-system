@@ -23,6 +23,11 @@ import {
   Building2,
   Users,
   Briefcase,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Pencil,
+  ListChecks,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal } from '@/components/ui'
 import {
@@ -180,6 +185,31 @@ const statusColors: Record<ProposalStatus, string> = {
 
 type SubmitModalState = 'confirm' | 'submitting' | 'success'
 
+// Read-only label/value row used by the Review step summary.
+function ReviewRow({
+  label,
+  value,
+  multiline,
+}: {
+  label: string
+  value?: string | null
+  multiline?: boolean
+}) {
+  return (
+    <div className={multiline ? 'sm:col-span-2' : undefined}>
+      <dt className="text-xs uppercase tracking-wide text-stone-500 mb-0.5">{label}</dt>
+      <dd
+        className={cn(
+          'font-medium text-stone-900',
+          multiline ? 'whitespace-pre-wrap break-words' : 'truncate'
+        )}
+      >
+        {value ? value : <span className="text-stone-400 italic font-normal">Not provided</span>}
+      </dd>
+    </div>
+  )
+}
+
 export function ProposalWorkspace() {
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitModalState, setSubmitModalState] = useState<SubmitModalState>('confirm')
@@ -203,6 +233,7 @@ export function ProposalWorkspace() {
     reset,
     setValue,
     watch,
+    trigger,
     formState: { errors, isDirty },
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
@@ -321,6 +352,116 @@ export function ProposalWorkspace() {
     name: 'references',
   })
 
+  // ---- Wizard step model -----------------------------------------------------
+  // Fields are grouped by step so per-step validation can run via trigger().
+  // Order matches the existing template and the rendered Card sections.
+  const STEPS = useMemo(
+    () =>
+      [
+        {
+          id: 1,
+          title: 'Project Identity',
+          description: 'Title, type, and taxonomy',
+          icon: FileText,
+          fields: [
+            'title',
+            'projectStatus',
+            'projectType',
+            'specialisation',
+            'projectCategory',
+            'projectFocus',
+            'industryCollaboration',
+            'industryCompanyName',
+            'industryContactName',
+            'industryContactPhone',
+          ] as const,
+        },
+        {
+          id: 2,
+          title: 'Description',
+          description: 'Problem, methods, outcomes',
+          icon: ListChecks,
+          fields: [
+            'problemStatement',
+            'objectives',
+            'scope',
+            'methodology',
+            'expectedOutcomes',
+          ] as const,
+        },
+        {
+          id: 3,
+          title: 'Team',
+          description: 'Supervisor & students',
+          icon: Users,
+          fields: [
+            'coSupervisorName',
+            'numberOfStudents',
+            'student1Subtitle',
+            'student1WorkDistribution',
+            'student2MmuId',
+            'student2Subtitle',
+            'student2WorkDistribution',
+          ] as const,
+        },
+        {
+          id: 4,
+          title: 'Timeline & Files',
+          description: 'Schedule and attachments',
+          icon: Clock,
+          fields: ['timeline'] as const,
+        },
+        {
+          id: 5,
+          title: 'Review',
+          description: 'Confirm and submit',
+          icon: CheckCircle,
+          fields: [] as const,
+        },
+      ] as const,
+    []
+  )
+
+  const totalSteps = STEPS.length
+  const [currentStep, setCurrentStep] = useState(1)
+
+  const stepErrorCount = useMemo(
+    () =>
+      STEPS.map((step) =>
+        step.fields.filter((f) => (errors as Record<string, unknown>)[f] != null)
+          .length
+      ),
+    [errors, STEPS]
+  )
+
+  const goToStep = async (target: number) => {
+    if (target === currentStep || target < 1 || target > totalSteps) return
+    // Backward navigation is always free.
+    if (target < currentStep) {
+      setCurrentStep(target)
+      return
+    }
+    // Forward navigation validates each intermediate step until one fails.
+    for (let i = currentStep - 1; i < target - 1; i++) {
+      const fields = STEPS[i].fields
+      if (fields.length === 0) continue
+      const ok = await trigger(
+        fields as unknown as (keyof ProposalFormData)[]
+      )
+      if (!ok) {
+        setCurrentStep(i + 1)
+        return
+      }
+    }
+    setCurrentStep(target)
+  }
+
+  const goNext = () => goToStep(currentStep + 1)
+  const goPrev = () => setCurrentStep((s) => Math.max(1, s - 1))
+
+  // Live values used by the Review step summary.
+  const watchedAll = watch()
+
   const onSave = async (data: ProposalFormData) => {
     const formattedData = {
       ...data,
@@ -433,63 +574,35 @@ export function ProposalWorkspace() {
         </div>
       </div>
 
-      {/* Action Bar */}
+      {/* Action Bar — quick links. Save / Submit live in the sticky wizard nav below. */}
       <Card className="bg-neutral-50">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Link to={ROUTES.STUDENT.PROPOSAL_HISTORY}>
-              <Button variant="ghost" size="sm" leftIcon={<History className="h-4 w-4" />}>
-                Version History
-              </Button>
-            </Link>
-            <Link to={ROUTES.STUDENT.PROPOSAL_ANALYSIS}>
-              <Button variant="ghost" size="sm" leftIcon={<Sparkles className="h-4 w-4" />}>
-                AI Analysis
-              </Button>
-            </Link>
-            <Link to={ROUTES.STUDENT.PROPOSAL_STATUS}>
-              <Button variant="ghost" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
-                Status Timeline
-              </Button>
-            </Link>
-            {!isNewProposal && (
-              <Button
-                variant="ghost"
-                size="sm"
-                leftIcon={<FileText className="h-4 w-4" />}
-                onClick={() => exportDocx.mutate()}
-                isLoading={exportDocx.isPending}
-              >
-                Download MMU Form
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {canEdit && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<Save className="h-4 w-4" />}
-                  onClick={handleSubmit(onSave)}
-                  isLoading={createProposal.isPending || updateProposal.isPending}
-                  disabled={!isDirty}
-                >
-                  Save Draft
-                </Button>
-                {canSubmit && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    leftIcon={<Send className="h-4 w-4" />}
-                    onClick={() => setShowSubmitModal(true)}
-                  >
-                    Submit Proposal
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to={ROUTES.STUDENT.PROPOSAL_HISTORY}>
+            <Button variant="ghost" size="sm" leftIcon={<History className="h-4 w-4" />}>
+              Version History
+            </Button>
+          </Link>
+          <Link to={ROUTES.STUDENT.PROPOSAL_ANALYSIS}>
+            <Button variant="ghost" size="sm" leftIcon={<Sparkles className="h-4 w-4" />}>
+              AI Analysis
+            </Button>
+          </Link>
+          <Link to={ROUTES.STUDENT.PROPOSAL_STATUS}>
+            <Button variant="ghost" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
+              Status Timeline
+            </Button>
+          </Link>
+          {!isNewProposal && (
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<FileText className="h-4 w-4" />}
+              onClick={() => exportDocx.mutate()}
+              isLoading={exportDocx.isPending}
+            >
+              Download MMU Form
+            </Button>
+          )}
         </div>
       </Card>
 
@@ -529,7 +642,88 @@ export function ProposalWorkspace() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSave)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSave)} className="space-y-6 pb-24">
+        {/* Wizard step indicator */}
+        <Card className="!p-4 sm:!p-5">
+          <ol className="relative grid grid-cols-5 gap-1 sm:gap-2">
+            <div
+              className="absolute top-5 left-[10%] right-[10%] h-px bg-stone-200"
+              aria-hidden
+            />
+            {STEPS.map((step, idx) => {
+              const isCurrent = step.id === currentStep
+              const isComplete =
+                step.id < currentStep && stepErrorCount[idx] === 0
+              const hasErrors = stepErrorCount[idx] > 0
+              const StepIcon = step.icon
+              return (
+                <li key={step.id} className="relative z-10">
+                  <button
+                    type="button"
+                    onClick={() => goToStep(step.id)}
+                    aria-current={isCurrent ? 'step' : undefined}
+                    className="w-full flex flex-col items-center text-center px-1 group focus-visible:outline-none"
+                  >
+                    <div
+                      className={cn(
+                        'h-10 w-10 rounded-full border-2 bg-white flex items-center justify-center transition-all',
+                        isCurrent &&
+                          'border-primary-600 bg-primary-50 text-primary-700 ring-4 ring-primary-100 shadow-sm',
+                        isComplete &&
+                          !hasErrors &&
+                          'border-primary-600 bg-primary-600 text-white',
+                        !isCurrent &&
+                          !isComplete &&
+                          'border-stone-300 text-stone-500 group-hover:border-primary-400',
+                        hasErrors &&
+                          'border-error-500 bg-error-50 text-error-600 ring-4 ring-error-100'
+                      )}
+                    >
+                      {isComplete && !hasErrors ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <StepIcon className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div
+                      className={cn(
+                        'mt-2 text-[10px] font-semibold uppercase tracking-wide',
+                        isCurrent
+                          ? 'text-primary-700'
+                          : isComplete
+                            ? 'text-stone-700'
+                            : 'text-stone-500'
+                      )}
+                    >
+                      Step {step.id}
+                    </div>
+                    <div
+                      className={cn(
+                        'text-sm font-medium leading-tight',
+                        isCurrent ? 'text-stone-900' : 'text-stone-600'
+                      )}
+                    >
+                      {step.title}
+                    </div>
+                    <div className="hidden md:block text-[11px] text-stone-500 mt-0.5 leading-snug">
+                      {step.description}
+                    </div>
+                    {hasErrors && (
+                      <div className="text-[10px] mt-1 font-medium text-error-600">
+                        {stepErrorCount[idx]} issue
+                        {stepErrorCount[idx] > 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </Card>
+
+        {/* Step 1: Project Identity */}
+        {currentStep === 1 && (
+        <>
         {/* Project Identity (template fields) */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-1">Project Identity</h2>
@@ -723,7 +917,12 @@ export function ProposalWorkspace() {
             </div>
           )}
         </Card>
+        </>
+        )}
 
+        {/* Step 2: Description */}
+        {currentStep === 2 && (
+        <>
         {/* Problem Statement */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Problem Statement</h2>
@@ -889,7 +1088,12 @@ export function ProposalWorkspace() {
             ))}
           </div>
         </Card>
+        </>
+        )}
 
+        {/* Step 3: Team */}
+        {currentStep === 3 && (
+        <>
         {/* Supervisor block (autofilled, read-only) */}
         <Card>
           <div className="flex items-start gap-3 mb-4">
@@ -1079,7 +1283,12 @@ export function ProposalWorkspace() {
             </div>
           )}
         </Card>
+        </>
+        )}
 
+        {/* Step 4: Timeline & Files */}
+        {currentStep === 4 && (
+        <>
         {/* Timeline */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Timeline (Optional)</h2>
@@ -1187,6 +1396,262 @@ export function ProposalWorkspace() {
             <p className="text-neutral-500 text-sm">No supporting attachment</p>
           )}
         </Card>
+        </>
+        )}
+
+        {/* Step 5: Review & Submit */}
+        {currentStep === 5 && (
+        <>
+        <Card>
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-neutral-900">Review your proposal</h2>
+              <p className="text-sm text-neutral-500">
+                Take a final look before submitting. Use Edit on any section to jump back.
+              </p>
+            </div>
+          </div>
+          {Object.keys(errors).length > 0 && (
+            <AlertBanner
+              variant="error"
+              title="Unresolved issues"
+              description={`${Object.keys(errors).length} field${
+                Object.keys(errors).length > 1 ? 's' : ''
+              } still need attention. Steps with issues are marked in red above — click one to jump back.`}
+              className="mt-4"
+            />
+          )}
+        </Card>
+
+        {/* Review · Project Identity */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-stone-900">1. Project Identity</h3>
+            {canEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                leftIcon={<Pencil className="h-3.5 w-3.5" />}
+                onClick={() => goToStep(1)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <ReviewRow label="Title" value={watchedAll.title} multiline />
+            <ReviewRow label="Status" value={watchedAll.projectStatus} />
+            <ReviewRow label="Type" value={watchedAll.projectType} />
+            <ReviewRow label="Specialisation" value={watchedAll.specialisation} />
+            <ReviewRow label="Category" value={watchedAll.projectCategory} />
+            <ReviewRow label="Focus / Contribution" value={watchedAll.projectFocus} multiline />
+            <ReviewRow
+              label="Industry collaboration"
+              value={watchedAll.industryCollaboration ? 'Yes' : 'No'}
+            />
+            {watchedAll.industryCollaboration && (
+              <>
+                <ReviewRow label="Industry partner" value={watchedAll.industryCompanyName} />
+                <ReviewRow label="Industry contact" value={watchedAll.industryContactName} />
+                <ReviewRow label="Industry phone" value={watchedAll.industryContactPhone} />
+              </>
+            )}
+          </dl>
+        </Card>
+
+        {/* Review · Description */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-stone-900">2. Description</h3>
+            {canEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                leftIcon={<Pencil className="h-3.5 w-3.5" />}
+                onClick={() => goToStep(2)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+          <dl className="space-y-4 text-sm">
+            <ReviewRow label="Problem statement" value={watchedAll.problemStatement} multiline />
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-stone-500 mb-1">Objectives</dt>
+              <dd>
+                {watchedAll.objectives?.length > 0 ? (
+                  <ol className="list-decimal pl-5 space-y-1 text-stone-900">
+                    {watchedAll.objectives.map((o, i) => (
+                      <li key={i}>{o.value || <span className="text-stone-400 italic">Empty</span>}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <span className="text-stone-400 italic">Not provided</span>
+                )}
+              </dd>
+            </div>
+            <ReviewRow label="Scope" value={watchedAll.scope} multiline />
+            <ReviewRow label="Methodology" value={watchedAll.methodology} multiline />
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-stone-500 mb-1">Expected outcomes</dt>
+              <dd>
+                {watchedAll.expectedOutcomes?.length > 0 ? (
+                  <ol className="list-decimal pl-5 space-y-1 text-stone-900">
+                    {watchedAll.expectedOutcomes.map((o, i) => (
+                      <li key={i}>{o.value || <span className="text-stone-400 italic">Empty</span>}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <span className="text-stone-400 italic">Not provided</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </Card>
+
+        {/* Review · Team */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-stone-900">3. Team</h3>
+            {canEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                leftIcon={<Pencil className="h-3.5 w-3.5" />}
+                onClick={() => goToStep(3)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <ReviewRow
+              label="Supervisor"
+              value={proposal?.supervisor?.fullName || 'Not paired yet'}
+            />
+            <ReviewRow label="Co-supervisor" value={watchedAll.coSupervisorName} />
+            <ReviewRow label="Number of students" value={watchedAll.numberOfStudents} />
+            {watchedAll.numberOfStudents === 'Two' && (
+              <>
+                <ReviewRow label="Student 1 subtitle" value={watchedAll.student1Subtitle} />
+                <ReviewRow
+                  label="Student 1 work distribution"
+                  value={watchedAll.student1WorkDistribution}
+                  multiline
+                />
+                <ReviewRow label="Student 2 MMU ID" value={watchedAll.student2MmuId} />
+                <ReviewRow label="Student 2 subtitle" value={watchedAll.student2Subtitle} />
+                <ReviewRow
+                  label="Student 2 work distribution"
+                  value={watchedAll.student2WorkDistribution}
+                  multiline
+                />
+              </>
+            )}
+          </dl>
+        </Card>
+
+        {/* Review · Timeline & Files */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-stone-900">4. Timeline & Files</h3>
+            {canEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                leftIcon={<Pencil className="h-3.5 w-3.5" />}
+                onClick={() => goToStep(4)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+          <dl className="space-y-3 text-sm">
+            <ReviewRow label="Timeline" value={watchedAll.timeline} multiline />
+            <ReviewRow
+              label="Supporting attachment"
+              value={proposalFileName || 'None'}
+            />
+          </dl>
+        </Card>
+
+        {canSubmit && Object.keys(errors).length === 0 && (
+          <Card className="bg-primary-50 border-primary-200">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                <Rocket className="h-5 w-5 text-primary-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-primary-900">Ready to submit?</p>
+                <p className="text-sm text-primary-700/80 mt-0.5">
+                  Once submitted, you can&apos;t edit until your supervisor sends feedback.
+                  Make sure your draft is saved first.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+        </>
+        )}
+
+        {/* Sticky wizard navigation */}
+        <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border border-stone-200 rounded-xl shadow-lg shadow-stone-300/30 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={goPrev}
+            disabled={currentStep === 1}
+            leftIcon={<ChevronLeft className="h-4 w-4" />}
+          >
+            Back
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:block text-xs text-stone-500 mr-1">
+              Step {currentStep} of {totalSteps}
+            </span>
+            {canEdit && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                leftIcon={<Save className="h-4 w-4" />}
+                onClick={handleSubmit(onSave)}
+                isLoading={createProposal.isPending || updateProposal.isPending}
+                disabled={!isDirty}
+              >
+                Save Draft
+              </Button>
+            )}
+            {currentStep < totalSteps ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={goNext}
+                rightIcon={<ChevronRight className="h-4 w-4" />}
+              >
+                Next
+              </Button>
+            ) : canSubmit ? (
+              <Button
+                type="button"
+                variant="primary"
+                leftIcon={<Send className="h-4 w-4" />}
+                onClick={() => setShowSubmitModal(true)}
+                disabled={Object.keys(errors).length > 0}
+              >
+                Submit Proposal
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </form>
 
       {/* Enhanced Submit Modal */}
