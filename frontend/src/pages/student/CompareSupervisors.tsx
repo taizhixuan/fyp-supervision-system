@@ -409,14 +409,14 @@ export function CompareSupervisors() {
                       View Profile
                     </Button>
                   </Link>
-                  <Link to={ROUTES.STUDENT.TOPICS}>
+                  <Link to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${supervisor.supervisorId}`}>
                     <Button
                       variant="primary"
                       size="sm"
                       className="w-full"
                       leftIcon={<Send className="h-4 w-4" />}
                     >
-                      Browse Topics
+                      Send Request
                     </Button>
                   </Link>
                 </>
