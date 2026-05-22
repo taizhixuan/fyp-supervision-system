@@ -29,25 +29,18 @@ public class CommitteeAnnouncementController {
         return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
-    // No `consumes` restriction: Tomcat's CharacterEncodingFilter appends
-    // `;charset=UTF-8` to multipart Content-Type after `setCharacterEncoding`
-    // runs, which makes a strict matcher reject the augmented header. Branch on
-    // which @RequestPart/@RequestBody is present instead.
+    // Multipart-only. The frontend always sends FormData with a `data` JSON part
+    // + optional `files`. Mixing @RequestBody with @RequestPart interacts badly
+    // with Tomcat's CharacterEncodingFilter (it appends `;charset=UTF-8` to the
+    // multipart Content-Type), and Spring then can't find a converter for the
+    // augmented header → HttpMediaTypeNotSupportedException 500.
     @PostMapping
     public ResponseEntity<?> createAnnouncement(
             @AuthenticationPrincipal UserDetails user,
-            @RequestPart(value = "data", required = false) String dataJson,
-            @RequestPart(value = "files", required = false) MultipartFile[] files,
-            @RequestBody(required = false) Map<String, Object> jsonBody) {
+            @RequestPart(value = "data") String dataJson,
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
         Long userId = Long.parseLong(user.getUsername());
-        Map<String, Object> dto;
-        if (dataJson != null && !dataJson.isBlank()) {
-            dto = announcementService.createFromMultipart(userId, dataJson, files);
-        } else if (jsonBody != null) {
-            dto = announcementService.create(userId, jsonBody, null);
-        } else {
-            return ResponseEntity.badRequest().body(Map.of("message", "Missing announcement payload"));
-        }
+        Map<String, Object> dto = announcementService.createFromMultipart(userId, dataJson, files);
         return ResponseEntity.ok(dto);
     }
 
