@@ -56,7 +56,7 @@ export function AuthLayout({
 
       {/* Footer */}
       <footer className="py-3 text-center text-xs text-stone-500">
-        <p>&copy; {new Date().getFullYear()} MMU FYP Committee. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Faculty of Computing and Informatics, Multimedia University. All rights reserved.</p>
       </footer>
     </div>
   )
