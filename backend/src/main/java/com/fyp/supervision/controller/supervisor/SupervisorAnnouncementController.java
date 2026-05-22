@@ -40,27 +40,20 @@ public class SupervisorAnnouncementController {
         return ResponseEntity.ok(announcementService.get(id));
     }
 
-    // No `consumes` restriction: Tomcat's CharacterEncodingFilter appends
-    // `;charset=UTF-8` to the request Content-Type once `setCharacterEncoding`
-    // runs, which makes a strict `consumes = MULTIPART_FORM_DATA_VALUE`
-    // matcher reject the augmented `multipart/form-data;boundary=...;charset=UTF-8`
-    // with HttpMediaTypeNotSupportedException. We branch on which @RequestPart
-    // is present instead.
+    // Multipart-only endpoint. The frontend always sends FormData with a `data`
+    // JSON part + optional `files`. We avoid both `consumes` matchers and a
+    // `@RequestBody` companion arg because either path interacts badly with
+    // Tomcat's CharacterEncodingFilter appending `;charset=UTF-8` to the
+    // Content-Type — Spring then can't find a converter for
+    // `multipart/form-data;...;charset=UTF-8` and throws
+    // HttpMediaTypeNotSupportedException (500).
     @PostMapping
     public ResponseEntity<?> createAnnouncement(
             @AuthenticationPrincipal UserDetails user,
-            @RequestPart(value = "data", required = false) String dataJson,
-            @RequestPart(value = "files", required = false) MultipartFile[] files,
-            @RequestBody(required = false) Map<String, Object> jsonBody) {
+            @RequestPart(value = "data") String dataJson,
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
         Long userId = Long.parseLong(user.getUsername());
-        Map<String, Object> dto;
-        if (dataJson != null && !dataJson.isBlank()) {
-            dto = announcementService.createFromMultipart(userId, dataJson, files);
-        } else if (jsonBody != null) {
-            dto = announcementService.create(userId, jsonBody, null);
-        } else {
-            return ResponseEntity.badRequest().body(Map.of("message", "Missing announcement payload"));
-        }
+        Map<String, Object> dto = announcementService.createFromMultipart(userId, dataJson, files);
         return ResponseEntity.ok(dto);
     }
 
