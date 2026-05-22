@@ -59,7 +59,7 @@ export function LogDetail() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
+    <div className="max-w-3xl mx-auto space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.LOGS}
@@ -124,7 +124,7 @@ export function LogDetail() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Log Content */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Progress */}
           <Card>
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Overall Progress</h2>
@@ -184,7 +184,7 @@ export function LogDetail() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {/* Meta Info */}
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-3">Log Details</h3>

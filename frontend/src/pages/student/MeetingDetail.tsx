@@ -183,7 +183,7 @@ export function MeetingDetail() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.MEETINGS}
@@ -283,7 +283,7 @@ export function MeetingDetail() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Join Meeting CTA (for confirmed upcoming meetings) */}
           {displayMeeting.meetingLink && displayMeeting.status === 'CONFIRMED' && isUpcoming && (
             <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
@@ -410,7 +410,7 @@ export function MeetingDetail() {
         </div>
 
         {/* Right Column - Sidebar */}
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {/* Supervisor Card */}
           <Card className="overflow-hidden">
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 -m-5 mb-4 p-4">

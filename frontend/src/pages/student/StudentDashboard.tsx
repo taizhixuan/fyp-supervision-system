@@ -308,7 +308,7 @@ export function StudentDashboard() {
   ] as const
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />

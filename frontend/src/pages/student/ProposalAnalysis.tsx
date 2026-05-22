@@ -73,7 +73,7 @@ export function ProposalAnalysis() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.PROPOSAL}

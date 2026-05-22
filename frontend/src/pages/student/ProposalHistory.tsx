@@ -36,7 +36,7 @@ export function ProposalHistory() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.PROPOSAL}
@@ -61,7 +61,7 @@ export function ProposalHistory() {
         <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-neutral-200" />
 
         {/* Versions */}
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {versions.map((version, index) => (
             <div key={version.versionId} className="relative flex gap-4">
               {/* Timeline Dot */}

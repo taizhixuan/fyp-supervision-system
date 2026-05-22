@@ -321,13 +321,13 @@ export function StudentProfile() {
   }
 
   return (
-    <div className={cn('max-w-4xl mx-auto space-y-4 lg:space-y-5', isEditing && 'pb-24')}>
+    <div className={cn('max-w-4xl mx-auto space-y-3 lg:space-y-4', isEditing && 'pb-24')}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-neutral-900">My Profile</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">My Profile</h1>
           {isEditing && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium border border-primary-100">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs font-medium border border-primary-100">
               <Edit2 className="h-3 w-3" />
               Editing
             </span>
@@ -336,8 +336,10 @@ export function StudentProfile() {
         {!isEditing && (
           <Button
             variant="secondary"
+            size="sm"
             leftIcon={<Edit2 className="h-4 w-4" />}
             onClick={() => setIsEditing(true)}
+            className="whitespace-nowrap"
           >
             Edit Profile
           </Button>

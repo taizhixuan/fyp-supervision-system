@@ -114,7 +114,7 @@ export function MeetingRequest() {
 
   if (submitSuccess) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
+      <div className="max-w-2xl mx-auto space-y-3 lg:space-y-4">
         <Card className="text-center py-12">
           <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-success-600" />
@@ -137,7 +137,7 @@ export function MeetingRequest() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
+    <div className="max-w-2xl mx-auto space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.MEETINGS}
@@ -153,7 +153,7 @@ export function MeetingRequest() {
         <p className="text-neutral-600 mt-1">Schedule a meeting with your supervisor</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 lg:space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 lg:space-y-4">
         {/* Meeting Details */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Meeting Details</h2>
