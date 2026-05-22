@@ -111,52 +111,50 @@ export function AuditLogs() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <FileText className="h-7 w-7 text-primary-600" />
-            Audit Logs
-          </h1>
-          <p className="text-neutral-600 mt-1">
-            Track all system activities and user actions
-          </p>
+      {/* Compact hero with inline stat chips */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <FileText className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Audit Logs</h1>
+              <p className="text-stone-300 text-xs">Track all system activities and user actions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button variant="secondary" size="sm" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
+              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+              Refresh
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleExport} className="border-stone-600 text-white hover:bg-stone-700">
+              <Download className="h-3.5 w-3.5 mr-1" />
+              Export
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button variant="secondary" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Total Logs</p>
-          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{stats.total.toLocaleString()}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Today</p>
-          <p className="text-2xl font-bold text-info-600">{stats.today}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Security Events</p>
-          <p className="text-2xl font-bold text-warning-600">{stats.security}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-neutral-500">Data Changes</p>
-          <p className="text-2xl font-bold text-success-600">{stats.changes}</p>
-        </Card>
+        {/* Stat chips */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: 'Total Logs', value: stats.total.toLocaleString(), color: 'text-stone-200' },
+            { label: 'Today', value: stats.today, color: 'text-sky-300' },
+            { label: 'Security', value: stats.security, color: 'text-amber-300' },
+            { label: 'Changes', value: stats.changes, color: 'text-emerald-300' },
+          ].map((chip) => (
+            <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
+              <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+              <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <Card padding="sm">
+        <div className="flex flex-col lg:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
             <Input
@@ -208,16 +206,17 @@ export function AuditLogs() {
       {/* Logs List */}
       <div className="space-y-2">
         {filteredLogs && filteredLogs.length > 0 ? (
-          filteredLogs.map((log) => {
+          filteredLogs.map((log, idx) => {
             const action = actionConfig[log.action]
             const ActionIcon = action?.icon || Eye
-            const isExpanded = expandedLog === log.logId
+            const rowKey = String(log.logId ?? log.auditId ?? `${log.timestamp ?? 'log'}-${idx}`)
+            const isExpanded = expandedLog === rowKey
 
             return (
-              <Card key={log.logId} className="overflow-hidden">
+              <Card key={rowKey} className="overflow-hidden">
                 <div
                   className="p-4 cursor-pointer hover:bg-neutral-50 transition-colors"
-                  onClick={() => setExpandedLog(isExpanded ? null : log.logId)}
+                  onClick={() => setExpandedLog(isExpanded ? null : rowKey)}
                 >
                   <div className="flex items-center gap-4">
                     {/* Action Icon */}

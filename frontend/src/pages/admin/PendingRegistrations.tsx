@@ -54,32 +54,36 @@ export function PendingRegistrations() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-          <UserPlus className="h-7 w-7 text-primary-600" />
-          Pending Registrations
-        </h1>
-        <p className="text-neutral-600 mt-1">
-          Approve or reject new student and supervisor signups before they can sign in.
-        </p>
+      {/* Compact hero */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+            <UserPlus className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Pending Registrations</h1>
+            <p className="text-stone-300 text-xs">Approve or reject student and supervisor signups before they can sign in</p>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-neutral-200">
+      <div className="flex gap-1 border-b border-neutral-200">
         <button
           type="button"
           onClick={() => setTab('STUDENT')}
           className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2',
+            'px-3 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5',
             tab === 'STUDENT'
-              ? 'border-primary-500 text-primary-700'
+              ? 'border-amber-500 text-amber-700'
               : 'border-transparent text-neutral-500 hover:text-neutral-900'
           )}
         >
-          <GraduationCap className="h-4 w-4" />
+          <GraduationCap className="h-3.5 w-3.5" />
           Students
           {data && tab === 'STUDENT' && (
-            <span className="ml-1 px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+            <span className="ml-0.5 px-1.5 py-0 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">
               {data.studentCount}
             </span>
           )}
@@ -88,16 +92,16 @@ export function PendingRegistrations() {
           type="button"
           onClick={() => setTab('SUPERVISOR')}
           className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2',
+            'px-3 py-1.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5',
             tab === 'SUPERVISOR'
-              ? 'border-primary-500 text-primary-700'
+              ? 'border-amber-500 text-amber-700'
               : 'border-transparent text-neutral-500 hover:text-neutral-900'
           )}
         >
-          <Briefcase className="h-4 w-4" />
+          <Briefcase className="h-3.5 w-3.5" />
           Supervisors
           {data && tab === 'SUPERVISOR' && (
-            <span className="ml-1 px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+            <span className="ml-0.5 px-1.5 py-0 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">
               {data.supervisorCount}
             </span>
           )}
@@ -106,65 +110,63 @@ export function PendingRegistrations() {
 
       {/* List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-8">
           <Spinner size="lg" />
         </div>
       ) : !data || data.registrations.length === 0 ? (
         <Card className="text-center py-8">
-          <UserPlus className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-          <h3 className="text-neutral-900 font-medium">No pending registrations</h3>
-          <p className="text-sm text-neutral-500 mt-1">
+          <UserPlus className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="text-neutral-900 font-medium text-sm">No pending registrations</h3>
+          <p className="text-xs text-neutral-500 mt-1">
             {tab === 'STUDENT' ? 'Student' : 'Supervisor'} signups awaiting approval will appear here.
           </p>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {data.registrations.map((reg) => (
-            <Card key={reg.userId} className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold flex-shrink-0">
+            <Card key={reg.userId} padding="sm" className="hover:shadow-md transition-all">
+              <div className="flex items-start gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {avatarInitial(reg.fullName)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-medium text-neutral-900">{reg.fullName}</h3>
-                      <p className="text-sm text-neutral-500">{reg.mmuId}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-neutral-900 leading-tight truncate">{reg.fullName}</h3>
+                      <p className="text-[11px] text-neutral-500">{reg.mmuId}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => setRejectTarget(reg)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
+                        className="h-7 px-2 text-xs"
                       >
-                        <X className="h-4 w-4 mr-1" />
+                        <X className="h-3.5 w-3.5 mr-0.5" />
                         Reject
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => handleApprove(reg)}
                         disabled={approveMutation.isPending || rejectMutation.isPending}
+                        className="h-7 px-2 text-xs"
                       >
-                        <Check className="h-4 w-4 mr-1" />
+                        <Check className="h-3.5 w-3.5 mr-0.5" />
                         Approve
                       </Button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-neutral-600">
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5" />
-                      {reg.email}
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-neutral-600">
+                    <span className="flex items-center gap-0.5 truncate">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{reg.email}</span>
                     </span>
-                    {reg.department && <span>{reg.department}</span>}
-                    {reg.programme && <span>{reg.programme}</span>}
-                    <span className="flex items-center gap-1 text-neutral-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      {new Date(reg.registeredAt).toLocaleDateString('en-MY', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                    {reg.department && <span>· {reg.department}</span>}
+                    {reg.programme && <span>· {reg.programme}</span>}
+                    <span className="flex items-center gap-0.5 text-neutral-500">
+                      <Clock className="h-3 w-3" />
+                      {new Date(reg.registeredAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
                 </div>

@@ -46,33 +46,42 @@ export function AdminNotificationCenter() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Notifications</h1>
-          <p className="text-neutral-600 mt-1">
-            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
-          </p>
+      {/* Compact hero */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Bell className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Notifications</h1>
+              <p className="text-stone-300 text-xs">{unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}</p>
+            </div>
+          </div>
+          {unreadCount > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<CheckCheck className="h-3.5 w-3.5" />}
+              onClick={markAllAsRead}
+              isLoading={isMarkingAllRead}
+              className="border-stone-600 text-white hover:bg-stone-700"
+            >
+              Mark All Read
+            </Button>
+          )}
         </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="ghost"
-            leftIcon={<CheckCheck className="h-4 w-4" />}
-            onClick={markAllAsRead}
-            isLoading={isMarkingAllRead}
-          >
-            Mark All Read
-          </Button>
-        )}
       </div>
 
-      <Card>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex bg-neutral-100 rounded-lg p-1">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex bg-neutral-100 rounded-md p-0.5">
             <button
               type="button"
               onClick={() => setReadFilter('all')}
               className={cn(
-                'px-4 py-2 rounded text-sm font-medium transition-colors',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 readFilter === 'all' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
               )}
             >
@@ -82,7 +91,7 @@ export function AdminNotificationCenter() {
               type="button"
               onClick={() => setReadFilter('unread')}
               className={cn(
-                'px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1',
                 readFilter === 'unread' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
               )}
             >
@@ -94,12 +103,12 @@ export function AdminNotificationCenter() {
           </div>
 
           {distinctTypes.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-neutral-500" />
+            <div className="flex items-center gap-1.5">
+              <Filter className="h-3.5 w-3.5 text-neutral-500" />
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="px-2.5 h-8 rounded-md border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 <option value="all">All Types</option>
                 {distinctTypes.map((type) => (
@@ -112,10 +121,10 @@ export function AdminNotificationCenter() {
       </Card>
 
       {filtered.length === 0 ? (
-        <Card className="text-center py-12">
-          <Bell className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No notifications</h3>
-          <p className="text-neutral-500">
+        <Card className="text-center py-8">
+          <Bell className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="text-sm font-medium text-neutral-900 mb-0.5">No notifications</h3>
+          <p className="text-xs text-neutral-500">
             {readFilter === 'unread'
               ? "You've read all your notifications"
               : "You don't have any notifications yet"}

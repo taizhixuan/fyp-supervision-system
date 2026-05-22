@@ -16,7 +16,6 @@ import {
   Calendar,
   FileText,
   History,
-  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -107,49 +106,43 @@ export function MaintenanceCenter() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Compact hero */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <Wrench className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Wrench className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                Maintenance Center
-                <Sparkles className="h-5 w-5 text-amber-400" />
-              </h1>
-              <p className="text-stone-300 text-xs">
-                System backups, health checks, and maintenance operations
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Maintenance Center</h1>
+              <p className="text-stone-300 text-xs">System backups, health checks, and maintenance operations</p>
             </div>
           </div>
           <Link to={ROUTES.ADMIN.JOB_HISTORY}>
-            <Button variant="secondary" className="border-stone-600 text-white hover:bg-stone-700">
-              <History className="h-4 w-4 mr-2" />
-              View Job History
+            <Button variant="secondary" size="sm" className="border-stone-600 text-white hover:bg-stone-700">
+              <History className="h-3.5 w-3.5 mr-1" />
+              Job History
             </Button>
           </Link>
         </div>
       </div>
 
       {/* System Health Status */}
-      <Card className={cn(
-        'p-4 border-l-4 rounded-xl',
-        overallHealth === 'HEALTHY' ? 'border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200' :
-        overallHealth === 'DEGRADED' ? 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200' :
-        'border-l-rose-500 bg-gradient-to-r from-rose-50 to-rose-100 border-rose-200'
+      <Card padding="sm" className={cn(
+        'border-l-4',
+        overallHealth === 'HEALTHY' ? 'border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-emerald-200' :
+        overallHealth === 'DEGRADED' ? 'border-l-amber-500 bg-gradient-to-r from-amber-50 to-amber-100/50 border-amber-200' :
+        'border-l-rose-500 bg-gradient-to-r from-rose-50 to-rose-100/50 border-rose-200'
       )}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {overallHealth === 'HEALTHY' ? (
-              <CheckCircle className="h-6 w-6 text-emerald-600" />
+              <CheckCircle className="h-5 w-5 text-emerald-600" />
             ) : overallHealth === 'DEGRADED' ? (
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
             ) : (
-              <XCircle className="h-6 w-6 text-rose-600" />
+              <XCircle className="h-5 w-5 text-rose-600" />
             )}
             <div>
               <h3 className="font-semibold text-stone-900">

@@ -71,17 +71,18 @@ public class AdminMaintenanceService {
     }
 
     public Map<String, Object> createBackup(Long userId, Map<String, Object> data) {
-        String type = (String) data.getOrDefault("type", "FULL");
-        MaintenanceJob job = MaintenanceJob.builder()
-                .jobType("BACKUP")
-                .status("RUNNING")
-                .startedAt(LocalDateTime.now())
-                .message("Backup started")
-                .triggeredBy(userId != null ? userAccountRepository.findById(userId).orElse(null) : null)
-                .build();
-        job = maintenanceJobRepository.save(job);
-
+        String type = data != null && data.get("type") instanceof String s ? s : "FULL";
+        MaintenanceJob job = null;
         try {
+            job = MaintenanceJob.builder()
+                    .jobType("BACKUP")
+                    .status("RUNNING")
+                    .startedAt(LocalDateTime.now())
+                    .message("Backup started")
+                    .triggeredBy(userId != null ? userAccountRepository.findById(userId).orElse(null) : null)
+                    .build();
+            job = maintenanceJobRepository.save(job);
+
             Path backupDir = fileStorageConfig.getUploadPath().resolve("backups");
             Files.createDirectories(backupDir);
             String fileName = "backup_" + System.currentTimeMillis() + ".txt";
@@ -101,7 +102,11 @@ public class AdminMaintenanceService {
             job.setStatus("COMPLETED");
             job.setCompletedAt(LocalDateTime.now());
             job.setMessage("Backup completed");
-            job.setResultJson(objectMapper.writeValueAsString(result));
+            try {
+                job.setResultJson(objectMapper.writeValueAsString(result));
+            } catch (Exception ignored) {
+                // Result JSON is informational; don't fail the whole backup over serialization.
+            }
             maintenanceJobRepository.save(job);
 
             Map<String, Object> response = new LinkedHashMap<>();
@@ -111,15 +116,24 @@ public class AdminMaintenanceService {
             response.put("downloadUrl", "/api/admin/maintenance/backups/download?file=" + fileName);
             return response;
         } catch (Exception e) {
-            job.setStatus("FAILED");
-            job.setCompletedAt(LocalDateTime.now());
-            job.setMessage("Backup failed: " + e.getMessage());
-            maintenanceJobRepository.save(job);
+            // Make sure a failure response always comes back as 200 with a FAILED payload
+            // instead of bubbling up to a 500 — the frontend keys its toast off the status field.
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            try {
+                if (job != null) {
+                    job.setStatus("FAILED");
+                    job.setCompletedAt(LocalDateTime.now());
+                    job.setMessage("Backup failed: " + msg);
+                    maintenanceJobRepository.save(job);
+                }
+            } catch (Exception ignored) {
+                // Best-effort: if the failed-state save itself blows up, still return a clean response.
+            }
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("jobId", job.getJobId());
+            response.put("jobId", job != null ? job.getJobId() : null);
             response.put("type", type);
             response.put("status", "FAILED");
-            response.put("message", e.getMessage());
+            response.put("message", msg);
             return response;
         }
     }

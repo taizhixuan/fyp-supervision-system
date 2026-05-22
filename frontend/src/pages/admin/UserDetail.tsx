@@ -148,63 +148,45 @@ export function UserDetail() {
 
   return (
     <div className="space-y-3 lg:space-y-4 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to={ROUTES.ADMIN.USERS}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Users
-          </Button>
-        </Link>
-      </div>
+      {/* Back */}
+      <Link to={ROUTES.ADMIN.USERS} className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-amber-700">
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Users
+      </Link>
 
-      {/* User Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center',
-            user.isLocked ? 'bg-error-100' : 'bg-primary-100'
-          )}>
-            {user.isLocked ? (
-              <Lock className="h-8 w-8 text-error-600" />
-            ) : (
-              <span className="text-2xl font-bold text-primary-600">
-                {avatarInitial(user.fullName)}
-              </span>
-            )}
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{user.fullName}</h1>
-            <p className="text-neutral-600">{user.email}</p>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <span className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-medium',
-                role.bgColor,
-                role.color
-              )}>
-                {role.label}
-              </span>
-              <span className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-medium',
-                status.bgColor,
-                status.color
-              )}>
-                {status.label}
-              </span>
-              {user.isLocked && (
-                <span className="px-2 py-0.5 bg-error-50 text-error-700 rounded-full text-xs font-medium flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  Locked
-                </span>
+      {/* User hero — compact stone-800 with avatar + status chips */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={cn(
+              'flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center ring-1',
+              user.isLocked ? 'bg-rose-500/30 ring-rose-300/40' : 'bg-amber-500/20 ring-amber-500/30'
+            )}>
+              {user.isLocked ? (
+                <Lock className="h-5 w-5 text-rose-300" />
+              ) : (
+                <span className="text-base font-bold text-amber-300">{avatarInitial(user.fullName)}</span>
               )}
             </div>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight truncate">{user.fullName}</h1>
+              <p className="text-stone-300 text-xs truncate">{user.email}</p>
+              <div className="flex flex-wrap items-center gap-1 mt-1">
+                <span className={cn('px-1.5 py-0 rounded text-[10px] font-medium', role.bgColor, role.color)}>{role.label}</span>
+                <span className={cn('px-1.5 py-0 rounded text-[10px] font-medium', status.bgColor, status.color)}>{status.label}</span>
+                {user.isLocked && (
+                  <span className="px-1.5 py-0 bg-rose-50 text-rose-700 rounded text-[10px] font-medium flex items-center gap-0.5">
+                    <Lock className="h-2.5 w-2.5" />
+                    Locked
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="flex gap-2">
           <Link to={ROUTES.ADMIN.USER_EDIT.replace(':id', user.userId)}>
-            <Button variant="secondary">
-              <Edit className="h-4 w-4 mr-2" />
+            <Button variant="secondary" size="sm">
+              <Edit className="h-3.5 w-3.5 mr-1" />
               Edit
             </Button>
           </Link>
@@ -212,266 +194,204 @@ export function UserDetail() {
       </div>
 
       {/* User Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Basic Info */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <User className="h-5 w-5 text-primary-600" />
+        <Card padding="sm">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-2 flex items-center gap-1.5">
+            <User className="h-4 w-4 text-amber-600" />
             Account Information
           </h3>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-neutral-400" />
-              <span className="text-neutral-600">Email:</span>
-              <span className="font-medium text-neutral-900">{user.email}</span>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 text-neutral-400" />
+              <span className="text-neutral-500">Email:</span>
+              <span className="font-medium text-neutral-900 truncate">{user.email}</span>
             </div>
             {user.phone && (
-              <div className="flex items-center gap-3 text-sm">
-                <User className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">Phone:</span>
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="text-neutral-500">Phone:</span>
                 <span className="font-medium text-neutral-900">{user.phone}</span>
               </div>
             )}
             {user.department && (
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">Department:</span>
-                <span className="font-medium text-neutral-900">{user.department}</span>
+              <div className="flex items-center gap-2">
+                <Building className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="text-neutral-500">Department:</span>
+                <span className="font-medium text-neutral-900 truncate">{user.department}</span>
               </div>
             )}
-            <div className="flex items-center gap-3 text-sm">
-              <Shield className="h-4 w-4 text-neutral-400" />
-              <span className="text-neutral-600">Role:</span>
+            <div className="flex items-center gap-2">
+              <Shield className="h-3.5 w-3.5 text-neutral-400" />
+              <span className="text-neutral-500">Role:</span>
               <span className={cn('font-medium', role.color)}>{role.label}</span>
             </div>
           </div>
         </Card>
 
         {/* Security Info */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-600" />
+        <Card padding="sm">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-2 flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-amber-600" />
             Security Information
           </h3>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <Calendar className="h-4 w-4 text-neutral-400" />
-              <span className="text-neutral-600">Created:</span>
-              <span className="font-medium text-neutral-900">
-                {new Date(user.createdAt).toLocaleDateString()}
-              </span>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 text-neutral-400" />
+              <span className="text-neutral-500">Created:</span>
+              <span className="font-medium text-neutral-900">{new Date(user.createdAt).toLocaleDateString()}</span>
             </div>
             {user.lastLoginAt && (
-              <div className="flex items-center gap-3 text-sm">
-                <Clock className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">Last Login:</span>
-                <span className="font-medium text-neutral-900">
-                  {new Date(user.lastLoginAt).toLocaleString()}
-                </span>
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="text-neutral-500">Last Login:</span>
+                <span className="font-medium text-neutral-900">{new Date(user.lastLoginAt).toLocaleString()}</span>
               </div>
             )}
             {user.passwordChangedAt && (
-              <div className="flex items-center gap-3 text-sm">
-                <Key className="h-4 w-4 text-neutral-400" />
-                <span className="text-neutral-600">Password Changed:</span>
-                <span className="font-medium text-neutral-900">
-                  {new Date(user.passwordChangedAt).toLocaleDateString()}
-                </span>
+              <div className="flex items-center gap-2">
+                <Key className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="text-neutral-500">Password Changed:</span>
+                <span className="font-medium text-neutral-900">{new Date(user.passwordChangedAt).toLocaleDateString()}</span>
               </div>
             )}
-            <div className="flex items-center gap-3 text-sm">
-              <AlertTriangle className="h-4 w-4 text-neutral-400" />
-              <span className="text-neutral-600">Failed Logins:</span>
-              <span className={cn(
-                'font-medium',
-                user.loginAttempts > 3 ? 'text-error-600' : 'text-neutral-900'
-              )}>
-                {user.loginAttempts}
-              </span>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-neutral-400" />
+              <span className="text-neutral-500">Failed Logins:</span>
+              <span className={cn('font-medium', user.loginAttempts > 3 ? 'text-error-600' : 'text-neutral-900')}>{user.loginAttempts}</span>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Active Sessions */}
-      <Card>
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-          <Monitor className="h-5 w-5 text-primary-600" />
-          Active Sessions ({user.sessions.length})
-        </h3>
+      {/* Sessions + Activity side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Active Sessions */}
+        <Card padding="sm">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-2 flex items-center gap-1.5">
+            <Monitor className="h-4 w-4 text-amber-600" />
+            Active Sessions ({user.sessions.length})
+          </h3>
 
-        {user.sessions.length > 0 ? (
-          <div className="space-y-3">
-            {user.sessions.map((session) => (
-              <div
-                key={session.sessionId}
-                className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    'w-3 h-3 rounded-full',
-                    session.isActive ? 'bg-success-500' : 'bg-neutral-300'
-                  )} />
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">
-                      {session.ipAddress}
-                    </p>
-                    <p className="text-xs text-neutral-500 line-clamp-1">
-                      {session.userAgent}
-                    </p>
-                    <p className="text-xs text-neutral-400 mt-0.5">
-                      Last activity: {new Date(session.lastActivityAt).toLocaleString()}
-                    </p>
+          {user.sessions.length > 0 ? (
+            <div className="space-y-1.5">
+              {user.sessions.map((session) => (
+                <div
+                  key={session.sessionId}
+                  className="flex items-center justify-between gap-2 p-2 bg-neutral-50 rounded-md"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={cn('w-2 h-2 rounded-full flex-shrink-0', session.isActive ? 'bg-emerald-500' : 'bg-neutral-300')} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-neutral-900">{session.ipAddress}</p>
+                      <p className="text-[10px] text-neutral-500 line-clamp-1">{session.userAgent}</p>
+                      <p className="text-[10px] text-neutral-400">
+                        Last activity: {new Date(session.lastActivityAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-rose-600 px-1.5">
+                    <LogOut className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-neutral-500">No active sessions</p>
+          )}
+        </Card>
+
+        {/* Recent Activity */}
+        <Card padding="sm">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-2 flex items-center gap-1.5">
+            <Activity className="h-4 w-4 text-amber-600" />
+            Recent Activity
+          </h3>
+
+          {user.activityLog.length > 0 ? (
+            <div className="space-y-1.5">
+              {user.activityLog.map((log) => (
+                <div key={log.logId} className="flex items-start gap-2 p-2 bg-neutral-50 rounded-md">
+                  <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Activity className="h-3 w-3 text-amber-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-neutral-900 leading-tight">{log.action}</p>
+                    <p className="text-[11px] text-neutral-500 line-clamp-1">{log.details}</p>
+                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-neutral-400">
+                      <span>{new Date(log.timestamp).toLocaleString()}</span>
+                      {log.ipAddress && <span>· {log.ipAddress}</span>}
+                    </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-error-600">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-neutral-500">No active sessions</p>
-        )}
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary-600" />
-          Recent Activity
-        </h3>
-
-        {user.activityLog.length > 0 ? (
-          <div className="space-y-3">
-            {user.activityLog.map((log) => (
-              <div
-                key={log.logId}
-                className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg"
-              >
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Activity className="h-4 w-4 text-primary-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">{log.action}</p>
-                  <p className="text-xs text-neutral-500">{log.details}</p>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-neutral-400">
-                    <span>{new Date(log.timestamp).toLocaleString()}</span>
-                    {log.ipAddress && (
-                      <>
-                        <span>•</span>
-                        <span>{log.ipAddress}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-neutral-500">No recent activity</p>
-        )}
-      </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-neutral-500">No recent activity</p>
+          )}
+        </Card>
+      </div>
 
       {/* Notes */}
       {user.notes && (
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-2">Admin Notes</h3>
-          <p className="text-sm text-neutral-600">{user.notes}</p>
+        <Card padding="sm">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-1">Admin Notes</h3>
+          <p className="text-xs text-neutral-600">{user.notes}</p>
         </Card>
       )}
 
       {/* Actions */}
-      <Card>
-        <h3 className="font-semibold text-neutral-900 mb-4">Account Actions</h3>
+      <Card padding="sm">
+        <h3 className="text-sm font-semibold text-neutral-900 mb-2">Account Actions</h3>
 
-        <div className="flex flex-wrap gap-3">
-          {/* Lock/Unlock */}
-          <Button
-            variant="secondary"
-            onClick={handleLockToggle}
-            disabled={updateMutation.isPending}
-          >
+        <div className="flex flex-wrap gap-1.5">
+          <Button variant="secondary" size="sm" onClick={handleLockToggle} disabled={updateMutation.isPending}>
             {user.isLocked ? (
-              <>
-                <Unlock className="h-4 w-4 mr-2" />
-                Unlock Account
-              </>
+              <><Unlock className="h-3.5 w-3.5 mr-1" />Unlock</>
             ) : (
-              <>
-                <Lock className="h-4 w-4 mr-2" />
-                Lock Account
-              </>
+              <><Lock className="h-3.5 w-3.5 mr-1" />Lock</>
             )}
           </Button>
 
-          {/* Resend Invite (if pending) */}
           {user.status === 'PENDING' && (
-            <Button
-              variant="secondary"
-              onClick={handleResendInvite}
-              disabled={resendInviteMutation.isPending}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {resendInviteMutation.isPending ? 'Sending...' : 'Resend Invite'}
+            <Button variant="secondary" size="sm" onClick={handleResendInvite} disabled={resendInviteMutation.isPending}>
+              <Send className="h-3.5 w-3.5 mr-1" />
+              {resendInviteMutation.isPending ? 'Sending…' : 'Resend Invite'}
             </Button>
           )}
 
-          {/* Send Password Reset (for non-pending users) */}
           {user.status !== 'PENDING' && (
-            <Button
-              variant="secondary"
-              onClick={handleSendResetLink}
-              disabled={sendCredentialsMutation.isPending}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {sendCredentialsMutation.isPending ? 'Sending...' : 'Send Password Reset'}
+            <Button variant="secondary" size="sm" onClick={handleSendResetLink} disabled={sendCredentialsMutation.isPending}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+              {sendCredentialsMutation.isPending ? 'Sending…' : 'Reset Password'}
             </Button>
           )}
 
-          {/* Approve (if pending) */}
           {user.status === 'PENDING' && (
-            <Button
-              onClick={() => handleStatusChange('ACTIVE')}
-              disabled={updateMutation.isPending}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve Account
+            <Button size="sm" onClick={() => handleStatusChange('ACTIVE')} disabled={updateMutation.isPending}>
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              Approve
             </Button>
           )}
 
-          {/* Suspend/Reactivate */}
           {user.status === 'ACTIVE' && (
-            <Button
-              variant="secondary"
-              className="text-warning-600 border-warning-300 hover:bg-warning-50"
-              onClick={() => setShowConfirmSuspend(true)}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Suspend Account
+            <Button variant="secondary" size="sm" className="text-amber-700 border-amber-300 hover:bg-amber-50" onClick={() => setShowConfirmSuspend(true)}>
+              <XCircle className="h-3.5 w-3.5 mr-1" />
+              Suspend
             </Button>
           )}
           {user.status === 'SUSPENDED' && (
-            <Button
-              variant="secondary"
-              onClick={() => handleStatusChange('ACTIVE')}
-              disabled={updateMutation.isPending}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Reactivate Account
+            <Button variant="secondary" size="sm" onClick={() => handleStatusChange('ACTIVE')} disabled={updateMutation.isPending}>
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              Reactivate
             </Button>
           )}
 
-          {/* Delete */}
-          <Button
-            variant="secondary"
-            className="text-error-600 border-error-300 hover:bg-error-50"
-            onClick={() => setShowConfirmDelete(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Account
+          <Button variant="secondary" size="sm" className="text-rose-700 border-rose-300 hover:bg-rose-50" onClick={() => setShowConfirmDelete(true)}>
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            Delete
           </Button>
         </div>
       </Card>

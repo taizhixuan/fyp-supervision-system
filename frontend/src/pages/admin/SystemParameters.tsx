@@ -118,14 +118,14 @@ export function SystemParameters() {
     if (param.type === 'BOOLEAN') {
       return (
         <span className={cn(
-          'px-2.5 py-1 rounded-full text-xs font-medium',
+          'px-1.5 py-0.5 rounded text-[10px] font-medium',
           param.value === 'true' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-stone-100 text-stone-600 border border-stone-200'
         )}>
           {param.value === 'true' ? 'Enabled' : 'Disabled'}
         </span>
       )
     }
-    return <span className="font-mono text-sm bg-stone-100 px-2 py-1 rounded text-stone-700">{param.value}</span>
+    return <span className="font-mono text-[11px] bg-stone-100 px-1.5 py-0.5 rounded text-stone-700">{param.value}</span>
   }
 
   if (isLoading) {
@@ -148,33 +148,27 @@ export function SystemParameters() {
   return (
     <div className="space-y-3 lg:space-y-4">
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-600/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        <div className="relative flex items-start gap-4">
-          <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-            <Settings className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+            <Settings className="h-5 w-5 text-amber-400" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              System Parameters
-              <Sparkles className="h-5 w-5 text-amber-400" />
-            </h1>
-            <p className="text-stone-300 text-xs">
-              Configure system-wide settings and policies
-            </p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">System Parameters</h1>
+            <p className="text-stone-300 text-xs">Configure system-wide settings and policies</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
           onClick={() => setSelectedCategory('ALL')}
           className={cn(
-            'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border',
+            'px-2.5 py-1 rounded-md text-xs font-medium transition-colors border',
             selectedCategory === 'ALL'
-              ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
-              : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200 hover:border-stone-300 hover:shadow-sm'
+              ? 'bg-amber-500 text-white border-amber-500'
+              : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200'
           )}
         >
           All
@@ -188,45 +182,45 @@ export function SystemParameters() {
               type="button"
               onClick={() => setSelectedCategory(key as ParameterCategory)}
               className={cn(
-                'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border flex items-center gap-2',
+                'px-2.5 py-1 rounded-md text-xs font-medium transition-colors border flex items-center gap-1',
                 selectedCategory === key
-                  ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
-                  : cn(config.bgColor, config.color, 'hover:shadow-sm hover:scale-[1.02]')
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : cn(config.bgColor, config.color, 'hover:opacity-80')
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3 w-3" />
               {config.label}
             </button>
           )
         })}
       </div>
 
-      <div className="bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl p-4 border border-stone-200">
+      <Card padding="sm">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
           <Input
             type="text"
             placeholder="Search parameters..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white border-stone-200 focus:border-amber-500 focus:ring-amber-500/20"
+            className="pl-8 h-9 text-sm bg-white border-stone-200 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
-      </div>
+      </Card>
 
       {selectedCategory === 'ALL' ? (
         Object.entries(groupedParams || {}).map(([category, params]) => {
           const config = getCategoryConfig(category)
           const Icon = config.icon
           return (
-            <Card key={category} className="border-stone-200 hover:shadow-lg transition-shadow duration-200">
-              <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                <div className={cn('p-2 rounded-lg border', config.bgColor)}>
-                  <Icon className={cn('h-5 w-5', config.color)} />
+            <Card key={category} padding="sm" className="border-stone-200">
+              <h3 className="font-semibold text-sm text-stone-900 mb-2 flex items-center gap-1.5">
+                <div className={cn('p-1 rounded border', config.bgColor)}>
+                  <Icon className={cn('h-3.5 w-3.5', config.color)} />
                 </div>
                 {config.label}
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-1.5">
                 {params.map((param) => (
                   <ParameterRow
                     key={param.parameterId}
@@ -247,8 +241,8 @@ export function SystemParameters() {
           )
         })
       ) : (
-        <Card className="border-stone-200 hover:shadow-lg transition-shadow duration-200">
-          <div className="space-y-4">
+        <Card padding="sm" className="border-stone-200">
+          <div className="space-y-1.5">
             {filteredParams?.map((param) => (
               <ParameterRow
                 key={param.parameterId}
@@ -269,12 +263,10 @@ export function SystemParameters() {
       )}
 
       {(!filteredParams || filteredParams.length === 0) && (
-        <Card className="p-12 text-center border-stone-200">
-          <div className="hidden">
-            <Settings className="h-8 w-8 text-stone-400" />
-          </div>
-          <h3 className="text-lg font-medium text-stone-900">No parameters found</h3>
-          <p className="text-stone-500 mt-1">
+        <Card className="py-8 text-center border-stone-200">
+          <Settings className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="text-sm font-medium text-stone-900">No parameters found</h3>
+          <p className="text-xs text-stone-500 mt-1">
             {searchQuery ? 'Try adjusting your search' : 'No parameters available'}
           </p>
         </Card>
@@ -299,37 +291,35 @@ interface ParameterRowProps {
 function ParameterRow({
   param,
   isEditing,
-  editValue,
+  editValue: _editValue,
   onEdit,
   onSave,
   onCancel,
-  onValueChange,
+  onValueChange: _onValueChange,
   renderValueInput,
   renderValue,
   isSaving,
 }: ParameterRowProps) {
   return (
-    <div className="flex items-start justify-between gap-4 p-4 bg-gradient-to-r from-stone-50 to-white rounded-xl border border-stone-200 hover:shadow-md hover:scale-[1.01] transition-all duration-200">
+    <div className="flex items-start justify-between gap-2 p-2 bg-stone-50 rounded-md border border-stone-200">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="font-medium text-stone-900">{param.label}</h4>
-          <span className="text-xs text-stone-400 font-mono bg-stone-100 px-2 py-0.5 rounded">{param.key}</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h4 className="text-sm font-medium text-stone-900">{param.label}</h4>
+          <span className="text-[10px] text-stone-400 font-mono bg-stone-100 px-1.5 py-0 rounded">{param.key}</span>
         </div>
-        <p className="text-sm text-stone-500 mt-0.5">{param.description}</p>
+        <p className="text-[11px] text-stone-500">{param.description}</p>
         {param.lastModifiedAt && (
-          <div className="flex items-center gap-2 mt-2 text-xs text-stone-400">
-            <Clock className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-stone-400">
+            <Clock className="h-3 w-3" />
             <span>
-              {param.lastModifiedBy
-                ? `Modified by ${param.lastModifiedBy} on `
-                : 'Modified on '}
+              {param.lastModifiedBy ? `By ${param.lastModifiedBy} · ` : ''}
               {new Date(param.lastModifiedAt).toLocaleDateString()}
             </span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         {isEditing ? (
           <>
             {renderValueInput(param)}
@@ -337,20 +327,20 @@ function ParameterRow({
               size="sm"
               onClick={onSave}
               disabled={isSaving}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-1.5"
             >
-              {isSaving ? <Spinner size="sm" /> : <Check className="h-4 w-4" />}
+              {isSaving ? <Spinner size="sm" /> : <Check className="h-3.5 w-3.5" />}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel} className="text-stone-600 hover:text-stone-800 hover:bg-stone-100">
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={onCancel} className="text-stone-600 hover:bg-stone-100 px-1.5">
+              <X className="h-3.5 w-3.5" />
             </Button>
           </>
         ) : (
           <>
             {renderValue(param)}
             {param.isEditable && (
-              <Button variant="ghost" size="sm" onClick={onEdit} className="text-stone-600 hover:text-amber-600 hover:bg-amber-50">
-                <Edit className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={onEdit} className="text-stone-600 hover:text-amber-600 hover:bg-amber-50 px-1.5">
+                <Edit className="h-3.5 w-3.5" />
               </Button>
             )}
           </>

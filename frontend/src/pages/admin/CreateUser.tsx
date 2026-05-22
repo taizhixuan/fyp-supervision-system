@@ -123,37 +123,37 @@ export function CreateUser() {
 
   return (
     <div className="space-y-3 lg:space-y-4 lg:max-w-5xl lg:mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to={ROUTES.ADMIN.USERS}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Users
-          </Button>
-        </Link>
+      {/* Back */}
+      <Link to={ROUTES.ADMIN.USERS} className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-amber-700">
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Users
+      </Link>
+
+      {/* Compact hero */}
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+            <UserPlus className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Create User Account</h1>
+            <p className="text-stone-300 text-xs">Create a new user account for the FYP system</p>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-          <UserPlus className="h-7 w-7 text-primary-600" />
-          Create User Account
-        </h1>
-        <p className="text-neutral-600 mt-1">
-          Create a new user account for the FYP system
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
+      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-3 lg:items-start space-y-3 lg:space-y-0">
         {/* Left column: form fields */}
-        <div className="lg:col-span-7 space-y-3 lg:space-y-4">
+        <div className="lg:col-span-7 space-y-3">
         {/* Basic Information */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <User className="h-5 w-5 text-primary-600" />
+        <Card padding="sm">
+          <h3 className="font-semibold text-sm text-neutral-900 mb-2 flex items-center gap-1.5">
+            <User className="h-4 w-4 text-amber-600" />
             Basic Information
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
@@ -240,20 +240,20 @@ export function CreateUser() {
         </Card>
 
         {/* Role Selection */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary-600" />
+        <Card padding="sm">
+          <h3 className="font-semibold text-sm text-neutral-900 mb-2 flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-amber-600" />
             User Role *
           </h3>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {roleOptions.map((option) => (
               <label
                 key={option.value}
                 className={cn(
-                  'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                  'flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors',
                   selectedRole === option.value
-                    ? 'border-primary-500 bg-primary-50'
+                    ? 'border-amber-500 bg-amber-50'
                     : 'border-neutral-200 hover:bg-neutral-50'
                 )}
               >
@@ -264,8 +264,8 @@ export function CreateUser() {
                   className="mt-0.5"
                 />
                 <div>
-                  <span className="font-medium text-neutral-900">{option.label}</span>
-                  <p className="text-sm text-neutral-500 mt-0.5">{option.description}</p>
+                  <span className="text-sm font-medium text-neutral-900">{option.label}</span>
+                  <p className="text-[11px] text-neutral-500">{option.description}</p>
                 </div>
               </label>
             ))}
@@ -273,26 +273,26 @@ export function CreateUser() {
         </Card>
 
         {/* Account Setup */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <Key className="h-5 w-5 text-primary-600" />
+        <Card padding="sm">
+          <h3 className="font-semibold text-sm text-neutral-900 mb-2 flex items-center gap-1.5">
+            <Key className="h-4 w-4 text-amber-600" />
             Account Setup
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Send Invite Email Toggle */}
-            <label className="flex items-start gap-3 p-4 rounded-lg border border-neutral-200 cursor-pointer hover:bg-neutral-50">
+            <label className="flex items-start gap-2 p-2 rounded-md border border-neutral-200 cursor-pointer hover:bg-neutral-50">
               <input
                 type="checkbox"
                 {...register('sendInviteEmail')}
                 className="mt-0.5"
               />
               <div>
-                <span className="font-medium text-neutral-900 flex items-center gap-2">
-                  <Send className="h-4 w-4" />
+                <span className="text-sm font-medium text-neutral-900 flex items-center gap-1.5">
+                  <Send className="h-3.5 w-3.5" />
                   Send Invitation Email
                 </span>
-                <p className="text-sm text-neutral-500 mt-0.5">
+                <p className="text-[11px] text-neutral-500">
                   User will receive an email with a link to set their password
                 </p>
               </div>
@@ -332,18 +332,18 @@ export function CreateUser() {
 
         {/* Right column: sticky live summary + actions */}
         <aside className="lg:col-span-5">
-          <div className="lg:sticky lg:top-6 space-y-4">
+          <div className="lg:sticky lg:top-6 space-y-3">
             {/* Summary preview */}
-            <Card className="p-5 bg-neutral-50">
-              <h4 className="font-semibold text-neutral-900 mb-1 flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-primary-600" />
+            <Card padding="sm" className="bg-neutral-50">
+              <h4 className="font-semibold text-sm text-neutral-900 mb-0.5 flex items-center gap-1.5">
+                <UserPlus className="h-4 w-4 text-amber-600" />
                 Account Summary
               </h4>
-              <p className="text-xs text-neutral-500 mb-4">
+              <p className="text-[11px] text-neutral-500 mb-2">
                 Updates as you fill in the form on the left.
               </p>
 
-              <dl className="space-y-2.5 text-sm">
+              <dl className="space-y-1.5 text-xs">
                 <div className="flex justify-between gap-3">
                   <dt className="text-neutral-500 flex-shrink-0">Name</dt>
                   <dd className="font-medium text-neutral-900 text-right truncate">
@@ -376,23 +376,23 @@ export function CreateUser() {
                 )}
               </dl>
 
-              <div className="mt-4 pt-4 border-t border-neutral-200">
-                <p className="text-xs uppercase tracking-wide text-neutral-500 mb-1.5">Role</p>
-                <p className="font-semibold text-neutral-900">
+              <div className="mt-2 pt-2 border-t border-neutral-200">
+                <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-0.5">Role</p>
+                <p className="text-sm font-semibold text-neutral-900">
                   {roleOptions.find((r) => r.value === selectedRole)?.label}
                 </p>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <p className="text-[11px] text-neutral-500">
                   {roleOptions.find((r) => r.value === selectedRole)?.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-neutral-200 flex items-start gap-2">
+              <div className="mt-2 pt-2 border-t border-neutral-200 flex items-start gap-1.5">
                 {sendInviteEmail ? (
-                  <Send className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                  <Send className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                 ) : (
-                  <Key className="h-4 w-4 text-primary-600 mt-0.5 flex-shrink-0" />
+                  <Key className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                 )}
-                <div className="text-xs text-neutral-600">
+                <div className="text-[11px] text-neutral-600">
                   {sendInviteEmail
                     ? 'An invitation email will be sent so the user can set their own password.'
                     : 'You\'ll set an initial password — share it with the user securely.'}
@@ -401,17 +401,17 @@ export function CreateUser() {
             </Card>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-2">
               <Link to={ROUTES.ADMIN.USERS}>
-                <Button variant="secondary" type="button">
+                <Button variant="secondary" type="button" size="sm">
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={createMutation.isPending}>
+              <Button type="submit" size="sm" disabled={createMutation.isPending}>
                 {createMutation.isPending ? (
-                  <Spinner size="sm" className="mr-2" />
+                  <Spinner size="sm" className="mr-1" />
                 ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
                 )}
                 Create User
               </Button>
