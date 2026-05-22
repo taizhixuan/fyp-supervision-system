@@ -11,64 +11,10 @@ import {
   Edit,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
-import { useCurrentProposal, useProposalFeedback } from '@/lib/hooks/useStudent'
+import { useCurrentProposal, useProposalFeedback, useProjectRegistration } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { ProposalStatus as ProposalStatusType, ProposalFeedback } from '@/types'
-
-// Sample data
-const SAMPLE_PROPOSAL = {
-  proposalId: '1',
-  studentId: '1',
-  supervisorId: '1',
-  title: 'AI-Powered Student Supervision System',
-  status: 'REVISION_REQUIRED' as ProposalStatusType,
-  version: 2,
-  submittedAt: '2025-01-15T14:30:00Z',
-  createdAt: '2025-01-10T09:00:00Z',
-  updatedAt: '2025-01-18T10:00:00Z',
-}
-
-const SAMPLE_FEEDBACK: ProposalFeedback[] = [
-  {
-    feedbackId: '2',
-    proposalId: '1',
-    reviewerType: 'SUPERVISOR',
-    reviewerId: '1',
-    reviewerName: 'Dr. Sarah Lee Wei Lin',
-    status: 'REVISION_REQUIRED',
-    comments: 'Good progress on the proposal. The problem statement is well-defined, but the methodology section needs more detail. Please specify the exact technologies and frameworks you plan to use.',
-    detailedFeedback: [
-      { section: 'Problem Statement', status: 'OK' as const, comment: 'Clear and well-articulated' },
-      { section: 'Objectives', status: 'OK' as const, comment: 'Measurable and achievable' },
-      { section: 'Methodology', status: 'NEEDS_IMPROVEMENT' as const, comment: 'Needs more technical detail', suggestions: ['Specify frontend/backend technologies', 'Add system architecture diagram', 'Include testing approach'] },
-      { section: 'Timeline', status: 'NEEDS_IMPROVEMENT' as const, comment: 'Add specific milestones with dates' },
-    ],
-    createdAt: '2025-01-17T10:00:00Z',
-  },
-  {
-    feedbackId: '1',
-    proposalId: '1',
-    reviewerType: 'COMMITTEE',
-    reviewerId: 'committee',
-    reviewerName: 'FYP Committee',
-    status: 'REVISION_REQUIRED',
-    comments: 'The initial proposal shows promise but requires significant revisions. Please address the scope and add proper academic references.',
-    detailedFeedback: [
-      { section: 'Scope', status: 'NEEDS_IMPROVEMENT' as const, comment: 'Too broad, please narrow down' },
-      { section: 'References', status: 'MISSING' as const, comment: 'No references provided' },
-    ],
-    createdAt: '2025-01-12T16:00:00Z',
-  },
-]
-
-const SAMPLE_TIMELINE = [
-  { eventId: '5', type: 'FEEDBACK' as const, title: 'Supervisor Feedback Received', description: 'Revision required for methodology section', timestamp: '2025-01-17T10:00:00Z' },
-  { eventId: '4', type: 'SUBMISSION' as const, title: 'Version 2 Submitted', description: 'Revised proposal submitted for review', timestamp: '2025-01-15T14:30:00Z' },
-  { eventId: '3', type: 'FEEDBACK' as const, title: 'Committee Feedback Received', description: 'Initial review completed, revisions needed', timestamp: '2025-01-12T16:00:00Z' },
-  { eventId: '2', type: 'STATUS_CHANGE' as const, title: 'Under Review', description: 'Proposal submitted for committee review', timestamp: '2025-01-10T09:30:00Z' },
-  { eventId: '1', type: 'SUBMISSION' as const, title: 'Initial Submission', description: 'First version of proposal submitted', timestamp: '2025-01-10T09:00:00Z' },
-]
+import type { ProposalStatus as ProposalStatusType } from '@/types'
 
 const statusConfig: Record<ProposalStatusType, { label: string; color: string; icon: typeof Clock; description: string }> = {
   DRAFT: { label: 'Draft', color: 'bg-neutral-100 text-neutral-700', icon: FileText, description: 'Your proposal is in draft mode. Complete all sections and submit for review.' },
@@ -88,14 +34,10 @@ const sectionStatusColors = {
 export function ProposalStatus() {
   const { data: proposal, isLoading: loadingProposal } = useCurrentProposal()
   const { data: feedbackData, isLoading: loadingFeedback } = useProposalFeedback()
+  const { data: registration } = useProjectRegistration()
 
-  // Use sample data
-  const currentProposal = proposal || SAMPLE_PROPOSAL
-  const feedback = feedbackData?.feedback || SAMPLE_FEEDBACK
-  const timeline = SAMPLE_TIMELINE
-
-  const status = statusConfig[currentProposal.status]
-  const StatusIcon = status.icon
+  const feedback = feedbackData?.feedback ?? []
+  const timeline = registration?.timeline ?? []
 
   if (loadingProposal || loadingFeedback) {
     return (
@@ -104,6 +46,34 @@ export function ProposalStatus() {
       </div>
     )
   }
+
+  if (!proposal) {
+    return (
+      <div className="space-y-6">
+        <Link
+          to={ROUTES.STUDENT.PROPOSAL}
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Proposal
+        </Link>
+        <Card className="text-center py-12">
+          <FileText className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+          <h2 className="text-lg font-medium text-neutral-900 mb-2">No proposal yet</h2>
+          <p className="text-neutral-500 mb-4">
+            Once you start your proposal, its review status and timeline will appear here.
+          </p>
+          <Link to={ROUTES.STUDENT.PROPOSAL}>
+            <Button variant="primary">Go to Proposal Workspace</Button>
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
+  const currentProposal = proposal
+  const status = statusConfig[currentProposal.status]
+  const StatusIcon = status.icon
 
   return (
     <div className="space-y-6">
@@ -237,12 +207,17 @@ export function ProposalStatus() {
         <div>
           <h3 className="text-lg font-semibold text-neutral-900 mb-4">Activity Timeline</h3>
           <Card>
+            {timeline.length === 0 ? (
+              <p className="text-sm text-neutral-500 text-center py-6">
+                No activity recorded yet.
+              </p>
+            ) : (
             <div className="relative">
               {/* Timeline Line */}
               <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-neutral-200" />
 
               <div className="space-y-4">
-                {timeline.map((event, index) => (
+                {timeline.map((event) => (
                   <div key={event.eventId} className="relative flex gap-4 pl-8">
                     {/* Dot */}
                     <div
@@ -280,6 +255,7 @@ export function ProposalStatus() {
                 ))}
               </div>
             </div>
+            )}
           </Card>
         </div>
       </div>
