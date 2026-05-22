@@ -20,7 +20,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorAnnouncements, useDeleteAnnouncement } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { AnnouncementPriority, AnnouncementVisibility } from '@/types'
+import type { AnnouncementPriority } from '@/types'
 
 const priorityConfig: Record<AnnouncementPriority, { label: string; color: string; bgColor: string; borderColor: string }> = {
   LOW: { label: 'Low', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400' },
