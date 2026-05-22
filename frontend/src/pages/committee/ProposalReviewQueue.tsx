@@ -68,18 +68,18 @@ export function ProposalReviewQueue() {
   return (
     <div className="space-y-3 lg:space-y-4">
       {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+        <div className="pointer-events-none hidden" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <FileText className="h-7 w-7 text-amber-400" />
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <FileText className="h-5 w-5 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Proposal Review Queue</h1>
-              <p className="text-stone-300 mt-1">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Proposal Review Queue</h1>
+              <p className="text-stone-300 text-xs">
                 Review and approve student project proposals
               </p>
             </div>
@@ -162,7 +162,7 @@ export function ProposalReviewQueue() {
       </div>
 
       {/* Proposals List */}
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
         {filteredProposals && filteredProposals.length > 0 ? (
           filteredProposals.map((proposal) => {
             const status = statusConfig[proposal.status]
@@ -254,11 +254,11 @@ export function ProposalReviewQueue() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Card className="text-center py-8">
+            <div className="hidden">
               <FileText className="h-8 w-8 text-stone-400" />
             </div>
-            <h3 className="text-lg font-semibold text-stone-800">No proposals found</h3>
+            <h3 className="font-medium text-stone-800">No proposals found</h3>
             <p className="text-stone-500 mt-1">
               {searchQuery || statusFilter !== 'ALL' || cycleFilter !== 'ALL'
                 ? 'Try adjusting your filters'
