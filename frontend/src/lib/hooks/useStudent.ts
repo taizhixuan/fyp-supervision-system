@@ -1187,3 +1187,22 @@ export function useResourceDetail(resourceId: string) {
     enabled: !!resourceId,
   })
 }
+
+export function useDownloadResource() {
+  return useMutation({
+    mutationFn: async ({ resourceId, fileName }: { resourceId: string | number; fileName?: string | null }) => {
+      const response = await apiClient.get(`/resources/${resourceId}/download`, {
+        responseType: 'blob',
+      })
+      const blob = response.data as Blob
+      const url = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = fileName || 'download'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    },
+  })
+}
