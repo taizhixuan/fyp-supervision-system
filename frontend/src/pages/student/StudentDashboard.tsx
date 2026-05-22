@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
@@ -17,6 +18,8 @@ import {
   Video,
   MapPin,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   GraduationCap,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
@@ -206,6 +209,27 @@ export function StudentDashboard() {
   // Use sample data if no API data available
   const dashboard = data || SAMPLE_DASHBOARD
 
+  // Registration Progress card is collapsible — saves ~350px of scroll when hidden.
+  // Defaults to expanded so first-time users see it; choice persists per device.
+  const REG_PROGRESS_KEY = 'student-dash-reg-progress-open'
+  const [showRegProgress, setShowRegProgress] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      const saved = window.localStorage.getItem(REG_PROGRESS_KEY)
+      return saved === null ? true : saved === 'true'
+    } catch {
+      return true
+    }
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(REG_PROGRESS_KEY, String(showRegProgress))
+    } catch {
+      // ignore
+    }
+  }, [showRegProgress])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -286,20 +310,20 @@ export function StudentDashboard() {
   return (
     <div className="space-y-4 lg:space-y-5">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-              <GraduationCap className="h-7 w-7 text-white" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">
+              <h1 className="text-xl sm:text-2xl font-bold leading-tight">
                 Welcome back, {profile.fullName.split(' ')[0]}!
               </h1>
-              <p className="text-primary-100 mt-0.5">
+              <p className="text-primary-100 text-sm mt-0.5">
                 {registrationStatus.cycle} • {registrationStatus.academicYear}
                 {trimester && trimester.hasStarted && !trimester.hasEnded && (
                   <>
@@ -349,6 +373,27 @@ export function StudentDashboard() {
         </div>
       </div>
 
+      {/* Cycle-ended banner — backend signals when the FYP cycle has been
+          COMPLETED/ARCHIVED so write actions across the app are disabled.
+          Surfaced above the status grid so it stays full-width when present. */}
+      {dashboard.registrationStatus.cycleActive === false && (
+        <Card className="p-4 border-l-4 border-l-warning-500 bg-warning-50">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-warning-900">Your FYP cycle has ended</p>
+              <p className="text-sm text-warning-800 mt-0.5">
+                The FYP cycle you were enrolled in has been{' '}
+                {dashboard.registrationStatus.cycleStatus === 'ARCHIVED' ? 'archived' : 'completed'}.
+                You now have read-only access — viewing your records is fine, but new submissions are disabled.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* FYP phase + pairing — side-by-side status row on lg+ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
       {/* FYP phase progression strip — FYP1 → FYP2 → Complete. Reflects whether
           admin has marked FYP1 passed and whether the cycle has ended. */}
       <Card>
@@ -411,24 +456,6 @@ export function StudentDashboard() {
         )}
       </Card>
 
-      {/* Cycle-ended banner — backend signals when the FYP cycle has been
-          COMPLETED/ARCHIVED so write actions across the app are disabled. */}
-      {dashboard.registrationStatus.cycleActive === false && (
-        <Card className="p-4 border-l-4 border-l-warning-500 bg-warning-50">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-warning-900">Your FYP cycle has ended</p>
-              <p className="text-sm text-warning-800 mt-0.5">
-                The FYP cycle you were enrolled in has been{' '}
-                {dashboard.registrationStatus.cycleStatus === 'ARCHIVED' ? 'archived' : 'completed'}.
-                You now have read-only access — viewing your records is fine, but new submissions are disabled.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
       {/* Pairing banner — different content depending on whether the student has a project yet */}
       {isPaired ? (
         <Card className="p-5 border-l-4 border-l-success-500 bg-gradient-to-r from-success-50 to-white">
@@ -487,6 +514,7 @@ export function StudentDashboard() {
           </div>
         </Card>
       )}
+      </div>
 
       {/* Final-report grades — shown only when admin has finalised at least one. */}
       <FinalGradesCard />
@@ -579,21 +607,37 @@ export function StudentDashboard() {
           or once the FYP cycle has ended (no more progress to make). */}
       {backendStatus !== 'REGISTERED' && reg.cycleActive !== false && (
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-500/20">
+        <div className={cn('flex items-center justify-between gap-3', showRegProgress ? 'mb-5' : 'mb-0')}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-500/20 flex-shrink-0">
               <TrendingUp className="h-5 w-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-neutral-900">Registration Progress</h2>
-              <p className="text-sm text-neutral-500">Track your FYP journey</p>
+              <p className="text-sm text-neutral-500 truncate">
+                {showRegProgress
+                  ? 'Track your FYP journey'
+                  : `Current: ${registrationStatus.nextSteps.find((s) => s.status === 'CURRENT')?.title ?? '—'}`}
+              </p>
             </div>
           </div>
-          <Badge className={cn(statusColors[registrationStatus.status], 'px-3 py-1')}>
-            {registrationStatus.status.replace(/_/g, ' ')}
-          </Badge>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge className={cn(statusColors[registrationStatus.status], 'px-3 py-1')}>
+              {registrationStatus.status.replace(/_/g, ' ')}
+            </Badge>
+            <button
+              type="button"
+              onClick={() => setShowRegProgress((v) => !v)}
+              aria-expanded={showRegProgress}
+              aria-label={showRegProgress ? 'Hide details' : 'Show details'}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
+            >
+              {showRegProgress ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
+        {showRegProgress && (<>
         {/* Progress Steps - Enhanced with Icons */}
         <div className="relative mb-6">
           {/* Progress Bar Background */}
@@ -760,6 +804,7 @@ export function StudentDashboard() {
             </div>
           </div>
         )}
+        </>)}
       </Card>
       )}
 
