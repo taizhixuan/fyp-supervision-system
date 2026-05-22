@@ -75,19 +75,22 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden max-w-lg w-full">
-        {/* Header - Compact */}
-        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-6 py-5 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-accent-500 rounded-xl mb-3 shadow-lg">
-            <UserPlus className="h-6 w-6 text-white" />
+    <AuthLayout maxWidth="4xl">
+      <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden lg:grid lg:grid-cols-5">
+        {/* Brand panel — top on mobile, left rail on desktop */}
+        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-6 py-5 text-center lg:col-span-2 lg:px-8 lg:py-10 lg:text-left lg:flex lg:flex-col lg:justify-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-accent-500 rounded-xl mb-3 shadow-lg lg:w-16 lg:h-16 lg:mb-5">
+            <UserPlus className="h-6 w-6 text-white lg:h-8 lg:w-8" />
           </div>
-          <h1 className="text-xl font-bold text-white">Create Your Account</h1>
-          <p className="text-stone-400 text-sm">Join the FYP Supervision System</p>
+          <h1 className="text-xl font-bold text-white lg:text-3xl lg:mb-3">Create Your Account</h1>
+          <p className="text-stone-400 text-sm lg:text-base">Join the FYP Supervision System</p>
+          <p className="hidden lg:block mt-6 text-xs text-stone-500 leading-relaxed">
+            FYP Supervision System &middot; MMU Faculty of Computing &amp; Informatics
+          </p>
         </div>
 
-        {/* Form - Compact */}
-        <div className="px-6 py-5">
+        {/* Form */}
+        <div className="px-6 py-5 lg:col-span-3 lg:px-8 lg:py-6">
           {error && (
             <AlertBanner
               variant="error"

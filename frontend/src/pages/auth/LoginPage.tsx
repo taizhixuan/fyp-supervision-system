@@ -52,19 +52,22 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout>
-      <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-8 py-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-500 rounded-2xl mb-4 shadow-lg">
-            <LogIn className="h-8 w-8 text-white" />
+    <AuthLayout maxWidth="4xl">
+      <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden lg:grid lg:grid-cols-5">
+        {/* Brand panel — top on mobile, left rail on desktop */}
+        <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-6 py-6 text-center lg:col-span-2 lg:px-8 lg:py-10 lg:text-left lg:flex lg:flex-col lg:justify-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-accent-500 rounded-2xl mb-3 shadow-lg lg:w-16 lg:h-16 lg:mb-5">
+            <LogIn className="h-7 w-7 text-white lg:h-8 lg:w-8" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-stone-400">Log in to continue to your dashboard</p>
+          <h1 className="text-xl font-bold text-white mb-1 lg:text-3xl lg:mb-3">Welcome Back</h1>
+          <p className="text-sm text-stone-400 lg:text-base">Log in to continue to your dashboard</p>
+          <p className="hidden lg:block mt-6 text-xs text-stone-500 leading-relaxed">
+            FYP Supervision System &middot; MMU Faculty of Computing &amp; Informatics
+          </p>
         </div>
 
         {/* Form */}
-        <div className="px-8 py-8">
+        <div className="px-6 py-6 lg:col-span-3 lg:px-8 lg:py-8">
           {error && (
             <AlertBanner
               variant="error"
@@ -75,70 +78,68 @@ export function LoginPage() {
             />
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 MMU ID or Email <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-stone-400" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-stone-400" />
                 </div>
                 <input
                   type="text"
                   placeholder="e.g., 1201234567 or john@mmu.edu.my"
-                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   {...register('identifier')}
                 />
               </div>
               {errors.identifier && (
-                <p className="mt-1.5 text-sm text-red-500">{errors.identifier.message}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.identifier.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">
                 Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-stone-400" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-stone-400" />
                 </div>
                 <input
                   type="password"
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   {...register('password')}
                 />
               </div>
               {errors.password && (
-                <p className="mt-1.5 text-sm text-red-500">{errors.password.message}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
               )}
-              <div className="mt-2 text-right">
-                <Link
-                  to={ROUTES.FORGOT_PASSWORD}
-                  className="text-sm text-primary-700 hover:text-primary-900 font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </div>
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                className="h-4 w-4 rounded border-stone-300 text-primary-700 focus:ring-primary-500"
-                {...register('rememberMe')}
-              />
-              <label htmlFor="rememberMe" className="ml-2.5 text-sm text-stone-600">
-                Remember me
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  className="h-4 w-4 rounded border-stone-300 text-primary-700 focus:ring-primary-500"
+                  {...register('rememberMe')}
+                />
+                <span className="ml-2 text-sm text-stone-600">Remember me</span>
               </label>
+              <Link
+                to={ROUTES.FORGOT_PASSWORD}
+                className="text-sm text-primary-700 hover:text-primary-900 font-medium"
+              >
+                Forgot password?
+              </Link>
             </div>
 
             <Button
               type="submit"
-              className="w-full bg-primary-900 hover:bg-primary-800 text-white py-3 rounded-xl font-medium shadow-lg shadow-primary-900/25 hover:shadow-primary-900/40 transition-all"
+              className="w-full bg-primary-900 hover:bg-primary-800 text-white py-2.5 rounded-lg font-medium shadow-lg shadow-primary-900/25 hover:shadow-primary-900/40 transition-all"
               isLoading={isSubmitting}
             >
               Log In
@@ -146,12 +147,12 @@ export function LoginPage() {
           </form>
 
           {import.meta.env.DEV && (
-            <div className="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-xl">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="mt-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
                 <Info className="h-4 w-4 text-primary-700" />
                 <span className="text-sm font-semibold text-primary-900">Demo Accounts</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {DEMO_ACCOUNTS.map((account) => (
                   <button
                     key={account.role}
@@ -160,20 +161,20 @@ export function LoginPage() {
                       setValue('identifier', account.identifier)
                       setValue('password', account.password)
                     }}
-                    className="flex items-center gap-2 p-2 text-left text-sm bg-white rounded-lg border border-primary-100 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                    className="flex items-center gap-2 px-2 py-1.5 text-left text-sm bg-white rounded-md border border-primary-100 hover:border-primary-300 hover:bg-primary-50 transition-colors"
                   >
                     <account.Icon className="h-4 w-4 text-primary-700 flex-shrink-0" />
                     <span className="font-medium text-stone-700 truncate">{account.role}</span>
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-primary-700 text-center">
+              <p className="mt-2 text-xs text-primary-700 text-center">
                 Click to auto-fill credentials. Password: Test@123 (Admin: Admin@123)
               </p>
             </div>
           )}
 
-          <div className="mt-8 pt-6 border-t border-stone-200 text-center">
+          <div className="mt-5 pt-4 border-t border-stone-200 text-center">
             <p className="text-sm text-stone-600">
               Don't have an account?{' '}
               <Link
