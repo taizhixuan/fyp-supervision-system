@@ -1639,6 +1639,7 @@ export function useCreateExportConfig() {
 }
 
 export function useRunExport() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (configId: number) => {
       if (USE_MOCK_DATA) {
@@ -1647,6 +1648,42 @@ export function useRunExport() {
       }
       const { data } = await apiClient.post(`/admin/export-configs/${configId}/run`)
       return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.exportConfigs() })
+    },
+  })
+}
+
+export function useDeleteExportConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (configId: number) => {
+      if (USE_MOCK_DATA) {
+        await new Promise((resolve) => setTimeout(resolve, 400))
+        return
+      }
+      await apiClient.delete(`/admin/export-configs/${configId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.exportConfigs() })
+    },
+  })
+}
+
+export function useUpdateExportConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ configId, data }: { configId: number; data: Partial<CreateExportConfigRequest> }) => {
+      if (USE_MOCK_DATA) {
+        await new Promise((resolve) => setTimeout(resolve, 600))
+        return { configId, ...data }
+      }
+      const { data: responseData } = await apiClient.put(`/admin/export-configs/${configId}`, data)
+      return responseData
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.exportConfigs() })
     },
   })
 }
