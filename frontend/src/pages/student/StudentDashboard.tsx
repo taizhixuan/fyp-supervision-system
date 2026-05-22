@@ -914,24 +914,29 @@ export function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
       {/* Upcoming Meetings */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Calendar className="h-5 w-5 text-primary-600" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-neutral-900">Upcoming Meetings</h2>
               <p className="text-sm text-neutral-500">{upcomingMeetings.length} scheduled</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Link to={ROUTES.STUDENT.MEETING_NEW}>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" className="whitespace-nowrap">
                 Request Meeting
               </Button>
             </Link>
             <Link to={ROUTES.STUDENT.MEETINGS}>
-              <Button variant="ghost" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                rightIcon={<ChevronRight className="h-4 w-4" />}
+                className="whitespace-nowrap"
+              >
                 View All
               </Button>
             </Link>
@@ -1007,21 +1012,26 @@ export function StudentDashboard() {
 
       {/* Recent Documents */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <FolderOpen className="h-5 w-5 text-info-600" />
             </div>
             <h2 className="text-lg font-semibold text-neutral-900">Recent Documents</h2>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" className="whitespace-nowrap">
                 Upload
               </Button>
             </Link>
             <Link to={ROUTES.STUDENT.DOCUMENTS}>
-              <Button variant="ghost" size="sm" rightIcon={<ChevronRight className="h-4 w-4" />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                rightIcon={<ChevronRight className="h-4 w-4" />}
+                className="whitespace-nowrap"
+              >
                 View All
               </Button>
             </Link>
