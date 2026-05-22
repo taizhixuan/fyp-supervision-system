@@ -88,210 +88,174 @@ export function DocumentsReview() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+      {/* Compact Header — stats inline */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <FolderOpen className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <FolderOpen className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight flex items-center gap-1.5">
                 Documents Review
-                <Sparkles className="h-5 w-5 text-amber-400" />
+                <Sparkles className="h-4 w-4 text-amber-400" />
               </h1>
-              <p className="text-stone-300 mt-1">
-                View and provide feedback on documents uploaded by your supervisees
-              </p>
+              <p className="text-stone-300 text-xs">View and provide feedback on supervisee documents</p>
             </div>
           </div>
-          {data && data.documents.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 backdrop-blur-sm rounded-xl ring-1 ring-amber-500/30">
-              <FileText className="h-5 w-5 text-amber-400" />
-              <span className="text-sm font-semibold text-amber-200">
-                {data.total} document{data.total !== 1 ? 's' : ''} total
-              </span>
+        </div>
+
+        {data && data.documents.length > 0 && (
+          <div className="relative mt-3 grid grid-cols-4 gap-1.5 text-center">
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none">{data.total}</div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Total</p>
             </div>
-          )}
-        </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-amber-300">
+                {data.documents.filter((d) => d.type === 'PROPOSAL').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Proposals</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-sky-300">
+                {data.documents.filter((d) => d.type === 'REPORT').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Reports</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-emerald-300">
+                {data.documents.filter((d) => d.hasFeedback).length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Feedback</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl">
-        {/* Type Filter */}
-        <div className="flex items-center gap-1 p-1 bg-white rounded-lg shadow-sm overflow-x-auto">
-          {filterOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setTypeFilter(option.value)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap',
-                typeFilter === option.value
-                  ? 'bg-stone-800 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+      {/* Filters — compact */}
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex items-center gap-0.5 p-0.5 bg-stone-100 rounded-md overflow-x-auto">
+            {filterOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setTypeFilter(option.value)}
+                className={cn(
+                  'px-2.5 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap',
+                  typeFilter === option.value
+                    ? 'bg-stone-800 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-white'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={studentFilter}
+            onChange={(e) => setStudentFilter(e.target.value)}
+            className="px-2.5 py-1.5 border border-stone-200 rounded-md text-xs font-medium text-stone-700 focus:ring-2 focus:ring-amber-500 bg-white whitespace-nowrap"
+          >
+            <option value="all">All Students</option>
+            {students.map((student) => (
+              <option key={student.id} value={student.id}>{student.name}</option>
+            ))}
+          </select>
+
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 border-stone-200 focus:ring-amber-500"
+            />
+          </div>
         </div>
+      </Card>
 
-        {/* Student Filter */}
-        <select
-          value={studentFilter}
-          onChange={(e) => setStudentFilter(e.target.value)}
-          className="px-4 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 focus:ring-2 focus:ring-amber-500 bg-white"
-        >
-          <option value="all">All Students</option>
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>
-              {student.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Search documents..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 border-stone-200 focus:ring-amber-500"
-          />
-        </div>
-      </div>
-
-      {/* Documents List */}
-      <div className="flex flex-col gap-4">
-        {filteredDocuments && filteredDocuments.length > 0 ? (
-          filteredDocuments.map((doc) => {
+      {/* Documents List — 2-col grid */}
+      {filteredDocuments && filteredDocuments.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {filteredDocuments.map((doc) => {
             const type = styleFor(doc.type)
             return (
               <Link
                 key={doc.documentId}
                 to={ROUTES.SUPERVISOR.DOCUMENT_DETAIL.replace(':id', String(doc.documentId))}
               >
-                <Card className={cn(
-                  'group p-5 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4',
+                <Card padding="sm" className={cn(
+                  'group hover:shadow-md transition-all cursor-pointer border-l-4',
                   type.borderColor,
-                  'hover:scale-[1.01]'
                 )}>
-                  <div className="flex items-start gap-4">
-                    {/* File Icon */}
-                    <div className={cn(
-                      'w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform',
-                      type.bgColor
-                    )}>
-                      <FileText className={cn('h-7 w-7', type.color)} />
+                  <div className="flex items-start gap-2.5">
+                    <div className={cn('w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 shadow-sm', type.bgColor)}>
+                      <FileText className={cn('h-5 w-5', type.color)} />
                     </div>
 
-                    {/* Document Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">{doc.title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <GraduationCap className="h-4 w-4 text-stone-400" />
-                            <span className="text-sm text-stone-500">{doc.studentName}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-sm text-stone-800 group-hover:text-amber-700 leading-tight truncate">{doc.title}</h3>
+                          <div className="flex items-center gap-1 text-[11px] text-stone-500 truncate">
+                            <GraduationCap className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{doc.studentName}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'px-3 py-1.5 rounded-xl text-xs font-semibold',
-                            type.bgColor,
-                            type.color
-                          )}>
-                            {type.label}
-                          </span>
-                          <ChevronRight className="h-5 w-5 text-stone-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
-                        </div>
+                        <span className={cn(
+                          'px-1.5 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0',
+                          type.bgColor,
+                          type.color
+                        )}>
+                          {type.label}
+                        </span>
                       </div>
 
-                      {/* File Details */}
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                        <span className="px-2 py-1 bg-stone-100 rounded-lg text-stone-600">{doc.fileName}</span>
-                        <span className="px-2 py-1 bg-stone-100 rounded-lg text-stone-600">{formatFileSize(doc.fileSize)}</span>
-                        <span className="px-2 py-1 bg-stone-100 rounded-lg text-stone-600">Version {doc.version}</span>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-stone-500">
+                        <span className="px-1 py-0 bg-stone-100 rounded truncate max-w-[120px]">{doc.fileName}</span>
+                        <span className="px-1 py-0 bg-stone-100 rounded">{formatFileSize(doc.fileSize)}</span>
+                        <span className="px-1 py-0 bg-stone-100 rounded">v{doc.version}</span>
                         {doc.hasFeedback && (
-                          <span className="flex items-center gap-1.5 text-amber-600 px-2 py-1 bg-amber-100 rounded-lg font-medium">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {doc.feedbackCount} feedback
+                          <span className="inline-flex items-center gap-0.5 px-1 py-0 bg-amber-100 text-amber-700 rounded font-medium">
+                            <MessageSquare className="h-3 w-3" />
+                            {doc.feedbackCount}
                           </span>
                         )}
                       </div>
 
-                      {/* Description */}
                       {doc.description && (
-                        <p className="mt-2 text-sm text-stone-600 line-clamp-1">
+                        <p className="mt-1 text-[11px] text-stone-600 line-clamp-1 leading-snug">
                           {doc.description}
                         </p>
                       )}
 
-                      {/* Upload Date */}
-                      <div className="mt-2 flex items-center gap-1 text-xs text-stone-400">
-                        <Clock className="h-3.5 w-3.5" />
-                        Uploaded {new Date(doc.uploadedAt).toLocaleDateString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                      <div className="mt-1 inline-flex items-center gap-0.5 text-[10px] text-stone-400">
+                        <Clock className="h-3 w-3" />
+                        {new Date(doc.uploadedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
                       </div>
                     </div>
+
+                    <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-amber-500 transition-colors flex-shrink-0 mt-0.5" />
                   </div>
                 </Card>
               </Link>
             )
-          })
-        ) : (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto bg-stone-100 rounded-full flex items-center justify-center mb-4">
-              <FolderOpen className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-stone-800">No documents found</h3>
-            <p className="text-stone-500 mt-1">
-              {searchQuery || typeFilter !== 'all' || studentFilter !== 'all'
-                ? 'Try adjusting your filters'
-                : 'No documents uploaded yet'}
-            </p>
-          </Card>
-        )}
-      </div>
-
-      {/* Summary Stats */}
-      {data && data.documents.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="p-4 bg-gradient-to-r from-stone-50 to-stone-100/50 border-b border-stone-200">
-            <h3 className="font-semibold text-stone-800">Documents Summary</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5">
-            <div className="text-center p-3 rounded-xl bg-stone-50">
-              <p className="text-2xl font-bold text-stone-800">{data.total}</p>
-              <p className="text-sm text-stone-500 font-medium">Total Documents</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-amber-50">
-              <p className="text-2xl font-bold text-amber-600">
-                {data.documents.filter((d) => d.type === 'PROPOSAL').length}
-              </p>
-              <p className="text-sm text-amber-700 font-medium">Proposals</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-sky-50">
-              <p className="text-2xl font-bold text-sky-600">
-                {data.documents.filter((d) => d.type === 'REPORT').length}
-              </p>
-              <p className="text-sm text-sky-700 font-medium">Reports</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-emerald-50">
-              <p className="text-2xl font-bold text-emerald-600">
-                {data.documents.filter((d) => d.hasFeedback).length}
-              </p>
-              <p className="text-sm text-emerald-700 font-medium">With Feedback</p>
-            </div>
-          </div>
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-8">
+          <FolderOpen className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="font-medium text-stone-800 mb-1">No documents found</h3>
+          <p className="text-sm text-stone-500">
+            {searchQuery || typeFilter !== 'all' || studentFilter !== 'all'
+              ? 'Try adjusting your filters'
+              : 'No documents uploaded yet'}
+          </p>
         </Card>
       )}
     </div>

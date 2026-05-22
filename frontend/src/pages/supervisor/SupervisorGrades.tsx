@@ -68,58 +68,60 @@ export function SupervisorGrades() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="relative flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/15 rounded-xl flex items-center justify-center ring-1 ring-white/20">
-            <Award className="h-7 w-7 text-white" />
+      {/* Compact Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+        <div className="relative flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
+            <Award className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Final-Report Grading</h1>
-            <p className="text-amber-100 mt-0.5">
-              Record FYP1 and FYP2 marks for each of your active supervisees.
-            </p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Final-Report Grading</h1>
+            <p className="text-amber-100 text-xs">Record FYP1 and FYP2 marks for each active supervisee</p>
           </div>
         </div>
       </div>
 
       {/* Empty state */}
       {supervisees.length === 0 ? (
-        <Card className="text-center py-12">
-          <GraduationCap className="h-12 w-12 text-stone-300 mx-auto mb-3" />
-          <p className="text-stone-600">No active supervisees to grade yet.</p>
+        <Card className="text-center py-8">
+          <GraduationCap className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <p className="text-sm text-stone-600">No active supervisees to grade yet.</p>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {supervisees.map((s) => {
             const projectId = Number(s.superviseeId)
             const fyp1 = gradesByKey.get(`${projectId}_FYP1`) ?? null
             const fyp2 = gradesByKey.get(`${projectId}_FYP2`) ?? null
 
             return (
-              <Card key={s.superviseeId} className="p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <Card key={s.superviseeId} padding="sm">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-10 h-10 bg-amber-100 rounded-md flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="h-5 w-5 text-amber-600" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-stone-900">{s.fullName}</h3>
-                    <p className="text-sm text-stone-500 mt-0.5">
+                    <h3 className="font-semibold text-sm text-stone-900 truncate leading-tight">{s.fullName}</h3>
+                    <p className="text-[11px] text-stone-500 truncate">
                       {s.studentId} · {s.program}
                     </p>
-                    <p className="text-sm text-stone-600 mt-1 truncate">
+                    <p className="text-xs text-stone-600 mt-0.5 line-clamp-1">
                       {s.projectTitle || <span className="text-stone-400">Untitled</span>}
                     </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                    <PhaseGradeButton
-                      phase="FYP1"
-                      grade={fyp1}
-                      onClick={() => openGradeModal(projectId, s.fullName, 'FYP1')}
-                    />
-                    <PhaseGradeButton
-                      phase="FYP2"
-                      grade={fyp2}
-                      onClick={() => openGradeModal(projectId, s.fullName, 'FYP2')}
-                    />
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <PhaseGradeButton
+                        phase="FYP1"
+                        grade={fyp1}
+                        onClick={() => openGradeModal(projectId, s.fullName, 'FYP1')}
+                      />
+                      <PhaseGradeButton
+                        phase="FYP2"
+                        grade={fyp2}
+                        onClick={() => openGradeModal(projectId, s.fullName, 'FYP2')}
+                      />
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -155,7 +157,7 @@ function PhaseGradeButton({
 }: { phase: GradePhase; grade: FypGrade | null; onClick: () => void }) {
   if (!grade) {
     return (
-      <Button variant="secondary" size="sm" onClick={onClick} leftIcon={<Award className="h-4 w-4" />}>
+      <Button variant="secondary" size="sm" onClick={onClick} leftIcon={<Award className="h-3.5 w-3.5" />} className="whitespace-nowrap">
         Grade {phase}
       </Button>
     )
@@ -165,17 +167,17 @@ function PhaseGradeButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-stone-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-stone-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
     >
-      <span className="text-xs font-semibold text-stone-700">{phase}</span>
-      <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', badge.cls)}>
+      <span className="text-[11px] font-semibold text-stone-700">{phase}</span>
+      <span className={cn('text-[10px] font-medium px-1.5 py-0 rounded', badge.cls)}>
         {badge.label}
       </span>
       {grade.totalScore != null && (
-        <span className="text-sm font-semibold text-stone-900">
+        <span className="text-xs font-semibold text-stone-900">
           {Number(grade.totalScore).toFixed(1)}
           {grade.letterGrade && (
-            <span className="text-xs text-amber-700 ml-1">{grade.letterGrade}</span>
+            <span className="text-[10px] text-amber-700 ml-0.5">{grade.letterGrade}</span>
           )}
         </span>
       )}
