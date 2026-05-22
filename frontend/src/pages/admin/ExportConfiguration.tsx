@@ -19,7 +19,6 @@ import {
   Users,
   FolderKanban,
   ClipboardList,
-  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -163,76 +162,57 @@ export function ExportConfigurationPage() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Compact hero with inline stat chips */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <Download className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Download className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                Export Configuration
-                <Sparkles className="h-5 w-5 text-amber-400" />
-              </h1>
-              <p className="text-stone-300 text-xs">
-                Configure data exports and scheduled reports
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Export Configuration</h1>
+              <p className="text-stone-300 text-xs">Configure data exports and scheduled reports</p>
             </div>
           </div>
-          <Button onClick={() => setShowCreateModal(true)} className="bg-amber-500 hover:bg-amber-600 text-white border-0">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" onClick={() => setShowCreateModal(true)} className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+            <Plus className="h-3.5 w-3.5 mr-1" />
             Create Export
           </Button>
         </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-sm text-neutral-500">Total Exports</p>
-          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{data?.configs.length || 0}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-500">
-          <p className="text-sm text-neutral-500">Scheduled</p>
-          <p className="text-2xl font-bold text-emerald-600">
-            {data?.configs.filter((c) => c.schedule?.enabled).length || 0}
-          </p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-sky-500">
-          <p className="text-sm text-neutral-500">Active</p>
-          <p className="text-2xl font-bold text-sky-600">
-            {data?.configs.filter((c) => c.isActive).length || 0}
-          </p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-violet-500">
-          <p className="text-sm text-neutral-500">Last Export</p>
-          <p className="text-lg font-bold text-neutral-900">
-            {data?.configs[0]?.lastExportedAt
-              ? new Date(data.configurations[0].lastExportedAt).toLocaleDateString()
-              : 'Never'}
-          </p>
-        </Card>
+        {/* Stat chips */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: 'Total', value: data?.configs.length || 0, color: 'text-stone-200' },
+            { label: 'Scheduled', value: data?.configs.filter((c) => c.schedule?.enabled).length || 0, color: 'text-emerald-300' },
+            { label: 'Active', value: data?.configs.filter((c) => c.isActive).length || 0, color: 'text-sky-300' },
+            { label: 'Last', value: data?.configs[0]?.lastExportedAt ? new Date(data.configs[0].lastExportedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' }) : '—', color: 'text-violet-300' },
+          ].map((chip) => (
+            <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
+              <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+              <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Search */}
-      <Card className="p-4">
+      <Card padding="sm">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
           <Input
             type="text"
             placeholder="Search exports..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-8 h-9 text-sm"
           />
         </div>
       </Card>
 
       {/* Export Configurations List */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
         {filteredConfigs && filteredConfigs.length > 0 ? (
           filteredConfigs.map((config) => {
             const dataType = dataTypeConfig[config.dataType]
@@ -241,78 +221,74 @@ export function ExportConfigurationPage() {
             const FormatIcon = format?.icon || FileText
 
             return (
-              <Card key={config.configId} className="p-5 hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className={cn('p-3 rounded-lg border', dataType?.colors || 'bg-stone-100 text-stone-700 border-stone-200')}>
-                      <DataIcon className="h-6 w-6" />
+              <Card key={config.configId} padding="sm" className="hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className={cn('p-1.5 rounded-md border flex-shrink-0', dataType?.colors || 'bg-stone-100 text-stone-700 border-stone-200')}>
+                      <DataIcon className="h-4 w-4" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-neutral-900">{config.name}</h3>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-sm font-semibold text-neutral-900">{config.name}</h3>
                         {config.isActive ? (
-                          <span className="px-2 py-0.5 bg-success-50 text-success-600 rounded-full text-xs font-medium">
-                            Active
-                          </span>
+                          <span className="px-1.5 py-0 bg-emerald-50 text-emerald-700 rounded text-[10px] font-medium">Active</span>
                         ) : (
-                          <span className="px-2 py-0.5 bg-neutral-100 text-neutral-500 rounded-full text-xs font-medium">
-                            Inactive
-                          </span>
+                          <span className="px-1.5 py-0 bg-neutral-100 text-neutral-500 rounded text-[10px] font-medium">Inactive</span>
                         )}
                       </div>
                       {config.description && (
-                        <p className="text-sm text-neutral-500 mt-1">{config.description}</p>
+                        <p className="text-[11px] text-neutral-500 line-clamp-1">{config.description}</p>
                       )}
 
-                      <div className="flex items-center gap-4 mt-3">
-                        <span className="flex items-center gap-1.5 text-sm text-neutral-600">
-                          <DataIcon className="h-4 w-4 text-neutral-400" />
+                      <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px] text-neutral-600">
+                        <span className="flex items-center gap-0.5">
+                          <DataIcon className="h-3 w-3 text-neutral-400" />
                           {dataType?.label || config.dataType}
                         </span>
-                        <span className="flex items-center gap-1.5 text-sm text-neutral-600">
-                          <FormatIcon className="h-4 w-4 text-neutral-400" />
+                        <span className="flex items-center gap-0.5">
+                          <FormatIcon className="h-3 w-3 text-neutral-400" />
                           {format?.label || config.format}
                         </span>
-                        <span className="flex items-center gap-1.5 text-sm text-neutral-600">
-                          <Settings className="h-4 w-4 text-neutral-400" />
+                        <span className="flex items-center gap-0.5">
+                          <Settings className="h-3 w-3 text-neutral-400" />
                           {config.includeFields?.length || 0} fields
                         </span>
                       </div>
 
-                      {/* Schedule Info */}
                       {config.schedule?.enabled && (
-                        <div className="flex items-center gap-2 mt-2 text-sm">
-                          <Clock className="h-4 w-4 text-info-600" />
-                          <span className="text-info-600 font-medium">
-                            Scheduled: {config.schedule.frequency?.toLowerCase()} at {config.schedule.time}
+                        <div className="flex items-center gap-1 mt-0.5 text-[11px]">
+                          <Clock className="h-3 w-3 text-sky-600" />
+                          <span className="text-sky-600 font-medium">
+                            {config.schedule.frequency?.toLowerCase()} at {config.schedule.time}
                           </span>
                         </div>
                       )}
 
-                      {/* Last Export */}
                       {config.lastExportedAt && (
-                        <p className="text-xs text-neutral-400 mt-2">
-                          Last exported: {new Date(config.lastExportedAt).toLocaleString()}
+                        <p className="text-[10px] text-neutral-400">
+                          Last: {new Date(config.lastExportedAt).toLocaleString()}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
                       variant="secondary"
                       size="sm"
                       onClick={() => handleExportNow(config)}
+                      className="h-7 px-2 text-xs"
                     >
-                      <Download className="h-4 w-4 mr-1" />
-                      Export Now
+                      <Download className="h-3.5 w-3.5 mr-0.5" />
+                      Run
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setEditingConfig(config)}
+                      className="px-1.5"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -320,14 +296,14 @@ export function ExportConfigurationPage() {
             )
           })
         ) : (
-          <Card className="text-center py-8">
-            <Download className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="font-medium text-neutral-900">No export configurations</h3>
-            <p className="text-neutral-500 mt-1">
+          <Card className="text-center py-8 col-span-full">
+            <Download className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-neutral-900">No export configurations</h3>
+            <p className="text-xs text-neutral-500 mt-1">
               Create your first export configuration to get started
             </p>
-            <Button className="mt-4" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button size="sm" className="mt-3" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
               Create Export
             </Button>
           </Card>
@@ -335,15 +311,15 @@ export function ExportConfigurationPage() {
       </div>
 
       {/* Quick Export Section */}
-      <Card>
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-          <Download className="h-5 w-5 text-amber-600" />
+      <Card padding="sm">
+        <h3 className="text-sm font-semibold text-neutral-900 mb-1 flex items-center gap-1.5">
+          <Download className="h-4 w-4 text-amber-600" />
           Quick Export
         </h3>
-        <p className="text-sm text-neutral-500 mb-4">
+        <p className="text-[11px] text-neutral-500 mb-2">
           Export data immediately without creating a configuration
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1.5">
           {Object.entries(dataTypeConfig).map(([type, config]) => {
             const Icon = config.icon
             return (
