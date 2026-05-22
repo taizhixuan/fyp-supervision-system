@@ -453,20 +453,18 @@ export function DeadlineCalendar() {
         </Card>
       ) : (
         /* List View */
-        <div className="space-y-8">
+        <div className="space-y-4">
           {/* Upcoming */}
           {upcomingDeadlines.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-warning-600" />
-                </div>
-                <h2 className="text-lg font-bold text-stone-800">Upcoming Deadlines</h2>
-                <span className="px-2.5 py-0.5 bg-warning-100 text-warning-700 text-sm font-semibold rounded-full">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-warning-600" />
+                <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Upcoming Deadlines</h2>
+                <span className="px-1.5 py-0 bg-warning-100 text-warning-700 text-[10px] font-semibold rounded-full">
                   {upcomingDeadlines.length}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                 {upcomingDeadlines.map((deadline) => (
                   <DeadlineCard key={deadline.deadlineId} deadline={deadline} />
                 ))}
@@ -477,16 +475,14 @@ export function DeadlineCalendar() {
           {/* Completed / Past */}
           {pastDeadlines.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="h-4 w-4 text-stone-500" />
-                </div>
-                <h2 className="text-lg font-bold text-stone-800">Past & Completed</h2>
-                <span className="px-2.5 py-0.5 bg-stone-100 text-stone-600 text-sm font-semibold rounded-full">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-stone-500" />
+                <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Past &amp; Completed</h2>
+                <span className="px-1.5 py-0 bg-stone-100 text-stone-600 text-[10px] font-semibold rounded-full">
                   {pastDeadlines.length}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                 {pastDeadlines.map((deadline) => (
                   <DeadlineCard key={deadline.deadlineId} deadline={deadline} />
                 ))}
@@ -495,14 +491,10 @@ export function DeadlineCalendar() {
           )}
 
           {filteredDeadlines.length === 0 && (
-            <Card className="text-center py-16 bg-gradient-to-br from-stone-50 to-neutral-50">
-              <div className="w-16 h-16 bg-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Calendar className="h-8 w-8 text-stone-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">No deadlines found</h3>
-              <p className="text-stone-500">
-                No deadlines match the selected filter
-              </p>
+            <Card className="text-center py-8">
+              <Calendar className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+              <h3 className="font-medium text-stone-800 mb-1">No deadlines found</h3>
+              <p className="text-sm text-stone-500">No deadlines match the selected filter</p>
             </Card>
           )}
         </div>
@@ -520,30 +512,30 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
   const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !deadline.isCompleted
 
   return (
-    <Card className={cn(
-      'transition-all duration-200 hover:shadow-md group',
+    <Card padding="sm" className={cn(
+      'transition-all hover:shadow-md group',
       deadline.isCompleted && 'opacity-70 bg-stone-50',
       isOverdue && 'border-l-4 border-l-error-500 bg-error-50/30',
       isUrgent && !isOverdue && 'border-l-4 border-l-warning-500 bg-warning-50/30',
       !deadline.isCompleted && !isOverdue && !isUrgent && 'border-l-4 border-l-stone-300 hover:border-l-primary-400'
     )}>
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-2.5">
         {/* Icon */}
         <div className={cn(
-          'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105',
+          'w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 ring-1',
           deadline.isCompleted
-            ? 'bg-success-100 ring-2 ring-success-200'
+            ? 'bg-success-100 ring-success-200'
             : isOverdue
-            ? 'bg-error-100 ring-2 ring-error-200'
+            ? 'bg-error-100 ring-error-200'
             : isUrgent
-            ? 'bg-warning-100 ring-2 ring-warning-200'
-            : config.color.replace('text-', 'ring-').replace('-700', '-200') + ' ring-2'
+            ? 'bg-warning-100 ring-warning-200'
+            : config.color.replace('text-', 'ring-').replace('-700', '-200')
         )}>
           {deadline.isCompleted ? (
-            <CheckCircle className="h-6 w-6 text-success-600" />
+            <CheckCircle className="h-4 w-4 text-success-600" />
           ) : (
             <Icon className={cn(
-              'h-6 w-6',
+              'h-4 w-4',
               isOverdue && 'text-error-600',
               isUrgent && !isOverdue && 'text-warning-600'
             )} />
@@ -552,70 +544,64 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
             <h3 className={cn(
-              'font-semibold text-stone-800',
+              'font-semibold text-sm text-stone-800 leading-tight truncate flex-1',
               deadline.isCompleted && 'line-through text-stone-500'
             )}>
               {deadline.title}
             </h3>
             {deadline.reminderSent && (
-              <div className="flex items-center gap-1 px-2 py-0.5 bg-primary-100 rounded-full">
-                <Bell className="h-3 w-3 text-primary-600" />
-                <span className="text-xs font-medium text-primary-600">Reminder</span>
-              </div>
+              <Bell className="h-3 w-3 text-primary-600 flex-shrink-0" />
             )}
           </div>
-          <p className="text-sm text-stone-500 line-clamp-1 mb-2">{deadline.description}</p>
-          <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-xs text-stone-500 line-clamp-1 mb-1.5 leading-snug">{deadline.description}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
-            <Badge className={cn(priority.color, 'font-semibold')} size="sm">{priority.label} Priority</Badge>
+            <Badge className={cn(priority.color, 'font-semibold')} size="sm">{priority.label}</Badge>
+            <span className="text-[10px] text-stone-400">
+              {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
+                day: 'numeric',
+                month: 'short',
+              })}
+            </span>
           </div>
         </div>
 
-        {/* Due Date */}
-        <div className="text-right flex-shrink-0">
-          <div className={cn(
-            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm',
-            isOverdue && 'bg-error-100 text-error-700',
-            isUrgent && !isOverdue && 'bg-warning-100 text-warning-700',
-            deadline.isCompleted && 'bg-success-100 text-success-700',
-            !isOverdue && !isUrgent && !deadline.isCompleted && 'bg-stone-100 text-stone-700'
-          )}>
-            {deadline.isCompleted ? (
-              <>
-                <CheckCircle className="h-4 w-4" />
-                Done
-              </>
-            ) : isOverdue ? (
-              <>
-                <AlertCircle className="h-4 w-4" />
-                {Math.abs(daysUntil)}d overdue
-              </>
-            ) : daysUntil === 0 ? (
-              <>
-                <AlertTriangle className="h-4 w-4" />
-                Today
-              </>
-            ) : daysUntil === 1 ? (
-              <>
-                <Clock className="h-4 w-4" />
-                Tomorrow
-              </>
-            ) : (
-              <>
-                <Clock className="h-4 w-4" />
-                {daysUntil}d left
-              </>
-            )}
-          </div>
-          <p className="text-xs text-stone-500 mt-1.5">
-            {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </p>
+        {/* Due Date pill */}
+        <div className={cn(
+          'inline-flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-xs flex-shrink-0',
+          isOverdue && 'bg-error-100 text-error-700',
+          isUrgent && !isOverdue && 'bg-warning-100 text-warning-700',
+          deadline.isCompleted && 'bg-success-100 text-success-700',
+          !isOverdue && !isUrgent && !deadline.isCompleted && 'bg-stone-100 text-stone-700'
+        )}>
+          {deadline.isCompleted ? (
+            <>
+              <CheckCircle className="h-3 w-3" />
+              Done
+            </>
+          ) : isOverdue ? (
+            <>
+              <AlertCircle className="h-3 w-3" />
+              {Math.abs(daysUntil)}d
+            </>
+          ) : daysUntil === 0 ? (
+            <>
+              <AlertTriangle className="h-3 w-3" />
+              Today
+            </>
+          ) : daysUntil === 1 ? (
+            <>
+              <Clock className="h-3 w-3" />
+              Tomorrow
+            </>
+          ) : (
+            <>
+              <Clock className="h-3 w-3" />
+              {daysUntil}d
+            </>
+          )}
         </div>
       </div>
     </Card>

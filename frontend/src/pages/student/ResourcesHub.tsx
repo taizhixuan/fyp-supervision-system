@@ -93,93 +93,67 @@ export function ResourcesHub() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header with Gradient */}
-      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary-500/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Header — title + stats + filters all in the hero */}
+      <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-xl p-3 sm:p-4 text-white overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-            <Library className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Resources Hub</h1>
-            <p className="text-primary-200 mt-0.5">Guidelines, templates, and helpful materials</p>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="relative mt-6 pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary-200">{resources.length}</div>
-            <div className="text-sm text-primary-300">Total Resources</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-success-400">{featuredResources.length}</div>
-            <div className="text-sm text-primary-300">Featured</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-info-400">{Object.keys(categoryConfig).length}</div>
-            <div className="text-sm text-primary-300">Categories</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Resources */}
-      {featuredResources.length > 0 && (
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-warning-600" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-white/10 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0">
+              <Library className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-lg font-bold text-stone-800">Featured Resources</h2>
-            <span className="px-2.5 py-0.5 bg-warning-100 text-warning-700 text-sm font-semibold rounded-full">
-              {featuredResources.length}
-            </span>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold leading-tight">Resources Hub</h1>
+              <p className="text-primary-200 text-xs">Guidelines, templates, and helpful materials</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuredResources.map((resource) => (
-              <FeaturedResourceCard key={resource.resourceId} resource={resource} />
-            ))}
+
+          {/* Inline stat chips */}
+          <div className="grid grid-cols-3 gap-1.5 flex-shrink-0">
+            <div className="bg-white/10 rounded-md px-2 py-1 text-center min-w-[60px]">
+              <div className="text-base font-bold leading-none">{resources.length}</div>
+              <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Total</p>
+            </div>
+            <div className="bg-white/10 rounded-md px-2 py-1 text-center min-w-[60px]">
+              <div className="text-base font-bold leading-none text-success-300">{featuredResources.length}</div>
+              <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Featured</p>
+            </div>
+            <div className="bg-white/10 rounded-md px-2 py-1 text-center min-w-[60px]">
+              <div className="text-base font-bold leading-none text-info-300">{Object.keys(categoryConfig).length}</div>
+              <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Cats</p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Filters */}
-      <Card className="bg-gradient-to-r from-stone-50 to-neutral-50 border-stone-200">
-        <div className="flex flex-col lg:flex-row gap-4">
+        {/* Inline filter row inside hero */}
+        <div className="relative mt-3 flex flex-col sm:flex-row gap-2">
           <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-stone-400" />
-            </div>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-200 pointer-events-none" />
             <input
               type="text"
               placeholder="Search resources..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 placeholder-stone-400 transition-all"
+              className="w-full pl-9 pr-3 py-2 rounded-md border border-white/20 bg-white/10 text-white placeholder-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
             />
           </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-stone-500" />
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
-              >
-                <option value="all">All Types</option>
-                {Object.entries(typeConfig).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
-                ))}
-              </select>
-            </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Filter className="h-4 w-4 text-primary-200 hidden sm:block" />
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-2.5 py-2 rounded-md border border-white/20 bg-white/10 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/30 [&>option]:text-stone-700"
+            >
+              <option value="all">All Types</option>
+              {Object.entries(typeConfig).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-stone-700 font-medium transition-all"
+              className="px-2.5 py-2 rounded-md border border-white/20 bg-white/10 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white/30 [&>option]:text-stone-700"
             >
               <option value="all">All Categories</option>
               {Object.entries(categoryConfig).map(([key, label]) => (
@@ -188,37 +162,49 @@ export function ResourcesHub() {
             </select>
           </div>
         </div>
-      </Card>
+      </div>
+
+      {/* Featured Resources */}
+      {featuredResources.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-warning-600" />
+            <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Featured</h2>
+            <span className="px-1.5 py-0 bg-warning-100 text-warning-700 text-[10px] font-semibold rounded-full">
+              {featuredResources.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {featuredResources.map((resource) => (
+              <FeaturedResourceCard key={resource.resourceId} resource={resource} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Resources List */}
-      <div className="mt-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
-            <Folder className="h-4 w-4 text-stone-600" />
-          </div>
-          <h2 className="text-lg font-bold text-stone-800">All Resources</h2>
-          <span className="px-2.5 py-0.5 bg-stone-100 text-stone-600 text-sm font-semibold rounded-full">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Folder className="h-4 w-4 text-stone-600" />
+          <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">All Resources</h2>
+          <span className="px-1.5 py-0 bg-stone-100 text-stone-600 text-[10px] font-semibold rounded-full">
             {filteredResources.length}
           </span>
         </div>
-        <div className="flex flex-col gap-5">
-          {filteredResources.map((resource) => (
-            <ResourceRow key={resource.resourceId} resource={resource} />
-          ))}
-        </div>
-      </div>
-
-      {filteredResources.length === 0 && (
-        <Card className="text-center py-16 bg-gradient-to-br from-stone-50 to-neutral-50">
-          <div className="w-16 h-16 bg-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Folder className="h-8 w-8 text-stone-400" />
+        {filteredResources.length === 0 ? (
+          <Card className="text-center py-8">
+            <Folder className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+            <h3 className="font-medium text-stone-800 mb-1">No resources found</h3>
+            <p className="text-sm text-stone-500">Try adjusting your search or filters</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {filteredResources.map((resource) => (
+              <ResourceRow key={resource.resourceId} resource={resource} />
+            ))}
           </div>
-          <h3 className="text-lg font-semibold text-stone-800 mb-2">No resources found</h3>
-          <p className="text-stone-500">
-            Try adjusting your search or filters
-          </p>
-        </Card>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -228,50 +214,42 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
   const Icon = config.icon
 
   return (
-    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
-      <Card className="h-full group hover:shadow-lg transition-all duration-300 border-l-4 border-l-warning-400 overflow-hidden relative">
-        {/* Background Glow */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-warning-500/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-
-        <div className="relative">
-          {/* Header with Icon */}
-          <div className="flex items-start gap-4 mb-3">
-            <div className={cn(
-              'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg transition-transform group-hover:scale-110',
-              config.bgColor
-            )}>
-              <Icon className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-warning-500 fill-warning-500 flex-shrink-0" />
-                <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
-              </div>
-              <h3 className="font-bold text-stone-800 line-clamp-1 mt-1 group-hover:text-primary-700 transition-colors">
-                {resource.title}
-              </h3>
-            </div>
+    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)} className="h-full">
+      <Card padding="sm" className="h-full group hover:shadow-md transition-all border-l-4 border-l-warning-400 flex flex-col">
+        <div className="flex items-start gap-2.5 mb-2">
+          <div className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md transition-transform group-hover:scale-105',
+            config.bgColor
+          )}>
+            <Icon className="h-4 w-4 text-white" />
           </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Star className="h-3.5 w-3.5 text-warning-500 fill-warning-500 flex-shrink-0" />
+              <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
+            </div>
+            <h3 className="font-semibold text-sm text-stone-800 line-clamp-1 group-hover:text-primary-700 transition-colors">
+              {resource.title}
+            </h3>
+          </div>
+        </div>
 
-          {/* Description */}
-          <p className="text-sm text-stone-500 line-clamp-2 mb-4">{resource.description}</p>
+        <p className="text-xs text-stone-500 line-clamp-2 mb-2 leading-snug flex-1">{resource.description}</p>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-            <div className="flex items-center gap-3 text-xs text-stone-400">
-              {resource.fileSize && (
-                <span className="flex items-center gap-1">
-                  <Download className="h-3 w-3" />
-                  {formatFileSize(resource.fileSize)}
-                </span>
-              )}
+        <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+          <div className="flex items-center gap-2 text-[11px] text-stone-400">
+            {resource.fileSize && (
               <span className="flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                {(resource.viewCount ?? 0).toLocaleString()} views
+                <Download className="h-3 w-3" />
+                {formatFileSize(resource.fileSize)}
               </span>
-            </div>
-            <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+            )}
+            <span className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              {(resource.viewCount ?? 0).toLocaleString()}
+            </span>
           </div>
+          <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
         </div>
       </Card>
     </Link>
@@ -285,62 +263,50 @@ function ResourceRow({ resource }: { resource: Resource }) {
 
   return (
     <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
-      <Card className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-stone-200 hover:border-l-primary-400 p-5">
-        <div className="flex items-center gap-4">
+      <Card padding="sm" className="group hover:shadow-md transition-all border-l-4 border-l-stone-200 hover:border-l-primary-400">
+        <div className="flex items-center gap-2.5">
           {/* Icon */}
           <div className={cn(
-            'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-105 ring-2',
+            'w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 ring-2',
             config.color,
             config.color.replace('bg-', 'ring-').replace('-100', '-200')
           )}>
-            <Icon className="h-5 w-5" />
+            <Icon className="h-4 w-4" />
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-stone-800 group-hover:text-primary-700 transition-colors">
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-semibold text-sm text-stone-800 group-hover:text-primary-700 transition-colors truncate">
                 {resource.title}
               </h3>
               {resource.isFeatured && (
-                <Star className="h-4 w-4 text-warning-500 fill-warning-500" />
+                <Star className="h-3.5 w-3.5 text-warning-500 fill-warning-500 flex-shrink-0" />
               )}
             </div>
-            <p className="text-sm text-stone-500 line-clamp-1">{resource.description}</p>
-            {/* Mobile badges */}
-            <div className="flex items-center gap-2 mt-2 sm:hidden">
+            <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-stone-400 mt-0.5">
               <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
-              <span className="text-xs text-stone-400">{categoryLabel}</span>
+              <span className="text-stone-500">{categoryLabel}</span>
+              {resource.fileSize && (
+                <span className="inline-flex items-center gap-0.5">
+                  <Download className="h-3 w-3" />
+                  {formatFileSize(resource.fileSize)}
+                </span>
+              )}
+              {resource.duration && (
+                <span className="inline-flex items-center gap-0.5">
+                  <Clock className="h-3 w-3" />
+                  {resource.duration}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-0.5">
+                <Eye className="h-3 w-3" />
+                {(resource.viewCount ?? 0).toLocaleString()}
+              </span>
             </div>
           </div>
 
-          {/* Meta - Desktop */}
-          <div className="hidden sm:flex items-center gap-3">
-            <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
-            <span className="px-2.5 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-lg">
-              {categoryLabel}
-            </span>
-            {resource.fileSize && (
-              <span className="flex items-center gap-1 text-xs text-stone-400">
-                <Download className="h-3 w-3" />
-                {formatFileSize(resource.fileSize)}
-              </span>
-            )}
-            {resource.duration && (
-              <span className="flex items-center gap-1 text-xs text-stone-400">
-                <Clock className="h-3 w-3" />
-                {resource.duration}
-              </span>
-            )}
-            <span className="flex items-center gap-1 text-xs text-stone-400">
-              <Eye className="h-3 w-3" />
-              {(resource.viewCount ?? 0).toLocaleString()}
-            </span>
-          </div>
-
-          <div className="w-8 h-8 rounded-lg bg-stone-100 group-hover:bg-primary-100 flex items-center justify-center transition-colors">
-            <ChevronRight className="h-4 w-4 text-stone-400 group-hover:text-primary-600 transition-colors" />
-          </div>
+          <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-primary-600 transition-colors flex-shrink-0" />
         </div>
       </Card>
     </Link>
