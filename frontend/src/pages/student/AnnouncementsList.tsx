@@ -128,35 +128,35 @@ export function AnnouncementsList() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
-            <Megaphone className="h-6 w-6" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Header — title + compact stat chips on one row */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
+            <Megaphone className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Announcements</h1>
-            <p className="text-neutral-600 mt-0.5">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Announcements</h1>
+            <p className="text-xs text-neutral-600">
               Updates from FYP committee and your supervisors
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <div className="px-4 py-2 rounded-lg border border-neutral-200 bg-white">
-            <p className="text-xs text-neutral-500 font-medium">Total</p>
-            <p className="text-lg font-bold text-neutral-900">{counts.total}</p>
+        <div className="flex gap-2 flex-shrink-0">
+          <div className="px-2.5 py-1 rounded-md border border-neutral-200 bg-white text-center">
+            <p className="text-[10px] uppercase tracking-wide text-neutral-500 font-medium">Total</p>
+            <p className="text-base font-bold text-neutral-900 leading-none">{counts.total}</p>
           </div>
-          <div className="px-4 py-2 rounded-lg border border-warning-200 bg-warning-50">
-            <p className="text-xs text-warning-700 font-medium">Important</p>
-            <p className="text-lg font-bold text-warning-700">{counts.urgent}</p>
+          <div className="px-2.5 py-1 rounded-md border border-warning-200 bg-warning-50 text-center">
+            <p className="text-[10px] uppercase tracking-wide text-warning-700 font-medium">Important</p>
+            <p className="text-base font-bold text-warning-700 leading-none">{counts.urgent}</p>
           </div>
         </div>
       </div>
 
       {/* Toolbar */}
-      <Card>
-        <div className="flex flex-col lg:flex-row gap-3">
+      <Card padding="sm">
+        <div className="flex flex-col lg:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
             <input
@@ -184,7 +184,7 @@ export function AnnouncementsList() {
                 type="button"
                 onClick={() => setPriorityFilter(opt)}
                 className={cn(
-                  'px-3 py-1.5 rounded text-xs font-medium transition-colors',
+                  'px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap',
                   priorityFilter === opt
                     ? 'bg-white shadow-sm text-neutral-900'
                     : 'text-neutral-600 hover:bg-neutral-200'
@@ -196,7 +196,7 @@ export function AnnouncementsList() {
           </div>
         </div>
         {(search || priorityFilter !== 'ALL') && (
-          <p className="text-xs text-neutral-500 mt-3">
+          <p className="text-xs text-neutral-500 mt-2">
             Showing {filtered.length} of {all.length} announcement{all.length === 1 ? '' : 's'}
           </p>
         )}
@@ -204,9 +204,9 @@ export function AnnouncementsList() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <Card className="text-center py-16">
-          <Megaphone className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-1">
+        <Card className="text-center py-8">
+          <Megaphone className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="font-medium text-neutral-900 mb-1">
             {search || priorityFilter !== 'ALL'
               ? 'No announcements match your filters'
               : 'No announcements yet'}
@@ -218,7 +218,7 @@ export function AnnouncementsList() {
           </p>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filtered.map((a) => {
             const cfg = priorityStyles[a.priority] ?? priorityStyles.NORMAL
             const Icon = cfg.Icon
@@ -227,50 +227,50 @@ export function AnnouncementsList() {
                 key={a.announcementId}
                 type="button"
                 onClick={() => setSelected(a)}
-                className="group w-full text-left bg-white rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all overflow-hidden"
+                className="group text-left bg-white rounded-lg border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all overflow-hidden"
               >
                 <div className="flex">
-                  <div className={cn('w-1.5 flex-shrink-0', cfg.barClass)} aria-hidden />
-                  <div className="flex-1 p-4 sm:p-5">
-                    <div className="flex items-start gap-3">
+                  <div className={cn('w-1 flex-shrink-0', cfg.barClass)} aria-hidden />
+                  <div className="flex-1 p-3">
+                    <div className="flex items-start gap-2.5">
                       <div
                         className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                          'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0',
                           cfg.iconClass
                         )}
                       >
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-neutral-900 group-hover:text-primary-700 transition-colors">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="font-semibold text-sm text-neutral-900 group-hover:text-primary-700 transition-colors leading-tight truncate flex-1">
                             {a.title}
                           </h3>
                           <span
                             className={cn(
-                              'px-2 py-0.5 rounded-full text-xs font-medium',
+                              'px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0',
                               cfg.pillClass
                             )}
                           >
                             {cfg.label}
                           </span>
                         </div>
-                        <p className="text-sm text-neutral-600 line-clamp-2 mb-2">
-                          {preview(a.content)}
+                        <p className="text-xs text-neutral-600 line-clamp-2 mb-1.5 leading-snug">
+                          {preview(a.content, 140)}
                         </p>
-                        <div className="flex items-center gap-4 text-xs text-neutral-400">
+                        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
                           <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <Calendar className="h-3 w-3" />
                             {formatDate(a.publishAt || a.createdAt)}
                           </span>
                           {a.scope && a.scope !== 'ALL' && (
-                            <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600">
+                            <span className="px-1.5 py-0 rounded-full bg-neutral-100 text-neutral-600 truncate">
                               {a.scope}
                             </span>
                           )}
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-neutral-300 group-hover:text-primary-500 transition-colors flex-shrink-0 mt-1" />
+                      <ChevronRight className="h-4 w-4 text-neutral-300 group-hover:text-primary-500 transition-colors flex-shrink-0 mt-0.5" />
                     </div>
                   </div>
                 </div>
