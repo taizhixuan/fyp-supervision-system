@@ -22,6 +22,9 @@ export interface Resource {
   tags?: string[]
   publishedAt: string
   updatedAt?: string
+  cycleId?: number | null
+  cycleType?: string | null
+  cycleAcademicYear?: string | null
 }
 
 export interface ResourceListResponse {

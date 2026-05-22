@@ -372,6 +372,9 @@ public class CommitteeService {
         dto.put("uploadedAt", doc.getPublishedAt() != null ? doc.getPublishedAt().toString() : "");
         dto.put("updatedAt", doc.getPublishedAt() != null ? doc.getPublishedAt().toString() : "");
         dto.put("downloadCount", doc.getDownloadCount());
+        dto.put("cycleId", doc.getCycle() != null ? doc.getCycle().getCycleId() : null);
+        dto.put("cycleType", doc.getCycle() != null ? doc.getCycle().getCycleType() : null);
+        dto.put("cycleAcademicYear", doc.getCycle() != null ? doc.getCycle().getAcademicYear() : null);
         dto.put("versions", List.of());
         return dto;
     }

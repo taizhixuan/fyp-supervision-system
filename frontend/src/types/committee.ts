@@ -171,11 +171,14 @@ export interface CommitteeDocumentVersion {
   changeNotes?: string
 }
 
+export type CommitteeDocumentCycleScope = 'EVERGREEN' | 'FYP1' | 'FYP2'
+
 export interface CommitteeUploadDocumentData {
   title: string
   description?: string
   category: CommitteeDocumentCategory
   visibility: DocumentVisibility
+  cycleScope?: CommitteeDocumentCycleScope
   file: File
   changeNotes?: string
 }
