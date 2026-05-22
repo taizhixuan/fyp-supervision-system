@@ -14,10 +14,9 @@ import {
   Play,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
-import { useResourceDetail } from '@/lib/hooks/useStudent'
+import { useResourceDetail, useDownloadResource } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import { assetUrl } from '@/lib/utils/assetUrl'
 
 type ResourceType = 'GUIDELINE' | 'TEMPLATE' | 'VIDEO' | 'DOCUMENT' | 'LINK'
 type ResourceCategory = 'GENERAL' | 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'SUBMISSION'
@@ -48,6 +47,7 @@ export function ResourceDetail() {
   const { id } = useParams<{ id: string }>()
 
   const { data: resource, isLoading } = useResourceDetail(id || '')
+  const downloadMutation = useDownloadResource()
 
   if (isLoading) {
     return (
@@ -79,7 +79,6 @@ export function ResourceDetail() {
   const config = typeConfig[displayResource.type as ResourceType] ?? typeConfig.DOCUMENT
   const Icon = config.icon
   const categoryLabel = categoryConfig[displayResource.category as ResourceCategory] ?? displayResource.category ?? 'General'
-  const fileHref = assetUrl(displayResource.fileUrl)
   const updatedAtLabel = displayResource.updatedAt
     ? new Date(displayResource.updatedAt).toLocaleDateString('en-MY')
     : null
@@ -219,12 +218,21 @@ export function ResourceDetail() {
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-3">Actions</h3>
             <div className="space-y-2">
-              {fileHref && (
-                <a href={fileHref} download>
-                  <Button variant="primary" className="w-full" leftIcon={<Download className="h-4 w-4" />}>
-                    Download
-                  </Button>
-                </a>
+              {displayResource.fileUrl && (
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  onClick={() =>
+                    downloadMutation.mutate({
+                      resourceId: displayResource.resourceId,
+                      fileName: (displayResource as { fileName?: string | null }).fileName ?? displayResource.title,
+                    })
+                  }
+                  disabled={downloadMutation.isPending}
+                >
+                  {downloadMutation.isPending ? 'Downloading…' : 'Download'}
+                </Button>
               )}
               {displayResource.externalUrl && (
                 <a href={displayResource.externalUrl} target="_blank" rel="noopener noreferrer">
