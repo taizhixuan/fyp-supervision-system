@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -423,7 +423,29 @@ export function ProposalWorkspace() {
   )
 
   const totalSteps = STEPS.length
-  const [currentStep, setCurrentStep] = useState(1)
+
+  // Persist the current step across reloads so users can resume mid-wizard.
+  // Keyed per user (one student → one proposal in this system).
+  const STEP_STORAGE_KEY = 'fyp-proposal-wizard-step'
+  const [currentStep, setCurrentStep] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1
+    try {
+      const saved = window.localStorage.getItem(STEP_STORAGE_KEY)
+      const n = saved ? parseInt(saved, 10) : 1
+      return n >= 1 && n <= 5 ? n : 1
+    } catch {
+      return 1
+    }
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(STEP_STORAGE_KEY, String(currentStep))
+    } catch {
+      // ignore quota / privacy mode errors
+    }
+  }, [currentStep])
 
   const stepErrorCount = useMemo(
     () =>
@@ -537,6 +559,49 @@ export function ProposalWorkspace() {
   const isApproved = proposalStatus === 'APPROVED'
   const cycleEnded = studentGate.cycleActive === false
 
+  // Auto-save draft on step change (best-effort, skipped if invalid).
+  // Only kicks in for proposals that already exist — for a brand-new proposal,
+  // the first explicit Save Draft creates it so we don't spam empty drafts.
+  const isFirstStepEffect = useRef(true)
+  useEffect(() => {
+    if (isFirstStepEffect.current) {
+      isFirstStepEffect.current = false
+      return
+    }
+    if (isDirty && canEdit && !isNewProposal) {
+      handleSubmit(onSave)()
+    }
+    // Intentionally not depending on isDirty/canEdit/onSave: fire once per step change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep])
+
+  // Alt + ←/→ navigates between steps when focus is outside form inputs.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!e.altKey) return
+      const target = e.target as HTMLElement | null
+      if (
+        target?.matches(
+          'input, textarea, select, [contenteditable="true"]'
+        )
+      ) {
+        return
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        goToStep(currentStep + 1)
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setCurrentStep((s) => Math.max(1, s - 1))
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+    // goToStep is recreated per render; the effect rebinds on step change so
+    // the listener always closes over the latest goToStep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -574,22 +639,38 @@ export function ProposalWorkspace() {
         </div>
       </div>
 
-      {/* Action Bar — quick links. Save / Submit live in the sticky wizard nav below. */}
+      {/* Action Bar — quick links. Labels collapse to icons on narrow viewports.
+          Save / Submit live in the sticky wizard nav below. */}
       <Card className="bg-neutral-50">
         <div className="flex flex-wrap items-center gap-2">
           <Link to={ROUTES.STUDENT.PROPOSAL_HISTORY}>
-            <Button variant="ghost" size="sm" leftIcon={<History className="h-4 w-4" />}>
-              Version History
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<History className="h-4 w-4" />}
+              aria-label="Version History"
+            >
+              <span className="hidden sm:inline">Version History</span>
             </Button>
           </Link>
           <Link to={ROUTES.STUDENT.PROPOSAL_ANALYSIS}>
-            <Button variant="ghost" size="sm" leftIcon={<Sparkles className="h-4 w-4" />}>
-              AI Analysis
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<Sparkles className="h-4 w-4" />}
+              aria-label="AI Analysis"
+            >
+              <span className="hidden sm:inline">AI Analysis</span>
             </Button>
           </Link>
           <Link to={ROUTES.STUDENT.PROPOSAL_STATUS}>
-            <Button variant="ghost" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
-              Status Timeline
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<Eye className="h-4 w-4" />}
+              aria-label="Status Timeline"
+            >
+              <span className="hidden sm:inline">Status Timeline</span>
             </Button>
           </Link>
           {!isNewProposal && (
@@ -599,8 +680,9 @@ export function ProposalWorkspace() {
               leftIcon={<FileText className="h-4 w-4" />}
               onClick={() => exportDocx.mutate()}
               isLoading={exportDocx.isPending}
+              aria-label="Download MMU Form"
             >
-              Download MMU Form
+              <span className="hidden sm:inline">Download MMU Form</span>
             </Button>
           )}
         </div>

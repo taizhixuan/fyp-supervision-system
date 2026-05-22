@@ -11,6 +11,7 @@ import {
   Paperclip,
   Link2,
   Trash2,
+  Eye,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -156,7 +157,7 @@ export function CreateAnnouncement() {
   const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 lg:max-w-6xl lg:mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENTS}>
@@ -179,7 +180,9 @@ export function CreateAnnouncement() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
+        {/* Left column: form fields */}
+        <div className="lg:col-span-7 space-y-6">
         {/* Basic Info */}
         <Card className="p-6">
           <h3 className="font-semibold text-neutral-900 mb-4">Announcement Details</h3>
@@ -432,23 +435,99 @@ export function CreateAnnouncement() {
             </div>
           </div>
         </Card>
-
-        {/* Submit */}
-        <div className="flex justify-end gap-3">
-          <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENTS}>
-            <Button variant="secondary" type="button">
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? (
-              <Spinner size="sm" className="mr-2" />
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
-            {isEditing ? 'Update Announcement' : 'Publish Announcement'}
-          </Button>
         </div>
+
+        {/* Right column: sticky live preview + actions */}
+        <aside className="lg:col-span-5">
+          <div className="lg:sticky lg:top-6 space-y-4">
+
+            {/* Preview */}
+            <Card className="p-6 bg-neutral-50">
+              <h3 className="font-semibold text-neutral-900 mb-1 flex items-center gap-2">
+                <Eye className="h-5 w-5 text-neutral-400" />
+                Live Preview
+              </h3>
+              <p className="text-xs text-neutral-500 mb-4">
+                Updates as you type — this is how supervisees will see it.
+              </p>
+              <div className="bg-white rounded-lg border p-4">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    'p-2 rounded-lg',
+                    watch('priority') === 'URGENT' ? 'bg-error-50' :
+                    watch('priority') === 'HIGH' ? 'bg-warning-50' :
+                    watch('priority') === 'NORMAL' ? 'bg-info-50' : 'bg-neutral-100'
+                  )}>
+                    <Megaphone className={cn(
+                      'h-5 w-5',
+                      watch('priority') === 'URGENT' ? 'text-error-600' :
+                      watch('priority') === 'HIGH' ? 'text-warning-600' :
+                      watch('priority') === 'NORMAL' ? 'text-info-600' : 'text-neutral-600'
+                    )} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-neutral-900 break-words">
+                      {watch('title') || 'Announcement Title'}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        watch('priority') === 'URGENT' ? 'bg-error-50 text-error-700' :
+                        watch('priority') === 'HIGH' ? 'bg-warning-50 text-warning-700' :
+                        watch('priority') === 'NORMAL' ? 'bg-info-50 text-info-700' : 'bg-neutral-100 text-neutral-700'
+                      )}>
+                        {watch('priority')}
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        {visibility === 'ALL_SUPERVISEES' ? 'All Supervisees' :
+                         visibility === 'FYP1' ? 'FYP 1 Students' :
+                         visibility === 'FYP2' ? 'FYP 2 Students' :
+                         `${selectedStudents.length} specific student${selectedStudents.length === 1 ? '' : 's'}`}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-neutral-600 whitespace-pre-wrap break-words">
+                      {watch('content') || 'Announcement content will appear here…'}
+                    </p>
+                    {(files.length > 0 || links.length > 0) && (
+                      <div className="mt-3 pt-3 border-t border-neutral-100 space-y-1">
+                        {files.length > 0 && (
+                          <p className="text-xs text-neutral-500">
+                            <Paperclip className="inline h-3 w-3 mr-1" />
+                            {files.length} attachment{files.length === 1 ? '' : 's'}
+                          </p>
+                        )}
+                        {links.length > 0 && (
+                          <p className="text-xs text-neutral-500">
+                            <Link2 className="inline h-3 w-3 mr-1" />
+                            {links.filter((l) => l.label && l.url).length} link
+                            {links.filter((l) => l.label && l.url).length === 1 ? '' : 's'}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Submit */}
+            <div className="flex justify-end gap-3">
+              <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENTS}>
+                <Button variant="secondary" type="button">
+                  Cancel
+                </Button>
+              </Link>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <Spinner size="sm" className="mr-2" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {isEditing ? 'Update Announcement' : 'Publish Announcement'}
+              </Button>
+            </div>
+          </div>
+        </aside>
       </form>
     </div>
   )

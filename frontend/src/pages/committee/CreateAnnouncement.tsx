@@ -11,6 +11,7 @@ import {
   Paperclip,
   Link2,
   Trash2,
+  Eye,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -161,7 +162,7 @@ export function CreateAnnouncement() {
   ]
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 lg:max-w-6xl lg:mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.ANNOUNCEMENTS}>
@@ -184,7 +185,9 @@ export function CreateAnnouncement() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
+        {/* Left column: form fields */}
+        <div className="lg:col-span-7 space-y-6">
         {/* Basic Info */}
         <Card className="p-6">
           <h3 className="font-semibold text-neutral-900 mb-4">Announcement Details</h3>
@@ -400,10 +403,21 @@ export function CreateAnnouncement() {
             </div>
           </div>
         </Card>
+        </div>
+
+        {/* Right column: sticky live preview + actions */}
+        <aside className="lg:col-span-5">
+          <div className="lg:sticky lg:top-6 space-y-4">
 
         {/* Preview */}
         <Card className="p-6 bg-neutral-50">
-          <h3 className="font-semibold text-neutral-900 mb-4">Preview</h3>
+          <h3 className="font-semibold text-neutral-900 mb-1 flex items-center gap-2">
+            <Eye className="h-5 w-5 text-neutral-400" />
+            Live Preview
+          </h3>
+          <p className="text-xs text-neutral-500 mb-4">
+            Updates as you type — this is how students will see the announcement.
+          </p>
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-start gap-3">
               <div className={cn(
@@ -460,6 +474,8 @@ export function CreateAnnouncement() {
             {isEditing ? 'Update Announcement' : 'Publish Announcement'}
           </Button>
         </div>
+          </div>
+        </aside>
       </form>
     </div>
   )
