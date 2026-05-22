@@ -1072,11 +1072,11 @@ public class StudentService {
         Project project = projectOpt.orElse(null);
         boolean hasSupervisor = project != null && project.getSupervisor() != null;
 
+        Optional<Proposal> proposalOpt = proposalRepository.findByStudent_UserId(userId);
+        ProposalStatus proposalStatus = proposalOpt.map(Proposal::getStatus).orElse(null);
+
         if (hasSupervisor) {
             // Real supervision pair — status now driven by proposal lifecycle.
-            ProposalStatus proposalStatus = proposalRepository.findByStudent_UserId(userId)
-                    .map(Proposal::getStatus)
-                    .orElse(null);
             String status;
             if (proposalStatus == null
                     || proposalStatus == ProposalStatus.DRAFT
@@ -1099,9 +1099,114 @@ public class StudentService {
             reg.put("supervisorId", null);
             reg.put("supervisor", null);
         }
-        reg.put("nextSteps", List.of());
-        reg.put("timeline", List.of());
+        reg.put("nextSteps", buildRegistrationSteps(user, project, proposalOpt.orElse(null), proposalStatus, hasSupervisor));
+        reg.put("timeline", buildRegistrationTimeline(user, project, proposalOpt.orElse(null), proposalStatus));
         return reg;
+    }
+
+    private List<Map<String, Object>> buildRegistrationSteps(
+            UserAccount user,
+            Project project,
+            Proposal proposal,
+            ProposalStatus proposalStatus,
+            boolean hasSupervisor) {
+
+        String acctTs = user != null && user.getCreatedAt() != null ? user.getCreatedAt().toString() : null;
+        String pairedTs = hasSupervisor && project != null && project.getRegisteredAt() != null
+                ? project.getRegisteredAt().toString() : null;
+        String proposalCreatedTs = proposal != null && proposal.getCreatedAt() != null
+                ? proposal.getCreatedAt().toString() : null;
+        String proposalUpdatedTs = proposal != null && proposal.getUpdatedAt() != null
+                ? proposal.getUpdatedAt().toString() : null;
+
+        boolean proposalDrafted = proposal != null;
+        boolean proposalSubmitted = proposalStatus == ProposalStatus.SUBMITTED
+                || proposalStatus == ProposalStatus.UNDER_REVIEW
+                || proposalStatus == ProposalStatus.APPROVED;
+        boolean proposalUnderReview = proposalStatus == ProposalStatus.UNDER_REVIEW
+                || proposalStatus == ProposalStatus.APPROVED;
+        boolean proposalApproved = proposalStatus == ProposalStatus.APPROVED;
+
+        List<Map<String, Object>> steps = new ArrayList<>();
+        steps.add(buildStep(1, "Account Verification", "Your student account has been verified.",
+                "COMPLETED", acctTs, null));
+        steps.add(buildStep(2, "Find Supervisor", "Select and get approval from a supervisor.",
+                hasSupervisor ? "COMPLETED" : "CURRENT", pairedTs, null));
+        steps.add(buildStep(3, "Submit Proposal", "Draft and submit your FYP proposal.",
+                proposalSubmitted ? "COMPLETED" : (hasSupervisor && !proposalDrafted ? "CURRENT"
+                        : hasSupervisor ? "CURRENT" : "PENDING"),
+                proposalSubmitted ? proposalUpdatedTs : null, null));
+        steps.add(buildStep(4, "Proposal Review", "Wait for supervisor and committee review.",
+                proposalApproved ? "COMPLETED" : (proposalUnderReview || proposalSubmitted ? "CURRENT" : "PENDING"),
+                proposalApproved ? proposalUpdatedTs : null, null));
+        steps.add(buildStep(5, "Project Registration", "FYP registration finalised.",
+                proposalApproved ? "COMPLETED" : (proposalApproved ? "CURRENT" : "PENDING"),
+                proposalApproved ? proposalUpdatedTs : null, null));
+        return steps;
+    }
+
+    private Map<String, Object> buildStep(int n, String title, String desc, String status,
+                                           String completedAt, String dueDate) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("step", n);
+        m.put("title", title);
+        m.put("description", desc);
+        m.put("status", status);
+        m.put("completedAt", "COMPLETED".equals(status) ? completedAt : null);
+        m.put("dueDate", dueDate);
+        return m;
+    }
+
+    private List<Map<String, Object>> buildRegistrationTimeline(
+            UserAccount user, Project project, Proposal proposal, ProposalStatus proposalStatus) {
+        List<Map<String, Object>> events = new ArrayList<>();
+        long id = 1;
+        if (user != null && user.getCreatedAt() != null) {
+            events.add(timelineEvent(id++, "STATUS_CHANGE", "Account Verified",
+                    "Student account verified.", user.getCreatedAt().toString()));
+        }
+        if (project != null && project.getSupervisor() != null && project.getRegisteredAt() != null) {
+            String supName = project.getSupervisor().getFullName();
+            events.add(timelineEvent(id++, "STATUS_CHANGE", "Supervisor Assigned",
+                    (supName != null ? supName : "Supervisor") + " accepted your supervision request.",
+                    project.getRegisteredAt().toString()));
+        }
+        if (proposal != null && proposal.getCreatedAt() != null) {
+            events.add(timelineEvent(id++, "SUBMISSION", "Proposal Draft Saved",
+                    "First draft of proposal saved.", proposal.getCreatedAt().toString()));
+        }
+        if (proposalStatus == ProposalStatus.SUBMITTED
+                || proposalStatus == ProposalStatus.UNDER_REVIEW
+                || proposalStatus == ProposalStatus.APPROVED) {
+            String ts = proposal != null && proposal.getUpdatedAt() != null
+                    ? proposal.getUpdatedAt().toString() : null;
+            events.add(timelineEvent(id++, "SUBMISSION", "Proposal Submitted",
+                    "Proposal sent for review.", ts));
+        }
+        if (proposalStatus == ProposalStatus.APPROVED) {
+            String ts = proposal.getUpdatedAt() != null ? proposal.getUpdatedAt().toString() : null;
+            events.add(timelineEvent(id++, "STATUS_CHANGE", "Proposal Approved",
+                    "Your proposal was approved.", ts));
+        }
+        events.sort((a, b) -> {
+            Object ta = a.get("timestamp");
+            Object tb = b.get("timestamp");
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return tb.toString().compareTo(ta.toString());
+        });
+        return events;
+    }
+
+    private Map<String, Object> timelineEvent(long id, String type, String title, String desc, String ts) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("eventId", String.valueOf(id));
+        m.put("type", type);
+        m.put("title", title);
+        m.put("description", desc);
+        m.put("timestamp", ts);
+        return m;
     }
 
     private String mapMeetingLogStatus(MeetingLogStatus status) {

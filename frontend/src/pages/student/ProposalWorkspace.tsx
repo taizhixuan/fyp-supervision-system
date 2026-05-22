@@ -37,6 +37,7 @@ import {
   useSubmitProposal,
   useUploadProposalFile,
   useExportProposalDocx,
+  useStudentDashboard,
 } from '@/lib/hooks/useStudent'
 import { useStudentRegistrationGate } from '@/lib/hooks/useStudentRegistrationGate'
 import { ROUTES } from '@/lib/constants/routes'
@@ -217,6 +218,15 @@ export function ProposalWorkspace() {
   const navigate = useNavigate()
 
   const { data: proposal, isLoading } = useCurrentProposal()
+  const { data: dashboard } = useStudentDashboard()
+  const pairedSupervisor = dashboard?.registrationStatus?.supervisor
+  const supervisorBlock = proposal?.supervisor || (pairedSupervisor ? {
+    userId: pairedSupervisor.userId ?? pairedSupervisor.supervisorId,
+    fullName: pairedSupervisor.fullName,
+    email: pairedSupervisor.email,
+    position: pairedSupervisor.title,
+    department: pairedSupervisor.department,
+  } : null)
   const createProposal = useCreateProposal()
   const updateProposal = useUpdateProposal()
   const submitProposal = useSubmitProposal()
@@ -1189,28 +1199,28 @@ export function ProposalWorkspace() {
               </p>
             </div>
           </div>
-          {proposal?.supervisor ? (
+          {supervisorBlock ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 p-4 rounded-lg bg-neutral-50 border border-neutral-100">
               <div>
                 <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Supervisor Name</p>
-                <p className="font-medium text-neutral-900">{proposal.supervisor.fullName}</p>
+                <p className="font-medium text-neutral-900">{supervisorBlock.fullName}</p>
               </div>
-              {proposal.supervisor.position && (
+              {supervisorBlock.position && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Position</p>
-                  <p className="font-medium text-neutral-900">{proposal.supervisor.position}</p>
+                  <p className="font-medium text-neutral-900">{supervisorBlock.position}</p>
                 </div>
               )}
-              {proposal.supervisor.email && (
+              {supervisorBlock.email && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Email</p>
-                  <p className="font-medium text-neutral-900">{proposal.supervisor.email}</p>
+                  <p className="font-medium text-neutral-900">{supervisorBlock.email}</p>
                 </div>
               )}
-              {proposal.supervisor.department && (
+              {supervisorBlock.department && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-neutral-500 mb-0.5">Department</p>
-                  <p className="font-medium text-neutral-900">{proposal.supervisor.department}</p>
+                  <p className="font-medium text-neutral-900">{supervisorBlock.department}</p>
                 </div>
               )}
             </div>
@@ -1615,7 +1625,7 @@ export function ProposalWorkspace() {
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <ReviewRow
               label="Supervisor"
-              value={proposal?.supervisor?.fullName || 'Not paired yet'}
+              value={supervisorBlock?.fullName || 'Not paired yet'}
             />
             <ReviewRow label="Co-supervisor" value={watchedAll.coSupervisorName} />
             <ReviewRow label="Number of students" value={watchedAll.numberOfStudents} />
