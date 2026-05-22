@@ -110,7 +110,7 @@ export function AuditLogs() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -138,7 +138,7 @@ export function AuditLogs() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-sm text-neutral-500">Total Logs</p>
-          <p className="text-2xl font-bold text-neutral-900">{stats.total.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{stats.total.toLocaleString()}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-neutral-500">Today</p>
@@ -353,9 +353,9 @@ export function AuditLogs() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <FileText className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No audit logs found</h3>
+            <h3 className="font-medium text-neutral-900">No audit logs found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || actionFilter !== 'ALL' || entityFilter !== 'ALL' || dateRange.start || dateRange.end
                 ? 'Try adjusting your filters'

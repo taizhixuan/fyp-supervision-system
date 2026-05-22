@@ -225,10 +225,10 @@ export function CycleManagement() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -240,7 +240,7 @@ export function CycleManagement() {
                 FYP Cycle Management
                 <Sparkles className="h-5 w-5 text-amber-400" />
               </h1>
-              <p className="text-stone-300 mt-1">
+              <p className="text-stone-300 text-xs">
                 One active FYP1 and one active FYP2 cycle at a time. Activating a cycle attaches every existing student to it.
               </p>
             </div>
@@ -393,9 +393,9 @@ export function CycleManagement() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <Calendar className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-neutral-900">No cycles found</h3>
+            <h3 className="font-medium text-neutral-900">No cycles found</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || statusFilter !== 'ALL'
                 ? 'Try adjusting your filters'

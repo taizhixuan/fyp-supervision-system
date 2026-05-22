@@ -51,9 +51,9 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
         <div className="absolute -right-10 -top-10 h-40 w-40 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="absolute -left-10 -bottom-10 h-40 w-40 bg-stone-500/20 rounded-full blur-3xl" />
         <div className="relative">
@@ -67,7 +67,7 @@ export function AdminDashboard() {
                   System Dashboard
                   <Sparkles className="h-5 w-5 text-amber-400" />
                 </h1>
-                <p className="text-stone-300 mt-1">
+                <p className="text-stone-300 text-xs">
                   Monitor system health and manage administrative tasks
                 </p>
               </div>

@@ -53,7 +53,7 @@ export function PendingRegistrations() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
           <UserPlus className="h-7 w-7 text-primary-600" />
@@ -110,7 +110,7 @@ export function PendingRegistrations() {
           <Spinner size="lg" />
         </div>
       ) : !data || data.registrations.length === 0 ? (
-        <Card className="p-12 text-center">
+        <Card className="text-center py-8">
           <UserPlus className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
           <h3 className="text-neutral-900 font-medium">No pending registrations</h3>
           <p className="text-sm text-neutral-500 mt-1">

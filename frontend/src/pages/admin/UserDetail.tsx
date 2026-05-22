@@ -147,7 +147,7 @@ export function UserDetail() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5 max-w-4xl mx-auto">
+    <div className="space-y-3 lg:space-y-4 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.ADMIN.USERS}>
@@ -174,7 +174,7 @@ export function UserDetail() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">{user.fullName}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">{user.fullName}</h1>
             <p className="text-neutral-600">{user.email}</p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span className={cn(

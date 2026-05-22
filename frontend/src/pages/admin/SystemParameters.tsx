@@ -146,8 +146,8 @@ export function SystemParameters() {
   }, {} as Record<ParameterCategory, AdminSystemParameter[]>)
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
+    <div className="space-y-3 lg:space-y-4">
+      <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-600/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         <div className="relative flex items-start gap-4">
@@ -159,7 +159,7 @@ export function SystemParameters() {
               System Parameters
               <Sparkles className="h-5 w-5 text-amber-400" />
             </h1>
-            <p className="text-stone-300 mt-1">
+            <p className="text-stone-300 text-xs">
               Configure system-wide settings and policies
             </p>
           </div>
@@ -270,7 +270,7 @@ export function SystemParameters() {
 
       {(!filteredParams || filteredParams.length === 0) && (
         <Card className="p-12 text-center border-stone-200">
-          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="hidden">
             <Settings className="h-8 w-8 text-stone-400" />
           </div>
           <h3 className="text-lg font-medium text-stone-900">No parameters found</h3>
