@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -54,6 +55,22 @@ export function SupervisorProfile() {
   const [newExpertise, setNewExpertise] = useState('')
   const [newProjectType, setNewProjectType] = useState('')
   const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // Right-column section tabs. The left identity panel (profile card, capacity,
+  // external links) stays always visible — it's identity, not section content.
+  const RIGHT_TABS = [
+    { id: 'about' as const, label: 'About', icon: Briefcase },
+    { id: 'research' as const, label: 'Research', icon: BookOpen },
+  ]
+  type RightTabId = (typeof RIGHT_TABS)[number]['id']
+  const [activeRightTab, setActiveRightTab] = useState<RightTabId>('about')
+
+  // Only right-column fields participate in tab-aware error routing; left-column
+  // fields (fullName, email, position, phoneNumber, etc.) are always visible.
+  const FIELD_TAB: Record<string, RightTabId> = {
+    bio: 'about',
+    researchAreas: 'research',
+  }
 
   const { data: profile, isLoading } = useSupervisorProfile()
   const updateProfile = useUpdateSupervisorProfile()
@@ -127,6 +144,15 @@ export function SupervisorProfile() {
     }
   }
 
+  // Jump to the offending right-column tab when validation fails on a tabbed field.
+  const onError = (formErrors: FieldErrors<ProfileFormData>) => {
+    const firstErrorField = Object.keys(formErrors)[0]
+    const targetTab = firstErrorField ? FIELD_TAB[firstErrorField] : undefined
+    if (targetTab && targetTab !== activeRightTab) {
+      setActiveRightTab(targetTab)
+    }
+  }
+
   const addToArray = (field: 'researchAreas' | 'expertise' | 'preferredProjectTypes', value: string) => {
     if (value.trim()) {
       const current = watch(field) ?? []
@@ -150,7 +176,7 @@ export function SupervisorProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn('space-y-6', isEditing && 'pb-24')}>
       {/* Header - Gradient Style */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
         {/* Decorative elements */}
@@ -163,30 +189,23 @@ export function SupervisorProfile() {
               <User className="h-7 w-7 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">My Profile</h1>
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                My Profile
+                {isEditing && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 text-xs font-medium border border-amber-500/30">
+                    <Edit2 className="h-3 w-3" />
+                    Editing
+                  </span>
+                )}
+              </h1>
               <p className="text-stone-300 mt-1">Manage your supervisor profile and preferences</p>
             </div>
           </div>
-          {!isEditing ? (
+          {!isEditing && (
             <Button onClick={handleStartEditing} className="bg-amber-500 hover:bg-amber-600 text-white border-0">
               <Edit2 className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" onClick={handleCancelEditing} className="border-stone-600 text-white hover:bg-stone-700">
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button onClick={handleSubmit(onSubmit)} disabled={updateProfile.isPending} className="bg-emerald-500 hover:bg-emerald-600 text-white border-0">
-                {updateProfile.isPending ? (
-                  <Spinner size="sm" className="mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save Changes
-              </Button>
-            </div>
           )}
         </div>
       </div>
@@ -438,6 +457,36 @@ export function SupervisorProfile() {
 
           {/* Right Column - Details */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Right-column tab nav */}
+            <div className="border-b border-stone-200">
+              <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Profile details">
+                {RIGHT_TABS.map((tab) => {
+                  const isActive = activeRightTab === tab.id
+                  const TabIcon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveRightTab(tab.id)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                        isActive
+                          ? 'border-amber-500 text-amber-700'
+                          : 'border-transparent text-stone-600 hover:text-stone-900 hover:border-stone-300'
+                      )}
+                    >
+                      <TabIcon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+
+            {/* Tab: About — Bio + Recent Supervised Projects */}
+            {activeRightTab === 'about' && (
+            <>
             {/* Bio */}
             <Card className="overflow-hidden">
               <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
@@ -513,7 +562,12 @@ export function SupervisorProfile() {
                 )}
               </div>
             </Card>
+            </>
+            )}
 
+            {/* Tab: Research — Research Areas + Expertise + Preferred Project Types */}
+            {activeRightTab === 'research' && (
+            <>
             {/* Research Areas */}
             <Card className="overflow-hidden">
               <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
@@ -711,9 +765,37 @@ export function SupervisorProfile() {
                 )}
               </div>
             </Card>
+            </>
+            )}
           </div>
         </div>
       </form>
+
+      {/* Sticky bottom action bar — visible only while editing */}
+      {isEditing && (
+        <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border border-stone-200 rounded-xl shadow-lg shadow-stone-300/30 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleCancelEditing}
+            disabled={updateProfile.isPending}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit, onError)}
+            disabled={updateProfile.isPending}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white border-0"
+          >
+            {updateProfile.isPending ? (
+              <Spinner size="sm" className="mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Save Changes
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
