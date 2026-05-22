@@ -13,43 +13,6 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { ProposalStatus } from '@/types'
 
-// Sample data for design preview
-const SAMPLE_VERSIONS = [
-  {
-    versionId: '3',
-    proposalId: '1',
-    version: 3,
-    title: 'AI-Powered Student Supervision System',
-    status: 'DRAFT' as ProposalStatus,
-    submittedAt: undefined,
-    fileUrl: '#',
-    changes: 'Updated methodology section based on supervisor feedback',
-    createdAt: '2025-01-20T10:00:00Z',
-  },
-  {
-    versionId: '2',
-    proposalId: '1',
-    version: 2,
-    title: 'AI-Powered Student Supervision System',
-    status: 'REVISION_REQUIRED' as ProposalStatus,
-    submittedAt: '2025-01-15T14:30:00Z',
-    fileUrl: '#',
-    changes: 'Added detailed objectives and refined scope',
-    createdAt: '2025-01-15T14:30:00Z',
-  },
-  {
-    versionId: '1',
-    proposalId: '1',
-    version: 1,
-    title: 'AI-Powered Student Supervision System',
-    status: 'REJECTED' as ProposalStatus,
-    submittedAt: '2025-01-10T09:00:00Z',
-    fileUrl: '#',
-    changes: 'Initial proposal submission',
-    createdAt: '2025-01-10T09:00:00Z',
-  },
-]
-
 const statusColors: Record<ProposalStatus, string> = {
   DRAFT: 'bg-neutral-100 text-neutral-700',
   SUBMITTED: 'bg-primary-100 text-primary-700',
@@ -62,8 +25,7 @@ const statusColors: Record<ProposalStatus, string> = {
 export function ProposalHistory() {
   const { data, isLoading } = useProposalVersions()
 
-  // Use sample data if no API data
-  const versions = data?.versions || SAMPLE_VERSIONS
+  const versions = data?.versions ?? []
 
   if (isLoading) {
     return (
@@ -93,6 +55,7 @@ export function ProposalHistory() {
       </div>
 
       {/* Timeline */}
+      {versions.length > 0 && (
       <div className="relative">
         {/* Timeline Line */}
         <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-neutral-200" />
@@ -182,6 +145,7 @@ export function ProposalHistory() {
           ))}
         </div>
       </div>
+      )}
 
       {versions.length === 0 && (
         <Card className="text-center py-12">

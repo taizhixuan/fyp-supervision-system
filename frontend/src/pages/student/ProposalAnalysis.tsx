@@ -12,45 +12,9 @@ import {
   TrendingDown,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
-import { useProposalAnalysis, useAnalyzeProposal } from '@/lib/hooks/useStudent'
+import { useProposalAnalysis, useAnalyzeProposal, useCurrentProposal } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-
-// Sample data for design preview
-const SAMPLE_ANALYSIS = {
-  analysisId: '1',
-  proposalId: '1',
-  overallScore: 78,
-  sectionAnalysis: [
-    { section: 'Title', status: 'COMPLETE' as const, score: 95, feedback: 'Clear and descriptive title that accurately reflects the project scope.' },
-    { section: 'Problem Statement', status: 'COMPLETE' as const, score: 85, feedback: 'Well-defined problem with clear motivation. Consider adding more recent statistics or citations.' },
-    { section: 'Objectives', status: 'COMPLETE' as const, score: 80, feedback: 'Objectives are specific and measurable. Consider adding timeline estimates for each objective.' },
-    { section: 'Scope', status: 'NEEDS_IMPROVEMENT' as const, score: 65, feedback: 'Scope is defined but could be more specific about limitations and boundaries.' },
-    { section: 'Methodology', status: 'NEEDS_IMPROVEMENT' as const, score: 70, feedback: 'Methodology is outlined but lacks detail on specific tools and techniques.' },
-    { section: 'Expected Outcomes', status: 'COMPLETE' as const, score: 75, feedback: 'Outcomes are clear but could be more specific about deliverables.' },
-    { section: 'Timeline', status: 'INCOMPLETE' as const, score: 50, feedback: 'Timeline needs more detailed milestones and deadlines.' },
-    { section: 'References', status: 'MISSING' as const, score: 0, feedback: 'No references provided. Academic proposals should include relevant literature.' },
-  ],
-  suggestions: [
-    { section: 'Scope', type: 'CONTENT' as const, priority: 'HIGH' as const, suggestion: 'Define specific boundaries of what the system will and will not cover.', example: 'E.g., "The system will focus on undergraduate FYP processes only and will not include postgraduate thesis management."' },
-    { section: 'Methodology', type: 'CLARITY' as const, priority: 'HIGH' as const, suggestion: 'Specify the development methodology and tools you plan to use.', example: 'E.g., "Agile methodology with 2-week sprints using React for frontend and Node.js for backend."' },
-    { section: 'Timeline', type: 'STRUCTURE' as const, priority: 'MEDIUM' as const, suggestion: 'Break down the project into phases with specific dates.', example: 'E.g., "Phase 1 (Week 1-4): Requirements gathering and system design"' },
-    { section: 'References', type: 'MISSING' as const, priority: 'HIGH' as const, suggestion: 'Add at least 5-10 academic references to support your proposal.', example: 'Include recent papers (2020-2024) related to your topic from IEEE, ACM, or other reputable sources.' },
-  ],
-  strengths: [
-    'Clear and focused project title',
-    'Well-articulated problem statement with real-world relevance',
-    'Measurable and achievable objectives',
-    'Good alignment between problem, objectives, and outcomes',
-  ],
-  weaknesses: [
-    'Missing academic references and literature review',
-    'Scope boundaries are not clearly defined',
-    'Methodology lacks technical depth',
-    'Timeline is too vague without specific milestones',
-  ],
-  analyzedAt: '2025-01-20T10:30:00Z',
-}
 
 const statusIcons = {
   COMPLETE: CheckCircle,
@@ -81,10 +45,12 @@ const priorityColors = {
 
 export function ProposalAnalysis() {
   const { data: analysis, isLoading } = useProposalAnalysis()
+  const { data: proposal } = useCurrentProposal()
   const analyzeMutation = useAnalyzeProposal()
 
-  // Use sample data if no API data
-  const displayAnalysis = analysis || SAMPLE_ANALYSIS
+  // Backend returns {} (empty object) for "no analysis yet" — treat that as null.
+  const hasAnalysis = !!(analysis && typeof analysis.overallScore === 'number')
+  const displayAnalysis = hasAnalysis ? analysis : null
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-success-600'
@@ -132,12 +98,47 @@ export function ProposalAnalysis() {
           variant="secondary"
           leftIcon={<RefreshCw className={cn('h-4 w-4', analyzeMutation.isPending && 'animate-spin')} />}
           onClick={() => analyzeMutation.mutate()}
-          disabled={analyzeMutation.isPending}
+          disabled={analyzeMutation.isPending || !proposal}
         >
-          Re-analyze
+          {hasAnalysis ? 'Re-analyze' : 'Run Analysis'}
         </Button>
       </div>
 
+      {!proposal && (
+        <Card className="text-center py-12">
+          <Sparkles className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+          <h2 className="text-lg font-medium text-neutral-900 mb-2">No proposal yet</h2>
+          <p className="text-neutral-500 mb-4">Start your proposal to enable AI analysis.</p>
+          <Link to={ROUTES.STUDENT.PROPOSAL}>
+            <Button variant="primary">Go to Proposal Workspace</Button>
+          </Link>
+        </Card>
+      )}
+
+      {proposal && !hasAnalysis && (
+        <Card className="text-center py-12">
+          <Sparkles className="h-12 w-12 text-primary-300 mx-auto mb-4" />
+          <h2 className="text-lg font-medium text-neutral-900 mb-2">No analysis yet</h2>
+          <p className="text-neutral-500 mb-4">
+            Run an AI analysis to get section-by-section feedback on your proposal.
+          </p>
+          <Button
+            variant="primary"
+            leftIcon={<Sparkles className="h-4 w-4" />}
+            onClick={() => analyzeMutation.mutate()}
+            isLoading={analyzeMutation.isPending}
+          >
+            Run AI Analysis
+          </Button>
+          {analyzeMutation.isError && (
+            <p className="text-sm text-error-600 mt-3">
+              Analysis failed. The AI service may be unavailable — try again in a moment.
+            </p>
+          )}
+        </Card>
+      )}
+
+      {hasAnalysis && displayAnalysis && (<>
       {/* Info Banner */}
       <AlertBanner
         variant="info"
@@ -190,12 +191,15 @@ export function ProposalAnalysis() {
             <h3 className="text-lg font-semibold text-neutral-900">Strengths</h3>
           </div>
           <ul className="space-y-2">
-            {displayAnalysis.strengths.map((strength, index) => (
+            {(displayAnalysis.strengths ?? []).map((strength, index) => (
               <li key={index} className="flex items-start gap-2">
                 <CheckCircle className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
                 <span className="text-neutral-700">{strength}</span>
               </li>
             ))}
+            {(displayAnalysis.strengths ?? []).length === 0 && (
+              <li className="text-sm text-neutral-500 italic">No strengths identified.</li>
+            )}
           </ul>
         </Card>
 
@@ -206,21 +210,25 @@ export function ProposalAnalysis() {
             <h3 className="text-lg font-semibold text-neutral-900">Areas for Improvement</h3>
           </div>
           <ul className="space-y-2">
-            {displayAnalysis.weaknesses.map((weakness, index) => (
+            {(displayAnalysis.weaknesses ?? []).map((weakness, index) => (
               <li key={index} className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-error-600 flex-shrink-0 mt-0.5" />
                 <span className="text-neutral-700">{weakness}</span>
               </li>
             ))}
+            {(displayAnalysis.weaknesses ?? []).length === 0 && (
+              <li className="text-sm text-neutral-500 italic">No weaknesses identified.</li>
+            )}
           </ul>
         </Card>
       </div>
 
       {/* Section Analysis */}
+      {(displayAnalysis.sectionAnalysis ?? []).length > 0 && (
       <Card>
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Section-by-Section Analysis</h3>
         <div className="space-y-4">
-          {displayAnalysis.sectionAnalysis.map((section) => {
+          {(displayAnalysis.sectionAnalysis ?? []).map((section) => {
             const StatusIcon = statusIcons[section.status]
             return (
               <div
@@ -255,15 +263,17 @@ export function ProposalAnalysis() {
           })}
         </div>
       </Card>
+      )}
 
       {/* Suggestions */}
+      {(displayAnalysis.suggestions ?? []).length > 0 && (
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <Lightbulb className="h-5 w-5 text-warning-600" />
           <h3 className="text-lg font-semibold text-neutral-900">Suggestions for Improvement</h3>
         </div>
         <div className="space-y-4">
-          {displayAnalysis.suggestions.map((suggestion, index) => (
+          {(displayAnalysis.suggestions ?? []).map((suggestion, index) => (
             <div key={index} className="p-4 bg-neutral-50 rounded-lg">
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div className="flex items-center gap-2">
@@ -284,6 +294,7 @@ export function ProposalAnalysis() {
           ))}
         </div>
       </Card>
+      )}
 
       {/* CTA */}
       <Card className="bg-primary-50 border-primary-200">
@@ -299,6 +310,7 @@ export function ProposalAnalysis() {
           </Link>
         </div>
       </Card>
+      </>)}
     </div>
   )
 }
