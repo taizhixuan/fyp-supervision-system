@@ -231,7 +231,7 @@ export function SupervisorLoad() {
             )
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-neutral-900">No supervisors found</h3>
             <p className="text-neutral-500 mt-1">

@@ -394,7 +394,7 @@ export function NotificationsCenter() {
             return <div key={notification.notificationId}>{content}</div>
           })
         ) : (
-          <Card className="p-12 text-center">
+          <Card className="text-center py-8">
             <Bell className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-neutral-900">No notifications</h3>
             <p className="text-neutral-500 mt-1">
