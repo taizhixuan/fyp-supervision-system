@@ -83,7 +83,7 @@ export function RegistrationStatus() {
   const progressPercentage = (completedSteps / totalSteps) * 100
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">Project Registration Status</h1>

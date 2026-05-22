@@ -191,25 +191,25 @@ export function CompareSupervisors() {
 
   if (ids.length === 0) {
     return (
-      <div className="space-y-4 lg:space-y-5">
+      <div className="space-y-3 lg:space-y-4">
         <Link
           to={ROUTES.STUDENT.SUPERVISORS}
-          className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Directory
         </Link>
 
-        <Card className="text-center py-12">
-          <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-neutral-900 mb-2">
+        <Card className="text-center py-8">
+          <Users className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h2 className="font-medium text-neutral-900 mb-1">
             No supervisors selected
           </h2>
-          <p className="text-neutral-500 mb-4">
+          <p className="text-sm text-neutral-500 mb-3">
             Select up to 3 supervisors from the directory to compare them side by side
           </p>
           <Link to={ROUTES.STUDENT.SUPERVISORS}>
-            <Button variant="primary">Browse Supervisors</Button>
+            <Button variant="primary" size="sm">Browse Supervisors</Button>
           </Link>
         </Card>
       </div>
@@ -230,19 +230,19 @@ export function CompareSupervisors() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.SUPERVISORS}
-        className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-primary-600 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Directory
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">Compare Supervisors</h1>
-        <p className="text-neutral-600 mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Compare Supervisors</h1>
+        <p className="text-xs text-neutral-600">
           Side-by-side comparison of selected supervisors
         </p>
       </div>
@@ -427,9 +427,9 @@ export function CompareSupervisors() {
       </Card>
 
       {/* Tips */}
-      <Card className="bg-primary-50 border-primary-200">
-        <h3 className="font-semibold text-primary-900 mb-2">Tips for Choosing a Supervisor</h3>
-        <ul className="text-sm text-primary-700 space-y-1">
+      <Card padding="sm" className="bg-primary-50 border-primary-200">
+        <h3 className="text-sm font-semibold text-primary-900 mb-1.5 uppercase tracking-wide">Tips for Choosing a Supervisor</h3>
+        <ul className="text-xs text-primary-700 space-y-0.5">
           <li>• Consider research area alignment with your project interests</li>
           <li>• Check availability and response times</li>
           <li>• Review their expertise and past supervision experience</li>

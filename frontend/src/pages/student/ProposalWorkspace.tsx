@@ -621,7 +621,7 @@ export function ProposalWorkspace() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Read-only banners — proposal APPROVED, or the FYP cycle has ended. */}
       {(isApproved || cycleEnded) && (
         <AlertBanner
@@ -634,10 +634,10 @@ export function ProposalWorkspace() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Proposal Workspace</h1>
-          <p className="text-neutral-600 mt-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Proposal Workspace</h1>
+          <p className="text-xs text-neutral-600">
             Create and edit your FYP proposal
           </p>
         </div>
@@ -734,7 +734,7 @@ export function ProposalWorkspace() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSave)} className="space-y-4 lg:space-y-5 pb-24">
+      <form onSubmit={handleSubmit(onSave)} className="space-y-3 lg:space-y-4 pb-24">
         {/* Wizard step indicator */}
         <Card className="!p-4 sm:!p-5">
           <ol className="relative grid grid-cols-5 gap-1 sm:gap-2">

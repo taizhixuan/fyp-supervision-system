@@ -166,28 +166,30 @@ export function NotificationCenter() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Notifications</h1>
-          <p className="text-neutral-600 mt-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Notifications</h1>
+          <p className="text-xs text-neutral-600">
             {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 flex-shrink-0">
           {unreadCount > 0 && (
             <Button
               variant="ghost"
+              size="sm"
               leftIcon={<CheckCheck className="h-4 w-4" />}
               onClick={handleMarkAllRead}
               isLoading={markAllRead.isPending}
+              className="whitespace-nowrap"
             >
               Mark All Read
             </Button>
           )}
           <Link to={ROUTES.STUDENT.NOTIFICATION_SETTINGS}>
-            <Button variant="secondary" leftIcon={<Settings className="h-4 w-4" />}>
+            <Button variant="secondary" size="sm" leftIcon={<Settings className="h-4 w-4" />} className="whitespace-nowrap">
               Settings
             </Button>
           </Link>
@@ -195,13 +197,13 @@ export function NotificationCenter() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex bg-neutral-100 rounded-lg p-1">
+      <Card padding="sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex bg-neutral-100 rounded-md p-0.5">
             <button
               onClick={() => setFilter('all')}
               className={cn(
-                'px-4 py-2 rounded text-sm font-medium transition-colors',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 filter === 'all' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
               )}
             >
@@ -210,7 +212,7 @@ export function NotificationCenter() {
             <button
               onClick={() => setFilter('unread')}
               className={cn(
-                'px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2',
+                'px-2.5 py-1 rounded text-xs font-medium transition-colors inline-flex items-center gap-1.5',
                 filter === 'unread' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
               )}
             >
@@ -221,12 +223,12 @@ export function NotificationCenter() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Filter className="h-4 w-4 text-neutral-500" />
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-2.5 py-1.5 rounded-md border border-neutral-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">All Types</option>
               {Object.entries(typeConfig).map(([key, config]) => (
@@ -238,7 +240,7 @@ export function NotificationCenter() {
       </Card>
 
       {/* Notifications List */}
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {filteredNotifications.map((notification) => (
           <NotificationCard
             key={notification.notificationId}
@@ -249,10 +251,10 @@ export function NotificationCenter() {
       </div>
 
       {filteredNotifications.length === 0 && (
-        <Card className="text-center py-12">
-          <Bell className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No notifications</h3>
-          <p className="text-neutral-500">
+        <Card className="text-center py-8">
+          <Bell className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="font-medium text-neutral-900 mb-1">No notifications</h3>
+          <p className="text-sm text-neutral-500">
             {filter === 'unread'
               ? "You've read all your notifications"
               : "You don't have any notifications yet"}
@@ -276,29 +278,30 @@ function NotificationCard({
   const content = (
     <Card
       hover={!!notification.actionUrl}
+      padding="sm"
       className={cn(
         'transition-all',
         !notification.isRead && 'border-l-4 border-l-primary-500 bg-primary-50/50'
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-2.5">
         {/* Icon */}
-        <div className={cn('w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0', config.bgColor)}>
-          <Icon className={cn('h-5 w-5', config.color)} />
+        <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', config.bgColor)}>
+          <Icon className={cn('h-4 w-4', config.color)} />
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className={cn(
-                'font-medium text-neutral-900',
-                !notification.isRead && 'font-semibold'
+                'text-sm text-neutral-900 leading-tight',
+                !notification.isRead ? 'font-semibold' : 'font-medium'
               )}>
                 {notification.title}
               </h3>
-              <p className="text-sm text-neutral-600 mt-1">{notification.message}</p>
-              <p className="text-xs text-neutral-400 mt-2">{formatTimeAgo(notification.createdAt)}</p>
+              <p className="text-xs text-neutral-600 mt-0.5 line-clamp-2 leading-snug">{notification.message}</p>
+              <p className="text-[11px] text-neutral-400 mt-1">{formatTimeAgo(notification.createdAt)}</p>
             </div>
 
             {!notification.isRead && (
@@ -308,10 +311,10 @@ function NotificationCard({
                   e.stopPropagation()
                   onMarkRead()
                 }}
-                className="p-2 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600"
+                className="p-1 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 flex-shrink-0"
                 title="Mark as read"
               >
-                <Check className="h-4 w-4" />
+                <Check className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -319,7 +322,7 @@ function NotificationCard({
 
         {/* Unread indicator */}
         {!notification.isRead && (
-          <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0 mt-2" />
         )}
       </div>
     </Card>

@@ -81,7 +81,7 @@ export function SupervisorDetail() {
   const loadPercentage = (displaySupervisor.currentLoad / displaySupervisor.maxCapacity) * 100
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.SUPERVISORS}
@@ -219,7 +219,7 @@ export function SupervisorDetail() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* About */}
           {displaySupervisor.bio && (
             <Card>
@@ -324,7 +324,7 @@ export function SupervisorDetail() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {/* Contact Info */}
           <Card>
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Contact Information</h2>

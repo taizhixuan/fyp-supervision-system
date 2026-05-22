@@ -139,17 +139,17 @@ export function MyRequests() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">My Supervision Requests</h1>
-          <p className="text-neutral-600 mt-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">My Supervision Requests</h1>
+          <p className="text-xs text-neutral-600">
             Track and manage your supervision requests
           </p>
         </div>
         <Link to={ROUTES.STUDENT.SUPERVISORS}>
-          <Button variant="primary" leftIcon={<Send className="h-4 w-4" />}>
+          <Button variant="primary" size="sm" leftIcon={<Send className="h-4 w-4" />} className="whitespace-nowrap">
             Find Supervisor
           </Button>
         </Link>
@@ -168,41 +168,41 @@ export function MyRequests() {
         />
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-warning-600">{pendingRequests.length}</div>
-          <p className="text-sm text-neutral-600">Pending</p>
+      {/* Summary Cards — compact inline */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card padding="sm" className="text-center">
+          <div className="text-lg font-bold text-warning-600 leading-none">{pendingRequests.length}</div>
+          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Pending</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-success-600">
+        <Card padding="sm" className="text-center">
+          <div className="text-lg font-bold text-success-600 leading-none">
             {requests.filter((r) => r.status === 'ACCEPTED').length}
           </div>
-          <p className="text-sm text-neutral-600">Accepted</p>
+          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Accepted</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-error-600">
+        <Card padding="sm" className="text-center">
+          <div className="text-lg font-bold text-error-600 leading-none">
             {requests.filter((r) => r.status === 'REJECTED').length}
           </div>
-          <p className="text-sm text-neutral-600">Rejected</p>
+          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Rejected</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-neutral-600">{requests.length}</div>
-          <p className="text-sm text-neutral-600">Total</p>
+        <Card padding="sm" className="text-center">
+          <div className="text-lg font-bold text-neutral-600 leading-none">{requests.length}</div>
+          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Total</p>
         </Card>
       </div>
 
       {requests.length === 0 ? (
-        <Card className="text-center py-12">
-          <Send className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-neutral-900 mb-2">
+        <Card className="text-center py-8">
+          <Send className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h2 className="font-medium text-neutral-900 mb-1">
             No requests yet
           </h2>
-          <p className="text-neutral-500 mb-4">
+          <p className="text-sm text-neutral-500 mb-3">
             Start by finding a supervisor and sending them a request
           </p>
           <Link to={ROUTES.STUDENT.SUPERVISORS}>
-            <Button variant="primary">Browse Supervisors</Button>
+            <Button variant="primary" size="sm">Browse Supervisors</Button>
           </Link>
         </Card>
       ) : (
@@ -210,10 +210,14 @@ export function MyRequests() {
           {/* Pending Requests */}
           {pendingRequests.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-                Pending Requests ({pendingRequests.length})
-              </h2>
-              <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-warning-600" />
+                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Pending Requests</h2>
+                <span className="px-1.5 py-0 bg-warning-100 text-warning-700 text-[10px] font-semibold rounded-full">
+                  {pendingRequests.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                 {pendingRequests.map((request) => (
                   <RequestCard
                     key={request.requestId}
@@ -232,10 +236,14 @@ export function MyRequests() {
           {/* Responded Requests */}
           {respondedRequests.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-                Responded ({respondedRequests.length})
-              </h2>
-              <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="h-4 w-4 text-info-600" />
+                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Responded</h2>
+                <span className="px-1.5 py-0 bg-info-100 text-info-700 text-[10px] font-semibold rounded-full">
+                  {respondedRequests.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                 {respondedRequests.map((request) => (
                   <RequestCard
                     key={request.requestId}
@@ -250,10 +258,14 @@ export function MyRequests() {
           {/* Other Requests */}
           {otherRequests.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-                Past Requests ({otherRequests.length})
-              </h2>
-              <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <RotateCcw className="h-4 w-4 text-stone-500" />
+                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Past Requests</h2>
+                <span className="px-1.5 py-0 bg-stone-100 text-stone-600 text-[10px] font-semibold rounded-full">
+                  {otherRequests.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                 {otherRequests.map((request) => (
                   <RequestCard
                     key={request.requestId}
@@ -437,11 +449,11 @@ function RequestCard({ request, onViewDetails, onWithdraw }: RequestCardProps) {
   )
 
   return (
-    <Card hover className="cursor-pointer" onClick={onViewDetails}>
-      <div className="flex flex-col sm:flex-row gap-4">
+    <Card hover padding="sm" className="cursor-pointer" onClick={onViewDetails}>
+      <div className="flex items-start gap-2.5">
         {/* Supervisor Avatar */}
-        <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-lg font-bold text-primary-600">
+        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-bold text-primary-600">
             {request.supervisor.fullName
               .split(' ')
               .filter((n) => !['Dr.', 'Prof.'].includes(n))
@@ -454,64 +466,64 @@ function RequestCard({ request, onViewDetails, onWithdraw }: RequestCardProps) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-neutral-900">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-sm text-neutral-900 leading-tight truncate">
                 {request.supervisor.fullName}
               </h3>
-              <p className="text-sm text-neutral-600">
-                {request.supervisor.title} • {request.supervisor.department}
+              <p className="text-[11px] text-neutral-600 truncate">
+                {request.supervisor.title} · {request.supervisor.department}
               </p>
             </div>
-            <Badge variant={config.variant} size="sm">
-              <StatusIcon className="h-3 w-3 mr-1" />
+            <Badge variant={config.variant} size="sm" className="flex-shrink-0">
+              <StatusIcon className="h-3 w-3 mr-0.5" />
               {config.label}
             </Badge>
           </div>
 
-          <p className="mt-2 text-sm text-neutral-700 font-medium">
+          <p className="mt-1.5 text-xs text-neutral-700 font-semibold line-clamp-1">
             {request.proposedTitle}
           </p>
-          <p className="mt-1 text-sm text-neutral-500 line-clamp-2">
+          <p className="text-[11px] text-neutral-500 line-clamp-2 leading-snug">
             {request.topicDescription}
           </p>
 
           {/* Timeline */}
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-neutral-500">
-            <span className="flex items-center gap-1">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
+            <span className="inline-flex items-center gap-0.5">
               <Calendar className="h-3 w-3" />
-              Submitted {new Date(request.submittedAt).toLocaleDateString('en-MY')}
+              {new Date(request.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
             </span>
             {request.status === 'PENDING' && daysRemaining > 0 && (
               <span className={cn(
-                'flex items-center gap-1',
-                daysRemaining <= 7 && 'text-warning-600'
+                'inline-flex items-center gap-0.5',
+                daysRemaining <= 7 && 'text-warning-600 font-semibold'
               )}>
                 <Clock className="h-3 w-3" />
-                Expires in {daysRemaining} days
+                {daysRemaining}d left
               </span>
             )}
             {request.respondedAt && (
-              <span className="flex items-center gap-1">
+              <span className="inline-flex items-center gap-0.5">
                 <MessageSquare className="h-3 w-3" />
-                Responded {new Date(request.respondedAt).toLocaleDateString('en-MY')}
+                {new Date(request.respondedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
               </span>
             )}
           </div>
 
           {/* Actions */}
-          <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
-            <Button variant="secondary" size="sm" onClick={onViewDetails}>
-              View Details
+          <div className="mt-2 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <Button variant="secondary" size="sm" onClick={onViewDetails} className="whitespace-nowrap">
+              Details
             </Button>
             {request.status === 'PENDING' && onWithdraw && (
-              <Button variant="ghost" size="sm" onClick={onWithdraw}>
+              <Button variant="ghost" size="sm" onClick={onWithdraw} className="whitespace-nowrap">
                 Withdraw
               </Button>
             )}
             {request.status === 'ACCEPTED' && (
               <Link to={ROUTES.STUDENT.MEETING_NEW}>
-                <Button variant="primary" size="sm">
-                  Schedule Meeting
+                <Button variant="primary" size="sm" className="whitespace-nowrap">
+                  Schedule
                 </Button>
               </Link>
             )}
