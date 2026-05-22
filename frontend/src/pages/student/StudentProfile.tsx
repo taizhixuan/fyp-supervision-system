@@ -19,7 +19,9 @@ import {
   Camera,
   Upload,
   BookOpen,
+  User,
 } from 'lucide-react'
+import type { FieldErrors } from 'react-hook-form'
 import { Card, Button, Input, Badge, Spinner, AlertBanner, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/components/ui'
 import { useStudentProfile, useUpdateStudentProfile, useUploadProfileImage } from '@/lib/hooks/useStudent'
 import {
@@ -94,6 +96,29 @@ export function StudentProfile() {
   const [skills, setSkills] = useState<string[]>([])
   const [interests, setInterests] = useState<string[]>([])
 
+  // Tabbed sections — keeps the long profile form discoverable.
+  const TABS = [
+    { id: 'academic' as const, label: 'Academic', icon: GraduationCap },
+    { id: 'contact' as const, label: 'Contact', icon: Phone },
+    { id: 'about' as const, label: 'About', icon: User },
+  ]
+  type TabId = (typeof TABS)[number]['id']
+  const [activeTab, setActiveTab] = useState<TabId>('academic')
+
+  // Map each form field back to the tab it lives on — used to auto-switch
+  // to the first failing tab when submit-time validation rejects the form.
+  const FIELD_TAB: Record<string, TabId> = {
+    specialisation: 'academic',
+    intakeYear: 'academic',
+    cgpa: 'academic',
+    expectedGraduation: 'academic',
+    phone: 'contact',
+    linkedinUrl: 'contact',
+    githubUrl: 'contact',
+    portfolioUrl: 'contact',
+    bio: 'about',
+  }
+
   // Profile image upload state
   const [showImageModal, setShowImageModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -144,6 +169,16 @@ export function StudentProfile() {
     setSkills(profile.skills ?? [])
     setInterests(profile.researchInterests ?? [])
   }, [profile, reset])
+
+  // On submit-time validation failure, jump to the first tab containing an error
+  // so the user can actually see the field that failed.
+  const onError = (formErrors: FieldErrors<ProfileFormData>) => {
+    const firstErrorField = Object.keys(formErrors)[0]
+    const targetTab = firstErrorField ? FIELD_TAB[firstErrorField] : undefined
+    if (targetTab && targetTab !== activeTab) {
+      setActiveTab(targetTab)
+    }
+  }
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
@@ -286,11 +321,19 @@ export function StudentProfile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className={cn('max-w-4xl mx-auto space-y-6', isEditing && 'pb-24')}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900">My Profile</h1>
-        {!isEditing ? (
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-neutral-900">My Profile</h1>
+          {isEditing && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-medium border border-primary-100">
+              <Edit2 className="h-3 w-3" />
+              Editing
+            </span>
+          )}
+        </div>
+        {!isEditing && (
           <Button
             variant="secondary"
             leftIcon={<Edit2 className="h-4 w-4" />}
@@ -298,20 +341,6 @@ export function StudentProfile() {
           >
             Edit Profile
           </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="ghost" leftIcon={<X className="h-4 w-4" />} onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              leftIcon={<Save className="h-4 w-4" />}
-              onClick={handleSubmit(onSubmit)}
-              isLoading={updateProfile.isPending}
-            >
-              Save Changes
-            </Button>
-          </div>
         )}
       </div>
 
@@ -446,6 +475,36 @@ export function StudentProfile() {
         </div>
       </Card>
 
+      {/* Tab navigation */}
+      <div className="border-b border-neutral-200">
+        <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Profile sections">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id
+            const TabIcon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                  isActive
+                    ? 'border-primary-600 text-primary-700'
+                    : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
+                )}
+              >
+                <TabIcon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Tab: Academic */}
+      {activeTab === 'academic' && (
+      <>
       {/* Academic Information */}
       <Card>
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Academic Information</h3>
@@ -585,7 +644,12 @@ export function StudentProfile() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {/* Tab: Contact */}
+      {activeTab === 'contact' && (
+      <>
       {/* Contact & Social Links */}
       <Card>
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Contact & Social Links</h3>
@@ -676,7 +740,12 @@ export function StudentProfile() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {/* Tab: About — bio + skills + research interests */}
+      {activeTab === 'about' && (
+      <>
       {/* Bio */}
       <Card>
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">About Me</h3>
@@ -811,6 +880,40 @@ export function StudentProfile() {
           )}
         </div>
       </Card>
+      </>
+      )}
+
+      {/* Sticky bottom action bar — visible only while editing */}
+      {isEditing && (
+        <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border border-neutral-200 rounded-xl shadow-lg shadow-stone-300/30 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            leftIcon={<X className="h-4 w-4" />}
+            onClick={handleCancel}
+            disabled={updateProfile.isPending}
+          >
+            Cancel
+          </Button>
+          <div className="flex items-center gap-2">
+            {!isDirty && !selectedImage && (
+              <span className="hidden sm:block text-xs text-neutral-500">
+                No changes to save
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="primary"
+              leftIcon={<Save className="h-4 w-4" />}
+              onClick={handleSubmit(onSubmit, onError)}
+              isLoading={updateProfile.isPending}
+              disabled={!isDirty && !selectedImage}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Profile Image Upload Modal */}
       <Modal
