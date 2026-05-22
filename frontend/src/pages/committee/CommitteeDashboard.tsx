@@ -131,354 +131,255 @@ export function CommitteeDashboard() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Header with KPIs inline */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <LayoutDashboard className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <LayoutDashboard className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">FYP Committee Dashboard</h1>
-              <p className="text-stone-300 mt-1">
-                Overview of FYP programme status and key metrics
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">FYP Committee Dashboard</h1>
+              <p className="text-stone-300 text-xs">Overview of FYP programme status and key metrics</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-stone-700/50 backdrop-blur-sm rounded-xl ring-1 ring-stone-600/30">
-            <Calendar className="h-4 w-4 text-amber-400" />
-            <span className="text-sm text-stone-200">
-              {new Date().toLocaleDateString('en-MY', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-700/50 backdrop-blur-sm rounded-md ring-1 ring-stone-600/30 flex-shrink-0">
+            <Calendar className="h-3.5 w-3.5 text-amber-400" />
+            <span className="text-xs text-stone-200 whitespace-nowrap">
+              {new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
           </div>
         </div>
+
+        {/* KPI chips inline */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {kpiCards.map((kpi) => (
+            <Link key={kpi.label} to={kpi.link}>
+              <div className={cn(
+                'flex items-center gap-2 rounded-md px-2 py-1.5 ring-1 transition-colors',
+                kpi.highlight ? 'bg-amber-500/30 ring-amber-300/40 hover:bg-amber-500/40' : 'bg-stone-700/40 ring-stone-600/40 hover:bg-stone-700/60'
+              )}>
+                <div className={cn('p-1 rounded flex-shrink-0', kpi.bgColor)}>
+                  <kpi.icon className={cn('h-3.5 w-3.5', kpi.color)} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-base font-bold leading-none">{kpi.value}</div>
+                  <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{kpi.label}</p>
+                </div>
+                {kpi.highlight && <Sparkles className="h-3 w-3 text-amber-300 ml-auto flex-shrink-0" />}
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
-      {/* Alerts */}
+      {/* Alerts — compact inline strips */}
       {alerts && alerts.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           {alerts.filter((a) => !a.isRead).slice(0, 3).map((alert) => (
             <div
               key={alert.alertId}
               className={cn(
-                'flex items-start gap-3 p-4 rounded-xl border-l-4 shadow-sm',
+                'flex items-center gap-2 px-3 py-1.5 rounded-md border',
                 getAlertBg(alert.type),
-                alert.type === 'URGENT' && 'border-l-rose-500',
-                alert.type === 'WARNING' && 'border-l-amber-500',
-                alert.type !== 'URGENT' && alert.type !== 'WARNING' && 'border-l-sky-500'
               )}
             >
-              <div className={cn(
-                'p-2 rounded-lg',
-                alert.type === 'URGENT' && 'bg-rose-100',
-                alert.type === 'WARNING' && 'bg-amber-100',
-                alert.type !== 'URGENT' && alert.type !== 'WARNING' && 'bg-sky-100'
-              )}>
-                {getAlertIcon(alert.type)}
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-stone-800">{alert.title}</p>
-                <p className="text-sm text-stone-600 mt-0.5">{alert.message}</p>
+              {getAlertIcon(alert.type)}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-stone-800 truncate">{alert.title}</p>
+                <p className="text-xs text-stone-600 line-clamp-1">{alert.message}</p>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiCards.map((kpi) => (
-          <Link key={kpi.label} to={kpi.link}>
-            <Card
-              className={cn(
-                'group p-4 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4',
-                kpi.borderColor,
-                kpi.highlight && 'ring-2 ring-amber-400 bg-amber-50/30'
-              )}
-            >
-              <div className="flex items-start justify-between">
-                <div className={cn('p-2.5 rounded-xl shadow-sm', kpi.bgColor)}>
-                  <kpi.icon className={cn('h-5 w-5', kpi.color)} />
+      {/* Main two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Left — Programme stats + Quick actions + Supervisor overview */}
+        <div className="lg:col-span-2 space-y-3">
+          {/* Programme stats — compact */}
+          <Card padding="sm">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Programme Statistics</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-stone-50 rounded-md p-2">
+                <div className="flex items-center gap-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wide mb-1">
+                  <Users className="h-3 w-3" /> Students
                 </div>
-                {kpi.highlight && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-                    <Sparkles className="h-3 w-3" />
-                    Urgent
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs">
+                  <span className="text-stone-600">Total</span>
+                  <span className="font-bold text-stone-800 text-right">{stats?.totalStudents ?? 0}</span>
+                  <span className="text-stone-600">FYP1</span>
+                  <span className="font-bold text-sky-600 text-right">{stats?.fyp1Students ?? 0}</span>
+                  <span className="text-stone-600">FYP2</span>
+                  <span className="font-bold text-violet-600 text-right">{stats?.fyp2Students ?? 0}</span>
+                  <span className="text-stone-600">Unpaired</span>
+                  <span className="font-bold text-rose-600 text-right">{stats?.unpairedStudents ?? 0}</span>
+                </div>
+              </div>
+              <div className="bg-stone-50 rounded-md p-2">
+                <div className="flex items-center gap-1 text-[10px] font-semibold text-stone-500 uppercase tracking-wide mb-1">
+                  <FileText className="h-3 w-3" /> Proposals
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs">
+                  <span className="text-stone-600">Total</span>
+                  <span className="font-bold text-stone-800 text-right">{stats?.totalProposals ?? 0}</span>
+                  <span className="text-stone-600">Approved</span>
+                  <span className="font-bold text-emerald-600 text-right">{stats?.approvedProposals ?? 0}</span>
+                  <span className="text-stone-600">Pending</span>
+                  <span className="font-bold text-amber-600 text-right">{stats?.pendingReviews ?? 0}</span>
+                  <span className="text-stone-600">Rejected</span>
+                  <span className="font-bold text-rose-600 text-right">{stats?.rejectedProposals ?? 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress bars */}
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-stone-600 font-medium">Approval Rate</span>
+                  <span className="font-bold text-emerald-600">
+                    {stats?.totalProposals ? Math.round((stats.approvedProposals / stats.totalProposals) * 100) : 0}%
                   </span>
-                )}
-              </div>
-              <p className="text-3xl font-bold text-stone-800 mt-3 group-hover:text-amber-700 transition-colors">{kpi.value}</p>
-              <p className="text-sm text-stone-500 font-medium mt-1">{kpi.label}</p>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Statistics */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
-          {/* Student & Project Stats */}
-          <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
-              <h3 className="font-semibold text-stone-800 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-amber-600" />
-                Programme Statistics
-              </h3>
-            </div>
-            <div className="p-6">
-              <div className="grid sm:grid-cols-2 gap-6">
-                {/* Students */}
-                <div className="p-4 bg-stone-50 rounded-xl">
-                  <h4 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-stone-500" />
-                    Students
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Total Students</span>
-                      <span className="font-bold text-stone-800">{stats?.totalStudents ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">FYP1 Students</span>
-                      <span className="font-bold text-sky-600">{stats?.fyp1Students ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">FYP2 Students</span>
-                      <span className="font-bold text-violet-600">{stats?.fyp2Students ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Unpaired</span>
-                      <span className="font-bold text-rose-600">{stats?.unpairedStudents ?? 0}</span>
-                    </div>
-                  </div>
                 </div>
-
-                {/* Proposals */}
-                <div className="p-4 bg-stone-50 rounded-xl">
-                  <h4 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-stone-500" />
-                    Proposals
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Total Proposals</span>
-                      <span className="font-bold text-stone-800">{stats?.totalProposals ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Approved</span>
-                      <span className="font-bold text-emerald-600">{stats?.approvedProposals ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Pending Review</span>
-                      <span className="font-bold text-amber-600">{stats?.pendingReviews ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-stone-600">Rejected</span>
-                      <span className="font-bold text-rose-600">{stats?.rejectedProposals ?? 0}</span>
-                    </div>
-                  </div>
+                <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{ width: `${stats?.totalProposals ? (stats.approvedProposals / stats.totalProposals) * 100 : 0}%` }}
+                  />
                 </div>
               </div>
-
-              {/* Progress Bars */}
-              <div className="mt-6 pt-6 border-t border-stone-200">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-stone-600 font-medium">Proposal Approval Rate</span>
-                      <span className="font-bold text-emerald-600">
-                        {stats?.totalProposals
-                          ? Math.round((stats.approvedProposals / stats.totalProposals) * 100)
-                          : 0}%
-                      </span>
-                    </div>
-                    <div className="h-3 bg-stone-100 rounded-full overflow-hidden shadow-inner">
-                      <div
-                        className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all"
-                        style={{
-                          width: `${stats?.totalProposals
-                            ? (stats.approvedProposals / stats.totalProposals) * 100
-                            : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-stone-600 font-medium">Pairing Completion</span>
-                      <span className="font-bold text-sky-600">
-                        {stats?.totalStudents
-                          ? Math.round(((stats.totalStudents - stats.unpairedStudents) / stats.totalStudents) * 100)
-                          : 0}%
-                      </span>
-                    </div>
-                    <div className="h-3 bg-stone-100 rounded-full overflow-hidden shadow-inner">
-                      <div
-                        className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-all"
-                        style={{
-                          width: `${stats?.totalStudents
-                            ? ((stats.totalStudents - stats.unpairedStudents) / stats.totalStudents) * 100
-                            : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
+              <div>
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-stone-600 font-medium">Pairing Completion</span>
+                  <span className="font-bold text-sky-600">
+                    {stats?.totalStudents ? Math.round(((stats.totalStudents - stats.unpairedStudents) / stats.totalStudents) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sky-500 rounded-full"
+                    style={{ width: `${stats?.totalStudents ? ((stats.totalStudents - stats.unpairedStudents) / stats.totalStudents) * 100 : 0}%` }}
+                  />
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Quick Actions */}
-          <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
-              <h3 className="font-semibold text-stone-800">Quick Actions</h3>
+          {/* Quick Actions — compact inline */}
+          <Card padding="sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-violet-600" />
+              <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Quick Actions</h3>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {quickActions.map((action) => (
-                  <Link key={action.label} to={action.href}>
-                    <div className={cn(
-                      'group flex flex-col items-center p-4 rounded-xl border border-stone-200 transition-all duration-300 text-center',
-                      action.hoverBg,
-                      'hover:shadow-md hover:border-stone-300'
-                    )}>
-                      <div className="p-2.5 bg-stone-100 rounded-xl group-hover:scale-110 transition-transform">
-                        <action.icon className={cn('h-6 w-6', action.color)} />
-                      </div>
-                      <span className="text-sm font-medium text-stone-700 mt-2">{action.label}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {quickActions.map((action) => (
+                <Link key={action.label} to={action.href}>
+                  <div className={cn(
+                    'group flex items-center gap-2 px-2.5 py-2 rounded-md border border-stone-200 transition-all',
+                    action.hoverBg, 'hover:border-stone-300'
+                  )}>
+                    <action.icon className={cn('h-4 w-4', action.color)} />
+                    <span className="text-xs font-semibold text-stone-700 truncate">{action.label}</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </Card>
 
-          {/* Supervisor Load Summary */}
-          <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200 flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800 flex items-center gap-2">
-                <Users className="h-5 w-5 text-amber-600" />
-                Supervisor Overview
-              </h3>
+          {/* Supervisor Overview — compact */}
+          <Card padding="sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-amber-600" />
+                <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Supervisor Overview</h3>
+              </div>
               <Link to={ROUTES.COMMITTEE.SUPERVISOR_LOAD}>
-                <Button variant="ghost" size="sm" className="text-stone-600 hover:text-amber-700">
-                  View All <ChevronRight className="h-4 w-4 ml-1" />
+                <Button variant="ghost" size="sm" className="text-stone-600 hover:text-amber-700 whitespace-nowrap">
+                  View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                 </Button>
               </Link>
             </div>
-            <div className="p-4">
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-stone-100 rounded-xl">
-                  <p className="text-3xl font-bold text-stone-800">{stats?.totalSupervisors ?? 0}</p>
-                  <p className="text-sm text-stone-600 font-medium">Total Supervisors</p>
-                </div>
-                <div className="text-center p-4 bg-emerald-100 rounded-xl">
-                  <p className="text-3xl font-bold text-emerald-700">
-                    {(stats?.totalSupervisors ?? 0) - (stats?.overloadedSupervisors ?? 0)}
-                  </p>
-                  <p className="text-sm text-emerald-700 font-medium">Within Capacity</p>
-                </div>
-                <div className="text-center p-4 bg-rose-100 rounded-xl">
-                  <p className="text-3xl font-bold text-rose-700">{stats?.overloadedSupervisors ?? 0}</p>
-                  <p className="text-sm text-rose-700 font-medium">Overloaded</p>
-                </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <div className="text-center p-2 bg-stone-100 rounded-md">
+                <p className="text-lg font-bold text-stone-800 leading-none">{stats?.totalSupervisors ?? 0}</p>
+                <p className="text-[10px] text-stone-600 mt-0.5 uppercase tracking-wide">Total</p>
+              </div>
+              <div className="text-center p-2 bg-emerald-100 rounded-md">
+                <p className="text-lg font-bold text-emerald-700 leading-none">
+                  {(stats?.totalSupervisors ?? 0) - (stats?.overloadedSupervisors ?? 0)}
+                </p>
+                <p className="text-[10px] text-emerald-700 mt-0.5 uppercase tracking-wide">Capacity</p>
+              </div>
+              <div className="text-center p-2 bg-rose-100 rounded-md">
+                <p className="text-lg font-bold text-rose-700 leading-none">{stats?.overloadedSupervisors ?? 0}</p>
+                <p className="text-[10px] text-rose-700 mt-0.5 uppercase tracking-wide">Overloaded</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Right Column - Activity Feed */}
-        <div className="space-y-4 lg:space-y-5">
-          {/* Recent Activity */}
-          <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
-              <h3 className="font-semibold text-stone-800 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-amber-600" />
-                Recent Activity
-              </h3>
+        {/* Right — Activity feed + deadlines */}
+        <div className="space-y-3">
+          <Card padding="sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Recent Activity</h3>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="divide-y divide-stone-100">
               {recentActivities && recentActivities.length > 0 ? (
-                recentActivities.slice(0, 6).map((activity) => (
-                  <div key={activity.activityId} className="group flex items-start gap-3 p-2 rounded-lg hover:bg-stone-50 transition-colors">
-                    <div className="p-2 bg-stone-100 rounded-lg group-hover:bg-white transition-colors">
+                recentActivities.slice(0, 5).map((activity) => (
+                  <div key={activity.activityId} className="py-1.5 flex items-start gap-2 hover:bg-stone-50/50 transition-colors">
+                    <div className="p-1 bg-stone-100 rounded flex-shrink-0">
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-800">{activity.title}</p>
-                      <p className="text-xs text-stone-500 mt-0.5 truncate">{activity.description}</p>
-                      <p className="text-xs text-stone-400 mt-1">
-                        {new Date(activity.timestamp).toLocaleString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{activity.title}</p>
+                      <p className="text-[11px] text-stone-500 line-clamp-1">{activity.description}</p>
+                      <p className="text-[10px] text-stone-400">
+                        {new Date(activity.timestamp).toLocaleString('en-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Activity className="h-6 w-6 text-stone-400" />
-                  </div>
-                  <p className="text-sm text-stone-500">No recent activity</p>
+                <div className="py-6 text-center">
+                  <Activity className="h-8 w-8 text-stone-300 mx-auto mb-1" />
+                  <p className="text-xs text-stone-500">No recent activity</p>
                 </div>
               )}
             </div>
           </Card>
 
-          {/* Upcoming Deadlines */}
-          <Card className="overflow-hidden">
-            <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
-              <h3 className="font-semibold text-stone-800 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-amber-600" />
-                Upcoming Deadlines
-              </h3>
+          <Card padding="sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Upcoming Deadlines</h3>
             </div>
-            <div className="p-4 space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-rose-50 rounded-xl border border-rose-100">
-                <div className="w-14 h-14 bg-rose-100 rounded-xl flex flex-col items-center justify-center">
-                  <p className="text-lg font-bold text-rose-700">31</p>
-                  <p className="text-xs text-rose-600 font-medium">JAN</p>
+            <div className="space-y-1.5">
+              {[
+                { date: '31', month: 'JAN', title: 'FYP1 Proposal Deadline', desc: 'All FYP1 proposals due', color: 'rose' },
+                { date: '15', month: 'FEB', title: 'Pairing Completion', desc: 'All students must be paired', color: 'amber' },
+                { date: '15', month: 'MAR', title: 'FYP2 Presentations', desc: 'Final presentations begin', color: 'sky' },
+              ].map((d) => (
+                <div key={d.title} className={cn(`flex items-center gap-2 p-2 rounded-md bg-${d.color}-50 border border-${d.color}-100`)}>
+                  <div className={cn(`w-10 bg-${d.color}-100 rounded-md p-1 text-center flex-shrink-0`)}>
+                    <p className={cn(`text-sm font-bold leading-none text-${d.color}-700`)}>{d.date}</p>
+                    <p className={cn(`text-[9px] text-${d.color}-600 font-medium leading-none mt-0.5`)}>{d.month}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{d.title}</p>
+                    <p className="text-[10px] text-stone-500 truncate">{d.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-800">FYP1 Proposal Deadline</p>
-                  <p className="text-xs text-stone-500">All FYP1 proposals due</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                <div className="w-14 h-14 bg-amber-100 rounded-xl flex flex-col items-center justify-center">
-                  <p className="text-lg font-bold text-amber-700">15</p>
-                  <p className="text-xs text-amber-600 font-medium">FEB</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-800">Pairing Completion</p>
-                  <p className="text-xs text-stone-500">All students must be paired</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-sky-50 rounded-xl border border-sky-100">
-                <div className="w-14 h-14 bg-sky-100 rounded-xl flex flex-col items-center justify-center">
-                  <p className="text-lg font-bold text-sky-700">15</p>
-                  <p className="text-xs text-sky-600 font-medium">MAR</p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-800">FYP2 Presentations</p>
-                  <p className="text-xs text-stone-500">Final presentations begin</p>
-                </div>
-              </div>
+              ))}
             </div>
           </Card>
         </div>

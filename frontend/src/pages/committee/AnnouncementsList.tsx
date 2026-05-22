@@ -99,38 +99,62 @@ export function AnnouncementsList() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Header with stats inline */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <Megaphone className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Megaphone className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">FYP Announcements</h1>
-              <p className="text-stone-300 mt-1">
-                Manage announcements for all FYP students and supervisors
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">FYP Announcements</h1>
+              <p className="text-stone-300 text-xs">Manage announcements for all FYP students and supervisors</p>
             </div>
           </div>
           <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_NEW}>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              New Announcement
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              New
             </Button>
           </Link>
         </div>
+
+        {data && data.announcements.length > 0 && (
+          <div className="relative mt-3 grid grid-cols-4 gap-1.5 text-center">
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none">{data.total}</div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Total</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-emerald-300">
+                {data.announcements.filter((a) => a.status === 'PUBLISHED').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Published</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-amber-300">
+                {data.announcements.filter((a) => a.priority === 'HIGH' || a.priority === 'URGENT').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Important</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-sky-300">
+                {data.announcements.reduce((sum, a) => sum + a.viewCount, 0)}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Views</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
-      <Card className="p-4 bg-gradient-to-r from-stone-100 to-stone-50">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
             <Input
               type="text"
               placeholder="Search announcements..."
@@ -139,11 +163,11 @@ export function AnnouncementsList() {
               className="pl-9"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as AnnouncementStatus | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-2.5 py-1.5 border border-neutral-300 rounded-md text-xs focus:ring-2 focus:ring-primary-500 whitespace-nowrap"
             >
               <option value="ALL">All Status</option>
               <option value="PUBLISHED">Published</option>
@@ -153,24 +177,23 @@ export function AnnouncementsList() {
             <select
               value={scopeFilter}
               onChange={(e) => setScopeFilter(e.target.value as AnnouncementScope | 'ALL')}
-              className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
+              className="px-2.5 py-1.5 border border-neutral-300 rounded-md text-xs focus:ring-2 focus:ring-primary-500 whitespace-nowrap"
             >
               <option value="ALL">All Audiences</option>
-              <option value="ALL">All Students</option>
-              <option value="FYP1">FYP1 Only</option>
-              <option value="FYP2">FYP2 Only</option>
-              <option value="PROGRAMME_CS">Computer Science</option>
-              <option value="PROGRAMME_SE">Software Engineering</option>
-              <option value="PROGRAMME_DS">Data Science</option>
+              <option value="FYP1">FYP1</option>
+              <option value="FYP2">FYP2</option>
+              <option value="PROGRAMME_CS">CS</option>
+              <option value="PROGRAMME_SE">SE</option>
+              <option value="PROGRAMME_DS">DS</option>
             </select>
           </div>
         </div>
       </Card>
 
-      {/* Announcements List */}
-      <div className="flex flex-col gap-4">
-        {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
-          filteredAnnouncements.map((announcement) => {
+      {/* Announcements List — 2-col grid */}
+      {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {filteredAnnouncements.map((announcement) => {
             const priority = priorityConfig[announcement.priority] ?? FALLBACK_PRIORITY
             const scope = scopeConfig[announcement.scope] ?? FALLBACK_SCOPE
             const status = statusConfig[announcement.status] ?? FALLBACK_STATUS
@@ -179,8 +202,9 @@ export function AnnouncementsList() {
             return (
               <Card
                 key={announcement.announcementId}
+                padding="sm"
                 className={cn(
-                  'group p-4 hover:shadow-lg transition-all duration-300 border-l-4',
+                  'group hover:shadow-md transition-all border-l-4',
                   announcement.priority === 'URGENT' && 'border-l-rose-500',
                   announcement.priority === 'HIGH' && 'border-l-amber-500',
                   announcement.priority === 'NORMAL' && 'border-l-sky-500',
@@ -189,144 +213,83 @@ export function AnnouncementsList() {
                   isExpired && 'bg-stone-50'
                 )}
               >
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className={cn('p-2.5 rounded-xl', priority.bgColor)}>
-                    <Megaphone className={cn('h-5 w-5', priority.color)} />
+                <div className="flex items-start gap-2.5">
+                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', priority.bgColor)}>
+                    <Megaphone className={cn('h-4 w-4', priority.color)} />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-semibold text-stone-800 group-hover:text-amber-700 transition-colors">{announcement.title}</h3>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className={cn(
-                            'px-2 py-0.5 rounded-full text-xs font-medium',
-                            priority.bgColor,
-                            priority.color
-                          )}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-stone-800 group-hover:text-amber-700 leading-tight truncate">{announcement.title}</h3>
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', priority.bgColor, priority.color)}>
                             {priority.label}
                           </span>
-                          <span className={cn(
-                            'px-2 py-0.5 rounded-full text-xs font-medium',
-                            status.bgColor,
-                            status.color
-                          )}>
+                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', status.bgColor, status.color)}>
                             {status.label}
                           </span>
-                          <span className="flex items-center gap-1 text-xs text-neutral-500">
-                            <Users className="h-3.5 w-3.5" />
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-500">
+                            <Users className="h-3 w-3" />
                             {scope.label}
                           </span>
-                          {isExpired && (
-                            <span className="text-xs text-neutral-500">Expired</span>
-                          )}
+                          {isExpired && <span className="text-[10px] text-neutral-500">· Expired</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
                         <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_EDIT.replace(':id', String(announcement.announcementId))}>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <button className="p-1 rounded hover:bg-amber-100 hover:text-amber-700 transition-colors">
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
                         </Link>
                         {announcement.status !== 'ARCHIVED' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <button
                             onClick={() => handleArchive(announcement.announcementId)}
                             disabled={archiveMutation.isPending}
+                            className="p-1 rounded hover:bg-stone-100 transition-colors disabled:opacity-50"
                           >
-                            <Archive className="h-4 w-4" />
-                          </Button>
+                            <Archive className="h-3.5 w-3.5" />
+                          </button>
                         )}
                       </div>
                     </div>
 
-                    {/* Content Preview */}
-                    <p className="mt-2 text-sm text-neutral-600 line-clamp-2">
+                    <p className="mt-1 text-[11px] text-neutral-600 line-clamp-2 leading-snug">
                       {announcement.content}
                     </p>
 
-                    {/* Stats */}
-                    <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3.5 w-3.5" />
-                        {announcement.viewCount} views
+                    <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-500">
+                      <span className="inline-flex items-center gap-0.5">
+                        <Eye className="h-3 w-3" />
+                        {announcement.viewCount}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        Published {new Date(announcement.publishAt).toLocaleDateString('en-MY', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                      <span className="inline-flex items-center gap-0.5">
+                        <Clock className="h-3 w-3" />
+                        {new Date(announcement.publishAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
                       </span>
-                      {announcement.expiresAt && (
-                        <span>
-                          {isExpired
-                            ? `Expired ${new Date(announcement.expiresAt).toLocaleDateString()}`
-                            : `Expires ${new Date(announcement.expiresAt).toLocaleDateString()}`}
-                        </span>
-                      )}
-                      <span>By {announcement.createdBy}</span>
+                      <span className="truncate">· {announcement.createdBy}</span>
                     </div>
                   </div>
                 </div>
               </Card>
             )
-          })
-        ) : (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Megaphone className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-stone-800">No announcements found</h3>
-            <p className="text-neutral-500 mt-1">
-              {searchQuery || statusFilter !== 'ALL' || scopeFilter !== 'ALL'
-                ? 'Try adjusting your filters'
-                : 'Create your first announcement to communicate with students'}
-            </p>
-            <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_NEW}>
-              <Button className="mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Announcement
-              </Button>
-            </Link>
-          </Card>
-        )}
-      </div>
-
-      {/* Summary */}
-      {data && data.announcements.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
-            <h3 className="font-semibold text-stone-800">Summary Statistics</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
-            <div className="text-center p-3 rounded-xl bg-stone-100">
-              <p className="text-2xl font-bold text-stone-800">{data.total}</p>
-              <p className="text-sm text-stone-600 font-medium">Total</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-emerald-100">
-              <p className="text-2xl font-bold text-emerald-700">
-                {data.announcements.filter((a) => a.status === 'PUBLISHED').length}
-              </p>
-              <p className="text-sm text-emerald-700 font-medium">Published</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-amber-100">
-              <p className="text-2xl font-bold text-amber-700">
-                {data.announcements.filter((a) => a.priority === 'HIGH' || a.priority === 'URGENT').length}
-              </p>
-              <p className="text-sm text-amber-700 font-medium">High Priority</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-sky-100">
-              <p className="text-2xl font-bold text-sky-700">
-                {data.announcements.reduce((sum, a) => sum + a.viewCount, 0)}
-              </p>
-              <p className="text-sm text-sky-700 font-medium">Total Views</p>
-            </div>
-          </div>
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-8">
+          <Megaphone className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="font-medium text-stone-800 mb-1">No announcements found</h3>
+          <p className="text-sm text-neutral-500 mb-3">
+            {searchQuery || statusFilter !== 'ALL' || scopeFilter !== 'ALL'
+              ? 'Try adjusting your filters'
+              : 'Create your first announcement to communicate with students'}
+          </p>
+          <Link to={ROUTES.COMMITTEE.ANNOUNCEMENT_NEW}>
+            <Button size="sm">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Create Announcement
+            </Button>
+          </Link>
         </Card>
       )}
     </div>

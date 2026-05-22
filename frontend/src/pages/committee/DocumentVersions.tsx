@@ -61,7 +61,7 @@ export function DocumentVersions() {
   ].sort((a, b) => b.version - a.version)
 
   return (
-    <div className="space-y-4 lg:space-y-5 max-w-3xl mx-auto">
+    <div className="space-y-3 lg:space-y-4 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.DOCUMENTS}>
@@ -107,7 +107,7 @@ export function DocumentVersions() {
           {/* Timeline line */}
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-neutral-200" />
 
-          <div className="space-y-4 lg:space-y-5">
+          <div className="space-y-3 lg:space-y-4">
             {allVersions.map((version, index) => (
               <div key={version.versionId || version.version} className="relative flex gap-4">
                 {/* Timeline dot */}

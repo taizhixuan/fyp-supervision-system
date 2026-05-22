@@ -45,7 +45,7 @@ export function UnpairedStudents() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.PROJECTS}>

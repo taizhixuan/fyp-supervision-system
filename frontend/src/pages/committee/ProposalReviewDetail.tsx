@@ -96,7 +96,7 @@ export function ProposalReviewDetail() {
   const canReview = proposal.status === 'PENDING_REVIEW' || proposal.status === 'UNDER_REVIEW'
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.PROPOSALS}>
@@ -109,7 +109,7 @@ export function ProposalReviewDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Proposal Info */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Proposal Header */}
           <Card>
             <div className="flex items-start justify-between gap-4">
@@ -358,7 +358,7 @@ export function ProposalReviewDetail() {
         </div>
 
         {/* Right Column - Review Form */}
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-3 lg:space-y-4">
           {/* Quick Info */}
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Submission Info</h3>
