@@ -47,7 +47,7 @@ export function DocumentHistory() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
       <Link
         to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}
         className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"

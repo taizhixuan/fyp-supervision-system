@@ -111,7 +111,7 @@ export function CreateSupervisionRequest() {
 
   if (submitSuccess) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
         <Card className="text-center py-12">
           <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-success-600" />
@@ -138,7 +138,7 @@ export function CreateSupervisionRequest() {
 
   if (hasPendingRequest) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
         <Link
           to={ROUTES.STUDENT.SUPERVISORS}
           className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -167,7 +167,7 @@ export function CreateSupervisionRequest() {
 
   if (!displaySupervisor.isAcceptingStudents) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
         <Link
           to={ROUTES.STUDENT.SUPERVISORS}
           className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -190,7 +190,7 @@ export function CreateSupervisionRequest() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.SUPERVISOR_DETAIL.replace(':id', supervisorId)}
@@ -240,7 +240,7 @@ export function CreateSupervisionRequest() {
 
       {/* Request Form */}
       <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 lg:space-y-5">
           {createRequest.isError && (
             <AlertBanner
               variant="error"

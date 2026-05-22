@@ -126,7 +126,7 @@ export function DocumentUpload() {
   ]
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-4 lg:space-y-5 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.DOCUMENTS}>
@@ -149,7 +149,7 @@ export function DocumentUpload() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 lg:space-y-5">
         {/* File Upload */}
         <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">

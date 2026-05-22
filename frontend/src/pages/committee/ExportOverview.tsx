@@ -54,7 +54,7 @@ export function ExportOverview() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-4 lg:space-y-5 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.PROJECTS}>

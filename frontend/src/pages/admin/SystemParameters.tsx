@@ -146,7 +146,7 @@ export function SystemParameters() {
   }, {} as Record<ParameterCategory, AdminSystemParameter[]>)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-600/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />

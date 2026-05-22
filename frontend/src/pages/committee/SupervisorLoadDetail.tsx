@@ -53,7 +53,7 @@ export function SupervisorLoadDetail() {
       : 'bg-success-500'
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 lg:space-y-5 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.COMMITTEE.SUPERVISOR_LOAD}>

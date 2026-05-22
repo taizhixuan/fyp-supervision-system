@@ -231,7 +231,7 @@ export function DeadlineManagement() {
   const selectableCycles = cycles.filter((c) => c.status === 'PLANNING' || c.status === 'ACTIVE')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -417,7 +417,7 @@ export function DeadlineManagement() {
           )}
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-5">
           {Object.entries(getCalendarData()).map(([month, deadlines]) => (
             <Card key={month}>
               <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">

@@ -120,7 +120,7 @@ export function SupervisorDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Welcome Header - Gradient Style */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
         {/* Decorative elements */}

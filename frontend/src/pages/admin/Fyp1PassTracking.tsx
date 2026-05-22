@@ -91,7 +91,7 @@ export function Fyp1PassTracking() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
           <Award className="h-7 w-7 text-primary-600" />

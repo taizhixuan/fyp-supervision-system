@@ -66,7 +66,7 @@ export function MeetingLogDetail() {
 
   if (error || !log) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
         <AlertBanner
           variant="error"
           title="Failed to load meeting log"
@@ -90,7 +90,7 @@ export function MeetingLogDetail() {
   const studentSignature = log.signatures.find((s) => s.signerRole === 'STUDENT')
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.MEETING_LOGS}

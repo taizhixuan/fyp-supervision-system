@@ -49,7 +49,7 @@ export function ProposalStatus() {
 
   if (!proposal) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-5">
         <Link
           to={ROUTES.STUDENT.PROPOSAL}
           className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -76,7 +76,7 @@ export function ProposalStatus() {
   const StatusIcon = status.icon
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.PROPOSAL}
@@ -121,7 +121,7 @@ export function ProposalStatus() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Feedback Section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           <h3 className="text-lg font-semibold text-neutral-900">Review Feedback</h3>
 
           {feedback.length === 0 ? (

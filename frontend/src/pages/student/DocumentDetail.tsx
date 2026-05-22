@@ -122,7 +122,7 @@ export function DocumentDetail() {
   const Icon = pickIcon(typeKey, document.mimeType)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
       <Link
         to={ROUTES.STUDENT.DOCUMENTS}
         className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -155,7 +155,7 @@ export function DocumentDetail() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           <Card>
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Document Details</h2>
 
@@ -202,7 +202,7 @@ export function DocumentDetail() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-5">
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-3">Actions</h3>
             <div className="space-y-2">

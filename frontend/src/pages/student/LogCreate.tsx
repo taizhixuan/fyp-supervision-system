@@ -82,7 +82,7 @@ export function LogCreate() {
 
   if (submitSuccess) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
         <Card className="text-center py-12">
           <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-success-600" />
@@ -109,7 +109,7 @@ export function LogCreate() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.LOGS}
@@ -132,7 +132,7 @@ export function LogCreate() {
         description="Be specific about what you accomplished and challenges faced. This helps your supervisor provide better guidance."
       />
 
-      <form className="space-y-6">
+      <form className="space-y-4 lg:space-y-5">
         {/* Week Number & Meeting Link */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Log Details</h2>

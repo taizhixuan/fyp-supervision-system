@@ -160,7 +160,7 @@ export function MeetingDetail() {
   const platformInfo = detectedPlatform ? getPlatformInfo(detectedPlatform) : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.MEETINGS}>
@@ -214,7 +214,7 @@ export function MeetingDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 lg:space-y-5">
           {/* Student Info */}
           <Card>
             <div className="text-center">
@@ -418,7 +418,7 @@ export function MeetingDetail() {
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           {/* Meeting Title */}
           <Card>
             <h2 className="text-xl font-semibold text-neutral-900">{meeting.title}</h2>
