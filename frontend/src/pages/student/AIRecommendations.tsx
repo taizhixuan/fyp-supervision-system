@@ -405,9 +405,9 @@ export function AIRecommendations() {
                         View Profile
                       </Button>
                     </Link>
-                    <Link to={ROUTES.STUDENT.TOPICS}>
+                    <Link to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${rec.supervisor.supervisorId}`}>
                       <Button variant="primary" size="sm" className="whitespace-nowrap">
-                        Topics
+                        Request
                       </Button>
                     </Link>
                   </div>

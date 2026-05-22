@@ -411,9 +411,9 @@ export function SupervisorDirectory() {
                       View Profile
                     </Button>
                   </Link>
-                  <Link to={ROUTES.STUDENT.TOPICS} className="flex-shrink-0">
+                  <Link to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${supervisor.supervisorId}`} className="flex-shrink-0">
                     <Button variant="primary" size="sm" className="whitespace-nowrap">
-                      Topics
+                      Request
                     </Button>
                   </Link>
                 </div>

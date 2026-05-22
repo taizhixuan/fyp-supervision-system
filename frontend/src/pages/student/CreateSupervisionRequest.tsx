@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -50,15 +50,8 @@ const SAMPLE_SUPERVISOR = {
 
 export function CreateSupervisionRequest() {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const supervisorId = searchParams.get('supervisorId') || '1'
   const [submitSuccess, setSubmitSuccess] = useState(false)
-
-  // Pairing now happens via approved topics; this page is the legacy free-form
-  // request flow and is redirected unconditionally so the two paths don't conflict.
-  useEffect(() => {
-    navigate(ROUTES.STUDENT.TOPICS, { replace: true })
-  }, [navigate])
 
   const { data: supervisor, isLoading: loadingSupervisor } = useSupervisorDetail(supervisorId)
   const { data: existingRequests } = useSupervisionRequests()

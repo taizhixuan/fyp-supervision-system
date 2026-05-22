@@ -201,9 +201,9 @@ export function SupervisorDetail() {
 
             {/* Action Buttons */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to={ROUTES.STUDENT.TOPICS}>
+              <Link to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${displaySupervisor.supervisorId}`}>
                 <Button variant="primary" leftIcon={<Send className="h-4 w-4" />}>
-                  Browse Their Topics
+                  Send Request
                 </Button>
               </Link>
               <a href={`mailto:${displaySupervisor.email}`}>
@@ -432,11 +432,11 @@ export function SupervisorDetail() {
                   Interested in working with {displaySupervisor.fullName.split(' ')[0]}?
                 </h3>
                 <p className="text-sm text-primary-700 mb-4">
-                  Browse this supervisor&apos;s approved project topics to pair up.
+                  Send a supervision request with your proposed project to start the pairing.
                 </p>
-                <Link to={ROUTES.STUDENT.TOPICS}>
+                <Link to={`${ROUTES.STUDENT.CREATE_REQUEST}?supervisorId=${displaySupervisor.supervisorId}`}>
                   <Button variant="primary" className="w-full">
-                    Browse Topics
+                    Send Request
                   </Button>
                 </Link>
               </div>
