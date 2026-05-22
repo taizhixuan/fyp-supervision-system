@@ -82,7 +82,6 @@ const SupervisorDocumentDetail = lazy(() => import('@/pages/supervisor/DocumentD
 const AnnouncementsList = lazy(() => import('@/pages/supervisor/AnnouncementsList').then(m => ({ default: m.AnnouncementsList })))
 const CreateAnnouncement = lazy(() => import('@/pages/supervisor/CreateAnnouncement').then(m => ({ default: m.CreateAnnouncement })))
 const NotificationsCenter = lazy(() => import('@/pages/supervisor/NotificationsCenter').then(m => ({ default: m.NotificationsCenter })))
-const SupervisorGrades = lazy(() => import('@/pages/supervisor/SupervisorGrades').then(m => ({ default: m.SupervisorGrades })))
 
 // Committee pages - All lazy loaded
 const CommitteeDashboard = lazy(() => import('@/pages/committee/CommitteeDashboard').then(m => ({ default: m.CommitteeDashboard })))
@@ -122,7 +121,6 @@ const JobHistory = lazy(() => import('@/pages/admin/JobHistory').then(m => ({ de
 const AuditLogs = lazy(() => import('@/pages/admin/AuditLogs').then(m => ({ default: m.AuditLogs })))
 const AdminNotificationCenter = lazy(() => import('@/pages/admin/AdminNotificationCenter').then(m => ({ default: m.AdminNotificationCenter })))
 const AdminProfile = lazy(() => import('@/pages/admin/AdminProfile').then(m => ({ default: m.AdminProfile })))
-const AdminGrades = lazy(() => import('@/pages/admin/AdminGrades').then(m => ({ default: m.AdminGrades })))
 
 // Layout components
 import { AppShell } from '@/components/layout/AppShell'
@@ -681,16 +679,6 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Final-report grading
-      {
-        path: ROUTES.SUPERVISOR.GRADES,
-        element: (
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <SupervisorGrades />
-          </ProtectedRoute>
-        ),
-      },
-
       // Announcements
       {
         path: ROUTES.SUPERVISOR.ANNOUNCEMENTS,
@@ -961,14 +949,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <Fyp1PassTracking />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.ADMIN.GRADES,
-        element: (
-          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
-            <AdminGrades />
           </ProtectedRoute>
         ),
       },

@@ -90,11 +90,18 @@ public class CommitteeService {
     public List<Map<String, Object>> getProposalDtos(String status, Pageable pageable) {
         Page<Proposal> page;
         if (status != null && !status.isBlank()) {
-            page = proposalRepository.findByStatus(ProposalStatus.valueOf(status), pageable);
+            // Frontend uses PENDING_REVIEW / REVISION_REQUESTED; backend enum is SUBMITTED / REVISION_REQUIRED.
+            String mapped = status;
+            if ("PENDING_REVIEW".equals(mapped)) mapped = "SUBMITTED";
+            else if ("REVISION_REQUESTED".equals(mapped)) mapped = "REVISION_REQUIRED";
+            page = proposalRepository.findByStatus(ProposalStatus.valueOf(mapped), pageable);
         } else {
             page = proposalRepository.findAll(pageable);
         }
-        return page.getContent().stream().map(this::buildProposalForCommitteeDto).collect(Collectors.toList());
+        // Drop DRAFTs — committee only sees proposals that students have actually submitted.
+        return page.getContent().stream()
+                .filter(p -> p.getStatus() != ProposalStatus.DRAFT)
+                .map(this::buildProposalForCommitteeDto).collect(Collectors.toList());
     }
 
     public Map<String, Object> getProposalDto(Long proposalId) {

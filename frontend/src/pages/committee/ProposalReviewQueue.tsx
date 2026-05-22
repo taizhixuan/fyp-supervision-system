@@ -166,6 +166,7 @@ export function ProposalReviewQueue() {
         {filteredProposals && filteredProposals.length > 0 ? (
           filteredProposals.map((proposal) => {
             const status = statusConfig[proposal.status]
+            if (!status) return null
             const StatusIcon = status.icon
 
             return (
