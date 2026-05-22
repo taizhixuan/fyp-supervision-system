@@ -7,7 +7,6 @@ import {
   GraduationCap,
   Calendar,
   FileText,
-  TrendingUp,
   AlertTriangle,
   Clock,
 } from 'lucide-react'
@@ -101,81 +100,111 @@ export function SuperviseesList() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Header — stats inline */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <Users className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Users className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">My Supervisees</h1>
-              <p className="text-stone-300 mt-1">Monitor and manage your supervised students</p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">My Supervisees</h1>
+              <p className="text-stone-300 text-xs">Monitor and manage your supervised students</p>
             </div>
           </div>
           {atRiskCount > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-rose-500/20 backdrop-blur-sm rounded-xl ring-1 ring-rose-500/30">
-              <AlertTriangle className="h-5 w-5 text-rose-400" />
-              <span className="text-sm font-semibold text-rose-200">
-                {atRiskCount} student{atRiskCount > 1 ? 's' : ''} at risk
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/20 backdrop-blur-sm rounded-md ring-1 ring-rose-500/30 flex-shrink-0">
+              <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+              <span className="text-xs font-semibold text-rose-200">
+                {atRiskCount} at risk
               </span>
             </div>
           )}
         </div>
+
+        {/* Inline stats */}
+        {data && data.supervisees.length > 0 && (
+          <div className="relative mt-3 grid grid-cols-5 gap-1.5 text-center">
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none">{data.total}</div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Total</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-sky-300">
+                {data.supervisees.filter((s) => s.projectStatus === 'ACTIVE').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Active</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-amber-300">
+                {data.supervisees.filter((s) => s.projectStatus === 'SUSPENDED').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Suspended</p>
+            </div>
+            <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
+              <div className="text-base font-bold leading-none text-emerald-300">
+                {data.supervisees.filter((s) => s.projectStatus === 'COMPLETED').length}
+              </div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Done</p>
+            </div>
+            <div className={cn('rounded-md px-2 py-1.5 ring-1', atRiskCount > 0 ? 'bg-rose-500/30 ring-rose-300/40' : 'bg-stone-700/40 ring-stone-600/40')}>
+              <div className="text-base font-bold leading-none text-rose-300">{atRiskCount}</div>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Risk</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gradient-to-r from-stone-100 to-stone-50 rounded-xl">
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-white rounded-lg shadow-sm overflow-x-auto">
-          {filterOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setStatusFilter(option.value)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap',
-                statusFilter === option.value
-                  ? 'bg-stone-800 text-white shadow-sm'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
+      {/* Filters — compact single row */}
+      <Card padding="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex items-center gap-0.5 p-0.5 bg-stone-100 rounded-md">
+            {filterOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setStatusFilter(option.value)}
+                className={cn(
+                  'px-2.5 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap',
+                  statusFilter === option.value
+                    ? 'bg-stone-800 text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-white'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search by name, ID, or project..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 border-stone-200 focus:ring-amber-500"
+            />
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'name' | 'progress' | 'risk')}
+            className="px-2.5 py-1.5 border border-stone-200 rounded-md text-xs font-medium text-stone-700 focus:ring-2 focus:ring-amber-500 bg-white whitespace-nowrap"
+          >
+            <option value="name">Sort: Name</option>
+            <option value="progress">Sort: Progress</option>
+            <option value="risk">Sort: Risk</option>
+          </select>
         </div>
+      </Card>
 
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-          <Input
-            type="text"
-            placeholder="Search by name, ID, or project..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 border-stone-200 focus:ring-amber-500"
-          />
-        </div>
-
-        {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'name' | 'progress' | 'risk')}
-          className="px-4 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 focus:ring-2 focus:ring-amber-500 bg-white"
-        >
-          <option value="name">Sort by Name</option>
-          <option value="progress">Sort by Progress</option>
-          <option value="risk">Sort by Risk Level</option>
-        </select>
-      </div>
-
-      {/* Supervisee List */}
-      <div className="flex flex-col gap-4">
-        {filteredSupervisees && filteredSupervisees.length > 0 ? (
-          filteredSupervisees.map((supervisee) => {
+      {/* Supervisee List — 2-col grid */}
+      {filteredSupervisees && filteredSupervisees.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {filteredSupervisees.map((supervisee) => {
             const status = getStatusConfig(supervisee.projectStatus)
             const risk = getRiskConfig(supervisee.riskLevel)
             return (
@@ -183,55 +212,46 @@ export function SuperviseesList() {
                 key={supervisee.superviseeId}
                 to={ROUTES.SUPERVISOR.SUPERVISEE_DETAIL.replace(':id', supervisee.superviseeId)}
               >
-                <Card className={cn(
-                  'group p-5 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4',
+                <Card padding="sm" className={cn(
+                  'group hover:shadow-md transition-all cursor-pointer border-l-4',
                   (supervisee.riskLevel === 'HIGH' || supervisee.riskLevel === 'CRITICAL')
                     ? 'border-l-rose-500 bg-rose-50/30'
                     : status.borderColor,
-                  'hover:scale-[1.01]'
                 )}>
-                  <div className="flex items-start gap-4">
-                    {/* Avatar */}
-                    <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                      <GraduationCap className="h-7 w-7 text-amber-600" />
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-200 rounded-md flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <GraduationCap className="h-5 w-5 text-amber-600" />
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-stone-800 group-hover:text-amber-700 transition-colors">{supervisee.fullName}</h3>
-                            <div className={cn('w-2.5 h-2.5 rounded-full ring-2 ring-white', risk.dotColor)} title={risk.label} />
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-sm text-stone-800 group-hover:text-amber-700 leading-tight truncate">{supervisee.fullName}</h3>
+                            <div className={cn('w-2 h-2 rounded-full flex-shrink-0', risk.dotColor)} title={risk.label} />
                           </div>
-                          <p className="text-sm text-stone-500">
-                            {supervisee.studentId} | {supervisee.program} | Year {supervisee.year}
+                          <p className="text-[11px] text-stone-500 truncate">
+                            {supervisee.studentId} · {supervisee.program} · Y{supervisee.year}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'px-3 py-1.5 rounded-xl text-xs font-semibold',
-                            status.bgColor,
-                            status.color
-                          )}>
-                            {status.label}
-                          </span>
-                          <ChevronRight className="h-5 w-5 text-stone-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
-                        </div>
+                        <span className={cn(
+                          'px-1.5 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0',
+                          status.bgColor,
+                          status.color
+                        )}>
+                          {status.label}
+                        </span>
                       </div>
 
-                      {/* Project Title */}
-                      <h4 className="font-semibold text-stone-700 mt-2">{supervisee.projectTitle}</h4>
+                      <h4 className="text-xs font-semibold text-stone-700 mt-1 line-clamp-1">{supervisee.projectTitle}</h4>
 
-                      {/* Stats Row */}
-                      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-                        {/* Progress */}
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-stone-400" />
-                          <div className="w-28 h-2.5 bg-stone-100 rounded-full overflow-hidden shadow-inner">
+                      {/* Stats row */}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <div className="flex items-center gap-1 flex-1 min-w-[80px]">
+                          <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
                             <div
                               className={cn(
-                                'h-full rounded-full transition-all',
+                                'h-full rounded-full',
                                 supervisee.overallProgress >= 75 ? 'bg-emerald-500' :
                                 supervisee.overallProgress >= 50 ? 'bg-sky-500' :
                                 supervisee.overallProgress >= 25 ? 'bg-amber-500' : 'bg-rose-500'
@@ -239,91 +259,43 @@ export function SuperviseesList() {
                               style={{ width: `${supervisee.overallProgress}%` }}
                             />
                           </div>
-                          <span className="text-stone-600 font-semibold">{supervisee.overallProgress}%</span>
+                          <span className="text-stone-600 font-semibold tabular-nums">{supervisee.overallProgress}%</span>
                         </div>
-
-                        {/* Meetings */}
-                        <div className="flex items-center gap-1.5 text-stone-500 px-2 py-1 bg-stone-100 rounded-lg">
-                          <Calendar className="h-4 w-4" />
-                          <span>{supervisee.totalMeetings} meetings</span>
-                        </div>
-
-                        {/* Pending Logs */}
+                        <span className="inline-flex items-center gap-0.5 text-stone-500">
+                          <Calendar className="h-3 w-3" />
+                          {supervisee.totalMeetings}
+                        </span>
                         {supervisee.pendingLogs > 0 && (
-                          <div className="flex items-center gap-1.5 text-amber-600 px-2 py-1 bg-amber-100 rounded-lg font-medium">
-                            <FileText className="h-4 w-4" />
-                            <span>{supervisee.pendingLogs} pending</span>
-                          </div>
+                          <span className="inline-flex items-center gap-0.5 text-amber-700 bg-amber-100 px-1 rounded font-medium">
+                            <FileText className="h-3 w-3" />
+                            {supervisee.pendingLogs}
+                          </span>
                         )}
-
-                        {/* Last Meeting */}
                         {supervisee.lastMeetingDate && (
-                          <div className="flex items-center gap-1 text-stone-400 text-xs">
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>
-                              Last: {new Date(supervisee.lastMeetingDate).toLocaleDateString('en-MY', {
-                                day: 'numeric',
-                                month: 'short',
-                              })}
-                            </span>
-                          </div>
+                          <span className="inline-flex items-center gap-0.5 text-stone-400">
+                            <Clock className="h-3 w-3" />
+                            {new Date(supervisee.lastMeetingDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                          </span>
                         )}
                       </div>
                     </div>
+
+                    <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-amber-500 transition-colors flex-shrink-0 mt-0.5" />
                   </div>
                 </Card>
               </Link>
             )
-          })
-        ) : (
-          <Card className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto bg-stone-100 rounded-full flex items-center justify-center mb-4">
-              <Users className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-stone-800">No supervisees found</h3>
-            <p className="text-stone-500 mt-1">
-              {searchQuery || statusFilter !== 'all'
-                ? 'Try adjusting your filters'
-                : "You don't have any supervisees yet"}
-            </p>
-          </Card>
-        )}
-      </div>
-
-      {/* Summary Stats */}
-      {data && data.supervisees.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="p-4 bg-gradient-to-r from-stone-50 to-stone-100/50 border-b border-stone-200">
-            <h3 className="font-semibold text-stone-800">Supervisee Summary</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-5">
-            <div className="text-center p-3 rounded-xl bg-stone-50">
-              <p className="text-2xl font-bold text-stone-800">{data.total}</p>
-              <p className="text-sm text-stone-500 font-medium">Total</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-sky-50">
-              <p className="text-2xl font-bold text-sky-600">
-                {data.supervisees.filter((s) => s.projectStatus === 'ACTIVE').length}
-              </p>
-              <p className="text-sm text-sky-700 font-medium">Active</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-amber-50">
-              <p className="text-2xl font-bold text-amber-600">
-                {data.supervisees.filter((s) => s.projectStatus === 'SUSPENDED').length}
-              </p>
-              <p className="text-sm text-amber-700 font-medium">Suspended</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-emerald-50">
-              <p className="text-2xl font-bold text-emerald-600">
-                {data.supervisees.filter((s) => s.projectStatus === 'COMPLETED').length}
-              </p>
-              <p className="text-sm text-emerald-700 font-medium">Completed</p>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-rose-50">
-              <p className="text-2xl font-bold text-rose-600">{atRiskCount}</p>
-              <p className="text-sm text-rose-700 font-medium">At Risk</p>
-            </div>
-          </div>
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-8">
+          <Users className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+          <h3 className="font-medium text-stone-800 mb-1">No supervisees found</h3>
+          <p className="text-sm text-stone-500">
+            {searchQuery || statusFilter !== 'all'
+              ? 'Try adjusting your filters'
+              : "You don't have any supervisees yet"}
+          </p>
         </Card>
       )}
     </div>

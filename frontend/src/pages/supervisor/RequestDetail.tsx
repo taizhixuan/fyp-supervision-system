@@ -92,7 +92,7 @@ export function RequestDetail() {
   const hasAvailableSlots = (profile?.availableSlots ?? 0) > 0
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.REQUESTS}>
@@ -150,7 +150,7 @@ export function RequestDetail() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Student Info */}
-        <div className="lg:col-span-1 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-1 space-y-3 lg:space-y-4">
           {/* Student Profile Card */}
           <Card>
             <div className="text-center">
@@ -233,7 +233,7 @@ export function RequestDetail() {
         </div>
 
         {/* Right Column - Project Details */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+        <div className="lg:col-span-2 space-y-3 lg:space-y-4">
           {/* Proposed Project */}
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">

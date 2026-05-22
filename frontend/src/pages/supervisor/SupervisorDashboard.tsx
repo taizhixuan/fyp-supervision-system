@@ -120,201 +120,143 @@ export function SupervisorDashboard() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      {/* Welcome Header - Gradient Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-stone-600/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+    <div className="space-y-3 lg:space-y-4">
+      {/* Compact Welcome Header — stats inline */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-3 sm:p-4 text-white shadow-md">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <LayoutDashboard className="h-7 w-7 text-amber-400" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <LayoutDashboard className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">
                 Welcome back, {firstNameOf(profile?.fullName) ?? 'Supervisor'}
               </h1>
-              <p className="text-stone-300 mt-1">
-                You have <span className="text-amber-400 font-semibold">{stats?.pendingRequests ?? 0}</span> pending requests and <span className="text-amber-400 font-semibold">{stats?.pendingLogReviews ?? 0}</span> logs awaiting review.
+              <p className="text-stone-300 text-xs">
+                <span className="text-amber-400 font-semibold">{stats?.pendingRequests ?? 0}</span> pending · <span className="text-amber-400 font-semibold">{stats?.pendingLogReviews ?? 0}</span> logs to review
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-stone-700/50 backdrop-blur-sm rounded-xl px-4 py-3 ring-1 ring-stone-600/50">
-            <div className="text-center">
-              <p className="text-xs text-stone-400 uppercase tracking-wider">Slots Available</p>
-              <p className="text-xl font-bold text-white mt-0.5">
-                <span className="text-amber-400">{profile?.availableSlots ?? 0}</span>
-                <span className="text-stone-500 mx-1">/</span>
-                <span>{profile?.maxSupervisionQuota ?? 0}</span>
-              </p>
-            </div>
+          <div className="bg-stone-700/50 backdrop-blur-sm rounded-md px-2.5 py-1 ring-1 ring-stone-600/50 flex-shrink-0">
+            <p className="text-[10px] text-stone-400 uppercase tracking-wider">Slots</p>
+            <p className="text-sm font-bold text-white leading-none">
+              <span className="text-amber-400">{profile?.availableSlots ?? 0}</span>
+              <span className="text-stone-500 mx-0.5">/</span>
+              <span>{profile?.maxSupervisionQuota ?? 0}</span>
+            </p>
           </div>
+        </div>
+
+        {/* Inline stat chips */}
+        <div className="relative mt-3 grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+          {quickStats.map((stat) => (
+            <Link key={stat.label} to={stat.href}>
+              <div className={cn(
+                'flex items-center gap-2 bg-stone-700/40 hover:bg-stone-700/60 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5 transition-colors',
+                stat.urgent && 'bg-amber-500/30 ring-amber-300/40'
+              )}>
+                <div className={cn('p-1 rounded-md flex-shrink-0', stat.bgColor)}>
+                  <stat.icon className={cn('h-3.5 w-3.5', stat.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-base font-bold leading-none">{stat.value}</p>
+                  <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{stat.label}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {quickStats.map((stat) => (
-          <Link key={stat.label} to={stat.href}>
-            <Card className={cn(
-              'group p-4 hover:shadow-lg transition-all duration-300 cursor-pointer border-l-4 hover:scale-[1.02]',
-              stat.borderColor,
-              stat.urgent && 'ring-2 ring-amber-400 bg-amber-50/50'
-            )}>
-              <div className="flex items-center gap-3">
-                <div className={cn('p-2.5 rounded-xl transition-colors', stat.bgColor, 'group-hover:scale-110 transition-transform')}>
-                  <stat.icon className={cn('h-5 w-5', stat.color)} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-stone-800">{stat.value}</p>
-                  <p className="text-xs text-stone-500 font-medium">{stat.label}</p>
-                </div>
-              </div>
-              {stat.urgent && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-amber-600 font-medium">
-                  <Sparkles className="h-3 w-3" />
-                  <span>Needs attention</span>
-                </div>
-              )}
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Supervisee Status Distribution */}
-        <Card className="lg:col-span-1 overflow-hidden">
-          <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-100 rounded-lg">
-                <Users className="h-5 w-5 text-sky-600" />
-              </div>
-              <h2 className="font-semibold text-stone-800">Supervisee Status</h2>
-            </div>
+      {/* Two-column layout: Supervisee status + Recent activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Supervisee Status */}
+        <Card padding="sm" className="lg:col-span-1">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="h-4 w-4 text-sky-600" />
+            <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Supervisee Status</h2>
           </div>
-          <div className="p-5 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-emerald-100">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <span className="text-sm font-medium text-stone-700">In Progress</span>
+          <div className="space-y-1">
+            {[
+              { label: 'In Progress', value: stats?.superviseesByStatus.inProgress ?? 0, Icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { label: 'Not Started', value: stats?.superviseesByStatus.notStarted ?? 0, Icon: Clock, color: 'text-stone-600', bg: 'bg-stone-50' },
+              { label: 'Completed', value: stats?.superviseesByStatus.completed ?? 0, Icon: CheckCircle, color: 'text-sky-600', bg: 'bg-sky-50' },
+              { label: 'On Hold', value: stats?.superviseesByStatus.onHold ?? 0, Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
+            ].map(({ label, value, Icon, color, bg }) => (
+              <div key={label} className={cn('flex items-center justify-between px-2 py-1.5 rounded-md', bg)}>
+                <div className="flex items-center gap-1.5">
+                  <Icon className={cn('h-3.5 w-3.5', color)} />
+                  <span className="text-xs font-medium text-stone-700">{label}</span>
                 </div>
-                <span className="text-lg font-bold text-emerald-600">{stats?.superviseesByStatus.inProgress ?? 0}</span>
+                <span className={cn('text-sm font-bold', color)}>{value}</span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50/50 hover:bg-stone-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-stone-200">
-                    <Clock className="h-4 w-4 text-stone-500" />
-                  </div>
-                  <span className="text-sm font-medium text-stone-700">Not Started</span>
-                </div>
-                <span className="text-lg font-bold text-stone-600">{stats?.superviseesByStatus.notStarted ?? 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-sky-50/50 hover:bg-sky-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-sky-100">
-                    <CheckCircle className="h-4 w-4 text-sky-600" />
-                  </div>
-                  <span className="text-sm font-medium text-stone-700">Completed</span>
-                </div>
-                <span className="text-lg font-bold text-sky-600">{stats?.superviseesByStatus.completed ?? 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50/50 hover:bg-amber-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-amber-100">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <span className="text-sm font-medium text-stone-700">On Hold</span>
-                </div>
-                <span className="text-lg font-bold text-amber-600">{stats?.superviseesByStatus.onHold ?? 0}</span>
-              </div>
-            </div>
+            ))}
+          </div>
 
-            <div className="pt-4 border-t border-stone-200">
-              <h3 className="text-sm font-semibold text-stone-700 mb-3">Risk Distribution</h3>
-              <div className="flex items-center gap-0.5 h-5 rounded-full overflow-hidden bg-stone-100 shadow-inner">
-                {Object.entries(stats?.superviseesByRisk ?? {}).map(([risk, count]) => (
-                  count > 0 && (
-                    <div
-                      key={risk}
-                      className={cn('h-full transition-all', getRiskColor(risk))}
-                      style={{ width: `${(count / (stats?.totalSupervisees ?? 1)) * 100}%` }}
-                      title={`${risk}: ${count}`}
-                    />
-                  )
-                ))}
-              </div>
-              <div className="flex items-center justify-between mt-3 text-xs">
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="font-medium text-emerald-700">{stats?.superviseesByRisk.low ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50">
-                  <div className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="font-medium text-amber-700">{stats?.superviseesByRisk.medium ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-orange-50">
-                  <div className="w-2 h-2 rounded-full bg-orange-500" />
-                  <span className="font-medium text-orange-700">{stats?.superviseesByRisk.high ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-50">
-                  <div className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span className="font-medium text-rose-700">{stats?.superviseesByRisk.critical ?? 0}</span>
-                </div>
-              </div>
+          <div className="mt-2 pt-2 border-t border-stone-200">
+            <h3 className="text-[10px] font-semibold text-stone-500 mb-1 uppercase tracking-wide">Risk Distribution</h3>
+            <div className="flex items-center gap-0.5 h-3 rounded-full overflow-hidden bg-stone-100">
+              {Object.entries(stats?.superviseesByRisk ?? {}).map(([risk, count]) => (
+                count > 0 && (
+                  <div
+                    key={risk}
+                    className={cn('h-full', getRiskColor(risk))}
+                    style={{ width: `${(count / (stats?.totalSupervisees ?? 1)) * 100}%` }}
+                    title={`${risk}: ${count}`}
+                  />
+                )
+              ))}
+            </div>
+            <div className="flex items-center justify-between mt-1.5 text-[10px]">
+              <span className="inline-flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="font-medium text-emerald-700">L {stats?.superviseesByRisk.low ?? 0}</span></span>
+              <span className="inline-flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-500" /><span className="font-medium text-amber-700">M {stats?.superviseesByRisk.medium ?? 0}</span></span>
+              <span className="inline-flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /><span className="font-medium text-orange-700">H {stats?.superviseesByRisk.high ?? 0}</span></span>
+              <span className="inline-flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /><span className="font-medium text-rose-700">C {stats?.superviseesByRisk.critical ?? 0}</span></span>
             </div>
           </div>
         </Card>
 
         {/* Recent Activity */}
-        <Card className="lg:col-span-2 overflow-hidden">
-          <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Bell className="h-5 w-5 text-amber-600" />
-              </div>
-              <h2 className="font-semibold text-stone-800">Recent Activity</h2>
+        <Card padding="sm" className="lg:col-span-2">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-amber-600" />
+              <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Recent Activity</h2>
             </div>
             <Link to={ROUTES.SUPERVISOR.NOTIFICATIONS}>
-              <Button variant="ghost" size="sm" className="text-stone-600 hover:text-amber-600 hover:bg-amber-50">
-                View All
-                <ArrowRight className="h-4 w-4 ml-1" />
+              <Button variant="ghost" size="sm" className="text-stone-600 hover:text-amber-600 hover:bg-amber-50 whitespace-nowrap">
+                View All <ArrowRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </Link>
           </div>
           <div className="divide-y divide-stone-100">
-            {stats?.recentActivity.map((activity) => {
+            {stats?.recentActivity.slice(0, 5).map((activity) => {
               const Icon = getActivityIcon(activity.type)
               return (
-                <div key={activity.activityId} className="p-4 flex items-start gap-4 hover:bg-stone-50/50 transition-colors group">
+                <div key={activity.activityId} className="py-1.5 flex items-start gap-2 hover:bg-stone-50/50 transition-colors group">
                   <div className={cn(
-                    'p-2.5 rounded-xl transition-transform group-hover:scale-110',
+                    'p-1.5 rounded-md flex-shrink-0',
                     activity.actionRequired ? 'bg-amber-100' : 'bg-stone-100'
                   )}>
                     <Icon className={cn(
-                      'h-5 w-5',
+                      'h-3.5 w-3.5',
                       activity.actionRequired ? 'text-amber-600' : 'text-stone-500'
                     )} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-stone-800">{activity.title}</p>
-                        <p className="text-sm text-stone-600 mt-0.5">{activity.description}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{activity.title}</p>
+                        <p className="text-[11px] text-stone-600 line-clamp-1 leading-snug">{activity.description}</p>
                       </div>
                       {activity.actionRequired && (
-                        <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full whitespace-nowrap">
-                          <Sparkles className="h-3 w-3" />
-                          Action Required
-                        </span>
+                        <Sparkles className="h-3 w-3 text-amber-600 flex-shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs text-stone-400 mt-2 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                    <p className="text-[10px] text-stone-400 inline-flex items-center gap-0.5 mt-0.5">
+                      <Clock className="h-2.5 w-2.5" />
                       {new Date(activity.timestamp).toLocaleDateString('en-MY', {
                         day: 'numeric',
                         month: 'short',
@@ -323,65 +265,45 @@ export function SupervisorDashboard() {
                       })}
                     </p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-stone-300 group-hover:text-amber-500 transition-colors" />
+                  <ChevronRight className="h-3.5 w-3.5 text-stone-300 group-hover:text-amber-500 transition-colors flex-shrink-0 mt-1" />
                 </div>
               )
             })}
             {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
-              <div className="p-12 text-center">
-                <div className="w-12 h-12 mx-auto bg-stone-100 rounded-full flex items-center justify-center mb-3">
-                  <Bell className="h-6 w-6 text-stone-400" />
-                </div>
-                <p className="text-stone-500 font-medium">No recent activity</p>
+              <div className="py-6 text-center">
+                <Bell className="h-8 w-8 text-stone-300 mx-auto mb-1" />
+                <p className="text-xs text-stone-500">No recent activity</p>
               </div>
             )}
           </div>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-stone-100/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-100 rounded-lg">
-              <Sparkles className="h-5 w-5 text-violet-600" />
-            </div>
-            <h2 className="font-semibold text-stone-800">Quick Actions</h2>
-          </div>
+      {/* Quick Actions — compact horizontal pills */}
+      <Card padding="sm">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="h-4 w-4 text-violet-600" />
+          <h2 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Quick Actions</h2>
         </div>
-        <div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to={ROUTES.SUPERVISOR.TOPICS} className="group">
-            <div className="p-4 rounded-xl border-2 border-stone-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all flex flex-col items-center gap-3 text-center">
-              <div className="p-3 bg-amber-100 rounded-xl group-hover:scale-110 transition-transform">
-                <ClipboardList className="h-6 w-6 text-amber-600" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { to: ROUTES.SUPERVISOR.TOPICS, Icon: ClipboardList, label: 'My Topics', color: 'amber' },
+            { to: ROUTES.SUPERVISOR.LOGS, Icon: FileText, label: 'Review Logs', color: 'emerald' },
+            { to: ROUTES.SUPERVISOR.MEETING_NEW, Icon: Calendar, label: 'Schedule', color: 'violet' },
+            { to: ROUTES.SUPERVISOR.ANNOUNCEMENT_NEW, Icon: Megaphone, label: 'Announce', color: 'sky' },
+          ].map(({ to, Icon, label, color }) => (
+            <Link key={to} to={to} className="group">
+              <div className={cn(
+                'flex items-center gap-2 px-2.5 py-2 rounded-md border border-stone-200 transition-all',
+                `hover:border-${color}-300 hover:bg-${color}-50/50`
+              )}>
+                <div className={cn('p-1.5 rounded-md', `bg-${color}-100`)}>
+                  <Icon className={cn('h-4 w-4', `text-${color}-600`)} />
+                </div>
+                <span className="text-xs font-semibold text-stone-700">{label}</span>
               </div>
-              <span className="text-sm font-semibold text-stone-700 group-hover:text-amber-700">My Topics</span>
-            </div>
-          </Link>
-          <Link to={ROUTES.SUPERVISOR.LOGS} className="group">
-            <div className="p-4 rounded-xl border-2 border-stone-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all flex flex-col items-center gap-3 text-center">
-              <div className="p-3 bg-emerald-100 rounded-xl group-hover:scale-110 transition-transform">
-                <FileText className="h-6 w-6 text-emerald-600" />
-              </div>
-              <span className="text-sm font-semibold text-stone-700 group-hover:text-emerald-700">Review Logs</span>
-            </div>
-          </Link>
-          <Link to={ROUTES.SUPERVISOR.MEETING_NEW} className="group">
-            <div className="p-4 rounded-xl border-2 border-stone-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all flex flex-col items-center gap-3 text-center">
-              <div className="p-3 bg-violet-100 rounded-xl group-hover:scale-110 transition-transform">
-                <Calendar className="h-6 w-6 text-violet-600" />
-              </div>
-              <span className="text-sm font-semibold text-stone-700 group-hover:text-violet-700">Schedule Meeting</span>
-            </div>
-          </Link>
-          <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENT_NEW} className="group">
-            <div className="p-4 rounded-xl border-2 border-stone-200 hover:border-sky-300 hover:bg-sky-50/50 transition-all flex flex-col items-center gap-3 text-center">
-              <div className="p-3 bg-sky-100 rounded-xl group-hover:scale-110 transition-transform">
-                <Megaphone className="h-6 w-6 text-sky-600" />
-              </div>
-              <span className="text-sm font-semibold text-stone-700 group-hover:text-sky-700">Post Announcement</span>
-            </div>
-          </Link>
+            </Link>
+          ))}
         </div>
       </Card>
     </div>

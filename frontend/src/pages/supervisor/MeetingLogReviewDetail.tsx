@@ -95,7 +95,7 @@ export function MeetingLogReviewDetail() {
 
   if (error || !log) {
     return (
-      <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
+      <div className="max-w-3xl mx-auto space-y-3 lg:space-y-4">
         <AlertBanner
           variant="error"
           title="Failed to load meeting log"
@@ -124,7 +124,7 @@ export function MeetingLogReviewDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-5">
+    <div className="max-w-4xl mx-auto space-y-3 lg:space-y-4">
       {/* Back Button */}
       <Link
         to={ROUTES.SUPERVISOR.MEETING_LOGS}

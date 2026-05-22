@@ -67,7 +67,7 @@ export function SupervisorGrades() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-3 lg:space-y-4">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 p-6 text-white shadow-xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
