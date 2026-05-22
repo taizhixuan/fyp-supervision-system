@@ -75,7 +75,7 @@ export function MeetingLogReview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header - Gradient Style */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-800 via-primary-800 to-primary-900 p-6 text-white shadow-xl">
         {/* Decorative elements */}

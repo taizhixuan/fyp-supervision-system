@@ -191,7 +191,7 @@ export function CompareSupervisors() {
 
   if (ids.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-5">
         <Link
           to={ROUTES.STUDENT.SUPERVISORS}
           className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -230,7 +230,7 @@ export function CompareSupervisors() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.SUPERVISORS}

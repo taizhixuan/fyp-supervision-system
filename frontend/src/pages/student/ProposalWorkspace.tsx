@@ -621,7 +621,7 @@ export function ProposalWorkspace() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Read-only banners — proposal APPROVED, or the FYP cycle has ended. */}
       {(isApproved || cycleEnded) && (
         <AlertBanner
@@ -734,7 +734,7 @@ export function ProposalWorkspace() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSave)} className="space-y-6 pb-24">
+      <form onSubmit={handleSubmit(onSave)} className="space-y-4 lg:space-y-5 pb-24">
         {/* Wizard step indicator */}
         <Card className="!p-4 sm:!p-5">
           <ol className="relative grid grid-cols-5 gap-1 sm:gap-2">

@@ -65,7 +65,7 @@ export function MeetingLogEdit() {
 
   if (error || !log) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
         <AlertBanner
           variant="error"
           title="Failed to load meeting log"
@@ -84,7 +84,7 @@ export function MeetingLogEdit() {
   const canEdit = ['DRAFT', 'CORRECTION_REQUIRED'].includes(log.status)
   if (!canEdit) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
         <AlertBanner
           variant="warning"
           title="Cannot edit this log"
@@ -101,7 +101,7 @@ export function MeetingLogEdit() {
 
   if (submitSuccess) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
         <Card className="text-center py-12">
           <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-success-600" />
@@ -145,7 +145,7 @@ export function MeetingLogEdit() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.MEETING_LOG_DETAIL.replace(':id', log.logId)}

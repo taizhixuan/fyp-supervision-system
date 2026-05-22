@@ -184,7 +184,7 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
   const roleBadgeVariant = ROLE_BADGE_VARIANTS[profile.role] ?? 'default'
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-neutral-900">{title}</h1>

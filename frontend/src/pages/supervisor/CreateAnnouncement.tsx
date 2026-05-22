@@ -157,7 +157,7 @@ export function CreateAnnouncement() {
   const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
-    <div className="space-y-6 lg:max-w-6xl lg:mx-auto">
+    <div className="space-y-4 lg:space-y-5 lg:max-w-6xl lg:mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.ANNOUNCEMENTS}>
@@ -180,9 +180,9 @@ export function CreateAnnouncement() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-6 lg:space-y-0">
+      <form onSubmit={handleSubmit(onSubmit)} className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
         {/* Left column: form fields */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4 lg:space-y-5">
         {/* Basic Info */}
         <Card>
           <h3 className="font-semibold text-neutral-900 mb-4">Announcement Details</h3>

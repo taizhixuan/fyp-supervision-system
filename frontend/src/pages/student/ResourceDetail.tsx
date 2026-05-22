@@ -59,7 +59,7 @@ export function ResourceDetail() {
 
   if (!resource) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
         <Link
           to={ROUTES.STUDENT.RESOURCES}
           className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -84,7 +84,7 @@ export function ResourceDetail() {
     : null
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.RESOURCES}
@@ -116,7 +116,7 @@ export function ResourceDetail() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           {/* Description */}
           <Card>
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">About this Resource</h2>
@@ -213,7 +213,7 @@ export function ResourceDetail() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-5">
           {/* Download / Open */}
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-3">Actions</h3>

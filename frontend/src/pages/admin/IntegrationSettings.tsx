@@ -86,7 +86,7 @@ export function IntegrationSettings() {
   }, {} as Record<IntegrationType, Integration[]>) || {}
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" />
@@ -140,7 +140,7 @@ export function IntegrationSettings() {
       </div>
 
       {/* Integrations by Type */}
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-5">
         {Object.entries(typeConfig).map(([type, config]) => {
           const integrations = integrationsByType[type as IntegrationType] || []
           const Icon = config.icon

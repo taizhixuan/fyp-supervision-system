@@ -106,7 +106,7 @@ export function DocumentDetail() {
   const type = typeConfig[typeKey]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       <div className="flex items-center gap-4">
         <Link to={ROUTES.SUPERVISOR.DOCUMENTS}>
           <Button variant="ghost" size="sm">
@@ -123,7 +123,7 @@ export function DocumentDetail() {
       )}
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 lg:space-y-5">
           <Card>
             <div className="text-center">
               <div className={cn('w-20 h-20 rounded-lg flex items-center justify-center mx-auto mb-4', type.bgColor)}>
@@ -192,7 +192,7 @@ export function DocumentDetail() {
           </Card>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           {document.description && (
             <Card>
               <h3 className="font-semibold text-neutral-900 mb-3">Description</h3>

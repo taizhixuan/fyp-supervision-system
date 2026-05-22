@@ -204,7 +204,7 @@ export function DeadlineCalendar() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header with Gradient */}
       <div className="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-950 rounded-2xl p-6 text-white overflow-hidden">
         {/* Decorative Elements */}

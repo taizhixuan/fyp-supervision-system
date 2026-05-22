@@ -70,7 +70,7 @@ export function MeetingExport() {
   const estimatedCount = 15
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 lg:space-y-5">
       {/* Back Button */}
       <Link
         to={ROUTES.STUDENT.MEETINGS}

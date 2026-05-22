@@ -176,7 +176,7 @@ export function SupervisorProfile() {
   }
 
   return (
-    <div className={cn('space-y-6', isEditing && 'pb-24')}>
+    <div className={cn('space-y-4 lg:space-y-5', isEditing && 'pb-24')}>
       {/* Header - Gradient Style */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
         {/* Decorative elements */}
@@ -235,7 +235,7 @@ export function SupervisorProfile() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Basic Info */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 lg:space-y-5">
             {/* Profile Card */}
             <Card className="overflow-hidden">
               <div className="bg-gradient-to-br from-stone-100 to-stone-50 p-6 text-center">
@@ -456,7 +456,7 @@ export function SupervisorProfile() {
           </div>
 
           {/* Right Column - Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-5">
             {/* Right-column tab nav */}
             <div className="border-b border-stone-200">
               <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Profile details">

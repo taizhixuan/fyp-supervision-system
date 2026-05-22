@@ -138,7 +138,7 @@ export function MeetingLogForm({
   }, [watchedPhase, setValue])
 
   return (
-    <form className={cn('space-y-6', !disabled && 'pb-24', className)}>
+    <form className={cn('space-y-4 lg:space-y-5', !disabled && 'pb-24', className)}>
       {/* Meeting Details */}
       <Card>
         <div className="flex items-start justify-between gap-4 mb-4">

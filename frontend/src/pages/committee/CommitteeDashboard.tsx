@@ -131,7 +131,7 @@ export function CommitteeDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header - Gradient Style */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
         {/* Decorative elements */}
@@ -227,7 +227,7 @@ export function CommitteeDashboard() {
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Statistics */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-5">
           {/* Student & Project Stats */}
           <Card className="overflow-hidden">
             <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">
@@ -399,7 +399,7 @@ export function CommitteeDashboard() {
         </div>
 
         {/* Right Column - Activity Feed */}
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-5">
           {/* Recent Activity */}
           <Card className="overflow-hidden">
             <div className="p-4 bg-gradient-to-r from-stone-100 to-stone-50 border-b border-stone-200">

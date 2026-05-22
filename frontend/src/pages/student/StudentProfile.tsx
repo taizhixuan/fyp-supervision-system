@@ -321,7 +321,7 @@ export function StudentProfile() {
   }
 
   return (
-    <div className={cn('max-w-4xl mx-auto space-y-6', isEditing && 'pb-24')}>
+    <div className={cn('max-w-4xl mx-auto space-y-4 lg:space-y-5', isEditing && 'pb-24')}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">

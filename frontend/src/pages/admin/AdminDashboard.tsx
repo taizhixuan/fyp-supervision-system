@@ -51,7 +51,7 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 p-6 text-white shadow-xl">
         <div className="absolute -right-10 -top-10 h-40 w-40 bg-amber-500/10 rounded-full blur-3xl" />

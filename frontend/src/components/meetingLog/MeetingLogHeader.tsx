@@ -38,7 +38,7 @@ export function MeetingLogHeader({ data, className }: MeetingLogHeaderProps) {
   })
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-4 lg:space-y-5', className)}>
       {/* MMU Header Banner */}
       <div className="bg-gradient-to-r from-primary-800 to-primary-900 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
