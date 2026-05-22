@@ -340,28 +340,42 @@
 }
 
 /* Inputs — force text color to light so typed content reads against the dark
-   field bg. Tailwind doesn't auto-flip text in form fields, and most inputs
-   in the app don't set an explicit text color (they inherit body color). */
-:where(.dark) input,
-:where(.dark) textarea,
-:where(.dark) select {
+   field bg. Use `.dark input` (specificity 0,0,1,1) instead of
+   `:where(.dark) input` so this beats any inherited `text-neutral-*` color
+   on the wrapping Card/page. !important so the rule survives even when a
+   page-level text class would normally win. */
+.dark input,
+.dark textarea,
+.dark select {
   color-scheme: dark;
-  color: #f1f5f9;
+  color: #f1f5f9 !important;
 }
-:where(.dark) input::placeholder,
-:where(.dark) textarea::placeholder {
-  color: #64748b;
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
 }
-:where(.dark) input:disabled,
-:where(.dark) textarea:disabled,
-:where(.dark) select:disabled {
-  color: #94a3b8;
-  background-color: #1f2937;
+.dark input:disabled,
+.dark textarea:disabled,
+.dark select:disabled {
+  color: #94a3b8 !important;
+  background-color: #1f2937 !important;
+}
+
+/* Webkit autofill yellow override (Chrome autofills inputs to a banana
+   yellow with black text by default). Repaint via an inset box-shadow. */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark textarea:-webkit-autofill,
+.dark select:-webkit-autofill {
+  -webkit-text-fill-color: #f1f5f9 !important;
+  -webkit-box-shadow: 0 0 0 1000px #111827 inset !important;
+  caret-color: #f1f5f9 !important;
 }
 
 /* Contenteditable surfaces (rich-text editors) */
-:where(.dark) [contenteditable="true"] {
-  color: #f1f5f9;
+.dark [contenteditable="true"] {
+  color: #f1f5f9 !important;
 }
 
 /* ---------------------------------------------------------------------------
