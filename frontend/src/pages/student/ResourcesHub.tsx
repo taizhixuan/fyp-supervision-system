@@ -224,7 +224,7 @@ export function ResourcesHub() {
 }
 
 function FeaturedResourceCard({ resource }: { resource: Resource }) {
-  const config = typeConfig[resource.type]
+  const config = typeConfig[resource.type as ResourceType] ?? typeConfig.DOCUMENT
   const Icon = config.icon
 
   return (
@@ -279,8 +279,9 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
 }
 
 function ResourceRow({ resource }: { resource: Resource }) {
-  const config = typeConfig[resource.type]
+  const config = typeConfig[resource.type as ResourceType] ?? typeConfig.DOCUMENT
   const Icon = config.icon
+  const categoryLabel = categoryConfig[resource.category as ResourceCategory] ?? resource.category ?? 'General'
 
   return (
     <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
@@ -309,7 +310,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
             {/* Mobile badges */}
             <div className="flex items-center gap-2 mt-2 sm:hidden">
               <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
-              <span className="text-xs text-stone-400">{categoryConfig[resource.category]}</span>
+              <span className="text-xs text-stone-400">{categoryLabel}</span>
             </div>
           </div>
 
@@ -317,7 +318,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
           <div className="hidden sm:flex items-center gap-3">
             <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
             <span className="px-2.5 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-lg">
-              {categoryConfig[resource.category]}
+              {categoryLabel}
             </span>
             {resource.fileSize && (
               <span className="flex items-center gap-1 text-xs text-stone-400">
