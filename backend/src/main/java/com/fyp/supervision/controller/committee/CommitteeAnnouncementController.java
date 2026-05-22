@@ -7,7 +7,6 @@ import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,7 +29,11 @@ public class CommitteeAnnouncementController {
         return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
-    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    // No `consumes` restriction: Tomcat's CharacterEncodingFilter appends
+    // `;charset=UTF-8` to multipart Content-Type after `setCharacterEncoding`
+    // runs, which makes a strict matcher reject the augmented header. Branch on
+    // which @RequestPart/@RequestBody is present instead.
+    @PostMapping
     public ResponseEntity<?> createAnnouncement(
             @AuthenticationPrincipal UserDetails user,
             @RequestPart(value = "data", required = false) String dataJson,
