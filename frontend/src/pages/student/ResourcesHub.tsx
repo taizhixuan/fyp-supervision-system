@@ -267,7 +267,7 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
               )}
               <span className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
-                {resource.viewCount.toLocaleString()} views
+                {(resource.viewCount ?? 0).toLocaleString()} views
               </span>
             </div>
             <ArrowRight className="h-4 w-4 text-stone-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
@@ -334,7 +334,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
             )}
             <span className="flex items-center gap-1 text-xs text-stone-400">
               <Eye className="h-3 w-3" />
-              {resource.viewCount.toLocaleString()}
+              {(resource.viewCount ?? 0).toLocaleString()}
             </span>
           </div>
 
