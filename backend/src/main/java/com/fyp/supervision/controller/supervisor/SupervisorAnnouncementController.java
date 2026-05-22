@@ -7,7 +7,6 @@ import com.fyp.supervision.service.AnnouncementService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,7 +40,13 @@ public class SupervisorAnnouncementController {
         return ResponseEntity.ok(announcementService.get(id));
     }
 
-    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    // No `consumes` restriction: Tomcat's CharacterEncodingFilter appends
+    // `;charset=UTF-8` to the request Content-Type once `setCharacterEncoding`
+    // runs, which makes a strict `consumes = MULTIPART_FORM_DATA_VALUE`
+    // matcher reject the augmented `multipart/form-data;boundary=...;charset=UTF-8`
+    // with HttpMediaTypeNotSupportedException. We branch on which @RequestPart
+    // is present instead.
+    @PostMapping
     public ResponseEntity<?> createAnnouncement(
             @AuthenticationPrincipal UserDetails user,
             @RequestPart(value = "data", required = false) String dataJson,
