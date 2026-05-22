@@ -865,6 +865,8 @@ export function StudentDashboard() {
         </Card>
       </div>
 
+      {/* Upcoming Meetings + Recent Documents — side-by-side on lg+ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
       {/* Upcoming Meetings */}
       <Card>
         <div className="flex items-center justify-between mb-4">
@@ -901,7 +903,7 @@ export function StudentDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
             {upcomingMeetings.map((meeting) => (
               <Link
                 key={meeting.meetingId}
@@ -1020,6 +1022,7 @@ export function StudentDashboard() {
           </div>
         )}
       </Card>
+      </div>
 
       {/* Quick Actions */}
       <div>
