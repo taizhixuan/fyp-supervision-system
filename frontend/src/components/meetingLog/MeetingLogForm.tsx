@@ -61,6 +61,11 @@ export function MeetingLogForm({
   collapseDetails = true,
 }: MeetingLogFormProps) {
   const [detailsOpen, setDetailsOpen] = useState(!collapseDetails || disabled)
+  // Optional "Problems & Solutions" is collapsed by default for new logs;
+  // auto-expand when there's already content (edit mode) or when disabled (read-only view).
+  const [problemsOpen, setProblemsOpen] = useState(
+    disabled || !!initialData?.problemsAndSolutions
+  )
   const {
     register,
     handleSubmit,
@@ -111,6 +116,7 @@ export function MeetingLogForm({
   const watchedMode = watch('meetingMode')
   const watchedPhase = watch('fypPhase')
   const watchedTitle = watch('projectTitle')
+  const watchedProblems = watch('problemsAndSolutions')
 
   // When user toggles FYP phase via Edit details, swap the task list to the
   // phase's defaults. Skip on first render so prefill/initialData isn't wiped.
@@ -132,7 +138,7 @@ export function MeetingLogForm({
   }, [watchedPhase, setValue])
 
   return (
-    <form className={cn('space-y-6', className)}>
+    <form className={cn('space-y-6', !disabled && 'pb-24', className)}>
       {/* Meeting Details */}
       <Card>
         <div className="flex items-start justify-between gap-4 mb-4">
@@ -369,27 +375,61 @@ export function MeetingLogForm({
         )}
       </Card>
 
-      {/* Section 3: Problems & Solutions */}
+      {/* Section 3: Problems & Solutions — collapsed by default (optional) */}
       <Card>
-        <h3 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide mb-4">
-          Section 3: Problems Faced & Solutions (Optional)
-        </h3>
-        <textarea
-          disabled={disabled}
-          placeholder="Describe any problems encountered and how they were resolved..."
-          className={cn(
-            'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none',
-            'border-neutral-300',
-            disabled && 'bg-neutral-100 cursor-not-allowed'
+        <button
+          type="button"
+          onClick={() => setProblemsOpen((v) => !v)}
+          aria-expanded={problemsOpen}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-neutral-700 uppercase tracking-wide">
+              Section 3: Problems Faced &amp; Solutions
+            </h3>
+            <span className="text-xs text-neutral-400 font-normal normal-case">
+              Optional
+            </span>
+            {!problemsOpen && watchedProblems && (
+              <span className="hidden sm:inline text-xs text-neutral-500 italic truncate">
+                — {watchedProblems.slice(0, 60)}
+                {watchedProblems.length > 60 ? '…' : ''}
+              </span>
+            )}
+          </div>
+          {problemsOpen ? (
+            <ChevronUp className="h-4 w-4 text-neutral-500 flex-shrink-0" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-neutral-500 flex-shrink-0" />
           )}
-          rows={4}
-          {...register('problemsAndSolutions')}
-        />
+        </button>
+
+        {problemsOpen ? (
+          <div className="mt-4">
+            <textarea
+              disabled={disabled}
+              placeholder="Describe any problems encountered and how they were resolved..."
+              className={cn(
+                'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none',
+                'border-neutral-300',
+                disabled && 'bg-neutral-100 cursor-not-allowed'
+              )}
+              rows={4}
+              {...register('problemsAndSolutions')}
+            />
+          </div>
+        ) : (
+          !watchedProblems && (
+            <p className="mt-2 text-xs text-neutral-400">
+              Click to add notes if your meeting raised any issues that needed solving.
+            </p>
+          )
+        )}
       </Card>
 
-      {/* Submit Buttons */}
+      {/* Sticky submit bar — always reachable without scrolling. */}
       {!disabled && (
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
+        <div className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border border-neutral-200 rounded-xl shadow-lg shadow-stone-300/30 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -398,15 +438,22 @@ export function MeetingLogForm({
           >
             Save as Draft
           </Button>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={handleSubmit((data) => onFormSubmit(data, false))}
-            isLoading={isLoading}
-            disabled={!hasSelectedTasks}
-          >
-            Submit for Review
-          </Button>
+          <div className="flex items-center gap-2">
+            {!hasSelectedTasks && (
+              <span className="hidden sm:block text-xs text-neutral-500">
+                Select at least one task first
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSubmit((data) => onFormSubmit(data, false))}
+              isLoading={isLoading}
+              disabled={!hasSelectedTasks}
+            >
+              Submit for Review
+            </Button>
+          </div>
         </div>
       )}
     </form>
