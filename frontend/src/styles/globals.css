@@ -339,15 +339,29 @@
   --tw-shadow-color: rgba(0, 0, 0, 0.4);
 }
 
-/* Inputs */
+/* Inputs — force text color to light so typed content reads against the dark
+   field bg. Tailwind doesn't auto-flip text in form fields, and most inputs
+   in the app don't set an explicit text color (they inherit body color). */
 :where(.dark) input,
 :where(.dark) textarea,
 :where(.dark) select {
   color-scheme: dark;
+  color: #f1f5f9;
 }
 :where(.dark) input::placeholder,
 :where(.dark) textarea::placeholder {
   color: #64748b;
+}
+:where(.dark) input:disabled,
+:where(.dark) textarea:disabled,
+:where(.dark) select:disabled {
+  color: #94a3b8;
+  background-color: #1f2937;
+}
+
+/* Contenteditable surfaces (rich-text editors) */
+:where(.dark) [contenteditable="true"] {
+  color: #f1f5f9;
 }
 
 /* ---------------------------------------------------------------------------
