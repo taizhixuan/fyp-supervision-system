@@ -104,20 +104,22 @@ export function DocumentList() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Documents</h1>
-          <p className="text-neutral-600 mt-1">Manage your FYP documents and files</p>
+    <div className="space-y-3 lg:space-y-4">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">Documents</h1>
+          <p className="text-xs text-neutral-600">Manage your FYP documents and files</p>
         </div>
         <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-          <Button variant="primary" leftIcon={<Upload className="h-4 w-4" />}>
+          <Button variant="primary" size="sm" leftIcon={<Upload className="h-4 w-4" />} className="whitespace-nowrap">
             Upload Document
           </Button>
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Type Stat Pills — horizontal compact strip */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {typeStats.map(({ type, label, color, count, icon: Icon }) => {
           const active = typeFilter === type
           return (
@@ -125,22 +127,25 @@ export function DocumentList() {
               key={type}
               onClick={() => setTypeFilter(active ? 'all' : type)}
               className={cn(
-                'p-3 rounded-lg text-center transition-all',
-                active ? 'ring-2 ring-primary-500 bg-white' : 'bg-white hover:shadow-md'
+                'flex items-center gap-2 px-2 py-1.5 rounded-md transition-all bg-white text-left',
+                active ? 'ring-2 ring-primary-500' : 'border border-neutral-200 hover:shadow-sm'
               )}
             >
-              <div className={cn('w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center', color)}>
-                <Icon className="h-5 w-5" />
+              <div className={cn('w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0', color)}>
+                <Icon className="h-3.5 w-3.5" />
               </div>
-              <p className="text-2xl font-bold text-neutral-900">{count}</p>
-              <p className="text-xs text-neutral-500">{label}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-neutral-900 leading-none">{count}</p>
+                <p className="text-[10px] text-neutral-500 truncate uppercase tracking-wide">{label}</p>
+              </div>
             </button>
           )
         })}
       </div>
 
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filters — compact single row */}
+      <Card padding="sm">
+        <div className="flex flex-col lg:flex-row gap-2">
           <div className="flex-1">
             <Input
               placeholder="Search documents..."
@@ -149,85 +154,83 @@ export function DocumentList() {
               leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex bg-neutral-100 rounded-lg p-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Phase</span>
+            <div className="flex gap-1">
+              {([
+                { value: 'all', label: 'All' },
+                { value: 'FYP1', label: 'FYP1' },
+                { value: 'FYP2', label: 'FYP2' },
+                { value: 'FINAL', label: 'Final' },
+              ] as const).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPhaseFilter(option.value as 'all' | DocumentPhase)}
+                  className={cn(
+                    'px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap',
+                    phaseFilter === option.value
+                      ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex bg-neutral-100 rounded-md p-0.5 ml-1">
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
                 aria-label="List view"
                 className={cn(
-                  'p-2 rounded transition-colors',
+                  'p-1.5 rounded transition-colors',
                   viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
                 )}
               >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
                 aria-label="Grid view"
                 className={cn(
-                  'p-2 rounded transition-colors',
+                  'p-1.5 rounded transition-colors',
                   viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'
                 )}
               >
-                <Grid className="h-4 w-4" />
+                <Grid className="h-3.5 w-3.5" />
               </button>
             </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-neutral-200">
-          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Phase</span>
-          <div className="flex flex-wrap gap-2">
-            {([
-              { value: 'all', label: 'All' },
-              { value: 'FYP1', label: 'FYP 1' },
-              { value: 'FYP2', label: 'FYP 2' },
-              { value: 'FINAL', label: 'Final' },
-            ] as const).map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setPhaseFilter(option.value as 'all' | DocumentPhase)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-                  phaseFilter === option.value
-                    ? 'bg-primary-100 text-primary-700 ring-1 ring-primary-300'
-                    : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
           </div>
         </div>
       </Card>
 
       {filteredDocuments.length === 0 ? (
-        <Card className="text-center py-12">
-          <Folder className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">
+        <Card className="text-center py-8">
+          <Folder className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
+          <h3 className="font-medium text-neutral-900 mb-1">
             {documents.length === 0 ? 'No documents yet' : 'No documents match your filters'}
           </h3>
-          <p className="text-neutral-500 mb-4">
+          <p className="text-sm text-neutral-500 mb-3">
             {documents.length === 0
               ? 'Upload your first document to get started'
               : 'Try clearing the search or selecting a different category'}
           </p>
           {documents.length === 0 && (
             <Link to={ROUTES.STUDENT.DOCUMENT_UPLOAD}>
-              <Button variant="primary">Upload Document</Button>
+              <Button variant="primary" size="sm">Upload Document</Button>
             </Link>
           )}
         </Card>
       ) : viewMode === 'list' ? (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {filteredDocuments.map((doc) => (
             <DocumentRow key={doc.documentId} document={doc} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {filteredDocuments.map((doc) => (
             <DocumentCard key={doc.documentId} document={doc} />
           ))}
@@ -247,15 +250,15 @@ function DocumentRow({ document }: { document: FYPDocument }) {
       to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}
       className="block"
     >
-      <Card hover className="transition-all">
-        <div className="flex items-center gap-4">
-          <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', config.color)}>
-            <Icon className="h-6 w-6" />
+      <Card hover padding="sm" className="transition-all">
+        <div className="flex items-center gap-2.5">
+          <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', config.color)}>
+            <Icon className="h-4 w-4" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-neutral-900 truncate">{document.title}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-semibold text-sm text-neutral-900 truncate">{document.title}</h3>
               {document.version > 1 && (
                 <Badge variant="default" size="sm">v{document.version}</Badge>
               )}
@@ -263,18 +266,17 @@ function DocumentRow({ document }: { document: FYPDocument }) {
                 <Badge variant="default" size="sm">{document.phase}</Badge>
               )}
             </div>
-            <p className="text-sm text-neutral-500 truncate">{document.fileName}</p>
+            <div className="flex items-center gap-2 text-[11px] text-neutral-500 mt-0.5">
+              <span className="truncate flex-1">{document.fileName}</span>
+              <span className="flex-shrink-0">{formatFileSize(document.fileSize)}</span>
+              <span className="hidden sm:inline-flex items-center gap-0.5 flex-shrink-0">
+                <Clock className="h-3 w-3" />
+                {new Date(document.uploadedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
+              </span>
+            </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-4 text-sm text-neutral-500">
-            <span>{formatFileSize(document.fileSize)}</span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {new Date(document.uploadedAt).toLocaleDateString('en-MY')}
-            </span>
-          </div>
-
-          <ChevronRight className="h-4 w-4 text-neutral-400" />
+          <ChevronRight className="h-4 w-4 text-neutral-300 flex-shrink-0" />
         </div>
       </Card>
     </Link>
@@ -291,28 +293,28 @@ function DocumentCard({ document }: { document: FYPDocument }) {
       to={ROUTES.STUDENT.DOCUMENT_DETAIL.replace(':id', document.documentId)}
       className="block h-full"
     >
-      <Card hover className="h-full">
+      <Card hover padding="sm" className="h-full">
         <div className="flex flex-col h-full">
-          <div className={cn('w-full h-24 rounded-lg flex items-center justify-center mb-4', config.color)}>
-            <Icon className="h-12 w-12" />
+          <div className={cn('w-full h-14 rounded-md flex items-center justify-center mb-2', config.color)}>
+            <Icon className="h-7 w-7" />
           </div>
 
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-neutral-900 truncate">{document.title}</h3>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <h3 className="font-semibold text-sm text-neutral-900 truncate flex-1">{document.title}</h3>
               {document.version > 1 && (
                 <Badge variant="default" size="sm">v{document.version}</Badge>
               )}
             </div>
-            <p className="text-sm text-neutral-500 truncate mb-2">{document.fileName}</p>
+            <p className="text-xs text-neutral-500 truncate mb-1">{document.fileName}</p>
             {document.description && (
-              <p className="text-xs text-neutral-400 line-clamp-2">{document.description}</p>
+              <p className="text-[11px] text-neutral-400 line-clamp-2 leading-snug">{document.description}</p>
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100 text-xs text-neutral-500">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100 text-[10px] text-neutral-500">
             <span>{formatFileSize(document.fileSize)}</span>
-            <span>{new Date(document.uploadedAt).toLocaleDateString('en-MY')}</span>
+            <span>{new Date(document.uploadedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
           </div>
         </div>
       </Card>
