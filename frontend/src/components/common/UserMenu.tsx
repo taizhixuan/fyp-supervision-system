@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
+import { User, Settings, LogOut, ChevronDown, Sun, Moon, Monitor } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/auth/useAuth'
 import { ROUTES } from '@/lib/constants/routes'
 import { avatarInitials } from '@/lib/utils/name'
 import { assetUrl } from '@/lib/utils/assetUrl'
 import { useUserProfile } from '@/lib/hooks/useUserProfile'
+import { useTheme, type ThemePreference } from '@/lib/theme/ThemeProvider'
 
 export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
@@ -18,6 +19,13 @@ export function UserMenu() {
   const { data: liveUser } = useUserProfile()
   const user = liveUser ?? authUser
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
+
+  const themeOptions: Array<{ value: ThemePreference; label: string; icon: typeof Sun }> = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor },
+  ]
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -145,6 +153,37 @@ export function UserMenu() {
               <Settings className="h-4 w-4 text-neutral-400" />
               Account Settings
             </Link>
+          </div>
+
+          {/* Appearance */}
+          <div className="border-t border-neutral-100 px-4 py-3">
+            <p className="text-xs font-medium text-neutral-500 mb-2 uppercase tracking-wide">
+              Appearance
+            </p>
+            <div className="flex gap-1">
+              {themeOptions.map((option) => {
+                const Icon = option.icon
+                const active = theme === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTheme(option.value)}
+                    className={cn(
+                      'flex-1 flex flex-col items-center gap-1 py-2 rounded-md text-xs font-medium transition-colors',
+                      active
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-neutral-600 hover:bg-neutral-50'
+                    )}
+                    aria-pressed={active}
+                    title={`Use ${option.label.toLowerCase()} theme`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Logout */}

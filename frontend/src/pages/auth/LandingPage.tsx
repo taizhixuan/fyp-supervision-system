@@ -141,7 +141,7 @@ export function LandingPage() {
                   <Link to={ROUTES.LOGIN}>
                     <Button
                       size="lg"
-                      className="min-w-[180px] bg-white text-[#1e3a5f] hover:bg-blue-50 shadow-lg shadow-black/20 font-semibold"
+                      className="min-w-[180px] bg-white text-[#1e3a5f] hover:bg-blue-50 shadow-lg shadow-black/20 font-semibold dark:!bg-blue-100 dark:!text-[#0b1f3a]"
                     >
                       Log In
                       <ArrowRight className="h-5 w-5 ml-2" />
@@ -293,8 +293,8 @@ export function LandingPage() {
                     className="relative flex flex-col items-center text-center px-2 animate-fade-in-up"
                     style={{ animationDelay: `${i * 100}ms` }}
                   >
-                    <div className="relative z-10 w-14 h-14 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm shadow-blue-100/60 transition-transform duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-md">
-                      <s.icon className="h-6 w-6 text-[#1e3a5f]" />
+                    <div className="relative z-10 w-14 h-14 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center shadow-sm shadow-blue-100/60 transition-transform duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-md dark:!bg-blue-100 dark:border-blue-400">
+                      <s.icon className="h-6 w-6 text-[#1e3a5f] dark:text-[#0b1f3a]" />
                     </div>
                     <div className="mt-3 font-semibold text-stone-800 text-sm">{s.label}</div>
                     <div className="text-xs text-stone-500">{s.sub}</div>
@@ -307,8 +307,8 @@ export function LandingPage() {
             <div className="md:hidden flex flex-col gap-4">
               {STAGES.map((s, i) => (
                 <div key={s.label} className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center flex-shrink-0">
-                    <s.icon className="h-5 w-5 text-[#1e3a5f]" />
+                  <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center flex-shrink-0 dark:!bg-blue-100 dark:border-blue-400">
+                    <s.icon className="h-5 w-5 text-[#1e3a5f] dark:text-[#0b1f3a]" />
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold text-stone-800 text-sm">{s.label}</div>
@@ -379,7 +379,7 @@ export function LandingPage() {
               <Link to={ROUTES.REGISTER}>
                 <Button
                   size="lg"
-                  className="min-w-[200px] bg-white text-[#1e3a5f] hover:bg-blue-50 font-semibold"
+                  className="min-w-[200px] bg-white text-[#1e3a5f] hover:bg-blue-50 font-semibold dark:!bg-blue-100 dark:!text-[#0b1f3a]"
                 >
                   Get Started
                   <ArrowRight className="h-5 w-5 ml-2" />
