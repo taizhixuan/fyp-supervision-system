@@ -50,7 +50,13 @@ interface NavGroup {
 
 type NavSchema = { kind: 'flat'; items: NavItem[] } | { kind: 'grouped'; groups: NavGroup[]; topItems: NavItem[] }
 
-type BadgeKey = 'notifications' | 'adminPendingRegs' | 'supervisorPendingReqs'
+type BadgeKey =
+  | 'notifications'
+  | 'adminPendingRegs'
+  | 'supervisorPendingReqs'
+  | 'supervisorProposalsPending'
+  | 'committeeProposalsPending'
+  | 'studentRequestsPending'
 
 // Routes the StudentFeatureGate locks until a supervisor is assigned (UC10/UC11/UC12).
 const STUDENT_GATED_HREFS: ReadonlySet<string> = new Set<string>([
@@ -69,44 +75,100 @@ const STUDENT_POST_REGISTRATION_LOCKED_HREFS: ReadonlySet<string> = new Set<stri
   ROUTES.STUDENT.MY_REQUESTS,
 ])
 
-const studentNavItems: NavItem[] = [
+// Student groups mirror the lock semantics: discovery routes lock once paired, and
+// the FYP-work routes lock until paired. Putting them under explicit headers tells the
+// student why some items grey out together.
+const studentTopItems: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.STUDENT.DASHBOARD, icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: 'My Profile', href: ROUTES.STUDENT.PROFILE, icon: <User className="h-5 w-5" /> },
-  { label: 'Find Supervisor', href: ROUTES.STUDENT.SUPERVISORS, icon: <Users className="h-5 w-5" /> },
-  { label: 'AI Recommendations', href: ROUTES.STUDENT.RECOMMENDATIONS, icon: <Sparkles className="h-5 w-5" /> },
-  { label: 'My Requests', href: ROUTES.STUDENT.MY_REQUESTS, icon: <Send className="h-5 w-5" /> },
-  { label: 'Proposal', href: ROUTES.STUDENT.PROPOSAL, icon: <FileText className="h-5 w-5" /> },
-  { label: 'Meetings', href: ROUTES.STUDENT.MEETINGS, icon: <Calendar className="h-5 w-5" /> },
-  { label: 'Meeting Logs', href: ROUTES.STUDENT.MEETING_LOGS, icon: <ClipboardList className="h-5 w-5" /> },
-  { label: 'Documents', href: ROUTES.STUDENT.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
-  { label: 'Announcements', href: ROUTES.STUDENT.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
-  { label: 'Resources', href: ROUTES.STUDENT.RESOURCES, icon: <Library className="h-5 w-5" /> },
-  { label: 'Deadlines', href: ROUTES.STUDENT.DEADLINES, icon: <Clock className="h-5 w-5" /> },
   { label: 'Notifications', href: ROUTES.STUDENT.NOTIFICATIONS, icon: <Bell className="h-5 w-5" />, badgeKey: 'notifications' },
 ]
 
-const supervisorNavItems: NavItem[] = [
+const studentNavGroups: NavGroup[] = [
+  {
+    label: 'Find Supervisor',
+    items: [
+      { label: 'Find Supervisor', href: ROUTES.STUDENT.SUPERVISORS, icon: <Users className="h-5 w-5" /> },
+      { label: 'AI Recommendations', href: ROUTES.STUDENT.RECOMMENDATIONS, icon: <Sparkles className="h-5 w-5" /> },
+      { label: 'My Requests', href: ROUTES.STUDENT.MY_REQUESTS, icon: <Send className="h-5 w-5" />, badgeKey: 'studentRequestsPending' },
+    ],
+  },
+  {
+    label: 'My FYP',
+    items: [
+      { label: 'Proposal', href: ROUTES.STUDENT.PROPOSAL, icon: <FileText className="h-5 w-5" /> },
+      { label: 'Meetings', href: ROUTES.STUDENT.MEETINGS, icon: <Calendar className="h-5 w-5" /> },
+      { label: 'Meeting Logs', href: ROUTES.STUDENT.MEETING_LOGS, icon: <ClipboardList className="h-5 w-5" /> },
+      { label: 'Documents', href: ROUTES.STUDENT.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Information',
+    items: [
+      { label: 'Announcements', href: ROUTES.STUDENT.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
+      { label: 'Resources', href: ROUTES.STUDENT.RESOURCES, icon: <Library className="h-5 w-5" /> },
+      { label: 'Deadlines', href: ROUTES.STUDENT.DEADLINES, icon: <Clock className="h-5 w-5" /> },
+    ],
+  },
+]
+
+// Supervisor groups split inbound work (requests/proposals to review) from the
+// people-and-meetings work, so the daily worklist sits visually together at the top.
+const supervisorTopItems: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.SUPERVISOR.DASHBOARD, icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: 'My Profile', href: ROUTES.SUPERVISOR.PROFILE, icon: <User className="h-5 w-5" /> },
-  { label: 'Supervision Requests', href: ROUTES.SUPERVISOR.REQUESTS, icon: <Inbox className="h-5 w-5" />, badgeKey: 'supervisorPendingReqs' },
-  { label: 'Supervisees', href: ROUTES.SUPERVISOR.SUPERVISEES, icon: <Users className="h-5 w-5" /> },
-  { label: 'Proposals', href: ROUTES.SUPERVISOR.PROPOSALS, icon: <FileText className="h-5 w-5" /> },
-  { label: 'Meetings', href: ROUTES.SUPERVISOR.MEETINGS, icon: <Calendar className="h-5 w-5" /> },
-  { label: 'Meeting Logs', href: ROUTES.SUPERVISOR.MEETING_LOGS, icon: <ClipboardList className="h-5 w-5" /> },
-  { label: 'Documents', href: ROUTES.SUPERVISOR.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
-  { label: 'Announcements', href: ROUTES.SUPERVISOR.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
   { label: 'Notifications', href: ROUTES.SUPERVISOR.NOTIFICATIONS, icon: <Bell className="h-5 w-5" />, badgeKey: 'notifications' },
 ]
 
-const committeeNavItems: NavItem[] = [
+const supervisorNavGroups: NavGroup[] = [
+  {
+    label: 'Inbox',
+    items: [
+      { label: 'Supervision Requests', href: ROUTES.SUPERVISOR.REQUESTS, icon: <Inbox className="h-5 w-5" />, badgeKey: 'supervisorPendingReqs' },
+      { label: 'Proposals', href: ROUTES.SUPERVISOR.PROPOSALS, icon: <FileText className="h-5 w-5" />, badgeKey: 'supervisorProposalsPending' },
+    ],
+  },
+  {
+    label: 'My Students',
+    items: [
+      { label: 'Supervisees', href: ROUTES.SUPERVISOR.SUPERVISEES, icon: <Users className="h-5 w-5" /> },
+      { label: 'Meetings', href: ROUTES.SUPERVISOR.MEETINGS, icon: <Calendar className="h-5 w-5" /> },
+      { label: 'Meeting Logs', href: ROUTES.SUPERVISOR.MEETING_LOGS, icon: <ClipboardList className="h-5 w-5" /> },
+      { label: 'Documents', href: ROUTES.SUPERVISOR.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Outbound',
+    items: [
+      { label: 'Announcements', href: ROUTES.SUPERVISOR.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
+    ],
+  },
+]
+
+// Committee has only 5 work items so the grouping is light: "Review" (queue work)
+// vs "Insights" (read-only overview).
+const committeeTopItems: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.COMMITTEE.DASHBOARD, icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: 'My Profile', href: ROUTES.COMMITTEE.PROFILE, icon: <User className="h-5 w-5" /> },
-  { label: 'Announcements', href: ROUTES.COMMITTEE.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
-  { label: 'Proposals', href: ROUTES.COMMITTEE.PROPOSALS, icon: <FileText className="h-5 w-5" /> },
-  { label: 'Documents', href: ROUTES.COMMITTEE.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
-  { label: 'Projects', href: ROUTES.COMMITTEE.PROJECTS, icon: <Users className="h-5 w-5" /> },
-  { label: 'Reports', href: ROUTES.COMMITTEE.REPORTS, icon: <BarChart3 className="h-5 w-5" /> },
   { label: 'Notifications', href: ROUTES.COMMITTEE.NOTIFICATIONS, icon: <Bell className="h-5 w-5" />, badgeKey: 'notifications' },
+]
+
+const committeeNavGroups: NavGroup[] = [
+  {
+    label: 'Review',
+    items: [
+      { label: 'Proposals', href: ROUTES.COMMITTEE.PROPOSALS, icon: <FileText className="h-5 w-5" />, badgeKey: 'committeeProposalsPending' },
+      { label: 'Documents', href: ROUTES.COMMITTEE.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
+      { label: 'Announcements', href: ROUTES.COMMITTEE.ANNOUNCEMENTS, icon: <Megaphone className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { label: 'Projects', href: ROUTES.COMMITTEE.PROJECTS, icon: <Users className="h-5 w-5" /> },
+      { label: 'Reports', href: ROUTES.COMMITTEE.REPORTS, icon: <BarChart3 className="h-5 w-5" /> },
+    ],
+  },
 ]
 
 // Admin nav is grouped — 15+ flat items is hard to scan in a real-life faculty admin
@@ -150,11 +212,11 @@ const adminNavGroups: NavGroup[] = [
 const getNavSchemaForRole = (role: UserRole): NavSchema => {
   switch (role) {
     case 'STUDENT':
-      return { kind: 'flat', items: studentNavItems }
+      return { kind: 'grouped', topItems: studentTopItems, groups: studentNavGroups }
     case 'SUPERVISOR':
-      return { kind: 'flat', items: supervisorNavItems }
+      return { kind: 'grouped', topItems: supervisorTopItems, groups: supervisorNavGroups }
     case 'FYP_COMMITTEE':
-      return { kind: 'flat', items: committeeNavItems }
+      return { kind: 'grouped', topItems: committeeTopItems, groups: committeeNavGroups }
     case 'SYSTEM_ADMIN':
       return { kind: 'grouped', topItems: adminTopItems, groups: adminNavGroups }
     default:
@@ -200,10 +262,51 @@ function useSidebarBadges(role: UserRole): Record<BadgeKey, number> {
     refetchInterval: 60_000,
   })
 
+  // Supervisor proposal queue — pending review = anything not yet APPROVED / REJECTED.
+  // The list endpoint doesn't accept a status filter, so we count client-side.
+  const supervisorProposals = useQuery({
+    queryKey: ['sidebar-badge', 'supervisor-pending-proposals'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ proposals: { status: string }[] }>('/supervisor/proposals')
+      const pendingSet = new Set(['SUBMITTED', 'UNDER_REVIEW', 'REVISION_REQUIRED'])
+      return (data?.proposals ?? []).filter((p) => pendingSet.has(p.status)).length
+    },
+    enabled: role === 'SUPERVISOR',
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+
+  const committeeProposals = useQuery({
+    queryKey: ['sidebar-badge', 'committee-pending-proposals'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ total: number }>('/committee/proposals', {
+        params: { status: 'PENDING_REVIEW' },
+      })
+      return data?.total ?? 0
+    },
+    enabled: role === 'FYP_COMMITTEE',
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+
+  const studentRequests = useQuery({
+    queryKey: ['sidebar-badge', 'student-pending-requests'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ requests: { status: string }[] }>('/student/supervision-requests')
+      return (data?.requests ?? []).filter((r) => r.status === 'PENDING').length
+    },
+    enabled: role === 'STUDENT',
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+
   return {
     notifications: notifications.data ?? 0,
     adminPendingRegs: adminPending.data ?? 0,
     supervisorPendingReqs: supervisorPending.data ?? 0,
+    supervisorProposalsPending: supervisorProposals.data ?? 0,
+    committeeProposalsPending: committeeProposals.data ?? 0,
+    studentRequestsPending: studentRequests.data ?? 0,
   }
 }
 

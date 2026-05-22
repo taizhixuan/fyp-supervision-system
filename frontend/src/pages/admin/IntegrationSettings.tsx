@@ -16,7 +16,6 @@ import {
   EyeOff,
   Copy,
   RotateCw,
-  Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -87,80 +86,63 @@ export function IntegrationSettings() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Compact hero with inline stat chips */}
       <div className="relative bg-gradient-to-br from-stone-800 via-stone-800 to-stone-900 rounded-xl p-3 sm:p-4 text-white shadow-md overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center ring-1 ring-amber-500/30">
-              <Puzzle className="h-7 w-7 text-amber-400" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex-shrink-0 w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center ring-1 ring-amber-500/30">
+              <Puzzle className="h-5 w-5 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                Integration Settings
-                <Sparkles className="h-5 w-5 text-amber-400" />
-              </h1>
-              <p className="text-stone-300 text-xs">
-                Configure external services and API connections
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">Integration Settings</h1>
+              <p className="text-stone-300 text-xs">Configure external services and API connections</p>
             </div>
           </div>
-          <Button variant="secondary" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Status
+          <Button variant="secondary" size="sm" onClick={() => refetch()} className="border-stone-600 text-white hover:bg-stone-700">
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+            Refresh
           </Button>
+        </div>
+
+        {/* Stat chips */}
+        <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: 'Total', value: data?.integrations.length || 0, color: 'text-stone-200' },
+            { label: 'Active', value: data?.integrations.filter((i) => i.status === 'ACTIVE').length || 0, color: 'text-emerald-300' },
+            { label: 'Errors', value: data?.integrations.filter((i) => i.status === 'ERROR').length || 0, color: 'text-rose-300' },
+            { label: 'Configuring', value: data?.integrations.filter((i) => i.status === 'CONFIGURING').length || 0, color: 'text-amber-300' },
+          ].map((chip) => (
+            <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
+              <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>
+              <p className="text-[10px] text-stone-300 truncate uppercase tracking-wide">{chip.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Status Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-stone-500">
-          <p className="text-sm text-stone-500">Total Integrations</p>
-          <p className="text-xl sm:text-2xl font-bold text-stone-900 leading-tight">{data?.integrations.length || 0}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-500">
-          <p className="text-sm text-stone-500">Active</p>
-          <p className="text-2xl font-bold text-emerald-700">
-            {data?.integrations.filter((i) => i.status === 'ACTIVE').length || 0}
-          </p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-rose-500">
-          <p className="text-sm text-stone-500">Errors</p>
-          <p className="text-2xl font-bold text-rose-700">
-            {data?.integrations.filter((i) => i.status === 'ERROR').length || 0}
-          </p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-sm text-stone-500">Configuring</p>
-          <p className="text-2xl font-bold text-amber-700">
-            {data?.integrations.filter((i) => i.status === 'CONFIGURING').length || 0}
-          </p>
-        </Card>
-      </div>
-
       {/* Integrations by Type */}
-      <div className="space-y-3 lg:space-y-4">
+      <div className="space-y-2.5">
         {Object.entries(typeConfig).map(([type, config]) => {
           const integrations = integrationsByType[type as IntegrationType] || []
           const Icon = config.icon
 
           return (
-            <Card key={type} className="hover:shadow-lg hover:scale-[1.01] transition-all duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={cn('p-2 rounded-lg', config.color)}>
-                    <Icon className="h-5 w-5" />
+            <Card key={type} padding="sm" className="hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={cn('p-1.5 rounded-md', config.color)}>
+                    <Icon className="h-3.5 w-3.5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-stone-900">{config.label}</h3>
-                    <p className="text-sm text-stone-500">{config.description}</p>
+                    <h3 className="text-sm font-semibold text-stone-900">{config.label}</h3>
+                    <p className="text-[11px] text-stone-500">{config.description}</p>
                   </div>
                 </div>
               </div>
 
               {integrations.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-1.5">
                   {integrations.map((integration) => {
                     const status = statusConfig[integration.status]
                     const StatusIcon = status.icon
@@ -168,42 +150,43 @@ export function IntegrationSettings() {
                     return (
                       <div
                         key={integration.integrationId}
-                        className="p-4 border border-stone-200 rounded-lg hover:border-stone-300 transition-colors"
+                        className="p-2 border border-stone-200 rounded-md hover:border-stone-300 transition-colors"
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <h4 className="font-medium text-stone-900">{integration.name}</h4>
+                        <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="text-sm font-medium text-stone-900">{integration.name}</h4>
                             <span className={cn(
-                              'px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 border',
+                              'px-1.5 py-0 rounded text-[10px] font-medium flex items-center gap-0.5 border',
                               status.bgColor,
                               status.color,
                               status.borderColor
                             )}>
-                              <StatusIcon className="h-3 w-3" />
+                              <StatusIcon className="h-2.5 w-2.5" />
                               {status.label}
                             </span>
                             {integration.isEnabled ? (
-                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full text-xs">
+                              <span className="px-1.5 py-0 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[10px]">
                                 Enabled
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 bg-stone-100 text-stone-500 border border-stone-200 rounded-full text-xs">
+                              <span className="px-1.5 py-0 bg-stone-100 text-stone-500 border border-stone-200 rounded text-[10px]">
                                 Disabled
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleTestConnection(integration.integrationId)}
                               disabled={testMutation.isPending}
+                              className="h-7 px-1.5 text-xs"
                             >
                               {testMutation.isPending ? (
                                 <Spinner size="sm" />
                               ) : (
                                 <>
-                                  <RotateCw className="h-4 w-4 mr-1" />
+                                  <RotateCw className="h-3.5 w-3.5 mr-0.5" />
                                   Test
                                 </>
                               )}
@@ -216,36 +199,37 @@ export function IntegrationSettings() {
                                   ? null
                                   : integration
                               )}
+                              className="h-7 px-1.5 text-xs"
                             >
-                              <Settings className="h-4 w-4 mr-1" />
+                              <Settings className="h-3.5 w-3.5 mr-0.5" />
                               Configure
                             </Button>
                           </div>
                         </div>
 
                         {integration.description && (
-                          <p className="text-sm text-stone-500 mb-3">{integration.description}</p>
+                          <p className="text-[11px] text-stone-500 mb-1.5 line-clamp-1">{integration.description}</p>
                         )}
 
                         {/* Error Message */}
                         {integration.status === 'ERROR' && integration.lastError && (
-                          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg mb-3">
-                            <p className="text-sm text-rose-700">{integration.lastError}</p>
+                          <div className="px-2 py-1 bg-rose-50 border border-rose-200 rounded mb-1.5">
+                            <p className="text-[11px] text-rose-700">{integration.lastError}</p>
                           </div>
                         )}
 
                         {/* Last Checked */}
                         {integration.lastChecked && (
-                          <p className="text-xs text-stone-400">
+                          <p className="text-[10px] text-stone-400">
                             Last checked: {new Date(integration.lastChecked).toLocaleString()}
                           </p>
                         )}
 
                         {/* Configuration Panel */}
                         {selectedIntegration?.integrationId === integration.integrationId && (
-                          <div className="mt-4 pt-4 border-t border-stone-200">
-                            <h5 className="font-medium text-stone-900 mb-3">Configuration</h5>
-                            <div className="space-y-3">
+                          <div className="mt-2 pt-2 border-t border-stone-200">
+                            <h5 className="text-xs font-medium text-stone-900 mb-1.5">Configuration</h5>
+                            <div className="space-y-1.5">
                               {integration.config && Object.entries(integration.config).map(([key, value]) => {
                                 const isSecret = key.toLowerCase().includes('secret') ||
                                   key.toLowerCase().includes('password') ||
@@ -331,7 +315,7 @@ export function IntegrationSettings() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-stone-500">
+                <div className="text-center py-4 text-xs text-stone-500">
                   <Icon className="h-8 w-8 mx-auto mb-2 text-stone-300" />
                   <p className="text-sm">No {config.label.toLowerCase()} integrations configured</p>
                 </div>
