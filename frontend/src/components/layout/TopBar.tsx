@@ -1,7 +1,8 @@
-import { Bell, Menu } from 'lucide-react'
+import { Bell, Menu, Moon, Sun } from 'lucide-react'
 import { DotBadge } from '@/components/ui'
 import { UserMenu } from '@/components/common/UserMenu'
 import { cn } from '@/lib/utils/cn'
+import { useTheme } from '@/lib/theme/ThemeProvider'
 
 interface TopBarProps {
   onMenuClick?: () => void
@@ -16,6 +17,9 @@ export function TopBar({
   unreadNotificationCount = 0,
   showMenuButton = true,
 }: TopBarProps) {
+  const { resolvedTheme, toggleTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
   return (
     <header className="h-16 bg-white border-b border-neutral-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
       <div className="flex items-center gap-4">
@@ -44,6 +48,17 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Theme toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="p-2.5 rounded-xl text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+
         {/* Notification Bell */}
         <button
           type="button"

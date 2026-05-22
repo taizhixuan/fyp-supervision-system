@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Shield, Key } from 'lucide-react'
+import { User, Shield, Key, Palette, Sun, Moon, Monitor } from 'lucide-react'
 import { Card, Button, Input, AlertBanner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { authApi } from '@/lib/api/auth'
@@ -13,9 +13,10 @@ import {
   type ChangePasswordFormData,
 } from '@/lib/validators/auth'
 import { useSuccessToast } from '@/components/ui/Toast'
+import { useTheme, type ThemePreference } from '@/lib/theme/ThemeProvider'
 import { cn } from '@/lib/utils/cn'
 
-type Tab = 'profile' | 'security'
+type Tab = 'profile' | 'security' | 'appearance'
 
 export function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -23,6 +24,7 @@ export function AccountSettingsPage() {
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'security' as const, label: 'Security', icon: Shield },
+    { id: 'appearance' as const, label: 'Appearance', icon: Palette },
   ]
 
   return (
@@ -51,7 +53,97 @@ export function AccountSettingsPage() {
       {/* Tab content */}
       {activeTab === 'profile' && <ProfileTab />}
       {activeTab === 'security' && <SecurityTab />}
+      {activeTab === 'appearance' && <AppearanceTab />}
     </div>
+  )
+}
+
+function AppearanceTab() {
+  const { theme, setTheme, resolvedTheme } = useTheme()
+
+  const options: Array<{
+    value: ThemePreference
+    label: string
+    description: string
+    icon: typeof Sun
+  }> = [
+    {
+      value: 'light',
+      label: 'Light',
+      description: 'Bright surfaces and dark text — best for daytime use.',
+      icon: Sun,
+    },
+    {
+      value: 'dark',
+      label: 'Dark',
+      description: 'Deep slate surfaces — easier on the eyes at night.',
+      icon: Moon,
+    },
+    {
+      value: 'system',
+      label: 'System',
+      description: 'Match your operating system preference automatically.',
+      icon: Monitor,
+    },
+  ]
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-1">
+        <Palette className="h-5 w-5 text-neutral-400" />
+        <h2 className="text-lg font-semibold text-neutral-900">Appearance</h2>
+      </div>
+      <p className="text-sm text-neutral-500 mb-6">
+        Choose how the FYP Supervision System looks for you.
+        {theme === 'system' && (
+          <>
+            {' '}Currently following system preference (
+            <span className="font-medium text-neutral-700">{resolvedTheme}</span>).
+          </>
+        )}
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {options.map((option) => {
+          const Icon = option.icon
+          const active = theme === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setTheme(option.value)}
+              className={cn(
+                'flex flex-col items-start gap-2 p-4 rounded-lg border-2 text-left transition-all',
+                active
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+              )}
+              aria-pressed={active}
+            >
+              <div
+                className={cn(
+                  'h-9 w-9 rounded-md flex items-center justify-center',
+                  active ? 'bg-primary-100 text-primary-700' : 'bg-neutral-100 text-neutral-600'
+                )}
+              >
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p
+                  className={cn(
+                    'text-sm font-semibold',
+                    active ? 'text-primary-700' : 'text-neutral-900'
+                  )}
+                >
+                  {option.label}
+                </p>
+                <p className="text-xs text-neutral-500 mt-1">{option.description}</p>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
 

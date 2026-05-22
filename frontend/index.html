@@ -9,6 +9,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>FYP Supervision System | MMU FCI</title>
+    <script>
+      // Apply theme before React mounts so the first paint already matches
+      // the user's preference (no FOUC flash from light → dark).
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var resolved = stored === 'dark' || (stored !== 'light' && prefersDark) ? 'dark' : 'light';
+          if (resolved === 'dark') document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = resolved;
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
