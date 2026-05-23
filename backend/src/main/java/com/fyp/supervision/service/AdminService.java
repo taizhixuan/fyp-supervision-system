@@ -1,15 +1,20 @@
 package com.fyp.supervision.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fyp.supervision.config.FileStorageConfig;
 import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.*;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -30,6 +35,10 @@ public class AdminService {
     private final IntegrationSettingRepository integrationSettingRepository;
     private final AuditLogRepository auditLogRepository;
     private final AiServiceClient aiServiceClient;
+    private final FileStorageConfig fileStorageConfig;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -404,24 +413,52 @@ public class AdminService {
     public Map<String, Object> getHealthChecks() {
         List<Map<String, Object>> checks = new ArrayList<>();
 
-        // Database
+        // Database — real SELECT 1 with elapsed-time measurement
         Map<String, Object> dbCheck = new LinkedHashMap<>();
         dbCheck.put("checkId", "db");
         dbCheck.put("name", "Database Connection");
-        dbCheck.put("status", "HEALTHY");
         dbCheck.put("lastCheckedAt", LocalDateTime.now().toString());
-        dbCheck.put("responseTime", 12);
-        dbCheck.put("message", "Connection pool healthy");
+        long dbStart = System.nanoTime();
+        try {
+            Object result = entityManager.createNativeQuery("SELECT 1").getSingleResult();
+            long ms = Math.max(1, (System.nanoTime() - dbStart) / 1_000_000);
+            dbCheck.put("status", "1".equals(String.valueOf(result)) ? "HEALTHY" : "DEGRADED");
+            dbCheck.put("responseTime", (int) ms);
+            dbCheck.put("message", "Database reachable (" + ms + "ms)");
+        } catch (Exception e) {
+            dbCheck.put("status", "UNHEALTHY");
+            dbCheck.put("responseTime", 0);
+            dbCheck.put("message", "Database probe failed: " + e.getMessage());
+        }
         checks.add(dbCheck);
 
-        // File Storage
+        // File Storage — real existence + writability probe on upload root
         Map<String, Object> storageCheck = new LinkedHashMap<>();
         storageCheck.put("checkId", "storage");
         storageCheck.put("name", "File Storage");
-        storageCheck.put("status", "HEALTHY");
         storageCheck.put("lastCheckedAt", LocalDateTime.now().toString());
-        storageCheck.put("responseTime", 5);
-        storageCheck.put("message", "Local storage accessible");
+        long storageStart = System.nanoTime();
+        try {
+            Path uploadPath = fileStorageConfig.getUploadPath();
+            boolean exists = Files.exists(uploadPath);
+            boolean writable = exists && Files.isWritable(uploadPath);
+            long ms = Math.max(1, (System.nanoTime() - storageStart) / 1_000_000);
+            if (!exists) {
+                storageCheck.put("status", "UNHEALTHY");
+                storageCheck.put("message", "Upload directory missing: " + uploadPath);
+            } else if (!writable) {
+                storageCheck.put("status", "DEGRADED");
+                storageCheck.put("message", "Upload directory not writable: " + uploadPath);
+            } else {
+                storageCheck.put("status", "HEALTHY");
+                storageCheck.put("message", "Upload directory writable (" + ms + "ms)");
+            }
+            storageCheck.put("responseTime", (int) ms);
+        } catch (Exception e) {
+            storageCheck.put("status", "UNHEALTHY");
+            storageCheck.put("responseTime", 0);
+            storageCheck.put("message", "Storage probe failed: " + e.getMessage());
+        }
         checks.add(storageCheck);
 
         // AI Recommendation Service

@@ -27,6 +27,7 @@ import {
   useRestoreBackup,
   useRunCleanup,
 } from '@/lib/hooks/useAdmin'
+import { apiClient } from '@/lib/api/client'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { BackupInfo, SystemHealthCheck, CleanupOptions } from '@/types'
@@ -63,11 +64,30 @@ export function MaintenanceCenter() {
   const handleRestore = async () => {
     if (!selectedBackup) return
     try {
-      await restoreBackupMutation.mutateAsync(selectedBackup.backupId)
+      await restoreBackupMutation.mutateAsync(selectedBackup.fileName)
       setShowRestoreModal(false)
       setSelectedBackup(null)
     } catch (error) {
       console.error('Failed to restore backup:', error)
+    }
+  }
+
+  const handleDownload = async (backup: BackupInfo) => {
+    try {
+      const response = await apiClient.get('/admin/maintenance/backups/download', {
+        params: { file: backup.fileName },
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', backup.fileName)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download backup:', error)
     }
   }
 
@@ -331,7 +351,7 @@ export function MaintenanceCenter() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-stone-900">{backup.name}</h4>
+                      <h4 className="font-medium text-stone-900">{backup.fileName}</h4>
                       <span className="px-2 py-0.5 bg-stone-100 text-stone-600 rounded-xl text-xs">
                         {backup.type}
                       </span>
@@ -343,19 +363,20 @@ export function MaintenanceCenter() {
                       </span>
                       <span className="flex items-center gap-1">
                         <HardDrive className="h-3.5 w-3.5" />
-                        {formatBytes(backup.size)}
+                        {formatBytes(backup.fileSize)}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {backup.status === 'COMPLETED' && (
+                  {backup.status === 'AVAILABLE' && (
                     <>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => console.log('Download:', backup.backupId)}
+                        onClick={() => handleDownload(backup)}
                         className="hover:bg-stone-100"
+                        aria-label={`Download ${backup.fileName}`}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -367,6 +388,7 @@ export function MaintenanceCenter() {
                           setShowRestoreModal(true)
                         }}
                         className="hover:bg-stone-100"
+                        aria-label={`Restore ${backup.fileName}`}
                       >
                         <Upload className="h-4 w-4" />
                       </Button>
@@ -515,12 +537,12 @@ export function MaintenanceCenter() {
                 </div>
 
                 <div className="p-4 bg-stone-50 rounded-xl border border-stone-200">
-                  <h4 className="font-medium text-stone-900">{selectedBackup.name}</h4>
+                  <h4 className="font-medium text-stone-900">{selectedBackup.fileName}</h4>
                   <p className="text-sm text-stone-500 mt-1">
                     Created: {new Date(selectedBackup.createdAt).toLocaleString()}
                   </p>
                   <p className="text-sm text-stone-500">
-                    Size: {formatBytes(selectedBackup.size)}
+                    Size: {formatBytes(selectedBackup.fileSize)}
                   </p>
                 </div>
 
@@ -556,7 +578,7 @@ export function MaintenanceCenter() {
                   Select a backup to restore:
                 </p>
                 {backupsData?.backups
-                  .filter((b) => b.status === 'COMPLETED')
+                  .filter((b) => b.status === 'AVAILABLE')
                   .slice(0, 5)
                   .map((backup) => (
                     <button
@@ -565,9 +587,9 @@ export function MaintenanceCenter() {
                       onClick={() => setSelectedBackup(backup)}
                       className="w-full p-4 border border-sky-200 rounded-xl text-left hover:bg-sky-50 transition-colors"
                     >
-                      <h4 className="font-medium text-stone-900">{backup.name}</h4>
+                      <h4 className="font-medium text-stone-900">{backup.fileName}</h4>
                       <p className="text-sm text-stone-500">
-                        {new Date(backup.createdAt).toLocaleString()} • {formatBytes(backup.size)}
+                        {new Date(backup.createdAt).toLocaleString()} • {formatBytes(backup.fileSize)}
                       </p>
                     </button>
                   ))}
