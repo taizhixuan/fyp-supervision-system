@@ -348,8 +348,8 @@ export interface BackupInfo {
   fileName: string
   fileSize: number
   createdAt: string
-  type: 'FULL' | 'INCREMENTAL'
-  status: 'AVAILABLE' | 'CORRUPTED' | 'EXPIRED'
+  type: 'FULL' | 'INCREMENTAL' | 'DATABASE'
+  status: 'AVAILABLE' | 'CORRUPTED' | 'EXPIRED' | 'COMPLETED'
   expiresAt?: string
 }
 
@@ -364,13 +364,13 @@ export interface SystemHealthCheck {
 }
 
 export interface CleanupOptions {
-  cleanLogs: boolean
-  logsOlderThanDays: number
-  cleanSessions: boolean
-  sessionsOlderThanDays: number
-  cleanTempFiles: boolean
-  cleanNotifications: boolean
-  notificationsOlderThanDays: number
+  clearTempFiles: boolean
+  clearOldLogs: boolean
+  clearExpiredSessions: boolean
+  clearOrphanedFiles: boolean
+  clearAuditLogs?: boolean
+  olderThanDays: number
+  auditLogsOlderThanDays?: number
 }
 
 // ============================================

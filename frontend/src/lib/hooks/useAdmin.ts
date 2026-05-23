@@ -1739,7 +1739,7 @@ export function useSystemHealthChecks() {
 export function useTriggerBackup() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (type: 'FULL' | 'INCREMENTAL') => {
+    mutationFn: async ({ type }: { type: 'FULL' | 'INCREMENTAL' | 'DATABASE' }) => {
       if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         return { jobId: Date.now(), type, status: 'PENDING' }
@@ -1749,6 +1749,7 @@ export function useTriggerBackup() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.jobs() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.backups() })
     },
   })
 }
@@ -1756,12 +1757,12 @@ export function useTriggerBackup() {
 export function useRestoreBackup() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (backupId: number) => {
+    mutationFn: async (backupRef: string | number) => {
       if (USE_MOCK_DATA) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        return { jobId: Date.now(), backupId, status: 'PENDING' }
+        return { jobId: Date.now(), backupRef, status: 'PENDING' }
       }
-      const { data } = await apiClient.post(`/admin/maintenance/restore/${backupId}`)
+      const { data } = await apiClient.post(`/admin/maintenance/restore/${backupRef}`)
       return data
     },
     onSuccess: () => {
