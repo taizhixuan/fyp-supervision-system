@@ -8,6 +8,11 @@ import {
   Search,
   FileSpreadsheet,
   FileText,
+  FileJson,
+  Calendar,
+  Megaphone,
+  ClipboardList,
+  Database,
   Clock,
   CheckCircle,
   X,
@@ -35,8 +40,8 @@ import type { ExportConfiguration } from '@/types'
 
 const exportSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  dataType: z.enum(['USERS', 'PROJECTS']),
-  format: z.enum(['CSV']),
+  dataType: z.enum(['USERS', 'PROJECTS', 'PROPOSALS', 'MEETINGS', 'MEETING_LOGS', 'ANNOUNCEMENTS', 'AUDIT_LOGS']),
+  format: z.enum(['CSV', 'JSON', 'XLSX']),
   fields: z.array(z.string()).min(1, 'Select at least one field'),
   schedule: z.object({
     enabled: z.boolean(),
@@ -53,19 +58,51 @@ const dataTypeConfig: Record<string, { label: string; icon: typeof Users; fields
   USERS: {
     label: 'Users',
     icon: Users,
-    fields: ['userId', 'email', 'fullName', 'role', 'status', 'mmuId', 'phone', 'lastLoginAt', 'createdAt'],
+    fields: ['userId', 'email', 'fullName', 'role', 'status', 'mmuId', 'phone', 'department', 'lastLoginAt', 'createdAt'],
     colors: 'bg-sky-100 text-sky-700 border-sky-200',
   },
   PROJECTS: {
     label: 'Projects',
     icon: FolderKanban,
-    fields: ['projectId', 'title', 'status', 'studentId', 'studentName', 'supervisorId', 'supervisorName', 'registeredAt', 'updatedAt'],
+    fields: ['projectId', 'title', 'status', 'studentId', 'studentName', 'supervisorId', 'supervisorName', 'cycleCode', 'registeredAt', 'updatedAt'],
     colors: 'bg-violet-100 text-violet-700 border-violet-200',
+  },
+  PROPOSALS: {
+    label: 'Proposals',
+    icon: FileText,
+    fields: ['proposalId', 'title', 'status', 'currentVersion', 'studentName', 'supervisorName', 'createdAt', 'updatedAt'],
+    colors: 'bg-amber-100 text-amber-700 border-amber-200',
+  },
+  MEETINGS: {
+    label: 'Meetings',
+    icon: Calendar,
+    fields: ['meetingId', 'title', 'meetingType', 'status', 'platform', 'scheduledStart', 'scheduledEnd', 'durationMinutes', 'studentName', 'supervisorName'],
+    colors: 'bg-orange-100 text-orange-700 border-orange-200',
+  },
+  MEETING_LOGS: {
+    label: 'Meeting Logs',
+    icon: ClipboardList,
+    fields: ['logId', 'meetingDate', 'meetingNumber', 'fypPhase', 'status', 'studentName', 'supervisorName', 'submittedAt', 'lockedAt'],
+    colors: 'bg-teal-100 text-teal-700 border-teal-200',
+  },
+  ANNOUNCEMENTS: {
+    label: 'Announcements',
+    icon: Megaphone,
+    fields: ['announcementId', 'title', 'scope', 'priority', 'status', 'createdBy', 'publishAt', 'expiresAt', 'viewCount'],
+    colors: 'bg-rose-100 text-rose-700 border-rose-200',
+  },
+  AUDIT_LOGS: {
+    label: 'Audit Logs',
+    icon: Database,
+    fields: ['auditId', 'action', 'entityName', 'entityId', 'user', 'details', 'ipAddress', 'timestamp'],
+    colors: 'bg-stone-100 text-stone-700 border-stone-200',
   },
 }
 
-const formatConfig: Record<string, { label: string; icon: typeof FileText; extension: string; colors: string }> = {
-  CSV: { label: 'CSV', icon: FileSpreadsheet, extension: '.csv', colors: 'bg-emerald-100 text-emerald-700' },
+const formatConfig: Record<string, { label: string; icon: typeof FileText; extension: string; colors: string; mime: string }> = {
+  CSV: { label: 'CSV', icon: FileSpreadsheet, extension: '.csv', colors: 'bg-emerald-100 text-emerald-700', mime: 'text/csv' },
+  JSON: { label: 'JSON', icon: FileJson, extension: '.json', colors: 'bg-amber-100 text-amber-700', mime: 'application/json' },
+  XLSX: { label: 'Excel', icon: FileSpreadsheet, extension: '.xlsx', colors: 'bg-sky-100 text-sky-700', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
 }
 
 export function ExportConfigurationPage() {
@@ -122,7 +159,7 @@ export function ExportConfigurationPage() {
     reset({
       name: config.name ?? '',
       dataType: config.dataType,
-      format: 'CSV',
+      format: (config.format as 'CSV' | 'JSON' | 'XLSX') || 'CSV',
       fields: Array.isArray(config.fields) ? config.fields : [],
       schedule: config.schedule?.enabled ? config.schedule : { enabled: false },
     })
@@ -140,7 +177,7 @@ export function ExportConfigurationPage() {
       const payload = {
         name: formData.name,
         dataType: formData.dataType,
-        format: 'CSV',
+        format: formData.format,
         includeHeaders: true,
         dateFormat: 'yyyy-MM-dd',
         fields: formData.fields,
@@ -154,8 +191,9 @@ export function ExportConfigurationPage() {
         successToast('Export created', `${formData.name} is ready to run.`)
       }
       closeModal()
-    } catch (e) {
-      errorToast(editingConfig ? 'Update failed' : 'Create failed', (e as Error).message)
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Unknown error'
+      errorToast(editingConfig ? 'Update failed' : 'Create failed', msg)
     }
   }
 
@@ -163,13 +201,15 @@ export function ExportConfigurationPage() {
     setRunningId(config.configId)
     try {
       await runMutation.mutateAsync(config.configId)
-      successToast('Export ready', `Downloading ${config.name}.csv…`)
-      // Stream the CSV through axios so the JWT header is attached.
+      const format = (config.format || 'CSV').toUpperCase()
+      const ext = formatConfig[format]?.extension ?? '.csv'
+      successToast('Export ready', `Downloading ${config.name}${ext}…`)
+      // Stream the file through axios so the JWT header is attached.
       const res = await apiClient.get(`/admin/export-configs/${config.configId}/download`, { responseType: 'blob' })
       const url = URL.createObjectURL(res.data as Blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${(config.name || 'export').replace(/\s+/g, '_')}.csv`
+      a.download = `${(config.name || 'export').replace(/\s+/g, '_')}${ext}`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -195,7 +235,7 @@ export function ExportConfigurationPage() {
     const fields = dataTypeConfig[dataType]?.fields ?? []
     try {
       const created = await createMutation.mutateAsync({
-        name: `Quick ${dataType} ${new Date().toLocaleString()}`,
+        name: `Quick ${dataTypeConfig[dataType]?.label || dataType} ${new Date().toLocaleString('en-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`,
         dataType,
         format: 'CSV',
         includeHeaders: true,
@@ -204,8 +244,9 @@ export function ExportConfigurationPage() {
         schedule: { enabled: false },
       } as any)
       await handleExportNow(created)
-    } catch (e) {
-      errorToast('Quick export failed', (e as Error).message)
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Unknown error'
+      errorToast('Quick export failed', msg)
     }
   }
 
@@ -324,6 +365,11 @@ export function ExportConfigurationPage() {
                           <span className="text-sky-600 font-medium">
                             {String(config.schedule.frequency || '').toLowerCase()}{config.schedule.time ? ` at ${config.schedule.time}` : ''}
                           </span>
+                          {config.nextRunAt && (
+                            <span className="text-stone-500">
+                              · next {new Date(config.nextRunAt).toLocaleString('en-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
                         </div>
                       )}
 
@@ -393,7 +439,7 @@ export function ExportConfigurationPage() {
         <p className="text-[11px] text-neutral-500 mb-2">
           Create + run a one-shot CSV export with the default fields
         </p>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
           {Object.entries(dataTypeConfig).map(([type, config]) => {
             const Icon = config.icon
             return (
@@ -466,14 +512,19 @@ export function ExportConfigurationPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Format
+                    Format *
                   </label>
                   <select
                     {...register('format')}
                     className="w-full px-2.5 h-9 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500"
                   >
-                    <option value="CSV">CSV</option>
+                    {Object.entries(formatConfig).map(([key, config]) => (
+                      <option key={key} value={key}>{config.label} ({config.extension})</option>
+                    ))}
                   </select>
+                  {errors.format && (
+                    <p className="text-[11px] text-error-600 mt-0.5">{errors.format.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -517,7 +568,7 @@ export function ExportConfigurationPage() {
                     className="rounded text-amber-600 focus:ring-amber-500 h-3.5 w-3.5"
                   />
                   <span className="text-xs font-medium text-neutral-700">
-                    Enable scheduled export (informational — scheduler not active)
+                    Enable scheduled export (runs automatically at the configured time)
                   </span>
                 </label>
 

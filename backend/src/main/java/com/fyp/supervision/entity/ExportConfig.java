@@ -49,6 +49,13 @@ public class ExportConfig {
     @Column(name = "last_export_at")
     private LocalDateTime lastExportAt;
 
+    @Column(name = "next_run_at")
+    private LocalDateTime nextRunAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private UserAccount createdBy;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
