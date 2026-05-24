@@ -36,4 +36,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     @Query("SELECT COUNT(m) FROM Meeting m WHERE m.project.supervisor.userId = :userId AND m.status IN :statuses")
     long countBySupervisorUserIdAndStatusIn(@Param("userId") Long userId, @Param("statuses") List<MeetingStatus> statuses);
+
+    long countByProject_ProjectIdAndStatus(Long projectId, com.fyp.supervision.enums.MeetingStatus status);
+
+    @Query("select max(m.confirmedStartAt) from Meeting m " +
+           "where m.project.projectId = :projectId and m.status = :status")
+    java.util.Optional<java.time.LocalDateTime> findMaxConfirmedStartAtByProjectAndStatus(
+            @org.springframework.data.repository.query.Param("projectId") Long projectId,
+            @org.springframework.data.repository.query.Param("status") com.fyp.supervision.enums.MeetingStatus status);
 }
