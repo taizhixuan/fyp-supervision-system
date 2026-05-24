@@ -28,6 +28,9 @@ public class CommitteeService {
     private final SupervisorRequestRepository supervisorRequestRepository;
     private final AnnouncementRepository announcementRepository;
     private final ResourceDocumentRepository resourceDocumentRepository;
+    private final ProjectProgressService projectProgressService;
+    private final MeetingLogComplianceService meetingLogComplianceService;
+    private final MeetingRepository meetingRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -195,17 +198,68 @@ public class CommitteeService {
 
     // ========== Projects ==========
 
-    /** Returns project overview DTOs matching ProjectOverview */
-    public Map<String, Object> getProjectDtos(Long cycleId, Pageable pageable) {
-        Page<Project> page;
+    /** Returns project overview DTOs matching ProjectOverview. Filters apply server-side. */
+    public Map<String, Object> getProjectDtos(
+            Long cycleId,
+            String cycleStatus,
+            String projectStatus,
+            String pairingStatus,
+            String riskLevel,
+            String search,
+            org.springframework.data.domain.Pageable pageable) {
+
+        org.springframework.data.jpa.domain.Specification<com.fyp.supervision.entity.Project> spec =
+                (root, query, cb) -> cb.conjunction();
+
         if (cycleId != null) {
-            page = projectRepository.findAllByCycleId(cycleId, pageable);
-        } else {
-            page = projectRepository.findAll(pageable);
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("cycle").get("cycleId"), cycleId));
+        } else if (cycleStatus != null && !cycleStatus.isBlank()) {
+            try {
+                com.fyp.supervision.enums.CycleStatus cs =
+                        com.fyp.supervision.enums.CycleStatus.valueOf(cycleStatus.toUpperCase());
+                spec = spec.and((root, q, cb) -> cb.equal(root.get("cycle").get("status"), cs));
+            } catch (IllegalArgumentException ignored) { }
         }
-        List<Map<String, Object>> dtos = page.getContent().stream().map(this::buildProjectOverviewDto).collect(Collectors.toList());
-        return Map.of("content", dtos, "totalElements", page.getTotalElements(),
-                "totalPages", page.getTotalPages(), "number", page.getNumber());
+        if (projectStatus != null && !projectStatus.isBlank()) {
+            try {
+                com.fyp.supervision.enums.ProjectStatus ps =
+                        com.fyp.supervision.enums.ProjectStatus.valueOf(projectStatus.toUpperCase());
+                spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), ps));
+            } catch (IllegalArgumentException ignored) { }
+        }
+        if (pairingStatus != null && !pairingStatus.isBlank()) {
+            String ps = pairingStatus.toUpperCase();
+            spec = spec.and((root, q, cb) -> switch (ps) {
+                case "PAIRED" -> cb.isNotNull(root.get("supervisor"));
+                case "UNPAIRED" -> cb.isNull(root.get("supervisor"));
+                default -> cb.conjunction(); // PENDING_APPROVAL not modelled on Project today
+            });
+        }
+        if (search != null && !search.isBlank()) {
+            String like = "%" + search.toLowerCase().trim() + "%";
+            spec = spec.and((root, q, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("projectTitle")), like),
+                    cb.like(cb.lower(root.get("student").get("fullName")), like),
+                    cb.like(cb.lower(root.get("student").get("mmuId")), like),
+                    cb.like(cb.lower(root.get("supervisor").get("fullName")), like)
+            ));
+        }
+
+        org.springframework.data.domain.Page<com.fyp.supervision.entity.Project> page =
+                projectRepository.findAll(spec, pageable);
+
+        java.util.List<java.util.Map<String, Object>> dtos = page.getContent().stream()
+                .map(this::buildProjectOverviewDto)
+                .filter(dto -> riskLevel == null || riskLevel.isBlank()
+                        || riskLevel.equalsIgnoreCase((String) dto.get("riskLevel")))
+                .collect(java.util.stream.Collectors.toList());
+
+        return java.util.Map.of(
+                "content", dtos,
+                "totalElements", page.getTotalElements(),
+                "totalPages", page.getTotalPages(),
+                "number", page.getNumber(),
+                "size", page.getSize());
     }
 
     public Map<String, Object> getProjectDetailDto(Long projectId) {
@@ -232,14 +286,16 @@ public class CommitteeService {
         return Map.of("projectId", projectId, "stage", "FYP2", "changed", true);
     }
 
-    public Map<String, Object> buildProjectOverviewDto(Project project) {
-        UserAccount student = project.getStudent();
-        UserAccount supervisor = project.getSupervisor();
-        StudentProfile sp = student != null ? studentProfileRepository.findById(student.getUserId()).orElse(null) : null;
+    public Map<String, Object> buildProjectOverviewDto(com.fyp.supervision.entity.Project project) {
+        com.fyp.supervision.entity.UserAccount student = project.getStudent();
+        com.fyp.supervision.entity.UserAccount supervisor = project.getSupervisor();
+        com.fyp.supervision.entity.StudentProfile sp = student != null
+                ? studentProfileRepository.findById(student.getUserId()).orElse(null) : null;
 
         String proposalStatus = "NOT_SUBMITTED";
         if (student != null) {
-            Proposal proposal = proposalRepository.findByStudent_UserId(student.getUserId()).orElse(null);
+            com.fyp.supervision.entity.Proposal proposal =
+                    proposalRepository.findByStudent_UserId(student.getUserId()).orElse(null);
             if (proposal != null) {
                 proposalStatus = proposal.getStatus().name();
                 if ("SUBMITTED".equals(proposalStatus)) proposalStatus = "PENDING_REVIEW";
@@ -247,44 +303,76 @@ public class CommitteeService {
             }
         }
 
-        Map<String, Object> dto = new LinkedHashMap<>();
+        com.fyp.supervision.entity.FypCycle cycle = project.getCycle();
+        int progress = projectProgressService.progressFor(project);
+        ProjectProgressService.ProjectRisk risk = projectProgressService.riskFor(project);
+
+        java.util.Map<String, Object> dto = new java.util.LinkedHashMap<>();
         dto.put("projectId", project.getProjectId());
         dto.put("title", project.getProjectTitle());
         dto.put("studentName", student != null ? student.getFullName() : "");
         dto.put("studentId", student != null ? student.getMmuId() : "");
         dto.put("studentEmail", student != null ? student.getEmail() : "");
         dto.put("programme", sp != null && sp.getProgramme() != null ? sp.getProgramme() : "");
-        dto.put("cycle", "FYP1");
+        // Legacy field kept for one release; structured fields below replace it.
+        dto.put("cycle", cycle != null && cycle.getCycleType() != null ? cycle.getCycleType() : "");
         dto.put("supervisorName", supervisor != null ? supervisor.getFullName() : null);
         dto.put("supervisorId", supervisor != null ? supervisor.getMmuId() : null);
         dto.put("pairingStatus", supervisor != null ? "PAIRED" : "UNPAIRED");
         dto.put("projectStatus", project.getStatus().name());
         dto.put("proposalStatus", proposalStatus);
-        dto.put("progress", 0);
+        dto.put("progress", progress);
         dto.put("lastActivity", project.getUpdatedAt() != null ? project.getUpdatedAt().toString() : "");
-        dto.put("riskLevel", "LOW");
-        // Cycle status — committee needs to see "past" projects so they can audit history,
-        // but the status flag lets the UI badge them as PAST and exclude from "active load"
-        // calculations.
-        if (project.getCycle() != null && project.getCycle().getStatus() != null) {
-            dto.put("cycleStatus", project.getCycle().getStatus().name());
-            dto.put("cycleType", project.getCycle().getCycleType());
-            dto.put("academicYear", project.getCycle().getAcademicYear());
+        dto.put("riskLevel", risk.level());
+        dto.put("riskFactors", risk.factors());
+
+        if (cycle != null) {
+            dto.put("cycleId", cycle.getCycleId());
+            dto.put("cycleCode", cycle.getCycleCode());
+            dto.put("cycleType", cycle.getCycleType());
+            dto.put("academicYear", cycle.getAcademicYear());
+            dto.put("cycleStatus", cycle.getStatus() != null ? cycle.getStatus().name() : null);
         } else {
-            dto.put("cycleStatus", null);
+            dto.put("cycleId", null);
+            dto.put("cycleCode", null);
             dto.put("cycleType", null);
             dto.put("academicYear", null);
+            dto.put("cycleStatus", null);
         }
         return dto;
     }
 
-    public Map<String, Object> buildProjectDetailDto(Project project) {
+    public Map<String, Object> buildProjectDetailDto(com.fyp.supervision.entity.Project project) {
         Map<String, Object> dto = buildProjectOverviewDto(project);
         dto.put("description", project.getDescription());
         dto.put("registeredAt", project.getRegisteredAt() != null ? project.getRegisteredAt().toString() : "");
-        dto.put("milestones", List.of());
-        dto.put("recentMeetings", List.of());
-        dto.put("submissions", List.of());
+
+        java.util.Map<String, Object> engagement = new java.util.LinkedHashMap<>();
+        com.fyp.supervision.entity.UserAccount student = project.getStudent();
+        String phase = (project.getStage() != null
+                && (project.getStage().equalsIgnoreCase("FYP2") || project.getStage().equalsIgnoreCase("FYP 2")))
+                ? "FYP2" : "FYP1";
+        int locked = student != null
+                ? meetingLogComplianceService.completedLogCount(student.getUserId(), phase) : 0;
+        engagement.put("lockedLogs", locked);
+        engagement.put("requiredLogs", meetingLogComplianceService.requiredLogCount(phase));
+        long conducted = meetingRepository.countByProject_ProjectIdAndStatus(
+                project.getProjectId(), com.fyp.supervision.enums.MeetingStatus.COMPLETED);
+        engagement.put("completedMeetings", conducted);
+        engagement.put("lastConductedMeetingAt", meetingRepository
+                .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(),
+                        com.fyp.supervision.enums.MeetingStatus.COMPLETED)
+                .map(java.time.LocalDateTime::toString).orElse(null));
+
+        com.fyp.supervision.entity.Proposal latestProposal = student != null
+                ? proposalRepository.findByStudent_UserId(student.getUserId()).orElse(null) : null;
+        engagement.put("proposalStatus", latestProposal != null ? latestProposal.getStatus().name() : "NOT_SUBMITTED");
+        engagement.put("proposalVersion", latestProposal != null ? latestProposal.getCurrentVersion() : 0);
+
+        dto.put("engagement", engagement);
+        dto.put("milestones", java.util.List.of()); // legacy field — empty; will be removed in next release
+        dto.put("recentMeetings", java.util.List.of());
+        dto.put("submissions", java.util.List.of());
         return dto;
     }
 

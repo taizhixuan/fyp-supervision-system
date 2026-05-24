@@ -20,7 +20,7 @@ public class CommitteeProjectController {
 
     @GetMapping
     public ResponseEntity<?> getProjects(@RequestParam(required = false) Long cycle, Pageable pageable) {
-        return ResponseEntity.ok(committeeService.getProjectDtos(cycle, pageable));
+        return ResponseEntity.ok(committeeService.getProjectDtos(cycle, null, null, null, null, null, pageable));
     }
 
     @GetMapping("/{id}")

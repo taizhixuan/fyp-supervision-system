@@ -167,7 +167,7 @@ public class CommitteeReportService {
     private String buildPairingStatusCsv(Map<String, Object> filters) {
         Long cycleId = filters.containsKey("cycleId") && filters.get("cycleId") != null
                 ? ((Number) filters.get("cycleId")).longValue() : null;
-        Map<String, Object> result = committeeService.getProjectDtos(cycleId, PageRequest.of(0, 5000));
+        Map<String, Object> result = committeeService.getProjectDtos(cycleId, null, null, null, null, null, PageRequest.of(0, 5000));
         List<Map<String, Object>> projects = (List<Map<String, Object>>) result.getOrDefault("content", List.of());
         StringBuilder sb = new StringBuilder();
         sb.append("projectId,title,studentName,studentId,supervisorName,pairingStatus,projectStatus,proposalStatus\n");
