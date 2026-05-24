@@ -25,4 +25,7 @@ public interface SupervisorProfileRepository
 
     @Query("SELECT sp FROM SupervisorProfile sp JOIN sp.user u WHERE u.status = 'ACTIVE' AND u.role = 'SUPERVISOR' AND LOWER(sp.faculty) = LOWER(:faculty)")
     Page<SupervisorProfile> findByFaculty(@Param("faculty") String faculty, Pageable pageable);
+
+    @Query("select count(sp) from SupervisorProfile sp where sp.currentLoad > sp.supervisionQuota")
+    long countOverloaded();
 }

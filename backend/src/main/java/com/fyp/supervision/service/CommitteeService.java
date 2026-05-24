@@ -49,6 +49,7 @@ public class CommitteeService {
                 + proposalRepository.countByStatus(ProposalStatus.DRAFT)
                 + proposalRepository.countByStatus(ProposalStatus.UNDER_REVIEW)
                 + proposalRepository.countByStatus(ProposalStatus.REVISION_REQUIRED);
+        long overloadedSupervisors = supervisorProfileRepository.countOverloaded();
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalProposals", totalProposals);
@@ -58,14 +59,123 @@ public class CommitteeService {
         stats.put("totalStudents", totalStudents);
         stats.put("unpairedStudents", projectRepository.countUnpairedStudents());
         stats.put("totalSupervisors", totalSupervisors);
-        stats.put("overloadedSupervisors", 0);
+        stats.put("overloadedSupervisors", overloadedSupervisors);
         stats.put("activeProjects", activeProjects);
         stats.put("completedProjects", completedProjects);
         stats.put("fyp1Students", projectRepository.countFyp1Projects());
         stats.put("fyp2Students", projectRepository.countFyp2Projects());
-        stats.put("alerts", List.of());
-        stats.put("recentActivities", List.of());
+        stats.put("alerts", buildDashboardAlerts(pendingProposals, overloadedSupervisors));
+        stats.put("recentActivities", buildRecentActivities());
         return stats;
+    }
+
+    private List<Map<String, Object>> buildDashboardAlerts(long pendingProposals, long overloadedSupervisors) {
+        List<Map<String, Object>> alerts = new ArrayList<>();
+        String nowStr = java.time.LocalDateTime.now().toString();
+        long nextId = 1L;
+        if (pendingProposals > 0) {
+            Map<String, Object> a = new LinkedHashMap<>();
+            a.put("alertId", nextId++);
+            a.put("type", "WARNING");
+            a.put("title", "Proposals Pending Review");
+            a.put("message", pendingProposals + " proposals awaiting committee review");
+            a.put("createdAt", nowStr);
+            a.put("isRead", false);
+            alerts.add(a);
+        }
+        if (overloadedSupervisors > 0) {
+            Map<String, Object> a = new LinkedHashMap<>();
+            a.put("alertId", nextId++);
+            a.put("type", "WARNING");
+            a.put("title", "Supervisor Capacity Alert");
+            a.put("message", overloadedSupervisors + " supervisors have exceeded capacity");
+            a.put("createdAt", nowStr);
+            a.put("isRead", false);
+            alerts.add(a);
+        }
+        // Cap to 5 (currently only 2 sources, but future-proof the contract)
+        if (alerts.size() > 5) {
+            return alerts.subList(0, 5);
+        }
+        return alerts;
+    }
+
+    private List<Map<String, Object>> buildRecentActivities() {
+        // Each candidate carries the raw timestamp so we can sort across sources.
+        List<Object[]> candidates = new ArrayList<>();
+
+        // 1. Recent SUBMITTED proposals
+        Page<Proposal> recentProposals = proposalRepository.findByStatus(
+                ProposalStatus.SUBMITTED,
+                org.springframework.data.domain.PageRequest.of(0, 5,
+                        org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")));
+        for (Proposal p : recentProposals.getContent()) {
+            if (p.getCreatedAt() == null) continue;
+            Map<String, Object> a = new LinkedHashMap<>();
+            a.put("type", "PROPOSAL_SUBMITTED");
+            a.put("title", p.getTitle() != null ? p.getTitle() : "Proposal submitted");
+            String studentName = p.getStudent() != null ? p.getStudent().getFullName() : "Unknown student";
+            a.put("description", "New proposal submitted by " + studentName);
+            a.put("timestamp", p.getCreatedAt().toString());
+            a.put("actor", studentName);
+            candidates.add(new Object[] { p.getCreatedAt(), a });
+        }
+
+        // 2. Recent ACCEPTED supervisor requests (student paired)
+        List<SupervisorRequest> accepted = supervisorRequestRepository.findAll().stream()
+                .filter(r -> r.getStatus() == RequestStatus.ACCEPTED)
+                .sorted((a, b) -> {
+                    java.time.LocalDateTime ta = a.getRespondedAt() != null ? a.getRespondedAt() : a.getSubmittedAt();
+                    java.time.LocalDateTime tb = b.getRespondedAt() != null ? b.getRespondedAt() : b.getSubmittedAt();
+                    if (ta == null && tb == null) return 0;
+                    if (ta == null) return 1;
+                    if (tb == null) return -1;
+                    return tb.compareTo(ta);
+                })
+                .limit(5)
+                .collect(Collectors.toList());
+        for (SupervisorRequest r : accepted) {
+            java.time.LocalDateTime ts = r.getRespondedAt() != null ? r.getRespondedAt() : r.getSubmittedAt();
+            if (ts == null) continue;
+            String studentName = r.getStudent() != null ? r.getStudent().getFullName() : "Student";
+            String supervisorName = r.getSupervisorUser() != null ? r.getSupervisorUser().getFullName() : "supervisor";
+            Map<String, Object> a = new LinkedHashMap<>();
+            a.put("type", "STUDENT_PAIRED");
+            a.put("title", "Student paired with supervisor");
+            a.put("description", studentName + " paired with " + supervisorName);
+            a.put("timestamp", ts.toString());
+            a.put("actor", studentName);
+            candidates.add(new Object[] { ts, a });
+        }
+
+        // 3. Recent PUBLISHED announcements
+        List<Announcement> announcements = announcementRepository
+                .findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED);
+        for (Announcement ann : announcements) {
+            if (ann.getCreatedAt() == null) continue;
+            Map<String, Object> a = new LinkedHashMap<>();
+            a.put("type", "ANNOUNCEMENT_CREATED");
+            a.put("title", "New announcement");
+            a.put("description", ann.getTitle() != null ? ann.getTitle() : "Announcement published");
+            a.put("timestamp", ann.getCreatedAt().toString());
+            a.put("actor", ann.getCreatedBy() != null ? ann.getCreatedBy().getFullName() : null);
+            candidates.add(new Object[] { ann.getCreatedAt(), a });
+        }
+
+        // Sort all by timestamp desc, take top 5, assign synthetic ids
+        candidates.sort((x, y) -> ((java.time.LocalDateTime) y[0]).compareTo((java.time.LocalDateTime) x[0]));
+        List<Map<String, Object>> activities = new ArrayList<>();
+        long id = 1L;
+        for (Object[] entry : candidates) {
+            if (activities.size() >= 5) break;
+            @SuppressWarnings("unchecked")
+            Map<String, Object> a = (Map<String, Object>) entry[1];
+            Map<String, Object> withId = new LinkedHashMap<>();
+            withId.put("activityId", id++);
+            withId.putAll(a);
+            activities.add(withId);
+        }
+        return activities;
     }
 
     // ========== Announcements ==========
@@ -181,7 +291,10 @@ public class CommitteeService {
         dto.put("studentId", student.getMmuId());
         dto.put("studentEmail", student.getEmail());
         dto.put("programme", sp != null && sp.getProgramme() != null ? sp.getProgramme() : "");
-        dto.put("cycle", "FYP1");
+        Project proj = proposal.getProject();
+        String cycleType = (proj != null && proj.getCycle() != null && proj.getCycle().getCycleType() != null)
+                ? proj.getCycle().getCycleType() : "";
+        dto.put("cycle", cycleType);
         dto.put("supervisorName", supervisor != null ? supervisor.getFullName() : "");
         dto.put("supervisorId", supervisor != null ? supervisor.getMmuId() : "");
         dto.put("submittedAt", proposal.getCreatedAt() != null ? proposal.getCreatedAt().toString() : "");
@@ -189,7 +302,16 @@ public class CommitteeService {
         dto.put("version", proposal.getCurrentVersion());
         dto.put("aiAnalysis", aiAnalysis);
         dto.put("reviewHistory", reviewHistory);
-        dto.put("documentUrl", "");
+        // documentUrl: latest version's uploaded file, served through /uploads/** static handler.
+        String documentUrl = null;
+        if (!versions.isEmpty()) {
+            String path = versions.get(0).getUploadFilePath();
+            if (path != null && !path.isBlank()) {
+                String trimmed = path.startsWith("/") ? path.substring(1) : path;
+                documentUrl = trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed;
+            }
+        }
+        dto.put("documentUrl", documentUrl);
         dto.put("abstract", abstractText);
         dto.put("objectives", objectives);
         dto.put("methodology", methodology);
