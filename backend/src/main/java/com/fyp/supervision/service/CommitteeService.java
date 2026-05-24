@@ -379,24 +379,47 @@ public class CommitteeService {
     // ========== Unpaired Students ==========
 
     public List<Map<String, Object>> getUnpairedStudentDtos(Long cycleId) {
-        List<Project> projects = projectRepository.findUnpairedStudentsByCycle(cycleId);
+        List<com.fyp.supervision.entity.Project> projects = projectRepository.findUnpairedStudentsByCycle(cycleId);
         return projects.stream().map(p -> {
-            UserAccount student = p.getStudent();
-            StudentProfile sp = student != null ? studentProfileRepository.findById(student.getUserId()).orElse(null) : null;
+            com.fyp.supervision.entity.UserAccount student = p.getStudent();
+            com.fyp.supervision.entity.StudentProfile sp = student != null
+                    ? studentProfileRepository.findById(student.getUserId()).orElse(null) : null;
+            com.fyp.supervision.entity.FypCycle c = p.getCycle();
 
-            Map<String, Object> dto = new LinkedHashMap<>();
+            long sent = student != null ? supervisorRequestRepository
+                    .countByStudent_UserIdAndStatus(student.getUserId(),
+                            com.fyp.supervision.enums.RequestStatus.PENDING)
+                + supervisorRequestRepository.countByStudent_UserIdAndStatus(student.getUserId(),
+                            com.fyp.supervision.enums.RequestStatus.ACCEPTED)
+                + supervisorRequestRepository.countByStudent_UserIdAndStatus(student.getUserId(),
+                            com.fyp.supervision.enums.RequestStatus.REJECTED) : 0;
+            long rejected = student != null ? supervisorRequestRepository
+                    .countByStudent_UserIdAndStatus(student.getUserId(),
+                            com.fyp.supervision.enums.RequestStatus.REJECTED) : 0;
+            String lastRequestAt = student != null
+                    ? supervisorRequestRepository.findMaxSubmittedAtByStudent_UserId(student.getUserId())
+                            .map(java.time.LocalDateTime::toString).orElse(null)
+                    : null;
+
+            java.util.Map<String, Object> dto = new java.util.LinkedHashMap<>();
             dto.put("studentId", student != null ? student.getMmuId() : "");
             dto.put("userId", student != null ? student.getUserId().toString() : "");
             dto.put("fullName", student != null ? student.getFullName() : "");
             dto.put("email", student != null ? student.getEmail() : "");
             dto.put("programme", sp != null && sp.getProgramme() != null ? sp.getProgramme() : "");
-            dto.put("cycle", "FYP1");
+            dto.put("cycle", c != null && c.getCycleType() != null ? c.getCycleType() : "");
+            dto.put("cycleId", c != null ? c.getCycleId() : null);
+            dto.put("cycleCode", c != null ? c.getCycleCode() : null);
+            dto.put("cycleType", c != null ? c.getCycleType() : null);
+            dto.put("academicYear", c != null ? c.getAcademicYear() : null);
+            dto.put("cycleStatus", c != null && c.getStatus() != null ? c.getStatus().name() : null);
             dto.put("registeredAt", p.getRegisteredAt() != null ? p.getRegisteredAt().toString() : "");
-            dto.put("requestsSent", 0);
-            dto.put("requestsRejected", 0);
-            dto.put("preferredAreas", sp != null ? parseJsonArray(sp.getInterests()) : List.of());
+            dto.put("requestsSent", sent);
+            dto.put("requestsRejected", rejected);
+            dto.put("lastRequestAt", lastRequestAt);
+            dto.put("preferredAreas", sp != null ? parseJsonArray(sp.getInterests()) : java.util.List.of());
             return dto;
-        }).collect(Collectors.toList());
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     // ========== Supervisor Loads ==========
@@ -412,27 +435,39 @@ public class CommitteeService {
         return buildSupervisorLoadDto(profile);
     }
 
-    public Map<String, Object> buildSupervisorLoadDto(SupervisorProfile profile) {
-        UserAccount user = userAccountRepository.findById(profile.getUserId()).orElse(null);
-        // Active-cycle projects only — past supervisees should not inflate "current load".
-        List<Project> projects = projectRepository.findActiveCycleBySupervisor(profile.getUserId());
+    public Map<String, Object> buildSupervisorLoadDto(com.fyp.supervision.entity.SupervisorProfile profile) {
+        com.fyp.supervision.entity.UserAccount user =
+                userAccountRepository.findById(profile.getUserId()).orElse(null);
+        java.util.List<com.fyp.supervision.entity.Project> projects =
+                projectRepository.findActiveCycleBySupervisor(profile.getUserId());
 
-        List<Map<String, Object>> students = projects.stream().map(p -> {
-            UserAccount student = p.getStudent();
-            Map<String, Object> sDto = new LinkedHashMap<>();
-            sDto.put("studentId", student != null ? student.getMmuId() : "");
-            sDto.put("fullName", student != null ? student.getFullName() : "");
-            sDto.put("cycle", "FYP1");
+        long fyp1Count = projects.stream()
+                .filter(p -> p.getCycle() != null && "FYP1".equalsIgnoreCase(p.getCycle().getCycleType())).count();
+        long fyp2Count = projects.stream()
+                .filter(p -> p.getCycle() != null && "FYP2".equalsIgnoreCase(p.getCycle().getCycleType())).count();
+
+        java.util.List<java.util.Map<String, Object>> students = projects.stream().map(p -> {
+            com.fyp.supervision.entity.UserAccount stu = p.getStudent();
+            com.fyp.supervision.entity.FypCycle c = p.getCycle();
+            int prog = projectProgressService.progressFor(p);
+            ProjectProgressService.ProjectRisk r = projectProgressService.riskFor(p);
+            java.util.Map<String, Object> sDto = new java.util.LinkedHashMap<>();
+            sDto.put("studentId", stu != null ? stu.getMmuId() : "");
+            sDto.put("fullName", stu != null ? stu.getFullName() : "");
+            sDto.put("cycle", c != null ? c.getCycleType() : "");
+            sDto.put("cycleId", c != null ? c.getCycleId() : null);
+            sDto.put("cycleCode", c != null ? c.getCycleCode() : null);
+            sDto.put("cycleType", c != null ? c.getCycleType() : null);
             sDto.put("projectTitle", p.getProjectTitle());
-            sDto.put("progress", 0);
-            sDto.put("riskLevel", "LOW");
+            sDto.put("progress", prog);
+            sDto.put("riskLevel", r.level());
             return sDto;
-        }).collect(Collectors.toList());
+        }).collect(java.util.stream.Collectors.toList());
 
         double utilization = profile.getSupervisionQuota() > 0
                 ? (double) profile.getCurrentLoad() / profile.getSupervisionQuota() * 100 : 0;
 
-        Map<String, Object> dto = new LinkedHashMap<>();
+        java.util.Map<String, Object> dto = new java.util.LinkedHashMap<>();
         dto.put("supervisorId", user != null ? user.getMmuId() : "");
         dto.put("userId", profile.getUserId().toString());
         dto.put("fullName", user != null ? user.getFullName() : "");
@@ -440,8 +475,8 @@ public class CommitteeService {
         dto.put("department", profile.getDepartment() != null ? profile.getDepartment() : "");
         dto.put("currentLoad", profile.getCurrentLoad());
         dto.put("maxCapacity", profile.getSupervisionQuota());
-        dto.put("fyp1Students", projects.size());
-        dto.put("fyp2Students", 0);
+        dto.put("fyp1Students", fyp1Count);
+        dto.put("fyp2Students", fyp2Count);
         dto.put("utilizationRate", Math.round(utilization));
         dto.put("isOverloaded", profile.getCurrentLoad() > profile.getSupervisionQuota());
         dto.put("expertise", parseJsonArray(profile.getExpertise()));
