@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   BookOpen,
   FileText,
+  FileSpreadsheet,
   Video,
   Download,
   ExternalLink,
@@ -43,7 +44,7 @@ interface Resource {
 
 const typeConfig: Record<ResourceType, { label: string; color: string; bgColor: string; icon: typeof FileText }> = {
   GUIDELINE: { label: 'Guideline', color: 'bg-amber-100 text-amber-700', bgColor: 'bg-amber-500', icon: BookOpen },
-  TEMPLATE: { label: 'Template', color: 'bg-emerald-100 text-emerald-700', bgColor: 'bg-emerald-500', icon: FileText },
+  TEMPLATE: { label: 'Template', color: 'bg-emerald-100 text-emerald-700', bgColor: 'bg-emerald-500', icon: FileSpreadsheet },
   VIDEO: { label: 'Video', color: 'bg-rose-100 text-rose-700', bgColor: 'bg-rose-500', icon: Video },
   DOCUMENT: { label: 'Document', color: 'bg-sky-100 text-sky-700', bgColor: 'bg-sky-500', icon: FileText },
   LINK: { label: 'Link', color: 'bg-violet-100 text-violet-700', bgColor: 'bg-violet-500', icon: ExternalLink },
@@ -132,7 +133,7 @@ export function ResourcesHub() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-200 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search resources..."
+              placeholder="Search by title or description…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 rounded-md border border-white/20 bg-white/10 text-white placeholder-primary-200 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
@@ -234,7 +235,7 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
           </div>
         </div>
 
-        <p className="text-xs text-stone-500 line-clamp-2 mb-2 leading-snug flex-1">{resource.description}</p>
+        <p className="text-xs text-stone-500 line-clamp-2 mb-2 leading-snug flex-1 min-h-[2.25em]">{resource.description}</p>
 
         <div className="flex items-center justify-between pt-2 border-t border-stone-100">
           <div className="flex items-center gap-2 text-[11px] text-stone-400">

@@ -17,32 +17,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useCommitteeAnnouncements, useArchiveAnnouncement } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { AnnouncementScope, AnnouncementPriority, AnnouncementStatus } from '@/types'
-
-const priorityConfig: Record<AnnouncementPriority, { label: string; color: string; bgColor: string }> = {
-  LOW: { label: 'Low', color: 'text-stone-600', bgColor: 'bg-stone-100' },
-  NORMAL: { label: 'Normal', color: 'text-sky-600', bgColor: 'bg-sky-100' },
-  HIGH: { label: 'High', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  URGENT: { label: 'Urgent', color: 'text-rose-600', bgColor: 'bg-rose-100' },
-}
-
-// Backend can publish any AnnouncementService scope including ALL_SUPERVISEES
-// (supervisor-authored), ALL_STUDENTS, and PROGRAMME_<code> for any programme
-// the admin defined. Lookups fall back to FALLBACK_SCOPE so an unknown scope
-// renders as "Other" instead of crashing the page on .label.
-const scopeConfig: Record<string, { label: string }> = {
-  ALL: { label: 'All Students' },
-  ALL_STUDENTS: { label: 'All Students' },
-  ALL_SUPERVISEES: { label: 'All Supervisees' },
-  SPECIFIC_STUDENTS: { label: 'Specific Students' },
-  FYP1: { label: 'FYP1 Only' },
-  FYP2: { label: 'FYP2 Only' },
-  PROGRAMME_CS: { label: 'Computer Science' },
-  PROGRAMME_SE: { label: 'Software Engineering' },
-  PROGRAMME_DS: { label: 'Data Science' },
-  PROGRAMME_IT: { label: 'Information Technology' },
-}
-const FALLBACK_SCOPE = { label: 'Other' }
+import { getPriorityDisplay, getScopeLabel } from '@/lib/utils/announcementDisplay'
+import { formatDate } from '@/lib/utils/formatDate'
+import type { AnnouncementScope, AnnouncementStatus } from '@/types'
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-100' },
@@ -50,7 +27,6 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   ARCHIVED: { label: 'Archived', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 }
 const FALLBACK_STATUS = { label: 'Unknown', color: 'text-stone-600', bgColor: 'bg-stone-100' }
-const FALLBACK_PRIORITY = { label: 'Normal', color: 'text-sky-600', bgColor: 'bg-sky-100' }
 
 export function AnnouncementsList() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -135,10 +111,10 @@ export function AnnouncementsList() {
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Published</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
-              <div className="text-base font-bold leading-none text-amber-300">
-                {data.announcements.filter((a) => a.priority === 'HIGH' || a.priority === 'URGENT').length}
+              <div className="text-base font-bold leading-none text-rose-300">
+                {data.announcements.filter((a) => a.priority === 'URGENT').length}
               </div>
-              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Important</p>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Urgent</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-sky-300">
@@ -194,8 +170,9 @@ export function AnnouncementsList() {
       {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filteredAnnouncements.map((announcement) => {
-            const priority = priorityConfig[announcement.priority] ?? FALLBACK_PRIORITY
-            const scope = scopeConfig[announcement.scope] ?? FALLBACK_SCOPE
+            const priority = getPriorityDisplay(announcement.priority)
+            const PriorityIcon = priority.Icon
+            const scopeLabel = getScopeLabel(announcement.scope)
             const status = statusConfig[announcement.status] ?? FALLBACK_STATUS
             const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date()
 
@@ -204,18 +181,15 @@ export function AnnouncementsList() {
                 key={announcement.announcementId}
                 padding="sm"
                 className={cn(
-                  'group hover:shadow-md transition-all border-l-4',
-                  announcement.priority === 'URGENT' && 'border-l-rose-500',
-                  announcement.priority === 'HIGH' && 'border-l-amber-500',
-                  announcement.priority === 'NORMAL' && 'border-l-sky-500',
-                  announcement.priority === 'LOW' && 'border-l-stone-400',
+                  'group hover:shadow-md transition-all border-l-4 h-full',
+                  priority.borderClass,
                   announcement.status === 'ARCHIVED' && 'opacity-60',
-                  isExpired && 'bg-stone-50'
+                  isExpired && 'bg-stone-50',
                 )}
               >
-                <div className="flex items-start gap-2.5">
-                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', priority.bgColor)}>
-                    <Megaphone className={cn('h-4 w-4', priority.color)} />
+                <div className="flex items-start gap-2.5 h-full">
+                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', priority.iconClass)}>
+                    <PriorityIcon className="h-4 w-4" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -223,7 +197,7 @@ export function AnnouncementsList() {
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-sm text-stone-800 group-hover:text-amber-700 leading-tight truncate">{announcement.title}</h3>
                         <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', priority.bgColor, priority.color)}>
+                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', priority.pillClass)}>
                             {priority.label}
                           </span>
                           <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', status.bgColor, status.color)}>
@@ -231,7 +205,7 @@ export function AnnouncementsList() {
                           </span>
                           <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-500">
                             <Users className="h-3 w-3" />
-                            {scope.label}
+                            {scopeLabel}
                           </span>
                           {isExpired && <span className="text-[10px] text-neutral-500">· Expired</span>}
                         </div>
@@ -254,7 +228,7 @@ export function AnnouncementsList() {
                       </div>
                     </div>
 
-                    <p className="mt-1 text-[11px] text-neutral-600 line-clamp-2 leading-snug">
+                    <p className="mt-1 text-[11px] text-neutral-600 line-clamp-2 leading-snug min-h-[2.25em]">
                       {announcement.content}
                     </p>
 
@@ -265,7 +239,7 @@ export function AnnouncementsList() {
                       </span>
                       <span className="inline-flex items-center gap-0.5">
                         <Clock className="h-3 w-3" />
-                        {new Date(announcement.publishAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                        {formatDate(announcement.publishAt)}
                       </span>
                       <span className="truncate">· {announcement.createdBy}</span>
                     </div>
