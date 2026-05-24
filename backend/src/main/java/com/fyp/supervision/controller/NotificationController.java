@@ -141,6 +141,10 @@ public class NotificationController {
         dto.put("targetRoute", n.getTargetRoute());
         dto.put("createdAt", n.getCreatedAt() != null ? n.getCreatedAt().toString() : "");
         dto.put("readAt", n.getReadAt() != null ? n.getReadAt().toString() : null);
+        // `isRead` mirrors readAt for frontends that template on it (supervisor/
+        // student centers filter on n.isRead). Without this, mark-as-read appears
+        // to do nothing even though the row gets updated server-side.
+        dto.put("isRead", n.getReadAt() != null);
         return dto;
     }
 }
