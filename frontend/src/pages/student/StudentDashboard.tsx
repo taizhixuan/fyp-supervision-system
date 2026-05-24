@@ -9,7 +9,6 @@ import {
   ArrowRight,
   ClipboardList,
   FolderOpen,
-  Bell,
   Sparkles,
   TrendingUp,
   AlertTriangle,
@@ -177,9 +176,9 @@ const SAMPLE_DASHBOARD = {
 
 const statusColors: Record<RegistrationStatus, string> = {
   NOT_STARTED: 'bg-neutral-100 text-neutral-700',
-  SUPERVISOR_PENDING: 'bg-warning-100 text-warning-700',
-  PROPOSAL_PENDING: 'bg-primary-100 text-primary-700',
-  UNDER_REVIEW: 'bg-info-100 text-info-700',
+  SUPERVISOR_PENDING: 'bg-warning-100 text-warning-800',
+  PROPOSAL_PENDING: 'bg-warning-100 text-warning-900',
+  UNDER_REVIEW: 'bg-info-100 text-info-800',
   REGISTERED: 'bg-success-100 text-success-700',
   DEFERRED: 'bg-error-100 text-error-700',
 }
@@ -308,27 +307,27 @@ export function StudentDashboard() {
   return (
     <div className="space-y-3 lg:space-y-4">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-4 sm:p-5 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <GraduationCap className="h-6 w-6 text-white" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold leading-tight">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold leading-tight truncate">
                 Welcome back, {profile.fullName.split(' ')[0]}!
               </h1>
-              <p className="text-primary-100 text-sm mt-0.5">
+              <p className="text-primary-100 text-xs sm:text-sm mt-0.5">
                 {registrationStatus.cycle} • {registrationStatus.academicYear}
                 {trimester && trimester.hasStarted && !trimester.hasEnded && (
                   <>
                     {' • '}Week {trimester.currentWeek} of {trimester.totalWeeks}
                     {trimester.weeksRemaining > 0 && (
                       <span className="text-primary-200">
-                        {' · '}{trimester.weeksRemaining} {trimester.weeksRemaining === 1 ? 'week' : 'weeks'} left
+                        {' • '}{trimester.weeksRemaining} {trimester.weeksRemaining === 1 ? 'week' : 'weeks'} left
                       </span>
                     )}
                   </>
@@ -342,32 +341,15 @@ export function StudentDashboard() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to={ROUTES.STUDENT.NOTIFICATIONS}>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                leftIcon={<Bell className="h-4 w-4" />}
-              >
-                <span className="hidden sm:inline">Notifications</span>
-                {dashboard.notifications.unreadCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-error-500 text-white text-xs rounded-full">
-                    {dashboard.notifications.unreadCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
-            <Link to={ROUTES.STUDENT.CHATBOT}>
-              <Button
-                size="sm"
-                className="bg-white text-primary-700 hover:bg-primary-50"
-                leftIcon={<Sparkles className="h-4 w-4" />}
-              >
-                AI Assistant
-              </Button>
-            </Link>
-          </div>
+          <Link to={ROUTES.STUDENT.CHATBOT} className="flex-shrink-0">
+            <Button
+              size="sm"
+              className="bg-white text-primary-700 hover:bg-primary-50"
+              leftIcon={<Sparkles className="h-4 w-4" />}
+            >
+              AI Assistant
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -390,68 +372,56 @@ export function StudentDashboard() {
         </Card>
       )}
 
-      {/* FYP phase + pairing — side-by-side status row on lg+ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
-      {/* FYP phase progression strip — FYP1 → FYP2 → Complete. Reflects whether
-          admin has marked FYP1 passed and whether the cycle has ended. */}
-      <Card>
-        <div className="flex items-center justify-between gap-4">
-          {phaseSteps.map((step, idx) => (
-            <div key={step.key} className="flex items-center gap-3 flex-1">
-              <div
-                className={cn(
-                  'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold',
-                  step.status === 'done' && 'bg-success-500 text-white',
-                  step.status === 'current' && 'bg-primary-600 text-white shadow-md shadow-primary-500/30',
-                  step.status === 'pending' && 'bg-neutral-200 text-neutral-500',
-                )}
-              >
-                {step.status === 'done' ? <CheckCircle className="h-5 w-5" /> : idx + 1}
-              </div>
-              <div className="min-w-0">
-                <p className={cn(
-                  'text-sm font-semibold',
-                  step.status === 'pending' ? 'text-neutral-500' : 'text-neutral-900',
-                )}>
-                  {step.label}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {step.status === 'done' && 'Complete'}
-                  {step.status === 'current' && 'In progress'}
-                  {step.status === 'pending' && 'Upcoming'}
-                </p>
-              </div>
-              {idx < phaseSteps.length - 1 && (
-                <div className={cn(
-                  'flex-1 h-0.5 rounded-full hidden sm:block',
-                  step.status === 'done' ? 'bg-success-300' : 'bg-neutral-200',
-                )} />
-              )}
+      {/* Compact FYP phase pill row — kept low-key so Registration Progress can be the focal point.
+          The detailed stepper lives further down; this is just a status glance. */}
+      <Card className="!py-2.5 !px-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide flex-shrink-0">FYP Phase</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {phaseSteps.map((step, idx) => (
+                <div key={step.key} className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+                      step.status === 'done' && 'bg-success-100 text-success-700',
+                      step.status === 'current' && 'bg-primary-600 text-white shadow-sm shadow-primary-500/30',
+                      step.status === 'pending' && 'bg-neutral-100 text-neutral-500',
+                    )}
+                  >
+                    {step.status === 'done' && <CheckCircle className="h-3 w-3" />}
+                    {step.label}
+                  </span>
+                  {idx < phaseSteps.length - 1 && (
+                    <ChevronRight className="h-3 w-3 text-neutral-400" />
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          {fyp1Passed === true && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success-50 text-success-700 text-xs font-medium">
+              <CheckCircle className="h-3 w-3" />
+              FYP1 Passed
+              {reg.fyp1ResultDecidedAt && (
+                <span className="text-success-600">
+                  · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </span>
+          )}
+          {fyp1Passed === false && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-error-50 text-error-700 text-xs font-medium">
+              <AlertCircle className="h-3 w-3" />
+              FYP1 Failed
+              {reg.fyp1ResultDecidedAt && (
+                <span className="text-error-600">
+                  · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                </span>
+              )}
+            </span>
+          )}
         </div>
-        {fyp1Passed === true && (
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-50 text-success-700 text-sm">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">FYP1 Passed</span>
-            {reg.fyp1ResultDecidedAt && (
-              <span className="text-xs text-success-600">
-                · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            )}
-          </div>
-        )}
-        {fyp1Passed === false && (
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-error-50 text-error-700 text-sm">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">FYP1 Failed</span>
-            {reg.fyp1ResultDecidedAt && (
-              <span className="text-xs text-error-600">
-                · {new Date(reg.fyp1ResultDecidedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            )}
-          </div>
-        )}
       </Card>
 
       {/* Pairing banner — different content depending on whether the student has a project yet */}
@@ -512,18 +482,31 @@ export function StudentDashboard() {
           </div>
         </Card>
       )}
-      </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats — empty cards swap the number for a CTA so new students don't see a wall of zeros. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-primary-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Calendar className="h-5 w-5 text-primary-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{quickStats.totalMeetings}</p>
-              <p className="text-xs text-neutral-500">Total Meetings</p>
+            <div className="min-w-0">
+              {quickStats.totalMeetings > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-neutral-900">{quickStats.totalMeetings}</p>
+                  <p className="text-xs text-neutral-500">Total Meetings</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-neutral-900">No meetings yet</p>
+                  <Link
+                    to={ROUTES.STUDENT.MEETING_NEW}
+                    className="text-xs text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5 mt-0.5"
+                  >
+                    Schedule one <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </Card>
@@ -539,40 +522,69 @@ export function StudentDashboard() {
               <p className="text-xs text-neutral-500">{currentPhase} meeting logs</p>
             </div>
           </div>
-          <div className="mt-3 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
-            <div
-              className={cn(
-                'h-full rounded-full transition-all',
-                logsDone >= (logsRequired || 6) ? 'bg-success-500' : 'bg-warning-500',
-              )}
-              style={{ width: `${Math.round(logsRatio * 100)}%` }}
-            />
-          </div>
+          {logsDone === 0 ? (
+            <div className="mt-3 h-1.5 rounded-full border border-dashed border-neutral-300" />
+          ) : (
+            <div className="mt-3 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all',
+                  logsDone >= (logsRequired || 6) ? 'bg-success-500' : 'bg-warning-500',
+                )}
+                style={{ width: `${Math.round(logsRatio * 100)}%` }}
+              />
+            </div>
+          )}
           <p className="text-[11px] text-neutral-500 mt-1">
             {logsDone >= (logsRequired || 6)
               ? 'Minimum met ✓'
+              : logsDone === 0
+              ? `Log your first meeting to start tracking`
               : `${logsRemaining} more to meet ${currentPhase} minimum`}
           </p>
         </Card>
         <Card className="border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <ClipboardList className="h-5 w-5 text-warning-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{pendingLogs.length}</p>
-              <p className="text-xs text-neutral-500">Pending Logs</p>
+            <div className="min-w-0">
+              {pendingLogs.length > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-neutral-900">{pendingLogs.length}</p>
+                  <p className="text-xs text-neutral-500">Pending Logs</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-neutral-900">All caught up</p>
+                  <p className="text-xs text-neutral-500">No pending logs</p>
+                </>
+              )}
             </div>
           </div>
         </Card>
         <Card className="border-l-4 border-l-info-500">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <FileText className="h-5 w-5 text-info-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900">{quickStats.documentsUploaded}</p>
-              <p className="text-xs text-neutral-500">Documents</p>
+            <div className="min-w-0">
+              {quickStats.documentsUploaded > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-neutral-900">{quickStats.documentsUploaded}</p>
+                  <p className="text-xs text-neutral-500">Documents</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-neutral-900">No documents</p>
+                  <Link
+                    to={ROUTES.STUDENT.DOCUMENT_UPLOAD}
+                    className="text-xs text-info-600 hover:text-info-700 inline-flex items-center gap-0.5 mt-0.5"
+                  >
+                    Upload one <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </Card>
