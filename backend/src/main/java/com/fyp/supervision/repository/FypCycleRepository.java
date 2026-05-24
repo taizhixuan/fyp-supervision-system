@@ -50,4 +50,16 @@ public interface FypCycleRepository extends JpaRepository<FypCycle, Long> {
     @Modifying
     @Query("delete from FypCycle c where c.cycleId = :id")
     int deleteByIdDirect(@Param("id") Long id);
+
+    /**
+     * List every cycle ordered by status priority (ACTIVE > UPCOMING > COMPLETED > ARCHIVED)
+     * then most-recent start date. Used by the committee cycle dropdown.
+     */
+    @Query("select c from FypCycle c order by " +
+           "case c.status when com.fyp.supervision.enums.CycleStatus.ACTIVE then 0 " +
+           "when com.fyp.supervision.enums.CycleStatus.UPCOMING then 1 " +
+           "when com.fyp.supervision.enums.CycleStatus.COMPLETED then 2 " +
+           "when com.fyp.supervision.enums.CycleStatus.ARCHIVED then 3 else 4 end, " +
+           "c.startDate desc")
+    List<FypCycle> findAllOrderedForDropdown();
 }
