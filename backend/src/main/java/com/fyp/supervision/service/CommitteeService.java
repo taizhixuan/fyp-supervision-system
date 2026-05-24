@@ -497,9 +497,20 @@ public class CommitteeService {
         engagement.put("proposalVersion", latestProposal != null ? latestProposal.getCurrentVersion() : 0);
 
         dto.put("engagement", engagement);
-        dto.put("milestones", java.util.List.of()); // legacy field — empty; will be removed in next release
-        dto.put("recentMeetings", java.util.List.of());
-        dto.put("submissions", java.util.List.of());
+
+        java.util.List<com.fyp.supervision.entity.Meeting> meetings =
+                meetingRepository.findTop5ByProject_ProjectIdOrderByConfirmedStartAtDesc(project.getProjectId());
+        java.util.List<java.util.Map<String, Object>> recentMeetingDtos = meetings.stream().map(m -> {
+            java.util.Map<String, Object> mDto = new java.util.LinkedHashMap<>();
+            mDto.put("meetingId", m.getMeetingId());
+            mDto.put("title", m.getTitle());
+            mDto.put("scheduledAt", m.getConfirmedStartAt() != null
+                    ? m.getConfirmedStartAt().toString()
+                    : (m.getProposedStartAt() != null ? m.getProposedStartAt().toString() : null));
+            mDto.put("status", m.getStatus() != null ? m.getStatus().name() : null);
+            return mDto;
+        }).toList();
+        dto.put("recentMeetings", recentMeetingDtos);
         return dto;
     }
 
