@@ -19,6 +19,7 @@ public class CommitteeProjectController {
 
     private final CommitteeService committeeService;
     private final FypCycleRepository fypCycleRepository;
+    private final com.fyp.supervision.service.ProjectExportService projectExportService;
 
     @GetMapping
     public ResponseEntity<?> getProjects(
@@ -81,5 +82,28 @@ public class CommitteeProjectController {
     @PostMapping("/{id}/advance-phase")
     public ResponseEntity<?> advancePhase(@PathVariable Long id) {
         return ResponseEntity.ok(committeeService.advanceProjectPhase(id));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportProjects(
+            @RequestParam(defaultValue = "csv") String format,
+            @RequestParam(required = false) Long cycleId,
+            @RequestParam(required = false) String cycleStatus,
+            @RequestParam(required = false) String projectStatus,
+            @RequestParam(required = false) String pairingStatus,
+            @RequestParam(required = false) String riskLevel,
+            @RequestParam(required = false) String search) {
+
+        com.fyp.supervision.service.report.ReportFormat fmt =
+                com.fyp.supervision.service.report.ReportFormat.parse(format);
+        byte[] bytes = projectExportService.export(fmt, cycleId, cycleStatus, projectStatus,
+                pairingStatus, riskLevel, search);
+        String name = "projects-" + java.time.LocalDate.now() + "." + fmt.extension;
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + name + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, fmt.contentType)
+                .body(bytes);
     }
 }
