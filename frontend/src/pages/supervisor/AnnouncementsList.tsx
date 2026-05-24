@@ -19,28 +19,8 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorAnnouncements, useDeleteAnnouncement } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { AnnouncementPriority } from '@/types'
-
-const priorityConfig: Record<AnnouncementPriority, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  LOW: { label: 'Low', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400' },
-  NORMAL: { label: 'Normal', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500' },
-  HIGH: { label: 'High', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500' },
-  URGENT: { label: 'Urgent', color: 'text-rose-600', bgColor: 'bg-rose-100', borderColor: 'border-l-rose-500' },
-}
-
-// Backend can also publish ALL / ALL_STUDENTS / PROGRAMME_<CODE> via committee
-// or admin announcements that the supervisor sees in their inbox. Lookups for
-// any unknown scope fall back to FALLBACK_VISIBILITY below so the page never
-// crashes on .icon when the enum grows.
-const visibilityConfig: Record<string, { label: string; icon: typeof Users }> = {
-  ALL: { label: 'All Users', icon: Users },
-  ALL_STUDENTS: { label: 'All Students', icon: Users },
-  ALL_SUPERVISEES: { label: 'All Supervisees', icon: Users },
-  SPECIFIC_STUDENTS: { label: 'Specific Students', icon: Users },
-  FYP1: { label: 'FYP 1 Students', icon: Users },
-  FYP2: { label: 'FYP 2 Students', icon: Users },
-}
-const FALLBACK_VISIBILITY = { label: 'Other', icon: Users }
+import { getPriorityDisplay, getScopeLabel } from '@/lib/utils/announcementDisplay'
+import { formatDate } from '@/lib/utils/formatDate'
 
 export function AnnouncementsList() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -113,10 +93,10 @@ export function AnnouncementsList() {
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Active</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
-              <div className="text-base font-bold leading-none text-amber-300">
-                {data.announcements.filter((a) => a.priority === 'HIGH' || a.priority === 'URGENT').length}
+              <div className="text-base font-bold leading-none text-rose-300">
+                {data.announcements.filter((a) => a.priority === 'URGENT').length}
               </div>
-              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Important</p>
+              <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Urgent</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-sky-300">
@@ -146,9 +126,9 @@ export function AnnouncementsList() {
       {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filteredAnnouncements.map((announcement) => {
-            const priority = priorityConfig[announcement.priority]
-            const visibility = visibilityConfig[announcement.visibility] ?? FALLBACK_VISIBILITY
-            const VisibilityIcon = visibility.icon
+            const priority = getPriorityDisplay(announcement.priority)
+            const PriorityIcon = priority.Icon
+            const visibilityLabel = getScopeLabel(announcement.visibility)
             const isExpired = announcement.expiresAt && new Date(announcement.expiresAt) < new Date()
             const direction = announcement.direction ?? 'SENT'
             const isReceived = direction === 'RECEIVED'
@@ -158,14 +138,14 @@ export function AnnouncementsList() {
                 key={announcement.announcementId}
                 padding="sm"
                 className={cn(
-                  'group hover:shadow-md transition-all border-l-4',
+                  'group hover:shadow-md transition-all border-l-4 h-full',
                   !announcement.isActive && 'opacity-60',
-                  isExpired ? 'border-l-stone-400 bg-stone-50/50' : priority.borderColor,
+                  isExpired ? 'border-l-stone-400 bg-stone-50/50' : priority.borderClass,
                 )}
               >
-                <div className="flex items-start gap-2.5">
-                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', priority.bgColor)}>
-                    <Megaphone className={cn('h-4 w-4', priority.color)} />
+                <div className="flex items-start gap-2.5 h-full">
+                  <div className={cn('w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0', priority.iconClass)}>
+                    <PriorityIcon className="h-4 w-4" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -180,18 +160,14 @@ export function AnnouncementsList() {
                             isReceived ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
                           )}>
                             {isReceived ? <Inbox className="h-3 w-3" /> : <Send className="h-3 w-3" />}
-                            {isReceived ? `From ${announcement.createdBy ?? 'cm'}` : 'Sent'}
+                            {isReceived ? `From ${announcement.createdBy ?? 'committee'}` : 'Sent'}
                           </span>
-                          <span className={cn(
-                            'px-1.5 py-0 rounded-md text-[10px] font-semibold',
-                            priority.bgColor,
-                            priority.color
-                          )}>
+                          <span className={cn('px-1.5 py-0 rounded-md text-[10px] font-semibold', priority.pillClass)}>
                             {priority.label}
                           </span>
                           <span className="inline-flex items-center gap-0.5 text-[10px] text-stone-500 px-1.5 py-0 bg-stone-100 rounded-md">
-                            <VisibilityIcon className="h-3 w-3" />
-                            {visibility.label}
+                            <Users className="h-3 w-3" />
+                            {visibilityLabel}
                           </span>
                         </div>
                       </div>
@@ -213,7 +189,7 @@ export function AnnouncementsList() {
                       )}
                     </div>
 
-                    <p className="mt-1 text-[11px] text-stone-600 line-clamp-2 leading-snug">
+                    <p className="mt-1 text-[11px] text-stone-600 line-clamp-2 leading-snug min-h-[2.25em]">
                       {announcement.content}
                     </p>
 
@@ -224,7 +200,7 @@ export function AnnouncementsList() {
                       </span>
                       <span className="inline-flex items-center gap-0.5 text-stone-500">
                         <Clock className="h-3 w-3" />
-                        {new Date(announcement.publishAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                        {formatDate(announcement.publishAt)}
                       </span>
                       {isExpired && <span className="text-stone-500">· Expired</span>}
                     </div>

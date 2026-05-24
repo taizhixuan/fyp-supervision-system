@@ -1,16 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Megaphone,
   Search,
   X,
   Calendar,
-  AlertTriangle,
-  Info,
   ChevronRight,
   Paperclip,
   Link2,
   Download,
   ExternalLink,
+  CheckCheck,
 } from 'lucide-react'
 import { apiClient } from '@/lib/api/client'
 import {
@@ -24,65 +23,13 @@ import {
   Button,
 } from '@/components/ui'
 import { useStudentAnnouncements, type StudentAnnouncement } from '@/lib/hooks/useStudent'
+import { useAuth } from '@/lib/auth/useAuth'
+import { useAnnouncementReadState } from '@/lib/hooks/useAnnouncementReadState'
+import { getPriorityDisplay, getScopeLabel } from '@/lib/utils/announcementDisplay'
+import { formatDate, formatDateTime, formatRelativeDate } from '@/lib/utils/formatDate'
 import { cn } from '@/lib/utils/cn'
 
-const priorityStyles: Record<
-  string,
-  { label: string; pillClass: string; barClass: string; iconClass: string; Icon: typeof Info }
-> = {
-  LOW: {
-    label: 'Low',
-    pillClass: 'bg-neutral-100 text-neutral-600',
-    barClass: 'bg-neutral-300',
-    iconClass: 'text-neutral-500 bg-neutral-100',
-    Icon: Info,
-  },
-  NORMAL: {
-    label: 'Normal',
-    pillClass: 'bg-info-100 text-info-700',
-    barClass: 'bg-info-400',
-    iconClass: 'text-info-600 bg-info-100',
-    Icon: Megaphone,
-  },
-  HIGH: {
-    label: 'High',
-    pillClass: 'bg-warning-100 text-warning-700',
-    barClass: 'bg-warning-500',
-    iconClass: 'text-warning-700 bg-warning-100',
-    Icon: AlertTriangle,
-  },
-  URGENT: {
-    label: 'Urgent',
-    pillClass: 'bg-error-100 text-error-700',
-    barClass: 'bg-error-500',
-    iconClass: 'text-error-700 bg-error-100',
-    Icon: AlertTriangle,
-  },
-}
-
-function formatDate(value: string | undefined) {
-  if (!value) return ''
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return value
-  return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
-function formatDateTime(value: string | undefined) {
-  if (!value) return ''
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return value
-  return d.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+type PriorityFilter = 'ALL' | 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 
 function preview(text: string, max = 200): string {
   if (!text) return ''
@@ -92,13 +39,21 @@ function preview(text: string, max = 200): string {
 
 export function AnnouncementsList() {
   const [search, setSearch] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState<'ALL' | 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'>(
-    'ALL'
-  )
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('ALL')
   const [selected, setSelected] = useState<StudentAnnouncement | null>(null)
+
   const { data, isLoading } = useStudentAnnouncements()
+  const { user } = useAuth()
+  const { isRead, markRead, markAllRead } = useAnnouncementReadState(
+    user ? String(user.userId) : null,
+  )
 
   const all = useMemo(() => data?.announcements ?? [], [data])
+
+  // Auto-mark as read when the detail modal opens.
+  useEffect(() => {
+    if (selected) markRead(selected.announcementId)
+  }, [selected, markRead])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -113,11 +68,26 @@ export function AnnouncementsList() {
     })
   }, [all, search, priorityFilter])
 
+  // Pin URGENT to the top of the list with a distinct full-width style.
+  // Only apply when no priority filter is active (otherwise the filter result
+  // is already homogeneous and pinning makes no sense).
+  const { pinned, rest } = useMemo(() => {
+    if (priorityFilter !== 'ALL') return { pinned: [] as StudentAnnouncement[], rest: filtered }
+    return {
+      pinned: filtered.filter((a) => a.priority === 'URGENT'),
+      rest: filtered.filter((a) => a.priority !== 'URGENT'),
+    }
+  }, [filtered, priorityFilter])
+
   const counts = useMemo(() => {
     const total = all.length
-    const urgent = all.filter((a) => a.priority === 'URGENT' || a.priority === 'HIGH').length
-    return { total, urgent }
-  }, [all])
+    const urgent = all.filter((a) => a.priority === 'URGENT').length
+    const unread = all.filter((a) => !isRead(a.announcementId)).length
+    return { total, urgent, unread }
+  }, [all, isRead])
+
+  const allIds = useMemo(() => all.map((a) => a.announcementId), [all])
+  const canMarkAllRead = counts.unread > 0
 
   if (isLoading) {
     return (
@@ -142,14 +112,18 @@ export function AnnouncementsList() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="px-2.5 py-1 rounded-md border border-neutral-200 bg-white text-center">
             <p className="text-[10px] uppercase tracking-wide text-neutral-500 font-medium">Total</p>
             <p className="text-base font-bold text-neutral-900 leading-none">{counts.total}</p>
           </div>
-          <div className="px-2.5 py-1 rounded-md border border-warning-200 bg-warning-50 text-center">
-            <p className="text-[10px] uppercase tracking-wide text-warning-700 font-medium">Important</p>
-            <p className="text-base font-bold text-warning-700 leading-none">{counts.urgent}</p>
+          <div className="px-2.5 py-1 rounded-md border border-primary-200 bg-primary-50 text-center">
+            <p className="text-[10px] uppercase tracking-wide text-primary-700 font-medium">Unread</p>
+            <p className="text-base font-bold text-primary-700 leading-none">{counts.unread}</p>
+          </div>
+          <div className="px-2.5 py-1 rounded-md border border-error-200 bg-error-50 text-center">
+            <p className="text-[10px] uppercase tracking-wide text-error-700 font-medium">Urgent</p>
+            <p className="text-base font-bold text-error-700 leading-none">{counts.urgent}</p>
           </div>
         </div>
       </div>
@@ -177,22 +151,34 @@ export function AnnouncementsList() {
               </button>
             )}
           </div>
-          <div className="flex bg-neutral-100 rounded-lg p-1 self-start">
-            {(['ALL', 'URGENT', 'HIGH', 'NORMAL', 'LOW'] as const).map((opt) => (
+          <div className="flex items-center gap-2">
+            <div className="flex bg-neutral-100 rounded-lg p-1 self-start">
+              {(['ALL', 'URGENT', 'HIGH', 'NORMAL', 'LOW'] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setPriorityFilter(opt)}
+                  className={cn(
+                    'px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap',
+                    priorityFilter === opt
+                      ? 'bg-white shadow-sm text-neutral-900'
+                      : 'text-neutral-600 hover:bg-neutral-200',
+                  )}
+                >
+                  {opt === 'ALL' ? 'All' : getPriorityDisplay(opt).label}
+                </button>
+              ))}
+            </div>
+            {canMarkAllRead && (
               <button
-                key={opt}
                 type="button"
-                onClick={() => setPriorityFilter(opt)}
-                className={cn(
-                  'px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap',
-                  priorityFilter === opt
-                    ? 'bg-white shadow-sm text-neutral-900'
-                    : 'text-neutral-600 hover:bg-neutral-200'
-                )}
+                onClick={() => markAllRead(allIds)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium text-primary-700 hover:bg-primary-50 border border-primary-200 whitespace-nowrap"
               >
-                {opt === 'ALL' ? 'All' : priorityStyles[opt]?.label ?? opt}
+                <CheckCheck className="h-3.5 w-3.5" />
+                Mark all read
               </button>
-            ))}
+            )}
           </div>
         </div>
         {(search || priorityFilter !== 'ALL') && (
@@ -218,65 +204,32 @@ export function AnnouncementsList() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-          {filtered.map((a) => {
-            const cfg = priorityStyles[a.priority] ?? priorityStyles.NORMAL
-            const Icon = cfg.Icon
-            return (
-              <button
-                key={a.announcementId}
-                type="button"
-                onClick={() => setSelected(a)}
-                className="group text-left bg-white rounded-lg border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all overflow-hidden"
-              >
-                <div className="flex">
-                  <div className={cn('w-1 flex-shrink-0', cfg.barClass)} aria-hidden />
-                  <div className="flex-1 p-3">
-                    <div className="flex items-start gap-2.5">
-                      <div
-                        className={cn(
-                          'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0',
-                          cfg.iconClass
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="font-semibold text-sm text-neutral-900 group-hover:text-primary-700 transition-colors leading-tight truncate flex-1">
-                            {a.title}
-                          </h3>
-                          <span
-                            className={cn(
-                              'px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0',
-                              cfg.pillClass
-                            )}
-                          >
-                            {cfg.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-600 line-clamp-2 mb-1.5 leading-snug">
-                          {preview(a.content, 140)}
-                        </p>
-                        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(a.publishAt || a.createdAt)}
-                          </span>
-                          {a.scope && a.scope !== 'ALL' && (
-                            <span className="px-1.5 py-0 rounded-full bg-neutral-100 text-neutral-600 truncate">
-                              {a.scope}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-neutral-300 group-hover:text-primary-500 transition-colors flex-shrink-0 mt-0.5" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-            )
-          })}
+        <div className="space-y-3">
+          {pinned.length > 0 && (
+            <div className="space-y-2">
+              {pinned.map((a) => (
+                <PinnedCard
+                  key={a.announcementId}
+                  announcement={a}
+                  unread={!isRead(a.announcementId)}
+                  onClick={() => setSelected(a)}
+                />
+              ))}
+            </div>
+          )}
+
+          {rest.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+              {rest.map((a) => (
+                <CompactCard
+                  key={a.announcementId}
+                  announcement={a}
+                  unread={!isRead(a.announcementId)}
+                  onClick={() => setSelected(a)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -287,13 +240,13 @@ export function AnnouncementsList() {
             <ModalHeader>
               <div className="flex items-start gap-3 flex-1">
                 {(() => {
-                  const cfg = priorityStyles[selected.priority] ?? priorityStyles.NORMAL
+                  const cfg = getPriorityDisplay(selected.priority)
                   const Icon = cfg.Icon
                   return (
                     <div
                       className={cn(
                         'w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0',
-                        cfg.iconClass
+                        cfg.iconClass,
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -306,15 +259,14 @@ export function AnnouncementsList() {
                     <span
                       className={cn(
                         'px-2 py-0.5 rounded-full font-medium',
-                        (priorityStyles[selected.priority] ?? priorityStyles.NORMAL).pillClass
+                        getPriorityDisplay(selected.priority).pillClass,
                       )}
                     >
-                      {(priorityStyles[selected.priority] ?? priorityStyles.NORMAL).label}{' '}
-                      priority
+                      {getPriorityDisplay(selected.priority).label} priority
                     </span>
                     {selected.scope && selected.scope !== 'ALL' && (
                       <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600">
-                        Scope: {selected.scope}
+                        {getScopeLabel(selected.scope)}
                       </span>
                     )}
                     <span className="text-neutral-500 inline-flex items-center gap-1">
@@ -405,5 +357,155 @@ export function AnnouncementsList() {
         )}
       </Modal>
     </div>
+  )
+}
+
+interface CardProps {
+  announcement: StudentAnnouncement
+  unread: boolean
+  onClick: () => void
+}
+
+function PinnedCard({ announcement: a, unread, onClick }: CardProps) {
+  const cfg = getPriorityDisplay(a.priority)
+  const Icon = cfg.Icon
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group block w-full text-left bg-white rounded-lg border-2 hover:shadow-lg transition-all overflow-hidden',
+        unread ? 'border-error-300 ring-1 ring-error-100' : 'border-error-200',
+      )}
+    >
+      <div className="flex">
+        <div className={cn('w-1.5 flex-shrink-0', cfg.barClass)} aria-hidden />
+        <div className="flex-1 p-3.5">
+          <div className="flex items-start gap-3">
+            <div
+              className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                cfg.iconClass,
+              )}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className={cn(
+                    'px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide',
+                    cfg.pillClass,
+                  )}
+                >
+                  Pinned · {cfg.label}
+                </span>
+                {unread && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+                    New
+                  </span>
+                )}
+              </div>
+              <h3
+                className={cn(
+                  'text-base text-neutral-900 group-hover:text-primary-700 transition-colors leading-tight',
+                  unread ? 'font-bold' : 'font-semibold',
+                )}
+              >
+                {a.title}
+              </h3>
+              <p className="text-sm text-neutral-600 line-clamp-2 mt-1 leading-snug">
+                {preview(a.content, 200)}
+              </p>
+              <div className="flex items-center gap-3 mt-2 text-[11px] text-neutral-500">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatRelativeDate(a.publishAt || a.createdAt)}
+                </span>
+                {a.scope && a.scope !== 'ALL' && (
+                  <span className="px-1.5 py-0 rounded-full bg-neutral-100 text-neutral-600 truncate">
+                    {getScopeLabel(a.scope)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-neutral-300 group-hover:text-primary-500 transition-colors flex-shrink-0 mt-1" />
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function CompactCard({ announcement: a, unread, onClick }: CardProps) {
+  const cfg = getPriorityDisplay(a.priority)
+  const Icon = cfg.Icon
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group text-left bg-white rounded-lg border hover:border-primary-300 hover:shadow-md transition-all overflow-hidden h-full',
+        unread ? 'border-neutral-300' : 'border-neutral-200',
+      )}
+    >
+      <div className="flex h-full">
+        <div className={cn('w-1 flex-shrink-0', cfg.barClass)} aria-hidden />
+        <div className="flex-1 p-3">
+          <div className="flex items-start gap-2.5 h-full">
+            <div
+              className={cn(
+                'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0',
+                cfg.iconClass,
+              )}
+            >
+              <Icon className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                {unread && (
+                  <span
+                    className="flex-shrink-0 w-2 h-2 rounded-full bg-primary-500"
+                    aria-label="Unread"
+                  />
+                )}
+                <h3
+                  className={cn(
+                    'text-sm text-neutral-900 group-hover:text-primary-700 transition-colors leading-tight truncate flex-1',
+                    unread ? 'font-bold' : 'font-semibold',
+                  )}
+                >
+                  {a.title}
+                </h3>
+                <span
+                  className={cn(
+                    'px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0',
+                    cfg.pillClass,
+                  )}
+                >
+                  {cfg.label}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 line-clamp-2 mb-1.5 leading-snug min-h-[2.25em]">
+                {preview(a.content, 140)}
+              </p>
+              <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatDate(a.publishAt || a.createdAt)}
+                </span>
+                {a.scope && a.scope !== 'ALL' && (
+                  <span className="px-1.5 py-0 rounded-full bg-neutral-100 text-neutral-600 truncate">
+                    {getScopeLabel(a.scope)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-neutral-300 group-hover:text-primary-500 transition-colors flex-shrink-0 mt-0.5" />
+          </div>
+        </div>
+      </div>
+    </button>
   )
 }

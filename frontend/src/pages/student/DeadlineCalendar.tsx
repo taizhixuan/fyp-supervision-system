@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Bell,
   FileText,
+  FileBarChart,
+  ClipboardList,
   Users,
   Presentation,
   Filter,
@@ -18,6 +20,7 @@ import {
 import { Card, Badge, Spinner } from '@/components/ui'
 import { useDeadlines } from '@/lib/hooks/useStudent'
 import { cn } from '@/lib/utils/cn'
+import { formatDate } from '@/lib/utils/formatDate'
 import type { Deadline } from '@/types'
 
 // Sample data
@@ -105,9 +108,9 @@ type DeadlineType = 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'LOG' | 'MEETING' |
 
 const typeConfig: Record<DeadlineType, { label: string; color: string; icon: typeof FileText }> = {
   PROPOSAL: { label: 'Proposal', color: 'bg-amber-100 text-amber-700', icon: FileText },
-  REPORT: { label: 'Report', color: 'bg-sky-100 text-sky-700', icon: FileText },
+  REPORT: { label: 'Report', color: 'bg-sky-100 text-sky-700', icon: FileBarChart },
   PRESENTATION: { label: 'Presentation', color: 'bg-violet-100 text-violet-700', icon: Presentation },
-  LOG: { label: 'Log', color: 'bg-emerald-100 text-emerald-700', icon: FileText },
+  LOG: { label: 'Log', color: 'bg-emerald-100 text-emerald-700', icon: ClipboardList },
   MEETING: { label: 'Meeting', color: 'bg-rose-100 text-rose-700', icon: Users },
   OTHER: { label: 'Other', color: 'bg-stone-100 text-stone-700', icon: Calendar },
 }
@@ -316,7 +319,7 @@ export function DeadlineCalendar() {
             </button>
             <div className="flex items-center gap-2 min-w-0">
               <h2 className="text-base sm:text-lg font-bold text-white whitespace-nowrap">
-                {currentDate.toLocaleDateString('en-MY', { month: 'long' })}{' '}
+                {currentDate.toLocaleDateString('en-GB', { month: 'long' })}{' '}
                 <span className="text-primary-300 font-normal">{currentDate.getFullYear()}</span>
               </h2>
               <button
@@ -513,7 +516,7 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
 
   return (
     <Card padding="sm" className={cn(
-      'transition-all hover:shadow-md group',
+      'transition-all hover:shadow-md group h-full',
       deadline.isCompleted && 'opacity-70 bg-stone-50',
       isOverdue && 'border-l-4 border-l-error-500 bg-error-50/30',
       isUrgent && !isOverdue && 'border-l-4 border-l-warning-500 bg-warning-50/30',
@@ -555,15 +558,12 @@ function DeadlineCard({ deadline }: { deadline: Deadline }) {
               <Bell className="h-3 w-3 text-primary-600 flex-shrink-0" />
             )}
           </div>
-          <p className="text-xs text-stone-500 line-clamp-1 mb-1.5 leading-snug">{deadline.description}</p>
+          <p className="text-xs text-stone-500 line-clamp-2 mb-1.5 leading-snug min-h-[2.25em]">{deadline.description}</p>
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge className={cn(config.color, 'font-semibold')} size="sm">{config.label}</Badge>
             <Badge className={cn(priority.color, 'font-semibold')} size="sm">{priority.label}</Badge>
             <span className="text-[10px] text-stone-400">
-              {new Date(deadline.dueDate).toLocaleDateString('en-MY', {
-                day: 'numeric',
-                month: 'short',
-              })}
+              {formatDate(deadline.dueDate)}
             </span>
           </div>
         </div>
