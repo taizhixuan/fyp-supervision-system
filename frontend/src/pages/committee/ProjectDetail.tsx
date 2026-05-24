@@ -264,75 +264,39 @@ export function ProjectDetail() {
         </Card>
       )}
 
-      {/* Activity & Meetings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Recent Meetings */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary-600" />
-            Recent Meetings
-          </h3>
-          {(project.recentMeetings?.length ?? 0) > 0 ? (
-            <div className="space-y-3">
-              {(project.recentMeetings || []).map((meeting) => (
-                <div key={meeting.meetingId} className="p-3 bg-neutral-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-neutral-900">{meeting.title}</span>
-                    <span className={cn(
-                      'px-2 py-0.5 rounded-full text-xs font-medium',
-                      meeting.status === 'COMPLETED' ? 'bg-success-50 text-success-700' :
-                      meeting.status === 'SCHEDULED' ? 'bg-info-50 text-info-700' :
-                      'bg-error-50 text-error-700'
-                    )}>
-                      {meeting.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{new Date(meeting.scheduledAt).toLocaleDateString()}</span>
-                  </div>
+      {/* Recent Meetings */}
+      <Card>
+        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-primary-600" />
+          Recent Meetings
+        </h3>
+        {(project.recentMeetings?.length ?? 0) > 0 ? (
+          <div className="space-y-3">
+            {(project.recentMeetings || []).map((meeting) => (
+              <div key={meeting.meetingId} className="p-3 bg-neutral-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-neutral-900">{meeting.title}</span>
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-xs font-medium',
+                    meeting.status === 'COMPLETED' ? 'bg-success-50 text-success-700' :
+                    meeting.status === 'CONFIRMED' ? 'bg-info-50 text-info-700' :
+                    meeting.status === 'PROPOSED' || meeting.status === 'RESCHEDULED' ? 'bg-warning-50 text-warning-700' :
+                    'bg-error-50 text-error-700'
+                  )}>
+                    {meeting.status}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-neutral-500 text-sm">No meetings scheduled yet</p>
-          )}
-        </Card>
-
-        {/* Submissions */}
-        <Card>
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary-600" />
-            Recent Submissions
-          </h3>
-          {(project.submissions?.length ?? 0) > 0 ? (
-            <div className="space-y-3">
-              {(project.submissions || []).map((submission) => (
-                <div key={submission.submissionId} className="p-3 bg-neutral-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-neutral-900">{submission.title}</span>
-                    <span className={cn(
-                      'px-2 py-0.5 rounded-full text-xs font-medium',
-                      submission.status === 'APPROVED' ? 'bg-success-50 text-success-700' :
-                      submission.status === 'PENDING' ? 'bg-warning-50 text-warning-700' :
-                      submission.status === 'REJECTED' ? 'bg-error-50 text-error-700' :
-                      'bg-info-50 text-info-700'
-                    )}>
-                      {submission.status}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>Submitted: {new Date(submission.submittedAt).toLocaleDateString()}</span>
-                  </div>
+                <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{meeting.scheduledAt ? new Date(meeting.scheduledAt).toLocaleDateString() : '—'}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-neutral-500 text-sm">No submissions yet</p>
-          )}
-        </Card>
-      </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-neutral-500 text-sm">No meetings yet</p>
+        )}
+      </Card>
 
       {/* Engagement */}
       {project.engagement && (

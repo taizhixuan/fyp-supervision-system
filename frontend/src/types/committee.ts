@@ -298,31 +298,14 @@ export interface ProjectDetail {
   registeredAt: string
   pairedAt?: string
   engagement?: ProjectEngagement
-  milestones?: ProjectMilestone[]
   recentMeetings?: RecentMeeting[]
-  submissions?: ProjectSubmission[]
-}
-
-export interface ProjectMilestone {
-  milestoneId: number
-  title: string
-  dueDate?: string
-  completedAt?: string
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE'
 }
 
 export interface RecentMeeting {
   meetingId: number
   title: string
   scheduledAt: string
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
-}
-
-export interface ProjectSubmission {
-  submissionId: number
-  title: string
-  submittedAt: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVISION_REQUIRED'
+  status: 'PROPOSED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED'
 }
 
 export interface MeetingSummary {

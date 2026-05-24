@@ -39,6 +39,8 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     long countByProject_ProjectIdAndStatus(Long projectId, com.fyp.supervision.enums.MeetingStatus status);
 
+    List<Meeting> findTop5ByProject_ProjectIdOrderByConfirmedStartAtDesc(Long projectId);
+
     @Query("select max(m.confirmedStartAt) from Meeting m " +
            "where m.project.projectId = :projectId and m.status = :status")
     java.util.Optional<java.time.LocalDateTime> findMaxConfirmedStartAtByProjectAndStatus(
