@@ -8,7 +8,6 @@ import {
   Edit,
   Trash2,
   Upload,
-  History,
   Book,
   FileCheck,
   ClipboardList,
@@ -191,17 +190,11 @@ export function DocumentsManagement() {
                           <span className={cn('text-[10px] font-medium', visibility.color)}>
                             {visibility.label}
                           </span>
-                          <span className="text-[10px] text-neutral-500">v{document.version}</span>
                           {!document.isActive && <span className="text-[10px] text-error-600">Inactive</span>}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-0.5 flex-shrink-0">
-                        <Link to={ROUTES.COMMITTEE.DOCUMENT_VERSIONS.replace(':id', String(document.documentId))}>
-                          <button className="p-1 rounded hover:bg-stone-100 transition-colors" title="History">
-                            <History className="h-3.5 w-3.5" />
-                          </button>
-                        </Link>
                         <Link to={ROUTES.COMMITTEE.DOCUMENT_DETAIL.replace(':id', String(document.documentId))}>
                           <button className="p-1 rounded hover:bg-stone-100 transition-colors" title="Edit">
                             <Edit className="h-3.5 w-3.5" />

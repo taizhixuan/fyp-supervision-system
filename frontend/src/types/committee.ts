@@ -166,24 +166,11 @@ export interface GeneralDocument {
   fileName: string
   fileSize: number
   fileUrl: string
-  version: number
   isActive: boolean
   uploadedBy: string
   uploadedAt: string
   updatedAt: string
   downloadCount: number
-  versions: CommitteeDocumentVersion[]
-}
-
-export interface CommitteeDocumentVersion {
-  versionId: number
-  version: number
-  fileName: string
-  fileSize: number
-  fileUrl: string
-  uploadedBy: string
-  uploadedAt: string
-  changeNotes?: string
 }
 
 export type CommitteeDocumentCycleScope = 'EVERGREEN' | 'FYP1' | 'FYP2'

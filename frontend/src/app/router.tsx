@@ -91,7 +91,6 @@ const CommitteeProposalQueue = lazy(() => import('@/pages/committee/ProposalRevi
 const CommitteeProposalDetail = lazy(() => import('@/pages/committee/ProposalReviewDetail').then(m => ({ default: m.ProposalReviewDetail })))
 const DocumentsManagement = lazy(() => import('@/pages/committee/DocumentsManagement').then(m => ({ default: m.DocumentsManagement })))
 const CommitteeDocumentUpload = lazy(() => import('@/pages/committee/DocumentUpload').then(m => ({ default: m.DocumentUpload })))
-const DocumentVersions = lazy(() => import('@/pages/committee/DocumentVersions').then(m => ({ default: m.DocumentVersions })))
 const ProjectOverview = lazy(() => import('@/pages/committee/ProjectOverview').then(m => ({ default: m.ProjectOverview })))
 const ProjectDetail = lazy(() => import('@/pages/committee/ProjectDetail').then(m => ({ default: m.ProjectDetail })))
 const UnpairedStudents = lazy(() => import('@/pages/committee/UnpairedStudents').then(m => ({ default: m.UnpairedStudents })))
@@ -808,12 +807,8 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: ROUTES.COMMITTEE.DOCUMENT_VERSIONS,
-        element: (
-          <ProtectedRoute allowedRoles={['FYP_COMMITTEE']}>
-            <DocumentVersions />
-          </ProtectedRoute>
-        ),
+        path: '/committee/documents/:id/versions',
+        element: <Navigate to="/committee/documents" replace />,
       },
 
       // Project & Pairing Overview (UC28)

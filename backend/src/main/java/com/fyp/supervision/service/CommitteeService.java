@@ -623,7 +623,6 @@ public class CommitteeService {
         dto.put("fileName", doc.getFileName());
         dto.put("fileSize", doc.getFileSize());
         dto.put("fileUrl", doc.getStoragePath());
-        dto.put("version", 1);
         dto.put("isActive", doc.getIsActive());
         dto.put("uploadedBy", doc.getUploadedBy() != null ? doc.getUploadedBy().getFullName() : "");
         dto.put("uploadedAt", doc.getPublishedAt() != null ? doc.getPublishedAt().toString() : "");
@@ -632,7 +631,6 @@ public class CommitteeService {
         dto.put("cycleId", doc.getCycle() != null ? doc.getCycle().getCycleId() : null);
         dto.put("cycleType", doc.getCycle() != null ? doc.getCycle().getCycleType() : null);
         dto.put("cycleAcademicYear", doc.getCycle() != null ? doc.getCycle().getAcademicYear() : null);
-        dto.put("versions", List.of());
         return dto;
     }
 
