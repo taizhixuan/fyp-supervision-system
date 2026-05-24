@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Long> {
+public interface ProjectRepository extends JpaRepository<Project, Long>,
+        org.springframework.data.jpa.repository.JpaSpecificationExecutor<Project> {
     Optional<Project> findByStudent_UserId(Long studentUserId);
     List<Project> findBySupervisor_UserId(Long supervisorUserId);
     Page<Project> findByCycle_CycleId(Long cycleId, Pageable pageable);
