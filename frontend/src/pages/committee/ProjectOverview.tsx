@@ -89,12 +89,34 @@ export function ProjectOverview() {
   const { data, isLoading, isFetching } = useProjectOverview({ ...filterPayload, page, size })
   const exportMutation = useExportProjects()
 
+  // Stat cards reflect the whole cycle population (scoped only by cycle selection,
+  // NOT by the user's pairing/status/risk filters). Each query asks size=1 so the
+  // response is tiny — we only read totalElements.
+  const pairedCountQuery = useProjectOverview({
+    cycleId: filterPayload.cycleId,
+    cycleStatus: filterPayload.cycleStatus,
+    pairingStatus: 'PAIRED',
+    size: 1,
+  })
+  const unpairedCountQuery = useProjectOverview({
+    cycleId: filterPayload.cycleId,
+    cycleStatus: filterPayload.cycleStatus,
+    pairingStatus: 'UNPAIRED',
+    size: 1,
+  })
+  const highRiskCountQuery = useProjectOverview({
+    cycleId: filterPayload.cycleId,
+    cycleStatus: filterPayload.cycleStatus,
+    riskLevel: 'HIGH',
+    size: 1,
+  })
+
   const stats = useMemo(() => ({
     total: data?.total ?? 0,
-    paired: (data?.projects ?? []).filter(p => p.pairingStatus === 'PAIRED').length,
-    unpaired: (data?.projects ?? []).filter(p => p.pairingStatus === 'UNPAIRED').length,
-    highRisk: (data?.projects ?? []).filter(p => p.riskLevel === 'HIGH').length,
-  }), [data])
+    paired: pairedCountQuery.data?.total ?? 0,
+    unpaired: unpairedCountQuery.data?.total ?? 0,
+    highRisk: highRiskCountQuery.data?.total ?? 0,
+  }), [data, pairedCountQuery.data, unpairedCountQuery.data, highRiskCountQuery.data])
 
   const handleExport = (format: 'CSV' | 'XLSX' | 'PDF') => {
     setExportOpen(false)
