@@ -33,7 +33,7 @@ export interface RecentActivity {
 }
 
 // Cycle types
-export type CycleStatus = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+export type CycleStatus = 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
 
 export interface CycleSummary {
   cycleId: number

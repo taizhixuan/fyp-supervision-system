@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,12 +55,22 @@ public interface FypCycleRepository extends JpaRepository<FypCycle, Long> {
     /**
      * List every cycle ordered by status priority (ACTIVE > UPCOMING > COMPLETED > ARCHIVED)
      * then most-recent start date. Used by the committee cycle dropdown.
+     * Sort runs in Java because Hibernate 6 rejects FQ enum literals in HQL CASE.
      */
-    @Query("select c from FypCycle c order by " +
-           "case c.status when com.fyp.supervision.enums.CycleStatus.ACTIVE then 0 " +
-           "when com.fyp.supervision.enums.CycleStatus.UPCOMING then 1 " +
-           "when com.fyp.supervision.enums.CycleStatus.COMPLETED then 2 " +
-           "when com.fyp.supervision.enums.CycleStatus.ARCHIVED then 3 else 4 end, " +
-           "c.startDate desc")
-    List<FypCycle> findAllOrderedForDropdown();
+    default List<FypCycle> findAllOrderedForDropdown() {
+        return findAll().stream()
+                .sorted(Comparator
+                        .comparingInt(FypCycleRepository::dropdownStatusRank)
+                        .thenComparing(FypCycle::getStartDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
+
+    static int dropdownStatusRank(FypCycle c) {
+        CycleStatus s = c.getStatus();
+        if (s == CycleStatus.ACTIVE) return 0;
+        if (s == CycleStatus.PLANNING) return 1;
+        if (s == CycleStatus.COMPLETED) return 2;
+        if (s == CycleStatus.ARCHIVED) return 3;
+        return 4;
+    }
 }
