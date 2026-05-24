@@ -33,7 +33,7 @@ const pairingStatusConfig: Record<string, StatusEntry> = {
 }
 const cycleStatusBadge: Record<CycleStatus, StatusEntry> = {
   ACTIVE: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-50' },
-  UPCOMING: { label: 'Upcoming', color: 'text-sky-700', bgColor: 'bg-sky-50' },
+  PLANNING: { label: 'Planning', color: 'text-sky-700', bgColor: 'bg-sky-50' },
   COMPLETED: { label: 'Past', color: 'text-stone-600', bgColor: 'bg-stone-100' },
   ARCHIVED: { label: 'Archived', color: 'text-stone-500', bgColor: 'bg-stone-100' },
 }
