@@ -9,6 +9,7 @@ import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.enums.UserRole;
+import com.fyp.supervision.repository.AnnouncementReadRepository;
 import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
@@ -26,9 +27,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +43,7 @@ import static org.mockito.Mockito.when;
 class AnnouncementServiceTest {
 
     @Mock AnnouncementRepository announcementRepository;
+    @Mock AnnouncementReadRepository announcementReadRepository;
     @Mock ProjectRepository projectRepository;
     @Mock StudentProfileRepository studentProfileRepository;
     @Mock UserAccountRepository userAccountRepository;
@@ -64,6 +68,11 @@ class AnnouncementServiceTest {
                 "Bachelor of Computer Science (Hons.)", "Software Engineering");
         configureStudentContext(FYP2_STUDENT_ID, "FYP2",
                 "Bachelor of Computer Science (Hons.)", "Software Engineering");
+        // No reads in these tests — every announcement starts unread. Stub here
+        // rather than per-test so the audience-filter tests don't have to know
+        // about the read-tracking layer.
+        when(announcementReadRepository.readIdsForUser(any(), any(Collection.class)))
+                .thenReturn(Set.of());
     }
 
     private void configureStudentContext(long userId, String cycleType, String programme, String specialisation) {

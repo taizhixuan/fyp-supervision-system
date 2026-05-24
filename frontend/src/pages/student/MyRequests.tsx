@@ -15,6 +15,7 @@ import { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from '@/compon
 import { useSupervisionRequests, useWithdrawSupervisionRequest } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { formatDate } from '@/lib/utils/formatDate'
 import type { SupervisionRequest, SupervisionRequestStatus } from '@/types'
 
 // Sample data for design preview when the API hasn't loaded yet.
@@ -102,11 +103,6 @@ const statusConfig: Record<SupervisionRequestStatus, { label: string; variant: '
   WITHDRAWN: { label: 'Withdrawn', variant: 'default', icon: RotateCcw },
   EXPIRED: { label: 'Expired', variant: 'default', icon: AlertCircle },
 }
-
-// Unambiguous date format — "23 May 26" left users wondering if 26 was the year
-// or the day. Always render the full 4-digit year.
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
 
 type StatusFilter = 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'PAST'
 

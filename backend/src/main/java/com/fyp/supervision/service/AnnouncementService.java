@@ -14,6 +14,7 @@ import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.enums.UserRole;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
+import com.fyp.supervision.repository.AnnouncementReadRepository;
 import com.fyp.supervision.repository.AnnouncementRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
@@ -29,13 +30,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Single source of truth for announcement queries, audience filtering, attachments, and
@@ -48,12 +50,19 @@ import java.util.Optional;
 public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
+    private final AnnouncementReadRepository announcementReadRepository;
     private final ProjectRepository projectRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final UserAccountRepository userAccountRepository;
     private final FypCycleRepository fypCycleRepository;
     private final FileStorageService fileStorageService;
     private final ObjectMapper objectMapper;
+
+    // Tunable bounds for title/content. Backstop against the test-data case where
+    // title == content; minimum length nudges authors to write something the
+    // student can actually understand.
+    private static final int MIN_TITLE_LENGTH = 3;
+    private static final int MIN_CONTENT_LENGTH = 5;
 
     // ---------- Reads ----------
 
@@ -65,24 +74,31 @@ public class AnnouncementService {
         // PUBLISHED rows here is fine; switch to a JPQL predicate if it ever
         // grows out of hand.
         StudentContext ctx = loadStudentContext(studentUserId);
-        List<Map<String, Object>> visible = announcementRepository
+        List<Announcement> visible = announcementRepository
                 .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, Pageable.unpaged())
                 .getContent().stream()
                 .filter(a -> matchesAudience(a, ctx))
-                .map(this::buildDto)
                 .toList();
-        int from = Math.min((int) pageable.getOffset(), visible.size());
-        int to = Math.min(from + pageable.getPageSize(), visible.size());
-        return new PageImpl<>(visible.subList(from, to), pageable, visible.size());
+        Set<Long> readIds = announcementReadRepository.readIdsForUser(
+                studentUserId, visible.stream().map(Announcement::getAnnouncementId).toList());
+        List<Map<String, Object>> dtos = visible.stream()
+                .map(a -> buildDto(a, readIds))
+                .toList();
+        int from = Math.min((int) pageable.getOffset(), dtos.size());
+        int to = Math.min(from + pageable.getPageSize(), dtos.size());
+        return new PageImpl<>(dtos.subList(from, to), pageable, dtos.size());
     }
 
     public List<Map<String, Object>> latestForStudent(Long studentUserId, int limit) {
         StudentContext ctx = loadStudentContext(studentUserId);
-        return announcementRepository.findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED).stream()
+        List<Announcement> visible = announcementRepository
+                .findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED).stream()
                 .filter(a -> matchesAudience(a, ctx))
                 .limit(limit)
-                .map(this::buildDto)
                 .toList();
+        Set<Long> readIds = announcementReadRepository.readIdsForUser(
+                studentUserId, visible.stream().map(Announcement::getAnnouncementId).toList());
+        return visible.stream().map(a -> buildDto(a, readIds)).toList();
     }
 
     public List<Map<String, Object>> listAllPublished(Pageable pageable) {
@@ -129,6 +145,61 @@ public class AnnouncementService {
         return buildDto(a);
     }
 
+    public Map<String, Object> getForUser(Long announcementId, Long userId) {
+        Announcement a = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        Set<Long> readIds = userId == null ? Set.of()
+                : announcementReadRepository.readIdsForUser(userId, List.of(announcementId));
+        return buildDto(a, readIds);
+    }
+
+    /**
+     * Mark an announcement as read for a user. First-time read also increments the
+     * announcement's {@code viewCount} (so viewCount = unique reader count, not
+     * raw page views). Subsequent calls are no-ops thanks to the PK on
+     * {@code announcement_read}.
+     */
+    @Transactional
+    public boolean recordRead(Long announcementId, Long userId) {
+        if (userId == null) return false;
+        if (!announcementRepository.existsById(announcementId)) {
+            throw new ResourceNotFoundException("Announcement not found");
+        }
+        int inserted = announcementReadRepository.insertIgnore(userId, announcementId);
+        if (inserted > 0) {
+            // Only bump the counter on a genuinely new read so refreshes don't inflate it.
+            Announcement a = announcementRepository.findById(announcementId).orElse(null);
+            if (a != null) {
+                int current = a.getViewCount() == null ? 0 : a.getViewCount();
+                a.setViewCount(current + 1);
+                announcementRepository.save(a);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Bulk mark — used by the "Mark all read" button. Iterates rather than a
+     * single batched INSERT IGNORE because we also need to bump viewCount for
+     * each newly-inserted row, which the native query alone can't tell us.
+     */
+    @Transactional
+    public int markAllRead(Long userId, Collection<Long> announcementIds) {
+        if (userId == null || announcementIds == null || announcementIds.isEmpty()) return 0;
+        int newly = 0;
+        for (Long id : announcementIds) {
+            if (id == null) continue;
+            try {
+                if (recordRead(id, userId)) newly++;
+            } catch (ResourceNotFoundException ignored) {
+                // Skip silently — the announcement may have been deleted between
+                // the client loading the list and pressing the bulk-mark button.
+            }
+        }
+        return newly;
+    }
+
     public AnnouncementAttachment loadAttachment(Long announcementId, Long attachmentId) {
         Announcement a = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
@@ -156,8 +227,24 @@ public class AnnouncementService {
         }
         if (scope == null || scope.isBlank()) scope = "ALL";
 
-        String title = requireString(payload, "title");
-        String content = requireString(payload, "content");
+        String title = requireString(payload, "title").trim();
+        String content = requireString(payload, "content").trim();
+
+        // Validate before we touch the DB: title and content must be distinct
+        // and substantive, otherwise the list view fills up with "Test / Test"
+        // noise that the audience can't act on.
+        if (title.length() < MIN_TITLE_LENGTH) {
+            throw new BadRequestException(
+                    "Title must be at least " + MIN_TITLE_LENGTH + " characters.");
+        }
+        if (content.length() < MIN_CONTENT_LENGTH) {
+            throw new BadRequestException(
+                    "Content must be at least " + MIN_CONTENT_LENGTH + " characters.");
+        }
+        if (title.equalsIgnoreCase(content)) {
+            throw new BadRequestException(
+                    "Title and content must be different — write a brief summary in the title and the details in the content.");
+        }
 
         // Stamp the active cycle of the matching type so the audience filter can
         // pin this announcement to a specific cohort. Falls back to NULL for
@@ -264,6 +351,10 @@ public class AnnouncementService {
     // ---------- DTO ----------
 
     public Map<String, Object> buildDto(Announcement a) {
+        return buildDto(a, Set.of());
+    }
+
+    public Map<String, Object> buildDto(Announcement a, Set<Long> readIds) {
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("announcementId", a.getAnnouncementId());
         dto.put("scope", a.getScope() != null ? a.getScope() : "ALL");
@@ -279,6 +370,7 @@ public class AnnouncementService {
         dto.put("updatedAt", a.getUpdatedAt() != null ? a.getUpdatedAt().toString() : "");
         dto.put("viewCount", a.getViewCount());
         dto.put("isActive", a.getStatus() == AnnouncementStatus.PUBLISHED);
+        dto.put("isRead", readIds != null && readIds.contains(a.getAnnouncementId()));
         dto.put("attachments", a.getAttachments().stream().map(this::attachmentDto).toList());
         dto.put("links", a.getLinks().stream().map(this::linkDto).toList());
         List<Long> targetStudentIds = a.getAudiences().stream()

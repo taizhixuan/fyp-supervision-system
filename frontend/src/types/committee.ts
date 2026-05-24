@@ -399,7 +399,7 @@ export type CommitteeNotificationType =
   | 'REQUEST'
   | 'SYSTEM'
   // Trailing string admits legacy/unknown values without erroring at call sites.
-  // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-redundant-type-constituents
+  // eslint-disable-next-line @typescript-eslint/ban-types
   | (string & {})
 
 export interface CommitteeNotification {

@@ -22,9 +22,12 @@ import {
   ModalFooter,
   Button,
 } from '@/components/ui'
-import { useStudentAnnouncements, type StudentAnnouncement } from '@/lib/hooks/useStudent'
-import { useAuth } from '@/lib/auth/useAuth'
-import { useAnnouncementReadState } from '@/lib/hooks/useAnnouncementReadState'
+import {
+  useStudentAnnouncements,
+  useMarkAnnouncementRead,
+  useMarkAllAnnouncementsRead,
+  type StudentAnnouncement,
+} from '@/lib/hooks/useStudent'
 import { getPriorityDisplay, getScopeLabel } from '@/lib/utils/announcementDisplay'
 import { formatDate, formatDateTime, formatRelativeDate } from '@/lib/utils/formatDate'
 import { cn } from '@/lib/utils/cn'
@@ -43,17 +46,19 @@ export function AnnouncementsList() {
   const [selected, setSelected] = useState<StudentAnnouncement | null>(null)
 
   const { data, isLoading } = useStudentAnnouncements()
-  const { user } = useAuth()
-  const { isRead, markRead, markAllRead } = useAnnouncementReadState(
-    user ? String(user.userId) : null,
-  )
+  const markReadMutation = useMarkAnnouncementRead()
+  const markAllReadMutation = useMarkAllAnnouncementsRead()
 
   const all = useMemo(() => data?.announcements ?? [], [data])
+  const isRead = (a: StudentAnnouncement) => a.isRead === true
 
-  // Auto-mark as read when the detail modal opens.
+  // Auto-mark as read when the detail modal opens — but only if it isn't
+  // already read, to avoid spamming the server on repeat-opens.
   useEffect(() => {
-    if (selected) markRead(selected.announcementId)
-  }, [selected, markRead])
+    if (selected && !selected.isRead) {
+      markReadMutation.mutate(selected.announcementId)
+    }
+  }, [selected, markReadMutation])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -82,11 +87,14 @@ export function AnnouncementsList() {
   const counts = useMemo(() => {
     const total = all.length
     const urgent = all.filter((a) => a.priority === 'URGENT').length
-    const unread = all.filter((a) => !isRead(a.announcementId)).length
+    const unread = all.filter((a) => a.isRead !== true).length
     return { total, urgent, unread }
-  }, [all, isRead])
+  }, [all])
 
-  const allIds = useMemo(() => all.map((a) => a.announcementId), [all])
+  const unreadIds = useMemo(
+    () => all.filter((a) => a.isRead !== true).map((a) => a.announcementId),
+    [all],
+  )
   const canMarkAllRead = counts.unread > 0
 
   if (isLoading) {
@@ -172,7 +180,8 @@ export function AnnouncementsList() {
             {canMarkAllRead && (
               <button
                 type="button"
-                onClick={() => markAllRead(allIds)}
+                onClick={() => markAllReadMutation.mutate(unreadIds)}
+                disabled={markAllReadMutation.isPending}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium text-primary-700 hover:bg-primary-50 border border-primary-200 whitespace-nowrap"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
@@ -211,7 +220,7 @@ export function AnnouncementsList() {
                 <PinnedCard
                   key={a.announcementId}
                   announcement={a}
-                  unread={!isRead(a.announcementId)}
+                  unread={!isRead(a)}
                   onClick={() => setSelected(a)}
                 />
               ))}
@@ -224,7 +233,7 @@ export function AnnouncementsList() {
                 <CompactCard
                   key={a.announcementId}
                   announcement={a}
-                  unread={!isRead(a.announcementId)}
+                  unread={!isRead(a)}
                   onClick={() => setSelected(a)}
                 />
               ))}
