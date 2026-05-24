@@ -206,7 +206,7 @@ export function SupervisorLoadDetail() {
                             'px-2 py-0.5 rounded-full font-medium',
                             student.cycle === 'FYP1' ? 'bg-info-50 text-info-700' : 'bg-accent-50 text-accent-700'
                           )}>
-                            {student.cycle}
+                            {student.cycleCode ?? student.cycle}
                           </span>
                           <span className={cn(
                             'px-2 py-0.5 rounded-full font-medium',
