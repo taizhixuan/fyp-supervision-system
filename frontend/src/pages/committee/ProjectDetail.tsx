@@ -135,7 +135,7 @@ export function ProjectDetail() {
           Progress Overview
         </h3>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center justify-center">
           {/* Progress Circle */}
           <div className="relative w-24 h-24 flex-shrink-0">
             <svg className="w-24 h-24 transform -rotate-90">
@@ -166,37 +166,6 @@ export function ProjectDetail() {
             <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
               {project.progress}%
             </span>
-          </div>
-
-          {/* Milestones */}
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-neutral-700 mb-3">Milestones</h4>
-            <div className="space-y-2">
-              {(project.milestones || []).map((milestone) => (
-                <div key={milestone.milestoneId} className="flex items-center gap-3">
-                  <div className={cn(
-                    'w-4 h-4 rounded-full flex items-center justify-center',
-                    milestone.status === 'COMPLETED' ? 'bg-success-500' :
-                    milestone.status === 'IN_PROGRESS' ? 'bg-info-500' : 'bg-neutral-300'
-                  )}>
-                    {milestone.status === 'COMPLETED' && (
-                      <CheckCircle className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    'text-sm',
-                    milestone.status === 'COMPLETED' ? 'text-neutral-500 line-through' : 'text-neutral-700'
-                  )}>
-                    {milestone.title}
-                  </span>
-                  {milestone.dueDate && (
-                    <span className="text-xs text-neutral-400 ml-auto">
-                      Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </Card>
@@ -365,20 +334,50 @@ export function ProjectDetail() {
         </Card>
       </div>
 
+      {/* Engagement */}
+      {project.engagement && (
+        <Card className="p-4">
+          <h3 className="font-semibold text-stone-800 mb-3">Engagement</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-stone-600">Meeting Logs (LOCKED)</span>
+                <span className="font-medium">{project.engagement.lockedLogs} / {project.engagement.requiredLogs}</span>
+              </div>
+              <div className="w-full bg-stone-100 rounded-full h-2">
+                <div
+                  className={cn('h-2 rounded-full',
+                    project.engagement.lockedLogs >= project.engagement.requiredLogs ? 'bg-emerald-500' : 'bg-amber-500')}
+                  style={{ width: `${Math.min(100, (project.engagement.lockedLogs / Math.max(1, project.engagement.requiredLogs)) * 100)}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">Conducted Meetings</span>
+              <span className="font-medium">{project.engagement.completedMeetings}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">Last Conducted</span>
+              <span className="font-medium">
+                {project.engagement.lastConductedMeetingAt
+                  ? new Date(project.engagement.lastConductedMeetingAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-600">Proposal</span>
+              <span className="font-medium">{project.engagement.proposalStatus} (v{project.engagement.proposalVersion})</span>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Risk Factors */}
       {project.riskFactors && project.riskFactors.length > 0 && (
-        <Card className="border-l-4 border-l-warning-500">
-          <h3 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-warning-600" />
-            Risk Factors
-          </h3>
-          <ul className="space-y-2">
-            {project.riskFactors.map((factor, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-neutral-600">
-                <span className="text-warning-500 mt-1">•</span>
-                {factor}
-              </li>
-            ))}
+        <Card className="p-4 border-l-4 border-l-rose-500 bg-rose-50/30">
+          <h3 className="font-semibold text-rose-800 mb-2">Risk Factors</h3>
+          <ul className="list-disc list-inside text-sm text-rose-700 space-y-1">
+            {project.riskFactors.map(f => <li key={f}>{f}</li>)}
           </ul>
         </Card>
       )}
