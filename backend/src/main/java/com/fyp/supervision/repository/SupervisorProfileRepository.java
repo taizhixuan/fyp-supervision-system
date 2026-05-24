@@ -4,12 +4,14 @@ import com.fyp.supervision.entity.SupervisorProfile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SupervisorProfileRepository extends JpaRepository<SupervisorProfile, Long> {
+public interface SupervisorProfileRepository
+        extends JpaRepository<SupervisorProfile, Long>, JpaSpecificationExecutor<SupervisorProfile> {
 
     @Query("SELECT sp FROM SupervisorProfile sp JOIN sp.user u WHERE u.status = 'ACTIVE' AND u.role = 'SUPERVISOR'")
     Page<SupervisorProfile> findAllActiveSupervisors(Pageable pageable);

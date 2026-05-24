@@ -4,6 +4,7 @@ import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,13 +25,28 @@ public class SupervisorDirectoryController {
     public ResponseEntity<Map<String, Object>> listSupervisors(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String faculty,
+            @RequestParam(required = false) String researchArea,
             @RequestParam(required = false) Boolean availableOnly,
+            @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
         int safePage = Math.max(1, page);
         int safeLimit = Math.min(Math.max(1, limit), 100);
-        Pageable pageable = PageRequest.of(safePage - 1, safeLimit);
-        return ResponseEntity.ok(studentService.searchSupervisorsDto(search, faculty, availableOnly, pageable));
+        Pageable pageable = PageRequest.of(safePage - 1, safeLimit, resolveSort(sort));
+        return ResponseEntity.ok(studentService.searchSupervisorsDto(search, faculty, researchArea, availableOnly, pageable));
+    }
+
+    private Sort resolveSort(String sort) {
+        // Whitelist sort keys — we sort on SupervisorProfile (root). For name
+        // sort we join through user.fullName via a property path Spring Data
+        // resolves automatically.
+        if (sort == null || sort.isBlank()) return Sort.by(Sort.Direction.ASC, "user.fullName");
+        return switch (sort) {
+            case "name_desc" -> Sort.by(Sort.Direction.DESC, "user.fullName");
+            case "load_asc" -> Sort.by(Sort.Direction.ASC, "currentLoad");
+            case "load_desc" -> Sort.by(Sort.Direction.DESC, "currentLoad");
+            default -> Sort.by(Sort.Direction.ASC, "user.fullName");
+        };
     }
 
     @GetMapping("/{id}")

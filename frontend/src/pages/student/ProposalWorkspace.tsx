@@ -244,6 +244,7 @@ export function ProposalWorkspace() {
     setValue,
     watch,
     trigger,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<ProposalFormData>({
     resolver: zodResolver(proposalSchema),
@@ -494,30 +495,31 @@ export function ProposalWorkspace() {
   // Live values used by the Review step summary.
   const watchedAll = watch()
 
-  const onSave = async (data: ProposalFormData) => {
-    const formattedData = {
-      ...data,
-      objectives: data.objectives.map((o) => o.value),
-      expectedOutcomes: data.expectedOutcomes.map((o) => o.value),
-      references: data.references?.map((r) => r.value).filter(Boolean),
-      // Industry block — null out collapsed fields so backend stores clean state.
-      industryCompanyName: data.industryCollaboration ? data.industryCompanyName || null : null,
-      industryContactName: data.industryCollaboration ? data.industryContactName || null : null,
-      industryContactPhone: data.industryCollaboration ? data.industryContactPhone || null : null,
-      // Student-2 block similarly collapsed when single-student.
-      student2MmuId: data.numberOfStudents === 'Two' ? data.student2MmuId || null : null,
-      student2Subtitle: data.numberOfStudents === 'Two' ? data.student2Subtitle || null : null,
-      student2WorkDistribution:
-        data.numberOfStudents === 'Two' ? data.student2WorkDistribution || null : null,
-    }
+  const buildProposalPayload = (data: ProposalFormData) => ({
+    ...data,
+    objectives: data.objectives.map((o) => o.value),
+    expectedOutcomes: data.expectedOutcomes.map((o) => o.value),
+    references: data.references?.map((r) => r.value).filter(Boolean),
+    // Industry block — null out collapsed fields so backend stores clean state.
+    industryCompanyName: data.industryCollaboration ? data.industryCompanyName || null : null,
+    industryContactName: data.industryCollaboration ? data.industryContactName || null : null,
+    industryContactPhone: data.industryCollaboration ? data.industryContactPhone || null : null,
+    // Student-2 block similarly collapsed when single-student.
+    student2MmuId: data.numberOfStudents === 'Two' ? data.student2MmuId || null : null,
+    student2Subtitle: data.numberOfStudents === 'Two' ? data.student2Subtitle || null : null,
+    student2WorkDistribution:
+      data.numberOfStudents === 'Two' ? data.student2WorkDistribution || null : null,
+  })
 
+  const onSave = async (data: ProposalFormData) => {
+    const formattedData = buildProposalPayload(data)
     try {
       if (isNewProposal) {
         await createProposal.mutateAsync(formattedData)
       } else {
         await updateProposal.mutateAsync(formattedData)
       }
-    } catch (err) {
+    } catch {
       // Error handled by mutation
     }
   }
@@ -525,9 +527,20 @@ export function ProposalWorkspace() {
   const onSubmit = async () => {
     setSubmitModalState('submitting')
     try {
+      // Backend's /student/proposal/submit 404s when no draft exists yet — so
+      // if the student never explicitly hit "Save Draft", create one now from
+      // the current form values before submitting.
+      if (isNewProposal) {
+        const valid = await trigger()
+        if (!valid) {
+          setSubmitModalState('confirm')
+          return
+        }
+        await createProposal.mutateAsync(buildProposalPayload(getValues()))
+      }
       await submitProposal.mutateAsync()
       setSubmitModalState('success')
-    } catch (err) {
+    } catch {
       setSubmitModalState('confirm')
     }
   }
