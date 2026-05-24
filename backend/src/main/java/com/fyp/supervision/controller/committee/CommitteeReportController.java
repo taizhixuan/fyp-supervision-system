@@ -1,6 +1,7 @@
 package com.fyp.supervision.controller.committee;
 
 import com.fyp.supervision.service.CommitteeReportService;
+import com.fyp.supervision.service.report.ReportFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
@@ -29,10 +30,21 @@ public class CommitteeReportController {
         return ResponseEntity.ok(Map.of("reports", reports, "total", reports.size()));
     }
 
+    /** Canonical generate endpoint. */
     @PostMapping("/generate")
-    public ResponseEntity<?> generateReport(
-            @AuthenticationPrincipal UserDetails user,
-            @RequestBody Map<String, Object> config) {
+    public ResponseEntity<?> generateCanonical(@AuthenticationPrincipal UserDetails user,
+                                               @RequestBody Map<String, Object> config) {
+        return doGenerate(user, config);
+    }
+
+    /** Back-compat alias — accepts the same payload at the bare collection URL. */
+    @PostMapping
+    public ResponseEntity<?> generateAlias(@AuthenticationPrincipal UserDetails user,
+                                           @RequestBody Map<String, Object> config) {
+        return doGenerate(user, config);
+    }
+
+    private ResponseEntity<?> doGenerate(UserDetails user, Map<String, Object> config) {
         try {
             Long userId = Long.parseLong(user.getUsername());
             Map<String, Object> result = committeeReportService.generateReport(userId, config);
@@ -47,10 +59,12 @@ public class CommitteeReportController {
     public ResponseEntity<Resource> downloadReport(@PathVariable Long id) {
         try {
             Path path = committeeReportService.getReportFilePath(id);
+            ReportFormat fmt = committeeReportService.getReportFormat(id);
             Resource resource = new PathResource(path);
-            String filename = path.getFileName() != null ? path.getFileName().toString() : "report.csv";
+            String filename = path.getFileName() != null ? path.getFileName().toString()
+                    : ("report." + fmt.extension);
             return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .contentType(MediaType.parseMediaType(fmt.contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
         } catch (Exception e) {
