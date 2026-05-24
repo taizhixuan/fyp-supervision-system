@@ -384,14 +384,23 @@ export interface GeneratedReport {
 }
 
 // Notification Types
+// Shared /notifications endpoint emits these 9 backend types. Trailing
+// `(string & {})` admits legacy values without erroring at call sites —
+// getNotificationDisplay handles unknown fallback.
 export type CommitteeNotificationType =
-  | 'PROPOSAL_SUBMITTED'
-  | 'PROPOSAL_REVISION'
-  | 'STUDENT_UNPAIRED_ALERT'
-  | 'SUPERVISOR_OVERLOAD'
-  | 'DEADLINE_REMINDER'
-  | 'SYSTEM_ALERT'
-  | 'REPORT_READY'
+  | 'ACCOUNT_APPROVED'
+  | 'ACCOUNT_REJECTED'
+  | 'CYCLE_STATUS'
+  | 'DEADLINE'
+  | 'FYP1_RESULT'
+  | 'MEETING'
+  | 'PROPOSAL'
+  | 'REGISTRATION_PENDING'
+  | 'REQUEST'
+  | 'SYSTEM'
+  // Trailing string admits legacy/unknown values without erroring at call sites.
+  // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-redundant-type-constituents
+  | (string & {})
 
 export interface CommitteeNotification {
   notificationId: number

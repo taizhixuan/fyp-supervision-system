@@ -6,8 +6,6 @@ import {
   Check,
   CheckCheck,
   FileText,
-  Users,
-  AlertTriangle,
   Clock,
   ChevronRight,
 } from 'lucide-react'
@@ -23,63 +21,18 @@ import {
 } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { getNotificationDisplay, formatNotificationTime } from '@/lib/utils/notificationDisplay'
 import type { CommitteeNotificationType, CommitteeNotification } from '@/types'
 
-const notificationTypeConfig: Record<
-  CommitteeNotificationType,
-  { label: string; icon: typeof Bell; color: string; bgColor: string }
-> = {
-  PROPOSAL_SUBMITTED: {
-    label: 'Proposal Submitted',
-    icon: FileText,
-    color: 'text-info-600',
-    bgColor: 'bg-info-50',
-  },
-  PROPOSAL_REVISION: {
-    label: 'Proposal Revision',
-    icon: FileText,
-    color: 'text-warning-600',
-    bgColor: 'bg-warning-50',
-  },
-  STUDENT_UNPAIRED_ALERT: {
-    label: 'Unpaired Student',
-    icon: Users,
-    color: 'text-error-600',
-    bgColor: 'bg-error-50',
-  },
-  SUPERVISOR_OVERLOAD: {
-    label: 'Supervisor Overload',
-    icon: AlertTriangle,
-    color: 'text-warning-600',
-    bgColor: 'bg-warning-50',
-  },
-  DEADLINE_REMINDER: {
-    label: 'Deadline Reminder',
-    icon: Clock,
-    color: 'text-warning-600',
-    bgColor: 'bg-warning-50',
-  },
-  SYSTEM_ALERT: {
-    label: 'System Alert',
-    icon: AlertTriangle,
-    color: 'text-error-600',
-    bgColor: 'bg-error-50',
-  },
-  REPORT_READY: {
-    label: 'Report Ready',
-    icon: FileText,
-    color: 'text-success-600',
-    bgColor: 'bg-success-50',
-  },
-}
-
-// Fallback config for unknown types
-const defaultConfig = {
-  label: 'Notification',
-  icon: Bell,
-  color: 'text-neutral-600',
-  bgColor: 'bg-neutral-100',
-}
+// Committee filter options align with the real backend types it receives.
+const COMMITTEE_TYPE_OPTIONS: Array<{ value: CommitteeNotificationType; label: string }> = [
+  { value: 'PROPOSAL', label: 'Proposals' },
+  { value: 'DEADLINE', label: 'Deadlines' },
+  { value: 'REGISTRATION_PENDING', label: 'Pending Registrations' },
+  { value: 'ACCOUNT_APPROVED', label: 'Account Updates' },
+  { value: 'CYCLE_STATUS', label: 'Cycle Updates' },
+  { value: 'SYSTEM', label: 'System' },
+]
 
 export function NotificationsCenter() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -120,37 +73,23 @@ export function NotificationsCenter() {
   }
 
   const getNotificationLink = (notification: CommitteeNotification): string | null => {
-    switch (notification.type) {
-      case 'PROPOSAL_SUBMITTED':
-        return notification.metadata?.proposalId
-          ? ROUTES.COMMITTEE.PROPOSAL_DETAIL.replace(':id', String(notification.metadata.proposalId))
-          : ROUTES.COMMITTEE.PROPOSALS
-      case 'PAIRING_REQUEST':
-        return ROUTES.COMMITTEE.PROJECTS
-      case 'REPORT_READY':
-        return notification.metadata?.reportId
-          ? ROUTES.COMMITTEE.REPORT_DETAIL.replace(':id', String(notification.metadata.reportId))
-          : ROUTES.COMMITTEE.REPORTS_HISTORY
-      case 'ANNOUNCEMENT_PUBLISHED':
-        return ROUTES.COMMITTEE.ANNOUNCEMENTS
-      default:
-        return null
+    const t = String(notification.type)
+    const id = notification.relatedEntityId
+    if (t === 'PROPOSAL' || t.startsWith('PROPOSAL_')) {
+      return id
+        ? ROUTES.COMMITTEE.PROPOSAL_DETAIL.replace(':id', String(id))
+        : ROUTES.COMMITTEE.PROPOSALS
     }
-  }
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
+    if (t === 'REPORT_READY') {
+      return id
+        ? ROUTES.COMMITTEE.REPORT_DETAIL.replace(':id', String(id))
+        : ROUTES.COMMITTEE.REPORTS_HISTORY
+    }
+    if (t === 'ANNOUNCEMENT_PUBLISHED' || t === 'ANNOUNCEMENT') {
+      return ROUTES.COMMITTEE.ANNOUNCEMENTS
+    }
+    if (t === 'PAIRING_REQUEST') return ROUTES.COMMITTEE.PROJECTS
+    return null
   }
 
   if (isLoading) {
@@ -210,9 +149,9 @@ export function NotificationsCenter() {
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Types</option>
-            {Object.entries(notificationTypeConfig).map(([value, config]) => (
-              <option key={value} value={value}>
-                {config.label}
+            {COMMITTEE_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>
@@ -228,14 +167,14 @@ export function NotificationsCenter() {
         </div>
       </Card>
 
-      {/* Quick Stats */}
+      {/* Quick Stats — counts keyed to real backend types */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card
           className={cn(
             'p-4 cursor-pointer transition-colors',
-            typeFilter === 'PROPOSAL_SUBMITTED' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+            typeFilter === 'PROPOSAL' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50',
           )}
-          onClick={() => setTypeFilter(typeFilter === 'PROPOSAL_SUBMITTED' ? 'ALL' : 'PROPOSAL_SUBMITTED')}
+          onClick={() => setTypeFilter(typeFilter === 'PROPOSAL' ? 'ALL' : 'PROPOSAL')}
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-info-50 rounded-lg">
@@ -243,7 +182,7 @@ export function NotificationsCenter() {
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'PROPOSAL_SUBMITTED').length ?? 0}
+                {data?.notifications.filter((n) => n.type === 'PROPOSAL').length ?? 0}
               </p>
               <p className="text-xs text-neutral-500">Proposals</p>
             </div>
@@ -253,9 +192,9 @@ export function NotificationsCenter() {
         <Card
           className={cn(
             'p-4 cursor-pointer transition-colors',
-            typeFilter === 'DEADLINE_REMINDER' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+            typeFilter === 'DEADLINE' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50',
           )}
-          onClick={() => setTypeFilter(typeFilter === 'DEADLINE_REMINDER' ? 'ALL' : 'DEADLINE_REMINDER')}
+          onClick={() => setTypeFilter(typeFilter === 'DEADLINE' ? 'ALL' : 'DEADLINE')}
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-warning-50 rounded-lg">
@@ -263,9 +202,9 @@ export function NotificationsCenter() {
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'DEADLINE_REMINDER').length ?? 0}
+                {data?.notifications.filter((n) => n.type === 'DEADLINE').length ?? 0}
               </p>
-              <p className="text-xs text-neutral-500">Reminders</p>
+              <p className="text-xs text-neutral-500">Deadlines</p>
             </div>
           </div>
         </Card>
@@ -273,19 +212,19 @@ export function NotificationsCenter() {
         <Card
           className={cn(
             'p-4 cursor-pointer transition-colors',
-            typeFilter === 'SYSTEM_ALERT' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+            typeFilter === 'REGISTRATION_PENDING' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50',
           )}
-          onClick={() => setTypeFilter(typeFilter === 'SYSTEM_ALERT' ? 'ALL' : 'SYSTEM_ALERT')}
+          onClick={() => setTypeFilter(typeFilter === 'REGISTRATION_PENDING' ? 'ALL' : 'REGISTRATION_PENDING')}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-error-50 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-error-600" />
+            <div className="p-2 bg-primary-50 rounded-lg">
+              <FileText className="h-5 w-5 text-primary-600" />
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'SYSTEM_ALERT').length ?? 0}
+                {data?.notifications.filter((n) => n.type === 'REGISTRATION_PENDING').length ?? 0}
               </p>
-              <p className="text-xs text-neutral-500">Alerts</p>
+              <p className="text-xs text-neutral-500">Pending Users</p>
             </div>
           </div>
         </Card>
@@ -293,13 +232,13 @@ export function NotificationsCenter() {
         <Card
           className={cn(
             'p-4 cursor-pointer transition-colors',
-            readFilter === 'UNREAD' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50'
+            readFilter === 'UNREAD' ? 'ring-2 ring-primary-500' : 'hover:bg-neutral-50',
           )}
           onClick={() => setReadFilter(readFilter === 'UNREAD' ? 'ALL' : 'UNREAD')}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-50 rounded-lg">
-              <Bell className="h-5 w-5 text-primary-600" />
+            <div className="p-2 bg-error-50 rounded-lg">
+              <Bell className="h-5 w-5 text-error-600" />
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">{unreadCount?.count ?? 0}</p>
@@ -313,54 +252,63 @@ export function NotificationsCenter() {
       <div className="space-y-2">
         {filteredNotifications && filteredNotifications.length > 0 ? (
           filteredNotifications.map((notification) => {
-            const config = notificationTypeConfig[notification.type] || defaultConfig
-            const Icon = config.icon
+            const { Icon, iconColor, iconBg, label } = getNotificationDisplay(
+              notification.type as string,
+              notification.title,
+            )
             const link = getNotificationLink(notification)
 
             const content = (
               <Card
                 className={cn(
-                  'p-4 transition-colors',
-                  !notification.isRead && 'bg-primary-50/30 border-l-4 border-l-primary-500',
-                  link && 'hover:shadow-md cursor-pointer'
+                  'group p-4 transition-all',
+                  !notification.isRead
+                    ? 'bg-primary-50/40 border-l-4 border-l-primary-500'
+                    : 'border-l-4 border-l-transparent',
+                  link && 'hover:shadow-md hover:border-l-primary-400 cursor-pointer',
                 )}
               >
                 <div className="flex items-start gap-4">
-                  {/* Icon */}
                   <div className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                    config.bgColor
+                    iconBg,
                   )}>
-                    <Icon className={cn('h-5 w-5', config.color)} />
+                    <Icon className={cn('h-5 w-5', iconColor)} />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className={cn(
-                          'font-medium text-neutral-900',
-                          !notification.isRead && 'font-semibold'
-                        )}>
-                          {notification.title}
-                        </h3>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className={cn(
+                            'text-neutral-900',
+                            !notification.isRead ? 'font-semibold' : 'font-medium',
+                          )}>
+                            {notification.title}
+                          </h3>
+                          {!notification.isRead && (
+                            <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary-500" />
+                          )}
+                        </div>
                         <p className="text-sm text-neutral-600 mt-0.5 line-clamp-2">
                           {notification.message}
                         </p>
                       </div>
-                      {link && <ChevronRight className="h-5 w-5 text-neutral-400 flex-shrink-0" />}
+                      {link && (
+                        <ChevronRight className="h-5 w-5 text-neutral-300 group-hover:text-neutral-600 flex-shrink-0 transition-colors" />
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3 mt-2">
                       <span className={cn(
                         'px-2 py-0.5 rounded-full text-xs font-medium',
-                        config.bgColor,
-                        config.color
+                        iconBg,
+                        iconColor,
                       )}>
-                        {config.label}
+                        {label}
                       </span>
                       <span className="text-xs text-neutral-500">
-                        {formatTime(notification.createdAt)}
+                        {formatNotificationTime(notification.createdAt)}
                       </span>
                       {!notification.isRead && (
                         <button
@@ -394,15 +342,20 @@ export function NotificationsCenter() {
             return <div key={notification.notificationId}>{content}</div>
           })
         ) : (
-          <Card className="text-center py-8">
+          <Card className="text-center py-10">
             <Bell className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-neutral-900">No notifications</h3>
             <p className="text-neutral-500 mt-1">
               {searchQuery || typeFilter !== 'ALL' || readFilter !== 'ALL'
                 ? 'Try adjusting your filters'
-                : "You're all caught up!"}
+                : "You'll see new updates here when there's activity"}
             </p>
           </Card>
+        )}
+        {filteredNotifications && filteredNotifications.length > 0 && filteredNotifications.length < 4 && (
+          <p className="text-center text-xs text-neutral-400 py-3">
+            That's all for now. You'll see new updates here.
+          </p>
         )}
       </div>
 
