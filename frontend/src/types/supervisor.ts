@@ -333,17 +333,23 @@ export interface ProfileAuditEntry {
   ipAddress?: string
 }
 
-// Notification types for supervisor
+// The shared /notifications endpoint emits these 9 backend types. The
+// trailing `string` admits unknown/legacy values (e.g. NEW_REQUEST) without
+// type errors at filter call sites — getNotificationDisplay handles fallback.
 export type SupervisorNotificationType =
-  | 'NEW_REQUEST'
-  | 'MEETING_REQUEST'
-  | 'MEETING_CONFIRMED'
-  | 'MEETING_CANCELLED'
-  | 'LOG_SUBMITTED'
-  | 'DOCUMENT_UPLOADED'
-  | 'PROPOSAL_SUBMITTED'
-  | 'PROPOSAL_REVISED'
+  | 'ACCOUNT_APPROVED'
+  | 'ACCOUNT_REJECTED'
+  | 'CYCLE_STATUS'
+  | 'DEADLINE'
+  | 'FYP1_RESULT'
+  | 'MEETING'
+  | 'PROPOSAL'
+  | 'REGISTRATION_PENDING'
+  | 'REQUEST'
   | 'SYSTEM'
+  // Trailing string admits legacy/unknown values without erroring at call sites.
+  // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-redundant-type-constituents
+  | (string & {})
 
 export interface SupervisorNotification {
   notificationId: number
