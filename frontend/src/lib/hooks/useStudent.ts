@@ -333,6 +333,7 @@ interface SupervisorListParams {
   faculty?: string
   researchArea?: string
   availableOnly?: boolean
+  sort?: 'name_asc' | 'name_desc' | 'load_asc' | 'load_desc'
   page?: number
   limit?: number
 }
@@ -474,8 +475,17 @@ export function useCurrentProposal() {
   return useQuery({
     queryKey: studentKeys.proposalCurrent(),
     queryFn: async () => {
-      const { data } = await apiClient.get<Proposal>('/student/proposal')
-      return data
+      // Backend intentionally returns 404 when no proposal exists yet
+      // (StudentProposalController.getProposal). Treat that as "no draft"
+      // instead of letting it bubble up as a query error.
+      try {
+        const { data } = await apiClient.get<Proposal>('/student/proposal')
+        return data
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status
+        if (status === 404) return null
+        throw err
+      }
     },
   })
 }

@@ -7,9 +7,11 @@ import com.fyp.supervision.exception.ForbiddenException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.proposal.ProposalTemplateOptions;
 import com.fyp.supervision.repository.*;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,17 +177,47 @@ public class StudentService {
 
     // ========================= Supervisor Directory =========================
 
-    public Map<String, Object> searchSupervisorsDto(String search, String faculty, Boolean availableOnly, Pageable pageable) {
-        Page<SupervisorProfile> page;
-        if (search != null && !search.isBlank()) {
-            page = supervisorProfileRepository.searchSupervisors(search, pageable);
-        } else if (faculty != null && !faculty.isBlank()) {
-            page = supervisorProfileRepository.findByFaculty(faculty, pageable);
-        } else if (Boolean.TRUE.equals(availableOnly)) {
-            page = supervisorProfileRepository.findAvailableSupervisors(pageable);
-        } else {
-            page = supervisorProfileRepository.findAllActiveSupervisors(pageable);
-        }
+    public Map<String, Object> searchSupervisorsDto(String search, String faculty, String researchArea,
+                                                    Boolean availableOnly, Pageable pageable) {
+        // Combine all filters via Specification — the legacy if-else-only-one
+        // branching dropped researchArea on the floor and refused to combine
+        // search + availableOnly. researchArea is comma-separated from the
+        // frontend filter chips and is treated as "match ANY".
+        Specification<SupervisorProfile> spec = (root, query, cb) -> {
+            var user = root.join("user");
+            List<Predicate> preds = new ArrayList<>();
+            preds.add(cb.equal(user.get("status"), UserStatus.ACTIVE));
+            preds.add(cb.equal(user.get("role"), UserRole.SUPERVISOR));
+
+            if (search != null && !search.isBlank()) {
+                String like = "%" + search.toLowerCase() + "%";
+                preds.add(cb.or(
+                        cb.like(cb.lower(user.get("fullName")), like),
+                        cb.like(cb.lower(root.get("researchAreas")), like),
+                        cb.like(cb.lower(root.get("department")), like)
+                ));
+            }
+            if (faculty != null && !faculty.isBlank()) {
+                preds.add(cb.equal(cb.lower(root.get("faculty")), faculty.toLowerCase()));
+            }
+            if (researchArea != null && !researchArea.isBlank()) {
+                List<Predicate> areaPreds = new ArrayList<>();
+                for (String raw : researchArea.split(",")) {
+                    String a = raw.trim();
+                    if (a.isEmpty()) continue;
+                    areaPreds.add(cb.like(cb.lower(root.get("researchAreas")), "%" + a.toLowerCase() + "%"));
+                }
+                if (!areaPreds.isEmpty()) {
+                    preds.add(cb.or(areaPreds.toArray(new Predicate[0])));
+                }
+            }
+            if (Boolean.TRUE.equals(availableOnly)) {
+                preds.add(cb.lessThan(root.<Integer>get("currentLoad"), root.<Integer>get("supervisionQuota")));
+            }
+            return cb.and(preds.toArray(new Predicate[0]));
+        };
+
+        Page<SupervisorProfile> page = supervisorProfileRepository.findAll(spec, pageable);
 
         List<Map<String, Object>> supervisors = page.getContent().stream()
                 .map(this::buildSupervisorSummaryDto)

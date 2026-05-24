@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Clock,
@@ -17,7 +17,7 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisionRequest, SupervisionRequestStatus } from '@/types'
 
-// Sample data for design preview
+// Sample data for design preview when the API hasn't loaded yet.
 const SAMPLE_REQUESTS: SupervisionRequest[] = [
   {
     requestId: '1',
@@ -90,7 +90,7 @@ const SAMPLE_REQUESTS: SupervisionRequest[] = [
     status: 'REJECTED',
     submittedAt: '2025-01-05T11:00:00Z',
     respondedAt: '2025-01-08T16:30:00Z',
-    responseMessage: 'Thank you for your interest, but I have reached my supervision capacity for this semester. I recommend reaching out to Dr. Lisa Wong who also works on related topics.',
+    responseMessage: 'Thank you for your interest, but I have reached my supervision capacity for this semester.',
     expiresAt: '2025-02-05T11:00:00Z',
   },
 ]
@@ -103,15 +103,30 @@ const statusConfig: Record<SupervisionRequestStatus, { label: string; variant: '
   EXPIRED: { label: 'Expired', variant: 'default', icon: AlertCircle },
 }
 
+// Unambiguous date format — "23 May 26" left users wondering if 26 was the year
+// or the day. Always render the full 4-digit year.
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+
+type StatusFilter = 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'PAST'
+
+const FILTER_LABELS: Record<StatusFilter, string> = {
+  ALL: 'All',
+  PENDING: 'Pending',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Rejected',
+  PAST: 'Past',
+}
+
 export function MyRequests() {
   const [selectedRequest, setSelectedRequest] = useState<SupervisionRequest | null>(null)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [requestToWithdraw, setRequestToWithdraw] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
 
   const { data, isLoading, error, errorUpdatedAt } = useSupervisionRequests()
   const withdrawRequest = useWithdrawSupervisionRequest()
 
-  // Use sample data if no API data available
   const requests = data?.requests || SAMPLE_REQUESTS
 
   const handleWithdraw = async () => {
@@ -120,15 +135,35 @@ export function MyRequests() {
         await withdrawRequest.mutateAsync(requestToWithdraw)
         setWithdrawModalOpen(false)
         setRequestToWithdraw(null)
-      } catch (err) {
+      } catch {
         // Error handled by mutation
       }
     }
   }
 
-  const pendingRequests = requests.filter((r) => r.status === 'PENDING')
-  const respondedRequests = requests.filter((r) => ['ACCEPTED', 'REJECTED'].includes(r.status))
-  const otherRequests = requests.filter((r) => ['WITHDRAWN', 'EXPIRED'].includes(r.status))
+  const counts = useMemo(() => ({
+    pending: requests.filter((r) => r.status === 'PENDING').length,
+    accepted: requests.filter((r) => r.status === 'ACCEPTED').length,
+    rejected: requests.filter((r) => r.status === 'REJECTED').length,
+    past: requests.filter((r) => ['WITHDRAWN', 'EXPIRED'].includes(r.status)).length,
+  }), [requests])
+
+  const filteredRequests = useMemo(() => {
+    switch (statusFilter) {
+      case 'PENDING': return requests.filter((r) => r.status === 'PENDING')
+      case 'ACCEPTED': return requests.filter((r) => r.status === 'ACCEPTED')
+      case 'REJECTED': return requests.filter((r) => r.status === 'REJECTED')
+      case 'PAST': return requests.filter((r) => ['WITHDRAWN', 'EXPIRED'].includes(r.status))
+      default: return requests
+    }
+  }, [requests, statusFilter])
+
+  // When ALL is selected we keep the three logical groupings so the page
+  // reads chronologically. Otherwise it's a single flat list under the chip.
+  const showGrouped = statusFilter === 'ALL'
+  const pendingRequests = filteredRequests.filter((r) => r.status === 'PENDING')
+  const respondedRequests = filteredRequests.filter((r) => ['ACCEPTED', 'REJECTED'].includes(r.status))
+  const otherRequests = filteredRequests.filter((r) => ['WITHDRAWN', 'EXPIRED'].includes(r.status))
 
   if (isLoading) {
     return (
@@ -140,25 +175,21 @@ export function MyRequests() {
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
+      {/* Header — managing existing requests is the page's primary job, so
+          "Find Supervisor" is de-emphasised as a secondary outline. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-tight">My Supervision Requests</h1>
-          <p className="text-xs text-neutral-600">
-            Track and manage your supervision requests
-          </p>
+          <p className="text-xs text-neutral-600">Track and manage your supervision requests</p>
         </div>
         <Link to={ROUTES.STUDENT.SUPERVISORS}>
-          <Button variant="primary" size="sm" leftIcon={<Send className="h-4 w-4" />} className="whitespace-nowrap">
+          <Button variant="secondary" size="sm" leftIcon={<Send className="h-4 w-4" />} className="whitespace-nowrap">
             Find Supervisor
           </Button>
         </Link>
       </div>
 
       {error && (
-        // key resets the banner's internal hidden state on every new error
-        // tick from TanStack Query (errorUpdatedAt changes per failed fetch),
-        // so dismissing once doesn't suppress subsequent retry failures.
         <AlertBanner
           key={errorUpdatedAt}
           variant="error"
@@ -168,123 +199,148 @@ export function MyRequests() {
         />
       )}
 
-      {/* Summary Cards — compact inline */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Card padding="sm" className="text-center">
-          <div className="text-lg font-bold text-warning-600 leading-none">{pendingRequests.length}</div>
-          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Pending</p>
-        </Card>
-        <Card padding="sm" className="text-center">
-          <div className="text-lg font-bold text-success-600 leading-none">
-            {requests.filter((r) => r.status === 'ACCEPTED').length}
-          </div>
-          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Accepted</p>
-        </Card>
-        <Card padding="sm" className="text-center">
-          <div className="text-lg font-bold text-error-600 leading-none">
-            {requests.filter((r) => r.status === 'REJECTED').length}
-          </div>
-          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Rejected</p>
-        </Card>
-        <Card padding="sm" className="text-center">
-          <div className="text-lg font-bold text-neutral-600 leading-none">{requests.length}</div>
-          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mt-0.5">Total</p>
-        </Card>
+      {/* Stat cards — tinted bg matches the number color so they scan as
+          status indicators, and each one is also a filter chip. */}
+      <div className="grid grid-cols-3 gap-2">
+        <StatCard
+          tone="warning"
+          icon={Clock}
+          value={counts.pending}
+          label="Pending"
+          active={statusFilter === 'PENDING'}
+          onClick={() => setStatusFilter(statusFilter === 'PENDING' ? 'ALL' : 'PENDING')}
+        />
+        <StatCard
+          tone="success"
+          icon={CheckCircle}
+          value={counts.accepted}
+          label="Accepted"
+          active={statusFilter === 'ACCEPTED'}
+          onClick={() => setStatusFilter(statusFilter === 'ACCEPTED' ? 'ALL' : 'ACCEPTED')}
+        />
+        <StatCard
+          tone="error"
+          icon={XCircle}
+          value={counts.rejected}
+          label="Rejected"
+          active={statusFilter === 'REJECTED'}
+          onClick={() => setStatusFilter(statusFilter === 'REJECTED' ? 'ALL' : 'REJECTED')}
+        />
       </div>
 
-      {requests.length === 0 ? (
-        <Card className="text-center py-8">
+      {/* Filter chip row — explicit alternative to clicking the stat cards. */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs font-medium text-neutral-500 mr-1">Show:</span>
+        {(Object.keys(FILTER_LABELS) as StatusFilter[]).map((key) => {
+          const count =
+            key === 'ALL' ? requests.length :
+            key === 'PENDING' ? counts.pending :
+            key === 'ACCEPTED' ? counts.accepted :
+            key === 'REJECTED' ? counts.rejected :
+            counts.past
+          if (key === 'PAST' && count === 0) return null
+          return (
+            <button
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={cn(
+                'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
+                statusFilter === key
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200',
+              )}
+            >
+              {FILTER_LABELS[key]}
+              <span className={cn(
+                'px-1 text-[10px] rounded',
+                statusFilter === key ? 'bg-white/20' : 'bg-white text-neutral-500',
+              )}>
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {filteredRequests.length === 0 ? (
+        <Card className="text-center py-10">
           <Send className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
           <h2 className="font-medium text-neutral-900 mb-1">
-            No requests yet
+            {statusFilter === 'ALL' ? 'No requests yet' : `No ${FILTER_LABELS[statusFilter].toLowerCase()} requests`}
           </h2>
           <p className="text-sm text-neutral-500 mb-3">
-            Start by finding a supervisor and sending them a request
+            {statusFilter === 'ALL'
+              ? 'Start by finding a supervisor and sending them a request'
+              : 'Try switching to a different filter or browse supervisors'}
           </p>
-          <Link to={ROUTES.STUDENT.SUPERVISORS}>
-            <Button variant="primary" size="sm">Browse Supervisors</Button>
-          </Link>
+          {statusFilter === 'ALL' && (
+            <Link to={ROUTES.STUDENT.SUPERVISORS}>
+              <Button variant="primary" size="sm">Browse Supervisors</Button>
+            </Link>
+          )}
         </Card>
+      ) : showGrouped ? (
+        <>
+          {pendingRequests.length > 0 && (
+            <RequestGroup
+              icon={<Clock className="h-4 w-4 text-warning-600" />}
+              title="Pending Requests"
+              count={pendingRequests.length}
+              tone="warning"
+              requests={pendingRequests}
+              onViewDetails={setSelectedRequest}
+              onWithdraw={(id) => { setRequestToWithdraw(id); setWithdrawModalOpen(true) }}
+            />
+          )}
+          {respondedRequests.length > 0 && (
+            <RequestGroup
+              icon={<MessageSquare className="h-4 w-4 text-info-600" />}
+              title="Responded"
+              count={respondedRequests.length}
+              tone="info"
+              requests={respondedRequests}
+              onViewDetails={setSelectedRequest}
+            />
+          )}
+          {otherRequests.length > 0 && (
+            <RequestGroup
+              icon={<RotateCcw className="h-4 w-4 text-stone-500" />}
+              title="Past Requests"
+              count={otherRequests.length}
+              tone="neutral"
+              requests={otherRequests}
+              onViewDetails={setSelectedRequest}
+            />
+          )}
+          {/* Bottom footer so a short list feels intentionally complete instead
+              of empty whitespace running down the page. */}
+          <p className="text-center text-xs text-neutral-400 py-3">
+            That's all your requests.
+          </p>
+        </>
       ) : (
         <>
-          {/* Pending Requests */}
-          {pendingRequests.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-warning-600" />
-                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Pending Requests</h2>
-                <span className="px-1.5 py-0 bg-warning-100 text-warning-700 text-[10px] font-semibold rounded-full">
-                  {pendingRequests.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                {pendingRequests.map((request) => (
-                  <RequestCard
-                    key={request.requestId}
-                    request={request}
-                    onViewDetails={() => setSelectedRequest(request)}
-                    onWithdraw={() => {
-                      setRequestToWithdraw(request.requestId)
-                      setWithdrawModalOpen(true)
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Responded Requests */}
-          {respondedRequests.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="h-4 w-4 text-info-600" />
-                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Responded</h2>
-                <span className="px-1.5 py-0 bg-info-100 text-info-700 text-[10px] font-semibold rounded-full">
-                  {respondedRequests.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                {respondedRequests.map((request) => (
-                  <RequestCard
-                    key={request.requestId}
-                    request={request}
-                    onViewDetails={() => setSelectedRequest(request)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Other Requests */}
-          {otherRequests.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <RotateCcw className="h-4 w-4 text-stone-500" />
-                <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Past Requests</h2>
-                <span className="px-1.5 py-0 bg-stone-100 text-stone-600 text-[10px] font-semibold rounded-full">
-                  {otherRequests.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-                {otherRequests.map((request) => (
-                  <RequestCard
-                    key={request.requestId}
-                    request={request}
-                    onViewDetails={() => setSelectedRequest(request)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+            {filteredRequests.map((request) => (
+              <RequestCard
+                key={request.requestId}
+                request={request}
+                onViewDetails={() => setSelectedRequest(request)}
+                onWithdraw={request.status === 'PENDING' ? () => {
+                  setRequestToWithdraw(request.requestId)
+                  setWithdrawModalOpen(true)
+                } : undefined}
+              />
+            ))}
+          </div>
+          <p className="text-center text-xs text-neutral-400 py-3">
+            That's all your {FILTER_LABELS[statusFilter].toLowerCase()} requests.
+          </p>
         </>
       )}
 
       {/* Request Detail Modal */}
-      <Modal
-        isOpen={!!selectedRequest}
-        onClose={() => setSelectedRequest(null)}
-        size="lg"
-      >
+      <Modal isOpen={!!selectedRequest} onClose={() => setSelectedRequest(null)} size="lg">
         {selectedRequest && (
           <>
             <ModalHeader>
@@ -292,20 +348,15 @@ export function MyRequests() {
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
-                {/* Status */}
                 <div className="flex items-center justify-between">
-                  <Badge
-                    variant={statusConfig[selectedRequest.status].variant}
-                    size="lg"
-                  >
+                  <Badge variant={statusConfig[selectedRequest.status].variant} size="lg">
                     {statusConfig[selectedRequest.status].label}
                   </Badge>
                   <span className="text-sm text-neutral-500">
-                    Submitted {new Date(selectedRequest.submittedAt).toLocaleDateString('en-MY')}
+                    Submitted {formatDate(selectedRequest.submittedAt)}
                   </span>
                 </div>
 
-                {/* Supervisor */}
                 <Card className="bg-neutral-50">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
@@ -329,7 +380,6 @@ export function MyRequests() {
                   </div>
                 </Card>
 
-                {/* Project Info */}
                 <div>
                   <h4 className="text-sm font-medium text-neutral-700 mb-1">Proposed Title</h4>
                   <p className="text-neutral-900">{selectedRequest.proposedTitle}</p>
@@ -349,35 +399,33 @@ export function MyRequests() {
                   </div>
                 )}
 
-                {/* Response */}
                 {selectedRequest.responseMessage && (
                   <div className={cn(
                     'p-4 rounded-lg',
-                    selectedRequest.status === 'ACCEPTED' ? 'bg-success-50' : 'bg-error-50'
+                    selectedRequest.status === 'ACCEPTED' ? 'bg-success-50' : 'bg-error-50',
                   )}>
                     <h4 className={cn(
                       'text-sm font-medium mb-1',
-                      selectedRequest.status === 'ACCEPTED' ? 'text-success-700' : 'text-error-700'
+                      selectedRequest.status === 'ACCEPTED' ? 'text-success-700' : 'text-error-700',
                     )}>
                       Supervisor Response
                     </h4>
                     <p className={cn(
-                      selectedRequest.status === 'ACCEPTED' ? 'text-success-900' : 'text-error-900'
+                      selectedRequest.status === 'ACCEPTED' ? 'text-success-900' : 'text-error-900',
                     )}>
                       {selectedRequest.responseMessage}
                     </p>
                     {selectedRequest.respondedAt && (
                       <p className={cn(
                         'text-sm mt-2',
-                        selectedRequest.status === 'ACCEPTED' ? 'text-success-600' : 'text-error-600'
+                        selectedRequest.status === 'ACCEPTED' ? 'text-success-600' : 'text-error-600',
                       )}>
-                        Responded on {new Date(selectedRequest.respondedAt).toLocaleDateString('en-MY')}
+                        Responded on {formatDate(selectedRequest.respondedAt)}
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* Actions for accepted requests */}
                 {selectedRequest.status === 'ACCEPTED' && (
                   <div className="pt-4 border-t border-neutral-200">
                     <Link to={ROUTES.STUDENT.MEETING_NEW}>
@@ -393,7 +441,6 @@ export function MyRequests() {
         )}
       </Modal>
 
-      {/* Withdraw Confirmation Modal */}
       <Modal
         isOpen={withdrawModalOpen}
         onClose={() => {
@@ -420,11 +467,7 @@ export function MyRequests() {
           >
             Cancel
           </Button>
-          <Button
-            variant="error"
-            onClick={handleWithdraw}
-            isLoading={withdrawRequest.isPending}
-          >
+          <Button variant="error" onClick={handleWithdraw} isLoading={withdrawRequest.isPending}>
             Withdraw Request
           </Button>
         </ModalFooter>
@@ -433,7 +476,83 @@ export function MyRequests() {
   )
 }
 
-// Request Card Component
+interface StatCardProps {
+  tone: 'warning' | 'success' | 'error'
+  icon: typeof Clock
+  value: number
+  label: string
+  active: boolean
+  onClick: () => void
+}
+
+function StatCard({ tone, icon: Icon, value, label, active, onClick }: StatCardProps) {
+  const toneStyles = {
+    warning: { bg: 'bg-warning-50', border: 'border-warning-200', text: 'text-warning-700', icon: 'text-warning-600', activeRing: 'ring-warning-500' },
+    success: { bg: 'bg-success-50', border: 'border-success-200', text: 'text-success-700', icon: 'text-success-600', activeRing: 'ring-success-500' },
+    error: { bg: 'bg-error-50', border: 'border-error-200', text: 'text-error-700', icon: 'text-error-600', activeRing: 'ring-error-500' },
+  }[tone]
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-xl border p-3 text-left transition-all hover:shadow-sm focus:outline-none focus:ring-2',
+        toneStyles.bg,
+        toneStyles.border,
+        active && `ring-2 ${toneStyles.activeRing}`,
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <div className={cn('text-2xl font-bold leading-none', toneStyles.text)}>{value}</div>
+          <p className="text-[11px] uppercase tracking-wide text-neutral-600 mt-1 font-medium">{label}</p>
+        </div>
+        <Icon className={cn('h-5 w-5', toneStyles.icon)} />
+      </div>
+    </button>
+  )
+}
+
+interface RequestGroupProps {
+  icon: React.ReactNode
+  title: string
+  count: number
+  tone: 'warning' | 'info' | 'neutral'
+  requests: SupervisionRequest[]
+  onViewDetails: (request: SupervisionRequest) => void
+  onWithdraw?: (id: string) => void
+}
+
+function RequestGroup({ icon, title, count, tone, requests, onViewDetails, onWithdraw }: RequestGroupProps) {
+  const badgeClasses = {
+    warning: 'bg-warning-100 text-warning-700',
+    info: 'bg-info-100 text-info-700',
+    neutral: 'bg-stone-100 text-stone-600',
+  }[tone]
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <h2 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">{title}</h2>
+        <span className={cn('px-1.5 py-0 text-[10px] font-semibold rounded-full', badgeClasses)}>
+          {count}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+        {requests.map((request) => (
+          <RequestCard
+            key={request.requestId}
+            request={request}
+            onViewDetails={() => onViewDetails(request)}
+            onWithdraw={onWithdraw && request.status === 'PENDING' ? () => onWithdraw(request.requestId) : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 interface RequestCardProps {
   request: SupervisionRequest
   onViewDetails: () => void
@@ -445,13 +564,12 @@ function RequestCard({ request, onViewDetails, onWithdraw }: RequestCardProps) {
   const StatusIcon = config.icon
 
   const daysRemaining = Math.ceil(
-    (new Date(request.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (new Date(request.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   )
 
   return (
     <Card hover padding="sm" className="cursor-pointer" onClick={onViewDetails}>
       <div className="flex items-start gap-2.5">
-        {/* Supervisor Avatar */}
         <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
           <span className="text-sm font-bold text-primary-600">
             {request.supervisor.fullName
@@ -463,7 +581,6 @@ function RequestCard({ request, onViewDetails, onWithdraw }: RequestCardProps) {
           </span>
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
@@ -487,30 +604,30 @@ function RequestCard({ request, onViewDetails, onWithdraw }: RequestCardProps) {
             {request.topicDescription}
           </p>
 
-          {/* Timeline */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
-            <span className="inline-flex items-center gap-0.5">
+          {/* Timeline — explicit labels so calendar/chat-bubble icons aren't
+              ambiguous; full year so the date can't be misread. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-neutral-500">
+            <span className="inline-flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(request.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
+              Submitted {formatDate(request.submittedAt)}
             </span>
+            {request.respondedAt && (
+              <span className="inline-flex items-center gap-1">
+                <MessageSquare className="h-3 w-3" />
+                Responded {formatDate(request.respondedAt)}
+              </span>
+            )}
             {request.status === 'PENDING' && daysRemaining > 0 && (
               <span className={cn(
-                'inline-flex items-center gap-0.5',
-                daysRemaining <= 7 && 'text-warning-600 font-semibold'
+                'inline-flex items-center gap-1',
+                daysRemaining <= 7 && 'text-warning-600 font-semibold',
               )}>
                 <Clock className="h-3 w-3" />
                 {daysRemaining}d left
               </span>
             )}
-            {request.respondedAt && (
-              <span className="inline-flex items-center gap-0.5">
-                <MessageSquare className="h-3 w-3" />
-                {new Date(request.respondedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })}
-              </span>
-            )}
           </div>
 
-          {/* Actions */}
           <div className="mt-2 flex gap-1.5" onClick={(e) => e.stopPropagation()}>
             <Button variant="secondary" size="sm" onClick={onViewDetails} className="whitespace-nowrap">
               Details
