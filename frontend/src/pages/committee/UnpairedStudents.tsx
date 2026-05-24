@@ -14,18 +14,17 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { useUnpairedStudents } from '@/lib/hooks/useCommittee'
+import { useCommitteeCycles, useUnpairedStudents } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
-import { cn } from '@/lib/utils/cn'
 
 export function UnpairedStudents() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [cycleFilter, setCycleFilter] = useState<'FYP1' | 'FYP2' | 'ALL'>('ALL')
+  const [cycleId, setCycleId] = useState<number | undefined>(undefined)
 
-  const { data, isLoading } = useUnpairedStudents()
+  const cyclesQuery = useCommitteeCycles()
+  const { data, isLoading } = useUnpairedStudents(cycleId)
 
   const filteredStudents = data?.students.filter((student) => {
-    if (cycleFilter !== 'ALL' && student.cycle !== cycleFilter) return false
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -75,46 +74,20 @@ export function UnpairedStudents() {
         )}
       </div>
 
-      {/* Cycle stat pills + filters */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setCycleFilter(cycleFilter === 'FYP1' ? 'ALL' : 'FYP1')}
-          className={cn(
-            'flex items-center justify-between px-3 py-2 rounded-md border bg-white transition-colors',
-            cycleFilter === 'FYP1' ? 'ring-2 ring-primary-500 border-primary-300' : 'border-stone-200 hover:bg-neutral-50'
-          )}
+      {/* Cycle filter */}
+      <div className="flex items-center gap-2">
+        <select
+          value={cycleId ?? ''}
+          onChange={(e) => setCycleId(e.target.value ? Number(e.target.value) : undefined)}
+          className="px-3 py-2 border border-stone-200 rounded-lg text-sm bg-white"
         >
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-info-50 rounded-md">
-              <GraduationCap className="h-4 w-4 text-info-600" />
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] uppercase tracking-wide text-neutral-500">FYP1 Unpaired</p>
-              <p className="text-lg font-bold text-neutral-900 leading-none">
-                {data?.students.filter((s) => s.cycle === 'FYP1').length ?? 0}
-              </p>
-            </div>
-          </div>
-        </button>
-        <button
-          onClick={() => setCycleFilter(cycleFilter === 'FYP2' ? 'ALL' : 'FYP2')}
-          className={cn(
-            'flex items-center justify-between px-3 py-2 rounded-md border bg-white transition-colors',
-            cycleFilter === 'FYP2' ? 'ring-2 ring-primary-500 border-primary-300' : 'border-stone-200 hover:bg-neutral-50'
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-accent-50 rounded-md">
-              <GraduationCap className="h-4 w-4 text-accent-600" />
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] uppercase tracking-wide text-neutral-500">FYP2 Unpaired</p>
-              <p className="text-lg font-bold text-neutral-900 leading-none">
-                {data?.students.filter((s) => s.cycle === 'FYP2').length ?? 0}
-              </p>
-            </div>
-          </div>
-        </button>
+          <option value="">All Active Cycles</option>
+          {(cyclesQuery.data?.cycles ?? []).map((c) => (
+            <option key={c.cycleId} value={c.cycleId}>
+              {c.cycleType} · {c.academicYear} Sem {c.semester} · {c.status}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Search */}
@@ -149,11 +122,8 @@ export function UnpairedStudents() {
                         {student.studentId} · {student.programme}
                       </p>
                     </div>
-                    <span className={cn(
-                      'px-1.5 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0',
-                      student.cycle === 'FYP1' ? 'bg-info-50 text-info-700' : 'bg-accent-50 text-accent-700'
-                    )}>
-                      {student.cycle}
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0 bg-neutral-100 text-neutral-700">
+                      {student.cycleCode ?? student.cycle}
                     </span>
                   </div>
 
@@ -201,10 +171,10 @@ export function UnpairedStudents() {
         <Card className="text-center py-8">
           <UserX className="h-10 w-10 text-neutral-300 mx-auto mb-2" />
           <h3 className="font-medium text-neutral-900 mb-1">
-            {searchQuery || cycleFilter !== 'ALL' ? 'No students found' : 'All students are paired!'}
+            {searchQuery || cycleId ? 'No students found' : 'All students are paired!'}
           </h3>
           <p className="text-sm text-neutral-500">
-            {searchQuery || cycleFilter !== 'ALL'
+            {searchQuery || cycleId
               ? 'Try adjusting your filters'
               : 'There are no unpaired students at this time'}
           </p>
