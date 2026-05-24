@@ -16,4 +16,9 @@ public interface SupervisorRequestRepository extends JpaRepository<SupervisorReq
     boolean existsByStudent_UserIdAndSupervisorUser_UserIdAndStatus(Long studentUserId, Long supervisorUserId, RequestStatus status);
     boolean existsByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
     long countByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
+
+    @org.springframework.data.jpa.repository.Query(
+        "select max(r.submittedAt) from SupervisorRequest r where r.student.userId = :studentUserId")
+    java.util.Optional<java.time.LocalDateTime> findMaxSubmittedAtByStudent_UserId(
+        @org.springframework.data.repository.query.Param("studentUserId") Long studentUserId);
 }
