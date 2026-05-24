@@ -229,13 +229,8 @@ public class CommitteeReportService {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map<String, Object> r : rows) {
             String phase = String.valueOf(r.getOrDefault("cycleType", "FYP1"));
-            Long studentUserId = null;
-            // studentId in DTO is mmuId; need userId — find by mmuId via userAccountRepository
-            Object studentMmu = r.get("studentId");
-            if (studentMmu != null) {
-                studentUserId = userAccountRepository.findByMmuId(studentMmu.toString())
-                        .map(UserAccount::getUserId).orElse(null);
-            }
+            Object stuId = r.get("_studentUserId");
+            Long studentUserId = stuId instanceof Number n ? n.longValue() : null;
             int completed = studentUserId != null
                     ? meetingLogComplianceService.completedLogCount(studentUserId, phase) : 0;
             int required = meetingLogComplianceService.requiredLogCount(phase);

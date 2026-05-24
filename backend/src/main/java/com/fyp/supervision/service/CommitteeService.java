@@ -237,12 +237,16 @@ public class CommitteeService {
         }
         if (search != null && !search.isBlank()) {
             String like = "%" + search.toLowerCase().trim() + "%";
-            spec = spec.and((root, q, cb) -> cb.or(
+            spec = spec.and((root, q, cb) -> {
+                var studentJoin = root.join("student", jakarta.persistence.criteria.JoinType.LEFT);
+                var supervisorJoin = root.join("supervisor", jakarta.persistence.criteria.JoinType.LEFT);
+                return cb.or(
                     cb.like(cb.lower(root.get("projectTitle")), like),
-                    cb.like(cb.lower(root.get("student").get("fullName")), like),
-                    cb.like(cb.lower(root.get("student").get("mmuId")), like),
-                    cb.like(cb.lower(root.get("supervisor").get("fullName")), like)
-            ));
+                    cb.like(cb.lower(studentJoin.get("fullName")), like),
+                    cb.like(cb.lower(studentJoin.get("mmuId")), like),
+                    cb.like(cb.lower(supervisorJoin.get("fullName")), like)
+                );
+            });
         }
 
         org.springframework.data.domain.Page<com.fyp.supervision.entity.Project> page =
@@ -312,6 +316,7 @@ public class CommitteeService {
         dto.put("title", project.getProjectTitle());
         dto.put("studentName", student != null ? student.getFullName() : "");
         dto.put("studentId", student != null ? student.getMmuId() : "");
+        dto.put("_studentUserId", student != null ? student.getUserId() : null);
         dto.put("studentEmail", student != null ? student.getEmail() : "");
         dto.put("programme", sp != null && sp.getProgramme() != null ? sp.getProgramme() : "");
         // Legacy field kept for one release; structured fields below replace it.
