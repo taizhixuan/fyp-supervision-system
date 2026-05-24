@@ -921,6 +921,10 @@ export function useCommitteeCycles() {
       const { data } = await apiClient.get('/committee/cycles')
       return data
     },
+    // Dropdown stays fresh without a manual refresh: poll 60s, treat as fresh for 30s.
+    // Window-focus refetch is on by default.
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   })
 }
 
