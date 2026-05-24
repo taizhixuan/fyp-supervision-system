@@ -24,6 +24,7 @@ import {
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { formatDate } from './formatDate'
 
 export interface NotificationDisplay {
   Icon: LucideIcon
@@ -121,7 +122,8 @@ export function getNotificationDisplay(
 }
 
 // One time-format used everywhere. < 1 min: "Just now", < 1h: "12m ago",
-// < 24h: "5h ago", "Yesterday", < 7d: "3d ago", otherwise absolute "12 Mar 2026".
+// < 24h: "5h ago", "Yesterday", < 7d: "3d ago", otherwise absolute "23 May 2026"
+// via the shared formatDate utility.
 export function formatNotificationTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -134,5 +136,5 @@ export function formatNotificationTime(dateString: string): string {
   const diffDay = Math.floor(diffHr / 24)
   if (diffDay === 1) return 'Yesterday'
   if (diffDay < 7) return `${diffDay}d ago`
-  return date.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+  return formatDate(date)
 }

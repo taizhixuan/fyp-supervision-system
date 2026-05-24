@@ -1156,6 +1156,8 @@ export interface StudentAnnouncement {
   publishAt: string
   createdAt: string
   createdBy?: string
+  isRead?: boolean
+  viewCount?: number
   attachments?: StudentAnnouncementAttachment[]
   links?: StudentAnnouncementLink[]
 }
@@ -1169,6 +1171,77 @@ export function useStudentAnnouncements() {
         total: number
       }>('/announcements')
       return data
+    },
+  })
+}
+
+export function useMarkAnnouncementRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (announcementId: number) => {
+      await apiClient.post(`/announcements/${announcementId}/read`)
+      return announcementId
+    },
+    // Optimistic — flip isRead locally before the round-trip lands so the dot
+    // disappears the moment the student opens the detail modal.
+    onMutate: async (announcementId) => {
+      await queryClient.cancelQueries({ queryKey: ['announcements', 'student'] })
+      const previous = queryClient.getQueryData<{ announcements: StudentAnnouncement[]; total: number }>([
+        'announcements',
+        'student',
+      ])
+      if (previous) {
+        queryClient.setQueryData(['announcements', 'student'], {
+          ...previous,
+          announcements: previous.announcements.map((a) =>
+            a.announcementId === announcementId ? { ...a, isRead: true } : a,
+          ),
+        })
+      }
+      return { previous }
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['announcements', 'student'], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'student'] })
+    },
+  })
+}
+
+export function useMarkAllAnnouncementsRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (announcementIds: number[]) => {
+      await apiClient.post('/announcements/mark-all-read', { announcementIds })
+      return announcementIds
+    },
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: ['announcements', 'student'] })
+      const previous = queryClient.getQueryData<{ announcements: StudentAnnouncement[]; total: number }>([
+        'announcements',
+        'student',
+      ])
+      const idSet = new Set(ids)
+      if (previous) {
+        queryClient.setQueryData(['announcements', 'student'], {
+          ...previous,
+          announcements: previous.announcements.map((a) =>
+            idSet.has(a.announcementId) ? { ...a, isRead: true } : a,
+          ),
+        })
+      }
+      return { previous }
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['announcements', 'student'], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'student'] })
     },
   })
 }

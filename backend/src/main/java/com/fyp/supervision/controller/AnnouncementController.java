@@ -68,8 +68,42 @@ public class AnnouncementController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getAnnouncement(@PathVariable Long id) {
-        return ResponseEntity.ok(announcementService.get(id));
+    public ResponseEntity<?> getAnnouncement(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long id) {
+        Long userId = parseUserId(user);
+        return ResponseEntity.ok(announcementService.getForUser(id, userId));
+    }
+
+    @PostMapping("/{id}/read")
+    public ResponseEntity<?> markRead(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long id) {
+        Long userId = parseUserId(user);
+        boolean inserted = announcementService.recordRead(id, userId);
+        return ResponseEntity.ok(Map.of("ok", true, "firstRead", inserted));
+    }
+
+    @PostMapping("/mark-all-read")
+    public ResponseEntity<?> markAllRead(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody Map<String, Object> body) {
+        Long userId = parseUserId(user);
+        Object idsRaw = body == null ? null : body.get("announcementIds");
+        List<Long> ids = new java.util.ArrayList<>();
+        if (idsRaw instanceof List<?> list) {
+            for (Object o : list) {
+                if (o == null) continue;
+                try {
+                    if (o instanceof Number n) ids.add(n.longValue());
+                    else ids.add(Long.parseLong(o.toString()));
+                } catch (NumberFormatException ignored) {
+                    // skip malformed ids — partial success is better than a 400 here
+                }
+            }
+        }
+        int newly = announcementService.markAllRead(userId, ids);
+        return ResponseEntity.ok(Map.of("ok", true, "newlyMarked", newly));
     }
 
     @GetMapping("/{id}/attachments/{attachmentId}")
@@ -95,6 +129,15 @@ public class AnnouncementController {
                     .orElse(false);
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+    private Long parseUserId(UserDetails user) {
+        if (user == null) return null;
+        try {
+            return Long.parseLong(user.getUsername());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }

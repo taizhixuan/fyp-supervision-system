@@ -23,87 +23,6 @@ import { cn } from '@/lib/utils/cn'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { Deadline } from '@/types'
 
-// Sample data
-const SAMPLE_DEADLINES: Deadline[] = [
-  {
-    deadlineId: '1',
-    title: 'Proposal Submission',
-    description: 'Submit final FYP proposal for committee review',
-    dueDate: '2025-02-15T23:59:00Z',
-    type: 'PROPOSAL',
-    priority: 'HIGH',
-    isCompleted: false,
-    reminderSent: true,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '2',
-    title: 'Weekly Log Submission',
-    description: 'Submit supervision log for Week 5',
-    dueDate: '2025-02-01T23:59:00Z',
-    type: 'LOG',
-    priority: 'MEDIUM',
-    isCompleted: true,
-    reminderSent: true,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '3',
-    title: 'Mid-Semester Presentation',
-    description: 'Present FYP progress to supervisor and committee',
-    dueDate: '2025-03-15T14:00:00Z',
-    type: 'PRESENTATION',
-    priority: 'HIGH',
-    isCompleted: false,
-    reminderSent: false,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '4',
-    title: 'Literature Review Draft',
-    description: 'Submit draft of literature review chapter',
-    dueDate: '2025-02-28T23:59:00Z',
-    type: 'REPORT',
-    priority: 'MEDIUM',
-    isCompleted: false,
-    reminderSent: false,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '5',
-    title: 'Supervisor Meeting',
-    description: 'Monthly progress meeting with Dr. Sarah Lee',
-    dueDate: '2025-02-10T10:00:00Z',
-    type: 'MEETING',
-    priority: 'MEDIUM',
-    isCompleted: false,
-    reminderSent: true,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '6',
-    title: 'Final Report Submission',
-    description: 'Submit complete FYP final report',
-    dueDate: '2025-05-31T23:59:00Z',
-    type: 'REPORT',
-    priority: 'HIGH',
-    isCompleted: false,
-    reminderSent: false,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    deadlineId: '7',
-    title: 'Final Presentation',
-    description: 'Final FYP presentation and viva',
-    dueDate: '2025-06-15T09:00:00Z',
-    type: 'PRESENTATION',
-    priority: 'HIGH',
-    isCompleted: false,
-    reminderSent: false,
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-]
-
 type DeadlineType = 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'LOG' | 'MEETING' | 'OTHER'
 
 const typeConfig: Record<DeadlineType, { label: string; color: string; icon: typeof FileText }> = {
@@ -163,8 +82,7 @@ export function DeadlineCalendar() {
 
   const { data, isLoading } = useDeadlines()
 
-  // Use sample data
-  const deadlines = data?.deadlines || SAMPLE_DEADLINES
+  const deadlines = data?.deadlines ?? []
 
   const filteredDeadlines = deadlines.filter((d) =>
     typeFilter === 'all' || d.type === typeFilter
