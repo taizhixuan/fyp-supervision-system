@@ -38,6 +38,13 @@ public class GeneratedReport {
     @Column(name = "file_path", length = 500)
     private String filePath;
 
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String status = "COMPLETED";
+
     @Column(name = "filters_json", columnDefinition = "TEXT")
     private String filtersJson;
 
