@@ -307,7 +307,7 @@ export interface ProjectDetail {
   proposalStatus?: CommitteeProposalStatus
   progress: number
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
-  riskFactors?: string[]
+  riskFactors: string[]
   registeredAt: string
   pairedAt?: string
   engagement?: ProjectEngagement
