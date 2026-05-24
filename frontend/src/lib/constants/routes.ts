@@ -126,7 +126,6 @@ export const ROUTES = {
     DOCUMENTS: '/committee/documents',
     DOCUMENT_UPLOAD: '/committee/documents/upload',
     DOCUMENT_DETAIL: '/committee/documents/:id',
-    DOCUMENT_VERSIONS: '/committee/documents/:id/versions',
     // Project & Pairing
     PROJECTS: '/committee/projects',
     PROJECT_DETAIL: '/committee/projects/:id',

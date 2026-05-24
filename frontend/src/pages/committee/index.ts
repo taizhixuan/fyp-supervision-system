@@ -15,7 +15,6 @@ export { ProposalReviewDetail } from './ProposalReviewDetail'
 // General Documents (UC27)
 export { DocumentsManagement } from './DocumentsManagement'
 export { DocumentUpload } from './DocumentUpload'
-export { DocumentVersions } from './DocumentVersions'
 
 // Project & Pairing Overview (UC28)
 export { ProjectOverview } from './ProjectOverview'
