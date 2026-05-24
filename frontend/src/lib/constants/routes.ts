@@ -133,7 +133,6 @@ export const ROUTES = {
     UNPAIRED_STUDENTS: '/committee/projects/unpaired',
     SUPERVISOR_LOAD: '/committee/projects/supervisor-load',
     SUPERVISOR_LOAD_DETAIL: '/committee/projects/supervisor-load/:id',
-    EXPORT_OVERVIEW: '/committee/projects/export',
     // Reports
     REPORTS: '/committee/reports',
     REPORTS_HISTORY: '/committee/reports/history',

@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants/routes'
 
 // Auth pages - Keep essential pages eager for fast initial load
@@ -97,7 +97,6 @@ const ProjectDetail = lazy(() => import('@/pages/committee/ProjectDetail').then(
 const UnpairedStudents = lazy(() => import('@/pages/committee/UnpairedStudents').then(m => ({ default: m.UnpairedStudents })))
 const SupervisorLoad = lazy(() => import('@/pages/committee/SupervisorLoad').then(m => ({ default: m.SupervisorLoad })))
 const SupervisorLoadDetail = lazy(() => import('@/pages/committee/SupervisorLoadDetail').then(m => ({ default: m.SupervisorLoadDetail })))
-const ExportOverview = lazy(() => import('@/pages/committee/ExportOverview').then(m => ({ default: m.ExportOverview })))
 const ReportsModule = lazy(() => import('@/pages/committee/ReportsModule').then(m => ({ default: m.ReportsModule })))
 const ReportsHistory = lazy(() => import('@/pages/committee/ReportsHistory').then(m => ({ default: m.ReportsHistory })))
 const CommitteeNotificationsCenter = lazy(() => import('@/pages/committee/NotificationsCenter').then(m => ({ default: m.NotificationsCenter })))
@@ -859,12 +858,8 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: ROUTES.COMMITTEE.EXPORT_OVERVIEW,
-        element: (
-          <ProtectedRoute allowedRoles={['FYP_COMMITTEE']}>
-            <ExportOverview />
-          </ProtectedRoute>
-        ),
+        path: '/committee/projects/export',
+        element: <Navigate to="/committee/projects" replace />,
       },
 
       // Reports (UC29)

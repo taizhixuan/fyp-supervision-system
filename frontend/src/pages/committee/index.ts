@@ -23,8 +23,6 @@ export { ProjectDetail } from './ProjectDetail'
 export { UnpairedStudents } from './UnpairedStudents'
 export { SupervisorLoad } from './SupervisorLoad'
 export { SupervisorLoadDetail } from './SupervisorLoadDetail'
-export { ExportOverview } from './ExportOverview'
-
 // Reports (UC29)
 export { ReportsModule } from './ReportsModule'
 export { ReportsHistory } from './ReportsHistory'
