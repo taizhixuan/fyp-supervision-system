@@ -60,11 +60,10 @@ public class CommitteeProjectController {
             List<Map<String, Object>> students = committeeService.getUnpairedStudentDtos(cycleId);
             return ResponseEntity.ok(Map.of("students", students));
         }
-        // No cycleId → union across all ACTIVE cycles
-        List<Map<String, Object>> students = fypCycleRepository
-                .findFirstByStatusOrderByStartDateDesc(CycleStatus.ACTIVE)
-                .map(c -> committeeService.getUnpairedStudentDtos(c.getCycleId()))
-                .orElseGet(List::of);
+        // No cycleId → union across ALL ACTIVE cycles
+        List<Map<String, Object>> students = fypCycleRepository.findByStatus(CycleStatus.ACTIVE).stream()
+                .flatMap(c -> committeeService.getUnpairedStudentDtos(c.getCycleId()).stream())
+                .collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(Map.of("students", students));
     }
 
