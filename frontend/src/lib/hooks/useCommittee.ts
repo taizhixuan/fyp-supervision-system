@@ -573,11 +573,14 @@ const MOCK_REPORTS: GeneratedReport[] = [
   },
 ]
 
+// Mock types mirror the 9 generic types the backend's NotificationService
+// actually emits. Title keywords let getNotificationDisplay distinguish
+// e.g. "Proposal Submitted" vs "Proposal Feedback" within type=PROPOSAL.
 const MOCK_NOTIFICATIONS: CommitteeNotification[] = [
   {
     notificationId: 1,
-    type: 'PROPOSAL_SUBMITTED',
-    title: 'New Proposal Submitted',
+    type: 'PROPOSAL',
+    title: 'Proposal Submitted',
     message: 'Ahmad bin Abdullah submitted proposal "AI-Powered Study Assistant"',
     isRead: false,
     createdAt: '2025-01-20T10:30:00Z',
@@ -587,7 +590,7 @@ const MOCK_NOTIFICATIONS: CommitteeNotification[] = [
   },
   {
     notificationId: 2,
-    type: 'SUPERVISOR_OVERLOAD',
+    type: 'SYSTEM',
     title: 'Supervisor Capacity Alert',
     message: 'Dr. John Smith has exceeded maximum student capacity (10/8)',
     isRead: false,
@@ -598,7 +601,7 @@ const MOCK_NOTIFICATIONS: CommitteeNotification[] = [
   },
   {
     notificationId: 3,
-    type: 'DEADLINE_REMINDER',
+    type: 'DEADLINE',
     title: 'Proposal Review Deadline',
     message: '23 proposals pending review. Deadline: Jan 31, 2025',
     isRead: false,
@@ -607,7 +610,7 @@ const MOCK_NOTIFICATIONS: CommitteeNotification[] = [
   },
   {
     notificationId: 4,
-    type: 'STUDENT_UNPAIRED_ALERT',
+    type: 'REGISTRATION_PENDING',
     title: 'Unpaired Students Alert',
     message: '18 students remain unpaired for FYP1',
     isRead: true,
@@ -616,7 +619,7 @@ const MOCK_NOTIFICATIONS: CommitteeNotification[] = [
   },
   {
     notificationId: 5,
-    type: 'REPORT_READY',
+    type: 'SYSTEM',
     title: 'Report Generated',
     message: 'FYP1 Proposal Status Report is ready for download',
     isRead: true,

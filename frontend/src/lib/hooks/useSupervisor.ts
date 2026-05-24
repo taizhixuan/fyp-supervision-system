@@ -592,11 +592,14 @@ const MOCK_DASHBOARD_STATS: SupervisorDashboardStats = {
   ],
 }
 
+// Mock types mirror the 9 generic types the backend's NotificationService
+// actually emits (REQUEST, MEETING, PROPOSAL, ...). Title keywords let
+// getNotificationDisplay pick a more specific icon at render time.
 const MOCK_NOTIFICATIONS: SupervisorNotification[] = [
   {
     notificationId: 1,
     userId: 'mock-supervisor-001',
-    type: 'NEW_REQUEST',
+    type: 'REQUEST',
     title: 'New Supervision Request',
     message: 'Siti Aminah has submitted a supervision request for your review.',
     isRead: false,
@@ -607,8 +610,8 @@ const MOCK_NOTIFICATIONS: SupervisorNotification[] = [
   {
     notificationId: 2,
     userId: 'mock-supervisor-001',
-    type: 'LOG_SUBMITTED',
-    title: 'Weekly Log Submitted',
+    type: 'MEETING',
+    title: 'Weekly Meeting Log Submitted',
     message: 'Kumar Raj has submitted weekly log #3 for your review.',
     isRead: false,
     relatedEntityId: 1,
@@ -618,7 +621,7 @@ const MOCK_NOTIFICATIONS: SupervisorNotification[] = [
   {
     notificationId: 3,
     userId: 'mock-supervisor-001',
-    type: 'MEETING_REQUEST',
+    type: 'MEETING',
     title: 'Meeting Request',
     message: 'Mei Ling Wong has requested a meeting on Jan 25.',
     isRead: true,
@@ -629,12 +632,12 @@ const MOCK_NOTIFICATIONS: SupervisorNotification[] = [
   {
     notificationId: 4,
     userId: 'mock-supervisor-001',
-    type: 'DOCUMENT_UPLOADED',
-    title: 'New Document',
-    message: 'Nurul Aisyah uploaded UI Mockups v3.',
+    type: 'PROPOSAL',
+    title: 'Proposal Submitted',
+    message: 'Nurul Aisyah submitted her proposal for review.',
     isRead: true,
     relatedEntityId: 4,
-    relatedEntityType: 'document',
+    relatedEntityType: 'proposal',
     createdAt: '2025-01-19T11:00:00Z',
   },
 ]
