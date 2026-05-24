@@ -32,6 +32,21 @@ export interface RecentActivity {
   actor?: string
 }
 
+// Cycle types
+export type CycleStatus = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+
+export interface CycleSummary {
+  cycleId: number
+  cycleCode: string
+  cycleType: 'FYP1' | 'FYP2'
+  academicYear: string
+  semester: number
+  startDate: string
+  endDate: string
+  status: CycleStatus
+  projectCount: number
+}
+
 // Announcement Types
 export type AnnouncementScope = 'ALL' | 'FYP1' | 'FYP2' | 'PROGRAMME_CS' | 'PROGRAMME_SE' | 'PROGRAMME_DS'
 export type CommitteeAnnouncementPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
@@ -195,7 +210,13 @@ export interface ProjectOverview {
   studentId: string
   studentEmail: string
   programme: string
-  cycle: 'FYP1' | 'FYP2'
+  // Legacy field kept for one release; prefer cycleCode/cycleType.
+  cycle: 'FYP1' | 'FYP2' | ''
+  cycleId?: number
+  cycleCode?: string
+  cycleType?: 'FYP1' | 'FYP2'
+  academicYear?: string
+  cycleStatus?: CycleStatus
   supervisorName?: string
   supervisorId?: string
   pairingStatus: PairingStatus
@@ -204,6 +225,7 @@ export interface ProjectOverview {
   progress: number
   lastActivity: string
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  riskFactors: string[]
 }
 
 export interface UnpairedStudent {
@@ -212,7 +234,12 @@ export interface UnpairedStudent {
   fullName: string
   email: string
   programme: string
-  cycle: 'FYP1' | 'FYP2'
+  cycle: 'FYP1' | 'FYP2' | ''
+  cycleId?: number
+  cycleCode?: string
+  cycleType?: 'FYP1' | 'FYP2'
+  academicYear?: string
+  cycleStatus?: CycleStatus
   registeredAt: string
   requestsSent: number
   requestsRejected: number
@@ -239,10 +266,22 @@ export interface SupervisorLoad {
 export interface SupervisorStudentSummary {
   studentId: string
   fullName: string
-  cycle: 'FYP1' | 'FYP2'
+  cycle: 'FYP1' | 'FYP2' | ''
+  cycleId?: number
+  cycleCode?: string
+  cycleType?: 'FYP1' | 'FYP2'
   projectTitle?: string
   progress: number
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+}
+
+export interface ProjectEngagement {
+  lockedLogs: number
+  requiredLogs: number
+  completedMeetings: number
+  lastConductedMeetingAt: string | null
+  proposalStatus: string
+  proposalVersion: number
 }
 
 export interface ProjectDetail {
@@ -254,6 +293,11 @@ export interface ProjectDetail {
   studentEmail: string
   programme: string
   cycle: string
+  cycleId?: number
+  cycleCode?: string
+  cycleType?: 'FYP1' | 'FYP2'
+  academicYear?: string
+  cycleStatus?: CycleStatus
   supervisorId?: string
   supervisorName?: string
   supervisorEmail?: string
@@ -266,6 +310,7 @@ export interface ProjectDetail {
   riskFactors?: string[]
   registeredAt: string
   pairedAt?: string
+  engagement?: ProjectEngagement
   milestones?: ProjectMilestone[]
   recentMeetings?: RecentMeeting[]
   submissions?: ProjectSubmission[]
@@ -338,48 +383,39 @@ export interface ExportOptions {
 
 // Reports Types
 export type ReportType =
-  | 'PROPOSAL_SUMMARY'
-  | 'STUDENT_PROGRESS'
-  | 'SUPERVISOR_LOAD'
   | 'PAIRING_STATUS'
-  | 'MEETING_STATISTICS'
-  | 'LOG_COMPLIANCE'
-  | 'DOCUMENT_SUBMISSIONS'
-  | 'COMPREHENSIVE'
+  | 'SUPERVISOR_LOAD'
+  | 'PROPOSAL_SUMMARY'
+  | 'MEETING_LOG_COMPLIANCE'
+  | 'RISK_ASSESSMENT'
+
+export type ReportFormat = 'CSV' | 'XLSX' | 'PDF'
 
 export interface ReportConfig {
   reportType: ReportType
-  title: string
-  description: string
-  filters: ReportFilters
-  format: 'PDF' | 'EXCEL' | 'CSV'
-  includeCharts: boolean
-  includeSummary: boolean
-}
-
-export interface ReportFilters {
-  cycle?: 'FYP1' | 'FYP2' | 'ALL'
-  programme?: string
-  semester?: string
-  academicYear?: string
-  dateRange?: {
-    start: string
-    end: string
+  format: ReportFormat
+  title?: string
+  filters: {
+    cycleId?: number
+    cycleStatus?: CycleStatus
+    programme?: string
+    dateFrom?: string
+    dateTo?: string
+    supervisorId?: number
   }
-  supervisorId?: string
-  status?: string
 }
 
 export interface GeneratedReport {
   reportId: number
   reportType: ReportType
   title: string
+  status: 'COMPLETED' | 'FAILED' | 'PENDING'
+  format: ReportFormat
+  fileSize: number
+  downloadUrl: string
+  filters: ReportConfig['filters']
   generatedBy: string
   generatedAt: string
-  format: 'PDF' | 'EXCEL' | 'CSV'
-  fileSize: number
-  fileUrl: string
-  filters: ReportFilters
   expiresAt: string
 }
 
