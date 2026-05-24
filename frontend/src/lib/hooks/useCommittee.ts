@@ -11,13 +11,17 @@ import type {
   GeneralDocument,
   CommitteeUploadDocumentData,
   ProjectOverview,
+  CommitteeProjectStatus,
+  PairingStatus,
   UnpairedStudent,
   SupervisorLoad,
   ProjectDetail,
   ReportConfig,
   GeneratedReport,
   CommitteeNotification,
+  CycleSummary,
 } from '@/types'
+import type { CycleStatus } from '@/types/committee'
 
 // Use mock data in development
 const USE_MOCK_DATA = false
@@ -438,48 +442,6 @@ const MOCK_PROJECTS: ProjectOverview[] = [
     progress: 65,
     lastActivity: '2025-01-18T16:00:00Z',
     riskLevel: 'HIGH',
-  },
-]
-
-const MOCK_UNPAIRED_STUDENTS: UnpairedStudent[] = [
-  {
-    studentId: 'CS2021089',
-    userId: 'user-089',
-    fullName: 'Lee Chong Wei',
-    email: 'chongwei@student.mmu.edu.my',
-    programme: 'Computer Science',
-    cycle: 'FYP1',
-    registeredAt: '2024-09-01T00:00:00Z',
-    requestsSent: 3,
-    requestsRejected: 2,
-    lastRequestAt: '2025-01-15T10:00:00Z',
-    preferredAreas: ['Machine Learning', 'Data Analytics'],
-  },
-  {
-    studentId: 'SE2021056',
-    userId: 'user-056',
-    fullName: 'Priya Sharma',
-    email: 'priya@student.mmu.edu.my',
-    programme: 'Software Engineering',
-    cycle: 'FYP1',
-    registeredAt: '2024-09-01T00:00:00Z',
-    requestsSent: 2,
-    requestsRejected: 1,
-    lastRequestAt: '2025-01-10T14:00:00Z',
-    preferredAreas: ['Web Development', 'Mobile Apps'],
-  },
-  {
-    studentId: 'DS2021034',
-    userId: 'user-034',
-    fullName: 'Muhammad Hafiz',
-    email: 'hafiz@student.mmu.edu.my',
-    programme: 'Data Science',
-    cycle: 'FYP1',
-    registeredAt: '2024-09-01T00:00:00Z',
-    requestsSent: 1,
-    requestsRejected: 0,
-    lastRequestAt: '2025-01-18T09:00:00Z',
-    preferredAreas: ['Big Data', 'Cloud Computing'],
   },
 ]
 
@@ -952,32 +914,56 @@ export function useDeleteGeneralDocument() {
 // PROJECT & PAIRING HOOKS
 // ============================================
 
-export function useProjectOverview(filters?: { cycle?: string; programme?: string; status?: string; pairingStatus?: string }) {
+export function useCommitteeCycles() {
   return useQuery({
-    queryKey: [...committeeKeys.projects(), filters],
-    queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        let filtered = [...MOCK_PROJECTS]
-        if (filters?.cycle) {
-          filtered = filtered.filter((p) => p.cycle === filters.cycle)
-        }
-        if (filters?.programme) {
-          filtered = filtered.filter((p) => p.programme.includes(filters.programme!))
-        }
-        if (filters?.status) {
-          filtered = filtered.filter((p) => p.projectStatus === filters.status)
-        }
-        if (filters?.pairingStatus) {
-          filtered = filtered.filter((p) => p.pairingStatus === filters.pairingStatus)
-        }
-        return { projects: filtered, total: filtered.length }
-      }
-      const { data } = await apiClient.get<{ content?: unknown[]; totalElements?: number }>('/committee/projects', { params: filters })
-      // Backend returns Spring Page shape: { content, totalElements, totalPages, number }
-      // Adapt to the component contract: { projects, total }
-      return { projects: (data.content || []) as ProjectOverview[], total: data.totalElements ?? 0 }
+    queryKey: [...committeeKeys.all, 'cycles'] as const,
+    queryFn: async (): Promise<{ cycles: CycleSummary[]; total: number }> => {
+      const { data } = await apiClient.get('/committee/cycles')
+      return data
     },
+  })
+}
+
+export function useProjectOverview(params: {
+  cycleId?: number
+  cycleStatus?: CycleStatus
+  projectStatus?: CommitteeProjectStatus
+  pairingStatus?: PairingStatus
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH'
+  search?: string
+  page?: number
+  size?: number
+} = {}) {
+  return useQuery({
+    queryKey: [...committeeKeys.projects(), params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        content?: ProjectOverview[]
+        totalElements?: number
+        totalPages?: number
+        number?: number
+        size?: number
+      }>('/committee/projects', {
+        params: {
+          cycleId: params.cycleId,
+          cycleStatus: params.cycleStatus,
+          projectStatus: params.projectStatus,
+          pairingStatus: params.pairingStatus,
+          riskLevel: params.riskLevel,
+          search: params.search || undefined,
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+        },
+      })
+      return {
+        projects: data.content ?? [],
+        total: data.totalElements ?? 0,
+        totalPages: data.totalPages ?? 0,
+        page: data.number ?? 0,
+        size: data.size ?? (params.size ?? 20),
+      }
+    },
+    placeholderData: (prev) => prev,
   })
 }
 
@@ -1033,16 +1019,14 @@ export function useProjectDetail(projectId: number) {
   })
 }
 
-export function useUnpairedStudents() {
+export function useUnpairedStudents(cycleId?: number) {
   return useQuery({
-    queryKey: committeeKeys.unpairedStudents(),
+    queryKey: [...committeeKeys.unpairedStudents(), cycleId],
     queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 400))
-        return { students: MOCK_UNPAIRED_STUDENTS, total: MOCK_UNPAIRED_STUDENTS.length }
-      }
-      const { data } = await apiClient.get('/committee/projects/unpaired-students')
-      return data
+      const { data } = await apiClient.get('/committee/projects/unpaired-students', {
+        params: { cycleId },
+      })
+      return data as { students: UnpairedStudent[] }
     },
   })
 }
@@ -1076,15 +1060,36 @@ export function useSupervisorLoadDetail(supervisorId: string) {
   })
 }
 
-export function useExportProjectData() {
+export function useExportProjects() {
   return useMutation({
-    mutationFn: async (options: { format: 'CSV' | 'PDF' | 'EXCEL'; filters?: Record<string, string> }) => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        return { success: true, downloadUrl: `/exports/projects_${Date.now()}.${options.format.toLowerCase()}` }
+    mutationFn: async (options: {
+      format: 'CSV' | 'XLSX' | 'PDF'
+      filters?: {
+        cycleId?: number
+        cycleStatus?: CycleStatus
+        projectStatus?: CommitteeProjectStatus
+        pairingStatus?: PairingStatus
+        riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH'
+        search?: string
       }
-      const { data } = await apiClient.post('/committee/projects/export', options)
-      return data
+    }) => {
+      const response = await apiClient.get('/committee/projects/export', {
+        params: { format: options.format.toLowerCase(), ...(options.filters || {}) },
+        responseType: 'blob',
+      })
+      const blob = response.data as Blob
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const disposition = response.headers['content-disposition'] as string | undefined
+      const match = disposition?.match(/filename="?([^";]+)"?/i)
+      a.download = match ? match[1]
+        : `projects-${new Date().toISOString().slice(0, 10)}.${options.format.toLowerCase()}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      return { success: true }
     },
   })
 }
@@ -1111,19 +1116,34 @@ export function useGenerateReport() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (config: ReportConfig) => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        return {
-          success: true,
-          reportId: Date.now(),
-          downloadUrl: `/reports/generated_${Date.now()}.${config.format.toLowerCase()}`,
-        }
-      }
-      const { data } = await apiClient.post('/committee/reports', config)
-      return data
+      const { data } = await apiClient.post('/committee/reports/generate', config)
+      return data as GeneratedReport
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: committeeKeys.reports() })
+    },
+  })
+}
+
+export function useDownloadReport() {
+  return useMutation({
+    mutationFn: async (report: GeneratedReport) => {
+      const response = await apiClient.get(`/committee/reports/${report.reportId}/download`, {
+        responseType: 'blob',
+      })
+      const blob = response.data as Blob
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const disposition = response.headers['content-disposition'] as string | undefined
+      const match = disposition?.match(/filename="?([^";]+)"?/i)
+      a.download = match ? match[1]
+        : `${report.title.replace(/[^a-z0-9-]+/gi, '_')}.${report.format.toLowerCase()}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      return { success: true }
     },
   })
 }
