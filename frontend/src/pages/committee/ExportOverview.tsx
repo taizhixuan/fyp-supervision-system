@@ -12,12 +12,12 @@ import {
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { useExportProjectData } from '@/lib/hooks/useCommittee'
+import { useExportProjects } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { CommitteeProjectStatus, PairingStatus } from '@/types'
 
-type ExportFormat = 'CSV' | 'PDF'
+type ExportFormat = 'CSV' | 'PDF' | 'XLSX'
 type ExportType = 'PROJECTS' | 'STUDENTS' | 'SUPERVISORS' | 'PAIRINGS' | 'PROGRESS'
 
 const exportTypes: { value: ExportType; label: string; description: string }[] = [
@@ -35,16 +35,20 @@ export function ExportOverview() {
   const [statusFilter, setStatusFilter] = useState<CommitteeProjectStatus | 'ALL'>('ALL')
   const [pairingFilter, setPairingFilter] = useState<PairingStatus | 'ALL'>('ALL')
 
-  const exportMutation = useExportProjectData()
+  const exportMutation = useExportProjects()
+
+  // NOTE: The legacy `type`/`cycle` string filters were dropped during the
+  // committee projects+reports rebuild. This page is going away in the next
+  // pass; for now we just send the supported filter shape so it compiles.
+  void selectedType
+  void cycleFilter
 
   const handleExport = async () => {
     try {
       await exportMutation.mutateAsync({
         format: selectedFormat,
-        type: selectedType,
         filters: {
-          cycle: cycleFilter !== 'ALL' ? cycleFilter : undefined,
-          status: statusFilter !== 'ALL' ? statusFilter : undefined,
+          projectStatus: statusFilter !== 'ALL' ? statusFilter : undefined,
           pairingStatus: pairingFilter !== 'ALL' ? pairingFilter : undefined,
         },
       })
