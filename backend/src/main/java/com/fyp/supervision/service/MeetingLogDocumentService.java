@@ -24,11 +24,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Renders a {@link MeetingLog} into the MMU FCI Meeting Log .docx template,
@@ -144,6 +147,33 @@ public class MeetingLogDocumentService {
             doc.write(out);
             return out.toByteArray();
         }
+    }
+
+    /**
+     * Render every log in the list as a .docx entry inside a zip. Empty list
+     * produces a zip containing a single README.txt explaining the situation.
+     */
+    public byte[] renderLogsAsZip(List<MeetingLog> logs, String phase, String studentMmuId)
+            throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(baos)) {
+            if (logs.isEmpty()) {
+                zip.putNextEntry(new ZipEntry("README.txt"));
+                zip.write(("No meeting logs found for phase " + phase + ".")
+                        .getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            } else {
+                for (MeetingLog log : logs) {
+                    String fileName = "MeetingLog_" + phase + "_M"
+                            + (log.getMeetingNumber() == null ? "X" : log.getMeetingNumber())
+                            + "_" + studentMmuId + ".docx";
+                    zip.putNextEntry(new ZipEntry(fileName));
+                    zip.write(renderLog(log));
+                    zip.closeEntry();
+                }
+            }
+        }
+        return baos.toByteArray();
     }
 
     private Map<String, String> buildHeaderValues(MeetingLog log) {
