@@ -1,0 +1,48 @@
+# Production-style overlay that puts Caddy in front of the stack and removes
+# the direct host port mappings from the app containers. Compose merges this
+# on top of docker-compose.yml when you pass it explicitly:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# The dev-only docker-compose.override.yml is NOT auto-loaded by this command
+# (only `up` without -f loads it), so the production nginx frontend image is
+# used as intended.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - fyp-network
+
+  # Stop publishing the frontend on the host — Caddy reaches it on the
+  # internal docker network instead. Also rebuild with the proxied API URL
+  # so the SPA calls https://api.localhost/api at runtime.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.localhost/api
+    ports: !override []
+
+  backend:
+    ports: !override []
+    environment:
+      APP_BASE_URL: https://app.localhost
+      APP_CORS_ALLOWED_ORIGINS: https://app.localhost
+
+volumes:
+  caddy_data:
+  caddy_config:
