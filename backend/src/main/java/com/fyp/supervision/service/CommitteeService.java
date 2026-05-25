@@ -371,13 +371,37 @@ public class CommitteeService {
             });
         }
 
+        boolean riskFilterActive = riskLevel != null && !riskLevel.isBlank();
+        if (riskFilterActive) {
+            // Risk is derived in-memory, not a DB column. Fetch all matching DB rows,
+            // compute risk per row, filter, then paginate in memory so totalElements
+            // and content both reflect the actual filtered set.
+            java.util.List<com.fyp.supervision.entity.Project> all = projectRepository.findAll(spec);
+            java.util.List<java.util.Map<String, Object>> allDtos = all.stream()
+                    .map(this::buildProjectOverviewDto)
+                    .filter(dto -> riskLevel.equalsIgnoreCase((String) dto.get("riskLevel")))
+                    .collect(java.util.stream.Collectors.toList());
+
+            long total = allDtos.size();
+            int from = Math.min((int) pageable.getOffset(), allDtos.size());
+            int to = Math.min(from + pageable.getPageSize(), allDtos.size());
+            java.util.List<java.util.Map<String, Object>> pageDtos = allDtos.subList(from, to);
+            int totalPages = pageable.getPageSize() > 0
+                    ? (int) Math.ceil((double) total / pageable.getPageSize()) : 0;
+
+            return java.util.Map.of(
+                    "content", pageDtos,
+                    "totalElements", total,
+                    "totalPages", totalPages,
+                    "number", pageable.getPageNumber(),
+                    "size", pageable.getPageSize());
+        }
+
         org.springframework.data.domain.Page<com.fyp.supervision.entity.Project> page =
                 projectRepository.findAll(spec, pageable);
 
         java.util.List<java.util.Map<String, Object>> dtos = page.getContent().stream()
                 .map(this::buildProjectOverviewDto)
-                .filter(dto -> riskLevel == null || riskLevel.isBlank()
-                        || riskLevel.equalsIgnoreCase((String) dto.get("riskLevel")))
                 .collect(java.util.stream.Collectors.toList());
 
         return java.util.Map.of(
