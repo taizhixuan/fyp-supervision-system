@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Shield, Key, Palette, Sun, Moon, Monitor } from 'lucide-react'
+import { User, Shield, Key, Palette, Sun, Moon, Monitor, ShieldCheck, Download, ExternalLink } from 'lucide-react'
 import { Card, Button, Input, AlertBanner } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { authApi } from '@/lib/api/auth'
@@ -14,9 +15,11 @@ import {
 } from '@/lib/validators/auth'
 import { useSuccessToast } from '@/components/ui/Toast'
 import { useTheme, type ThemePreference } from '@/lib/theme/ThemeProvider'
+import { useExportPersonalData } from '@/lib/hooks/useStudent'
+import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
 import { cn } from '@/lib/utils/cn'
 
-type Tab = 'profile' | 'security' | 'appearance'
+type Tab = 'profile' | 'security' | 'privacy' | 'appearance'
 
 export function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -24,6 +27,7 @@ export function AccountSettingsPage() {
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'security' as const, label: 'Security', icon: Shield },
+    { id: 'privacy' as const, label: 'Privacy', icon: ShieldCheck },
     { id: 'appearance' as const, label: 'Appearance', icon: Palette },
   ]
 
@@ -53,7 +57,86 @@ export function AccountSettingsPage() {
       {/* Tab content */}
       {activeTab === 'profile' && <ProfileTab />}
       {activeTab === 'security' && <SecurityTab />}
+      {activeTab === 'privacy' && <PrivacyTab />}
       {activeTab === 'appearance' && <AppearanceTab />}
+    </div>
+  )
+}
+
+function PrivacyTab() {
+  const { user } = useAuth()
+  const exportData = useExportPersonalData()
+  const showSuccessToast = useSuccessToast()
+  const [error, setError] = useState<string | null>(null)
+  const isStudent = user?.role === 'STUDENT'
+
+  const handleExport = async () => {
+    setError(null)
+    try {
+      await exportData.mutateAsync()
+      showSuccessToast('Download started', 'Your personal data file is being downloaded.')
+    } catch (err) {
+      setError(getApiErrorMessage(err))
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheck className="h-5 w-5 text-neutral-400" />
+          <h2 className="text-lg font-semibold text-neutral-900">Privacy Notice</h2>
+        </div>
+        <p className="text-sm text-neutral-500 mb-4">
+          You agreed to version <span className="font-medium text-neutral-700">{PRIVACY_NOTICE_VERSION}</span> of
+          the Privacy Notice when you registered. We&apos;ll reprompt for consent if the notice changes materially.
+        </p>
+        <Link
+          to="/privacy"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+        >
+          Read the full Privacy Notice
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-1">
+          <Download className="h-5 w-5 text-neutral-400" />
+          <h2 className="text-lg font-semibold text-neutral-900">Download my data</h2>
+        </div>
+        <p className="text-sm text-neutral-500 mb-4">
+          Get a JSON file with everything we hold about you — profile, project, proposal, meetings, meeting logs,
+          documents (metadata only), supervision requests, chatbot history, and notifications. This is the PDPA
+          right of access.
+        </p>
+
+        {error && (
+          <AlertBanner
+            variant="error"
+            description={error}
+            dismissible
+            onDismiss={() => setError(null)}
+            className="mb-4"
+          />
+        )}
+
+        {isStudent ? (
+          <Button
+            type="button"
+            onClick={handleExport}
+            isLoading={exportData.isPending}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download my data (JSON)
+          </Button>
+        ) : (
+          <p className="text-xs text-neutral-500 italic">
+            Data export is available for student accounts. Other roles can request a copy through the system
+            administrator.
+          </p>
+        )}
+      </Card>
     </div>
   )
 }
