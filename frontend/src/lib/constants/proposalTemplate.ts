@@ -1,5 +1,5 @@
 // Mirrors the official MMU FCI "FYP Proposal Form" template
-// (Project-info/template/FYP Proposal Form.docx). Single source of truth for
+// (docs-project/template/FYP Proposal Form.docx). Single source of truth for
 // the cascading dropdowns in ProposalWorkspace.
 
 export const PROJECT_STATUS_OPTIONS = [
