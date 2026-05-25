@@ -11,7 +11,7 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import { Card, Button, Input, Badge } from '@/components/ui'
-import { useCreateMeeting } from '@/lib/hooks/useStudent'
+import { useCreateMeeting, useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingPlatform } from '@/types'
@@ -43,7 +43,10 @@ export function MeetingRequest() {
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
   const createMeeting = useCreateMeeting()
-  const supervisorId = '1' // In real app, get from context or prop
+  const { data: dashboard } = useStudentDashboard()
+  // Backend infers the supervisor from the project, but the request type still
+  // requires this field — read the paired supervisor from the dashboard.
+  const supervisorId = dashboard?.supervisorId ?? ''
 
   const {
     register,

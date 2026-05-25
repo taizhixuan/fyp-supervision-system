@@ -186,7 +186,6 @@ export interface SupervisionLogForReview {
   progressSummary: string
   challenges?: string
   nextWeekPlan: string
-  hoursSpent: number
   submittedAt: string
   supervisorComment?: string
   supervisorSignedAt?: string

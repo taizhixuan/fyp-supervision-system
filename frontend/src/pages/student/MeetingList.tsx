@@ -70,12 +70,15 @@ const SAMPLE_MEETINGS: Meeting[] = [
 ]
 
 const statusConfig: Record<MeetingStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; color: string; bgColor: string; icon: typeof Clock }> = {
+  PROPOSED: { label: 'Awaiting Response', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Clock },
   PENDING: { label: 'Pending', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Clock },
   CONFIRMED: { label: 'Confirmed', variant: 'success', color: 'text-success-600', bgColor: 'bg-success-100', icon: CheckCircle },
   RESCHEDULED: { label: 'Rescheduled', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Calendar },
   CANCELLED: { label: 'Cancelled', variant: 'error', color: 'text-error-600', bgColor: 'bg-error-100', icon: AlertCircle },
   COMPLETED: { label: 'Completed', variant: 'default', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: CheckCircle },
+  NO_SHOW: { label: 'No Show', variant: 'default', color: 'text-stone-600', bgColor: 'bg-stone-100', icon: AlertCircle },
 }
+const FALLBACK_STATUS = { label: 'Unknown', variant: 'default' as const, color: 'text-stone-600', bgColor: 'bg-stone-100', icon: Clock }
 
 const platformIcons = {
   ZOOM: Video,
@@ -267,11 +270,12 @@ export function MeetingList() {
 }
 
 function MeetingCard({ meeting }: { meeting: Meeting }) {
-  const config = statusConfig[meeting.status]
+  const config = statusConfig[meeting.status] ?? FALLBACK_STATUS
   const StatusIcon = config.icon
   const PlatformIcon = platformIcons[meeting.platform]
   const isUpcoming = new Date(meeting.scheduledAt) >= new Date()
   const meetingDate = new Date(meeting.scheduledAt)
+  const isPendingLike = meeting.status === 'PENDING' || meeting.status === 'PROPOSED'
 
   return (
     <Link to={ROUTES.STUDENT.MEETING_DETAIL.replace(':id', meeting.meetingId)}>
@@ -280,7 +284,7 @@ function MeetingCard({ meeting }: { meeting: Meeting }) {
         className={cn(
           'transition-all hover:shadow-md group',
           isUpcoming && meeting.status === 'CONFIRMED' && 'border-l-4 border-l-success-500',
-          isUpcoming && meeting.status === 'PENDING' && 'border-l-4 border-l-warning-500',
+          isUpcoming && isPendingLike && 'border-l-4 border-l-warning-500',
           meeting.status === 'CANCELLED' && 'border-l-4 border-l-error-500 opacity-70',
           meeting.status === 'COMPLETED' && 'border-l-4 border-l-stone-300',
           !isUpcoming && meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' && 'border-l-4 border-l-stone-300'

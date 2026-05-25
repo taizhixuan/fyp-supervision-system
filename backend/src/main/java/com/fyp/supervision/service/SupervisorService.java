@@ -750,7 +750,6 @@ public class SupervisorService {
         dto.put("progressSummary", log.getDiscussionSummary() != null ? log.getDiscussionSummary() : "");
         dto.put("challenges", log.getProblemsAndSolutions());
         dto.put("nextWeekPlan", log.getWorkToBeDone() != null ? log.getWorkToBeDone() : "");
-        dto.put("hoursSpent", 0);
         dto.put("submittedAt", log.getSubmittedAt() != null ? log.getSubmittedAt().toString() : "");
         dto.put("supervisorComment", log.getSupervisorComments());
         dto.put("supervisorSignedAt", null);

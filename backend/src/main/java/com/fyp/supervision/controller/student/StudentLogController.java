@@ -2,6 +2,7 @@ package com.fyp.supervision.controller.student;
 
 import com.fyp.supervision.entity.MeetingLog;
 import com.fyp.supervision.service.MeetingLogService;
+import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ public class StudentLogController {
 
     private final StudentService studentService;
     private final MeetingLogService meetingLogService;
+    private final StudentAccessService studentAccessService;
 
     @GetMapping
     public ResponseEntity<?> getLogs(
@@ -38,6 +40,7 @@ public class StudentLogController {
     @PostMapping
     public ResponseEntity<?> createLog(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         MeetingLog log = meetingLogService.createLog(userId, data);
         return ResponseEntity.ok(studentService.buildMeetingLogDto(log));
     }
@@ -45,6 +48,7 @@ public class StudentLogController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         MeetingLog log = meetingLogService.updateLog(id, userId, data);
         return ResponseEntity.ok(studentService.buildMeetingLogDto(log));
     }
@@ -52,6 +56,7 @@ public class StudentLogController {
     @PostMapping("/{id}/submit")
     public ResponseEntity<?> submitLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         MeetingLog log = meetingLogService.submitLog(id, userId);
         return ResponseEntity.ok(studentService.buildMeetingLogDto(log));
     }
@@ -59,6 +64,7 @@ public class StudentLogController {
     @PostMapping("/{id}/sign")
     public ResponseEntity<?> signLog(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
         MeetingLog log = meetingLogService.signLog(id, userId, data);
         return ResponseEntity.ok(studentService.buildMeetingLogDto(log));
     }

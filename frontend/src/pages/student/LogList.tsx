@@ -89,10 +89,14 @@ const SAMPLE_LOGS: SupervisionLog[] = [
 
 const statusConfig: Record<LogStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; icon: typeof Clock; color: string; bgColor: string }> = {
   DRAFT: { label: 'Draft', variant: 'default', icon: Edit3, color: 'text-stone-600', bgColor: 'bg-stone-100' },
+  SUBMITTED: { label: 'Awaiting Review', variant: 'warning', icon: Clock, color: 'text-warning-600', bgColor: 'bg-warning-100' },
   PENDING: { label: 'Pending Review', variant: 'warning', icon: Clock, color: 'text-warning-600', bgColor: 'bg-warning-100' },
   APPROVED: { label: 'Approved', variant: 'success', icon: CheckCircle, color: 'text-success-600', bgColor: 'bg-success-100' },
   REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', icon: AlertCircle, color: 'text-error-600', bgColor: 'bg-error-100' },
+  SUPERVISOR_SIGNED: { label: 'Signed', variant: 'success', icon: CheckCircle, color: 'text-primary-600', bgColor: 'bg-primary-100' },
+  LOCKED: { label: 'Locked', variant: 'default', icon: CheckCircle, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 }
+const LOG_STATUS_FALLBACK = { label: 'Unknown', variant: 'default' as const, icon: Clock, color: 'text-stone-600', bgColor: 'bg-stone-100' }
 
 export function LogList() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -304,7 +308,7 @@ export function LogList() {
 }
 
 function LogCard({ log }: { log: SupervisionLog }) {
-  const config = statusConfig[log.status]
+  const config = statusConfig[log.status] ?? LOG_STATUS_FALLBACK
   const StatusIcon = config.icon
 
   return (

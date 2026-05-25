@@ -9,7 +9,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { Card, Button } from '@/components/ui'
-import { useExportMeetings } from '@/lib/hooks/useStudent'
+import { useExportMeetings, useMeetingList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
@@ -49,6 +49,9 @@ export function MeetingExport() {
   const [exportSuccess, setExportSuccess] = useState(false)
 
   const exportMeetings = useExportMeetings()
+  const { data: meetingsData } = useMeetingList(
+    statusFilter === 'all' ? undefined : { status: statusFilter }
+  )
 
   const handleExport = async () => {
     try {
@@ -66,8 +69,8 @@ export function MeetingExport() {
     }
   }
 
-  // Estimated meeting count (sample)
-  const estimatedCount = 15
+  // Real meeting count from the cached list (filtered by status if set)
+  const estimatedCount = meetingsData?.meetings?.length ?? 0
 
   return (
     <div className="max-w-2xl mx-auto space-y-3 lg:space-y-4">
