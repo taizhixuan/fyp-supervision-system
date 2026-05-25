@@ -89,6 +89,16 @@ class MeetingLogDocumentServiceTest {
                 .build();
     }
 
+    @Test
+    void ticksInPersonCheckboxForPhysicalMode() throws Exception {
+        MeetingLog log = headerSampleLog();   // meetingMode = "PHYSICAL"
+        byte[] bytes = service.renderLog(log);
+
+        String text = extractAllText(bytes);
+        assertThat(text).contains("☑ In-Person");
+        assertThat(text).contains("☐ Online");
+    }
+
     /** Read every w:t element from the rendered DOCX (test helper). */
     private String extractAllText(byte[] bytes) throws java.io.IOException {
         try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
