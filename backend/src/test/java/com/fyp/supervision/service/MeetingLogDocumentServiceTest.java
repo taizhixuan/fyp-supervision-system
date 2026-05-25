@@ -135,7 +135,16 @@ class MeetingLogDocumentServiceTest {
 
     @Test
     void embedsSignaturePictureWhenSignerHasDataUrl() throws Exception {
-        MeetingLog log = headerSampleLog();
+        MeetingLog baseline = headerSampleLog();
+        // Make sure baseline has no signatures.
+        baseline.setSignatures(new java.util.ArrayList<>());
+        byte[] baselineBytes = service.renderLog(baseline);
+        int baselinePictureCount;
+        try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(baselineBytes))) {
+            baselinePictureCount = doc.getAllPictures().size();
+        }
+
+        MeetingLog withSig = headerSampleLog();
         UserAccount signer = new UserAccount();
         signer.setUserId(10L);
         signer.setFullName("Test Student");
@@ -149,12 +158,13 @@ class MeetingLogDocumentServiceTest {
                 .signatureImageUrl("data:image/png;base64," + pngBase64)
                 .signedAt(java.time.LocalDateTime.now())
                 .build();
-        log.setSignatures(new java.util.ArrayList<>(java.util.List.of(sig)));
+        withSig.setSignatures(new java.util.ArrayList<>(java.util.List.of(sig)));
 
-        byte[] bytes = service.renderLog(log);
-        try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
-            long pictureCount = doc.getAllPictures().size();
-            assertThat(pictureCount).isGreaterThan(0);
+        byte[] withSigBytes = service.renderLog(withSig);
+        try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(withSigBytes))) {
+            assertThat(doc.getAllPictures().size())
+                    .as("signature should add at least one picture beyond the template's existing images")
+                    .isGreaterThan(baselinePictureCount);
         }
     }
 
