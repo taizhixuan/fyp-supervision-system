@@ -115,6 +115,23 @@ class MeetingLogDocumentServiceTest {
         assertThat(text).contains("☐ Final Report");
     }
 
+    @Test
+    void writesWorkDetailsAndProblemsAndComments() throws Exception {
+        MeetingLog log = headerSampleLog();
+        log.setWorkDoneDetails("Implemented the login screen.\nFixed two CSS bugs.");
+        log.setWorkToBeDone("Wire signup flow.");
+        log.setProblemsAndSolutions("Token refresh fails. Mitigated by polling.");
+        log.setSupervisorComments("Good progress, keep going.");
+
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+        assertThat(text).contains("Implemented the login screen.");
+        assertThat(text).contains("Fixed two CSS bugs.");
+        assertThat(text).contains("Wire signup flow.");
+        assertThat(text).contains("Token refresh fails.");
+        assertThat(text).contains("Good progress, keep going.");
+    }
+
     /** Read every w:t element from the rendered DOCX (test helper). */
     private String extractAllText(byte[] bytes) throws java.io.IOException {
         try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
