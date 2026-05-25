@@ -40,6 +40,9 @@ public class MeetingLogDocumentService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
+    private static final String CHECKBOX_EMPTY = "☐";   // ☐
+    private static final String CHECKBOX_TICK  = "☑";   // ☑
+
     /** Render a single meeting log into populated DOCX bytes. */
     public byte[] renderLog(MeetingLog log) throws Exception {
         String templatePath = "FYP2".equalsIgnoreCase(log.getFypPhase())
@@ -53,6 +56,16 @@ public class MeetingLogDocumentService {
             for (XWPFTable table : doc.getTables()) {
                 fillHeaderTable(table, headerValues);
             }
+
+            Map<String, Boolean> modeAndType = new LinkedHashMap<>();
+            boolean physical = "PHYSICAL".equalsIgnoreCase(log.getMeetingMode());
+            boolean online = "ONLINE".equalsIgnoreCase(log.getMeetingMode());
+            modeAndType.put("In-Person", physical);
+            modeAndType.put("Online", online);
+            // Project entity has no projectType column today — leave both research/application unchecked.
+            modeAndType.put("Research-based", false);
+            modeAndType.put("Application-based", false);
+            setCheckboxes(doc, modeAndType);
 
             doc.write(out);
             return out.toByteArray();
@@ -112,6 +125,63 @@ public class MeetingLogDocumentService {
     }
 
     private String nz(String s) { return s == null ? "" : s; }
+
+    /**
+     * Tick the checkbox glyph that precedes one of the given labels, untick the
+     * others. Searches every paragraph in every cell of every table, plus body
+     * paragraphs outside tables.
+     */
+    private void setCheckboxes(XWPFDocument doc, Map<String, Boolean> labelToTicked) {
+        for (XWPFTable table : doc.getTables()) {
+            for (XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        rewriteParagraphCheckboxes(p, labelToTicked);
+                    }
+                }
+            }
+        }
+        for (XWPFParagraph p : doc.getParagraphs()) {
+            rewriteParagraphCheckboxes(p, labelToTicked);
+        }
+    }
+
+    private void rewriteParagraphCheckboxes(XWPFParagraph p, Map<String, Boolean> labelToTicked) {
+        String fullText = p.getText();
+        if (fullText == null || fullText.isBlank()) return;
+        boolean changed = false;
+        String newText = fullText;
+        for (Map.Entry<String, Boolean> entry : labelToTicked.entrySet()) {
+            String label = entry.getKey();
+            boolean ticked = entry.getValue();
+            String want = (ticked ? CHECKBOX_TICK : CHECKBOX_EMPTY) + " " + label;
+            String otherGlyph = (ticked ? CHECKBOX_EMPTY : CHECKBOX_TICK) + " " + label;
+            if (newText.contains(otherGlyph)) {
+                newText = newText.replace(otherGlyph, want);
+                changed = true;
+            } else if (newText.contains(label) && !newText.contains(want)) {
+                // Template has no glyph next to label — prepend one.
+                newText = newText.replace(label, want);
+                changed = true;
+            }
+        }
+        if (changed) {
+            String fontFamily = "Times New Roman";
+            Integer fontSize = 11;
+            if (!p.getRuns().isEmpty()) {
+                XWPFRun r0 = p.getRuns().get(0);
+                if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
+                if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
+            }
+            for (int i = p.getRuns().size() - 1; i >= 0; i--) {
+                p.removeRun(i);
+            }
+            XWPFRun r = p.createRun();
+            r.setFontFamily(fontFamily);
+            r.setFontSize(fontSize);
+            r.setText(newText);
+        }
+    }
 
     /**
      * Wipe the cell and write a single paragraph containing the value, preserving
