@@ -373,6 +373,20 @@ public class AuthService {
         return UserDto.fromEntity(user);
     }
 
+    /**
+     * Records the user's acceptance of a (possibly new) privacy notice version.
+     * Used by the in-app re-consent gate when PRIVACY_NOTICE_VERSION is bumped.
+     */
+    @Transactional
+    public UserDto acceptPrivacyNotice(Long userId, String version) {
+        UserAccount user = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        user.setPrivacyNoticeVersion(version == null ? "v1" : version.trim());
+        user.setTermsAcceptedAt(LocalDateTime.now());
+        userAccountRepository.save(user);
+        return UserDto.fromEntity(user);
+    }
+
     @Transactional
     public String forgotPassword(ForgotPasswordRequest request) {
         String genericResponse = "If an account with that email exists, a password reset link has been sent.";

@@ -14,6 +14,8 @@ export interface User {
   lastLoginAt?: string
   createdAt: string
   updatedAt: string
+  /** Privacy-notice version the user agreed to. Null for pre-PDPA seeded accounts; mismatch with PRIVACY_NOTICE_VERSION triggers the re-consent gate. */
+  privacyNoticeVersion?: string | null
 }
 
 export interface LoginRequest {

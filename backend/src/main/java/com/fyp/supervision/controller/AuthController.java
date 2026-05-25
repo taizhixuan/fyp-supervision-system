@@ -70,6 +70,14 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/accept-privacy-notice")
+    public ResponseEntity<UserDto> acceptPrivacyNotice(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody AcceptPrivacyNoticeRequest request) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return ResponseEntity.ok(authService.acceptPrivacyNotice(userId, request.getVersion()));
+    }
+
     @PostMapping("/profile-image")
     public ResponseEntity<?> uploadProfileImage(
             @AuthenticationPrincipal UserDetails userDetails,
