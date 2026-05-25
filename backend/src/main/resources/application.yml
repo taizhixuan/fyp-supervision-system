@@ -63,6 +63,11 @@ app:
   retention:
     notification-days: ${APP_RETENTION_NOTIFICATION_DAYS:180}
     chat-session-days: ${APP_RETENTION_CHAT_SESSION_DAYS:180}
+  # Per-user rate limits for LLM-backed endpoints. Token-bucket; refills greedily over
+  # a rolling 1-hour window. Increase only after measuring real LLM provider cost.
+  rate-limit:
+    chat-per-hour: ${APP_RATE_LIMIT_CHAT_PER_HOUR:60}
+    analyze-per-hour: ${APP_RATE_LIMIT_ANALYZE_PER_HOUR:10}
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
     expiry-ms: ${JWT_EXPIRY_MS:86400000}

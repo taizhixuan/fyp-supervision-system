@@ -112,6 +112,13 @@
             <version>1.78</version>
         </dependency>
 
+        <!-- Rate limiting (token bucket, in-memory; swap to Redis later if multi-instance). -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

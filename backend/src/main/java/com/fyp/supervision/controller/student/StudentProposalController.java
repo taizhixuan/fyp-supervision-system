@@ -9,6 +9,7 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProposalCheckResultRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import com.fyp.supervision.service.ProposalDocumentService;
+import com.fyp.supervision.service.RateLimitService;
 import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import java.util.Map;
 public class StudentProposalController {
     private final StudentService studentService;
     private final AiServiceClient aiServiceClient;
+    private final RateLimitService rateLimitService;
     private final ProposalCheckResultRepository checkResultRepository;
     private final ProposalDocumentService proposalDocumentService;
     private final StudentAccessService studentAccessService;
@@ -152,6 +154,8 @@ public class StudentProposalController {
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
+        // Rate limit — analyser can call an external LLM when LLM_API_KEY is set.
+        rateLimitService.require("analyze", userId);
         return studentService.getProposal(userId)
                 .map(proposal -> {
                     // Build a STABLE prose blob from the structured form fields. The
