@@ -266,7 +266,6 @@ export function StudentDashboard() {
   const pairedSupervisor = dashboard.registrationStatus.supervisor as
     | { fullName?: string; department?: string; email?: string }
     | undefined
-  const nextDeadline = upcomingDeadlines && upcomingDeadlines.length > 0 ? upcomingDeadlines[0] : null
 
   // Trimester window + log compliance + FYP1 result — drives the new dashboard widgets.
   const reg = dashboard.registrationStatus
@@ -456,21 +455,6 @@ export function StudentDashboard() {
                 )}
               </div>
             </div>
-            {nextDeadline && (
-              <div className="text-right">
-                <p className="text-xs text-neutral-500">Next deadline</p>
-                <p className="text-sm font-medium text-neutral-900">
-                  {(nextDeadline as { title?: string }).title ?? '—'}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {new Date((nextDeadline as { dueDate: string }).dueDate).toLocaleDateString('en-MY', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
-            )}
           </div>
         </Card>
       ) : (
@@ -524,10 +508,26 @@ export function StudentDashboard() {
             </div>
           </div>
         </Card>
-        <Card className="border-l-4 border-l-success-500">
+        <Card
+          className={cn(
+            'border-l-4',
+            logsDone >= (logsRequired || 6) ? 'border-l-success-500' : 'border-l-warning-500',
+          )}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-success-600" />
+            <div
+              className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center',
+                logsDone >= (logsRequired || 6)
+                  ? 'bg-success-100 text-success-600'
+                  : 'bg-warning-100 text-warning-600',
+              )}
+            >
+              {logsDone >= (logsRequired || 6) ? (
+                <CheckCircle className="h-5 w-5" />
+              ) : (
+                <ClipboardList className="h-5 w-5" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-2xl font-bold text-neutral-900">
@@ -612,11 +612,11 @@ export function StudentDashboard() {
               <AlertTriangle className="h-5 w-5 text-warning-600" />
             </div>
             <div>
-              <p className="font-medium text-warning-800">Pending Supervision Logs</p>
+              <p className="font-medium text-warning-800">Pending Meeting Logs</p>
               <p className="text-sm text-warning-600">You have {pendingLogs.length} log(s) that need to be completed</p>
             </div>
           </div>
-          <Link to={ROUTES.STUDENT.LOGS}>
+          <Link to={ROUTES.STUDENT.MEETING_LOGS}>
             <Button variant="secondary" size="sm" className="border-warning-300 text-warning-700 hover:bg-warning-100">
               Complete Now
             </Button>
@@ -1120,12 +1120,12 @@ export function StudentDashboard() {
               <p className="font-medium text-neutral-900 text-sm">My Proposal</p>
             </div>
           </Link>
-          <Link to={ROUTES.STUDENT.LOGS}>
+          <Link to={ROUTES.STUDENT.MEETING_LOGS}>
             <div className="bg-white border border-neutral-200 rounded-xl p-4 text-center hover:border-warning-300 hover:shadow-md transition-all group cursor-pointer">
               <div className="w-12 h-12 bg-warning-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-warning-600 transition-colors">
                 <ClipboardList className="h-6 w-6 text-warning-600 group-hover:text-white transition-colors" />
               </div>
-              <p className="font-medium text-neutral-900 text-sm">Supervision Logs</p>
+              <p className="font-medium text-neutral-900 text-sm">Meeting Logs</p>
             </div>
           </Link>
           <Link to={ROUTES.STUDENT.RESOURCES}>
