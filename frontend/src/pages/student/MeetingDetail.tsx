@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { Card, Button, Spinner, Modal } from '@/components/ui'
 import { useMeetingDetail, useCancelMeeting, useStudentRespondToMeeting } from '@/lib/hooks/useStudent'
+import { localDatetimeToLocalDateTime } from '@/lib/utils/datetimeLocal'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { detectPlatformFromUrl, getPlatformInfo } from '@/lib/utils/meetingPlatform'
@@ -190,7 +191,7 @@ export function MeetingDetail() {
       await respondMutation.mutateAsync({
         meetingId: id!,
         action: 'RESCHEDULE',
-        proposedDateTime: new Date(reschedDateTime).toISOString(),
+        proposedDateTime: localDatetimeToLocalDateTime(reschedDateTime),
         reason: reschedReason,
       })
       setShowReschedModal(false)
@@ -232,7 +233,7 @@ export function MeetingDetail() {
   }
 
   const isUpcoming = new Date(displayMeeting.scheduledAt) > new Date()
-  const canCancel = isUpcoming && ['PENDING', 'CONFIRMED'].includes(displayMeeting.status)
+  const canCancel = isUpcoming && ['PENDING', 'PROPOSED', 'RESCHEDULED', 'CONFIRMED'].includes(displayMeeting.status)
   const canCreateLog = displayMeeting.status === 'COMPLETED'
   const meetingDate = new Date(displayMeeting.scheduledAt)
 
@@ -259,9 +260,11 @@ export function MeetingDetail() {
         Back to Meetings
       </Link>
 
-      {/* Response Required (supervisor initiated or rescheduled) */}
-      {(displayMeeting.status === 'PROPOSED' || displayMeeting.status === 'RESCHEDULED') &&
-        displayMeeting.initiatedBy === 'SUPERVISOR' && (
+      {/* Response Required: supervisor proposed a new time (status RESCHEDULED
+          always needs the student's response regardless of original initiator;
+          PROPOSED only when supervisor is the one who made the proposal). */}
+      {(displayMeeting.status === 'RESCHEDULED' ||
+        (displayMeeting.status === 'PROPOSED' && displayMeeting.initiatedBy === 'SUPERVISOR')) && (
         <Card className="border-amber-200 bg-amber-50">
           <h3 className="font-semibold text-amber-900">Action needed: respond to this meeting</h3>
           <p className="mt-1 text-sm text-amber-800">
@@ -489,7 +492,7 @@ export function MeetingDetail() {
           {/* Status Info Card */}
           <Card className={cn(
             'border-l-4',
-            displayMeeting.status === 'PENDING' && 'border-l-warning-500 bg-warning-50/50',
+            (displayMeeting.status === 'PENDING' || displayMeeting.status === 'PROPOSED' || displayMeeting.status === 'RESCHEDULED') && 'border-l-warning-500 bg-warning-50/50',
             displayMeeting.status === 'CONFIRMED' && 'border-l-success-500 bg-success-50/50',
             displayMeeting.status === 'CANCELLED' && 'border-l-error-500 bg-error-50/50',
             displayMeeting.status === 'COMPLETED' && 'border-l-neutral-500 bg-neutral-50/50',
@@ -605,7 +608,7 @@ export function MeetingDetail() {
                   <div className={cn(
                     'w-4 h-4 rounded-full border-2 bg-white z-10',
                     displayMeeting.status === 'CONFIRMED' && 'border-success-500',
-                    displayMeeting.status === 'PENDING' && 'border-warning-500',
+                    (displayMeeting.status === 'PENDING' || displayMeeting.status === 'PROPOSED') && 'border-warning-500',
                     displayMeeting.status === 'CANCELLED' && 'border-error-500',
                     displayMeeting.status === 'COMPLETED' && 'border-neutral-500',
                     displayMeeting.status === 'RESCHEDULED' && 'border-info-500'

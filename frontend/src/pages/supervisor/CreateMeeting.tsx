@@ -100,7 +100,12 @@ export function CreateMeeting() {
         studentName: selectedStudent?.fullName ?? '',
         requestedBy: 'SUPERVISOR',
         status: 'PENDING',
-        proposedDateTime: new Date(data.proposedDateTime).toISOString(),
+        // datetime-local already gives "YYYY-MM-DDTHH:mm" — append seconds
+        // and send as-is. toISOString() would shift to UTC and the backend
+        // (LocalDateTime, no offset) would land it 8h earlier in Malaysia.
+        proposedDateTime: data.proposedDateTime.length === 16
+          ? `${data.proposedDateTime}:00`
+          : data.proposedDateTime,
       })
       navigate(ROUTES.SUPERVISOR.MEETINGS)
     } catch (error) {
