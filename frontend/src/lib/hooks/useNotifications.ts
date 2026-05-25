@@ -2,39 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationsApi } from '@/lib/api/notifications'
 import type { Notification } from '@/types'
 
-// Enable mock data in development mode
-const USE_MOCK_DATA = false
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    notificationId: 1,
-    userId: 'mock-student-001',
-    type: 'MEETING',
-    title: 'Meeting Confirmed',
-    message: 'Your meeting with Dr. Sarah Lee on 25 Jan at 10:00 AM has been confirmed.',
-    isRead: false,
-    createdAt: '2025-01-20T10:30:00Z',
-  },
-  {
-    notificationId: 2,
-    userId: 'mock-student-001',
-    type: 'PROPOSAL',
-    title: 'Proposal Feedback Available',
-    message: 'Your supervisor has provided feedback on your proposal. Please review.',
-    isRead: false,
-    createdAt: '2025-01-19T14:00:00Z',
-  },
-  {
-    notificationId: 3,
-    userId: 'mock-student-001',
-    type: 'ANNOUNCEMENT',
-    title: 'Deadline Reminder',
-    message: 'Proposal submission deadline is in 7 days. Make sure to submit on time.',
-    isRead: true,
-    createdAt: '2025-01-18T09:00:00Z',
-  },
-]
-
 export function useNotifications(limit: number = 10) {
   const queryClient = useQueryClient()
 
@@ -47,9 +14,6 @@ export function useNotifications(limit: number = 10) {
   } = useQuery({
     queryKey: ['notifications', limit],
     queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        return { notifications: MOCK_NOTIFICATIONS.slice(0, limit), total: MOCK_NOTIFICATIONS.length }
-      }
       return notificationsApi.getNotifications({ limit })
     },
     staleTime: 30000, // 30 seconds
@@ -59,13 +23,10 @@ export function useNotifications(limit: number = 10) {
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        return { count: MOCK_NOTIFICATIONS.filter(n => !n.isRead).length }
-      }
       return notificationsApi.getUnreadCount()
     },
     staleTime: 30000,
-    refetchInterval: USE_MOCK_DATA ? false : 60000, // Don't refetch in mock mode
+    refetchInterval: 60000,
   })
 
   // Mark single as read mutation

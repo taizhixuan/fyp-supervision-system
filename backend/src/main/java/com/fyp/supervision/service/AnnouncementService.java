@@ -91,8 +91,13 @@ public class AnnouncementService {
 
     public List<Map<String, Object>> latestForStudent(Long studentUserId, int limit) {
         StudentContext ctx = loadStudentContext(studentUserId);
+        // Fetch all PUBLISHED rows, then audience-filter, then take the requested limit.
+        // The previous findTop5* hard-limited at the DB layer, so an audience filter
+        // that dropped any of the 5 would return fewer items than the caller requested.
         List<Announcement> visible = announcementRepository
-                .findTop5ByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED).stream()
+                .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED,
+                        org.springframework.data.domain.Pageable.unpaged())
+                .getContent().stream()
                 .filter(a -> matchesAudience(a, ctx))
                 .limit(limit)
                 .toList();
