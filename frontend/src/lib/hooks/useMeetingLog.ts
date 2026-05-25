@@ -245,3 +245,58 @@ export function useSupervisorSignMeetingLog() {
     },
   })
 }
+
+/**
+ * Download one meeting log as a populated MMU FCI .docx file.
+ * Triggers a browser download via an in-memory blob URL.
+ */
+export function useExportMeetingLog() {
+  return useMutation({
+    mutationFn: async (logId: string | number) => {
+      const response = await apiClient.get(
+        `/student/meeting-logs/${logId}/export.docx`,
+        { responseType: 'blob' },
+      )
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const disp = (response.headers as Record<string, string>)['content-disposition'] || ''
+      const match = disp.match(/filename="?([^";]+)"?/i)
+      a.download = match?.[1] || `MeetingLog_${logId}.docx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      return true
+    },
+  })
+}
+
+/**
+ * Download all of the student's logs for the given phase as a zipped bundle.
+ */
+export function useExportMeetingLogsBulk() {
+  return useMutation({
+    mutationFn: async (phase: 'FYP1' | 'FYP2') => {
+      const response = await apiClient.get('/student/meeting-logs/export.zip', {
+        params: { phase },
+        responseType: 'blob',
+      })
+      const blob = new Blob([response.data], { type: 'application/zip' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const disp = (response.headers as Record<string, string>)['content-disposition'] || ''
+      const match = disp.match(/filename="?([^";]+)"?/i)
+      a.download = match?.[1] || `MeetingLogs_${phase}.zip`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      return true
+    },
+  })
+}
