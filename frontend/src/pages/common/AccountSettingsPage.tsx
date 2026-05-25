@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Shield, Key, Palette, Sun, Moon, Monitor, ShieldCheck, Download, ExternalLink } from 'lucide-react'
-import { Card, Button, Input, AlertBanner } from '@/components/ui'
+import { User, Shield, Key, Palette, Sun, Moon, Monitor, ShieldCheck, Download, ExternalLink, AlertTriangle, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Card, Button, Input, AlertBanner, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Badge } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { authApi } from '@/lib/api/auth'
 import { getApiErrorMessage } from '@/lib/api/client'
@@ -15,7 +15,12 @@ import {
 } from '@/lib/validators/auth'
 import { useSuccessToast } from '@/components/ui/Toast'
 import { useTheme, type ThemePreference } from '@/lib/theme/ThemeProvider'
-import { useExportPersonalData } from '@/lib/hooks/useStudent'
+import {
+  useExportPersonalData,
+  useMyDeletionRequest,
+  useRequestAccountDeletion,
+  type DeletionRequest,
+} from '@/lib/hooks/useStudent'
 import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
 import { cn } from '@/lib/utils/cn'
 
@@ -137,6 +142,168 @@ function PrivacyTab() {
           </p>
         )}
       </Card>
+
+      {isStudent && <DeletionRequestCard />}
+    </div>
+  )
+}
+
+function DeletionRequestCard() {
+  const { data: existing, isLoading } = useMyDeletionRequest()
+  const requestDeletion = useRequestAccountDeletion()
+  const showSuccessToast = useSuccessToast()
+  const [showModal, setShowModal] = useState(false)
+  const [reason, setReason] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const hasActiveRequest = existing && (existing.status === 'PENDING' || existing.status === 'APPROVED')
+
+  const handleSubmit = async () => {
+    if (!confirmed) return
+    setError(null)
+    try {
+      await requestDeletion.mutateAsync(reason.trim())
+      showSuccessToast('Request submitted', 'An administrator will review your request.')
+      setShowModal(false)
+      setReason('')
+      setConfirmed(false)
+    } catch (err) {
+      setError(getApiErrorMessage(err))
+    }
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-1">
+        <Trash2 className="h-5 w-5 text-neutral-400" />
+        <h2 className="text-lg font-semibold text-neutral-900">Delete my account</h2>
+      </div>
+      <p className="text-sm text-neutral-500 mb-4">
+        Submit a request to delete your account (PDPA right of erasure). An administrator will review the request.
+        On approval, your personal details are anonymised and chat history is permanently deleted. Academic
+        records (project, proposal, meeting logs, documents) are retained anonymised so supervisor records and
+        compliance counts remain intact.
+      </p>
+
+      {isLoading ? (
+        <p className="text-sm text-neutral-500">Checking request status…</p>
+      ) : existing ? (
+        <DeletionRequestStatus request={existing} />
+      ) : null}
+
+      {!hasActiveRequest && (
+        <Button
+          type="button"
+          variant="danger"
+          onClick={() => setShowModal(true)}
+          className="mt-4"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {existing ? 'Submit a new deletion request' : 'Request account deletion'}
+        </Button>
+      )}
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        size="lg"
+      >
+        <ModalHeader>
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <ModalTitle>Request account deletion</ModalTitle>
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 mb-4">
+            <p className="text-sm text-amber-900 font-medium">What happens on approval</p>
+            <ul className="text-xs text-amber-800 list-disc pl-5 mt-2 space-y-1">
+              <li>Your name, email, MMU ID, phone, and profile image are replaced with placeholders</li>
+              <li>Your chatbot history, memory, and preferences are permanently deleted</li>
+              <li>Your notifications and push subscriptions are deleted</li>
+              <li>Your project, proposal, meeting logs, and uploaded documents are kept (academic record)</li>
+              <li>You will no longer be able to sign in</li>
+            </ul>
+          </div>
+
+          <label className="block text-sm font-medium text-neutral-700 mb-1">
+            Reason (optional)
+          </label>
+          <textarea
+            className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border"
+            rows={3}
+            placeholder="Tell us why you're leaving (optional, helps us improve)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+
+          {error && (
+            <AlertBanner
+              variant="error"
+              description={error}
+              dismissible
+              onDismiss={() => setError(null)}
+              className="mt-4"
+            />
+          )}
+
+          <label className="flex items-start gap-2.5 mt-4 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-red-600 focus:ring-red-500"
+            />
+            <span className="text-sm text-neutral-700">
+              I understand that, once an administrator approves this request, I will no longer be able to sign in
+              and my chat history will be permanently deleted.
+            </span>
+          </label>
+        </ModalBody>
+        <ModalFooter>
+          <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={handleSubmit}
+            disabled={!confirmed || requestDeletion.isPending}
+            isLoading={requestDeletion.isPending}
+          >
+            Submit request
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </Card>
+  )
+}
+
+function DeletionRequestStatus({ request }: { request: DeletionRequest }) {
+  const config: Record<DeletionRequest['status'], { icon: typeof Clock; label: string; variant: 'warning' | 'success' | 'error'; tint: string }> = {
+    PENDING:   { icon: Clock,       label: 'Pending admin review', variant: 'warning', tint: 'bg-amber-50 border-amber-200 text-amber-900' },
+    APPROVED:  { icon: CheckCircle, label: 'Approved — processing', variant: 'success', tint: 'bg-emerald-50 border-emerald-200 text-emerald-900' },
+    COMPLETED: { icon: CheckCircle, label: 'Account deleted',        variant: 'success', tint: 'bg-neutral-50 border-neutral-200 text-neutral-900' },
+    REJECTED:  { icon: XCircle,     label: 'Request declined',       variant: 'error',   tint: 'bg-red-50 border-red-200 text-red-900' },
+  }
+  const cfg = config[request.status]
+  const Icon = cfg.icon
+  return (
+    <div className={cn('rounded-md border p-3 mt-2', cfg.tint)}>
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4" />
+        <p className="text-sm font-medium">{cfg.label}</p>
+        <Badge variant={cfg.variant} className="ml-auto">{request.status}</Badge>
+      </div>
+      {request.requestedAt && (
+        <p className="text-xs mt-1 opacity-80">Requested {new Date(request.requestedAt).toLocaleString()}</p>
+      )}
+      {request.decisionNote && (
+        <p className="text-xs mt-2"><span className="font-medium">Note:</span> {request.decisionNote}</p>
+      )}
     </div>
   )
 }
