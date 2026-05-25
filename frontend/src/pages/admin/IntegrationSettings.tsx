@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   RefreshCw,
   Settings,
-  ExternalLink,
   Eye,
   EyeOff,
   Copy,
@@ -47,7 +46,7 @@ export function IntegrationSettings() {
   const { data, isLoading, refetch } = useIntegrations()
   const testMutation = useTestIntegration()
 
-  const handleTestConnection = async (integrationId: string) => {
+  const handleTestConnection = async (integrationId: number) => {
     try {
       await testMutation.mutateAsync(integrationId)
     } catch (error) {
@@ -164,7 +163,7 @@ export function IntegrationSettings() {
                               <StatusIcon className="h-2.5 w-2.5" />
                               {status.label}
                             </span>
-                            {integration.isEnabled ? (
+                            {integration.status === 'ACTIVE' ? (
                               <span className="px-1.5 py-0 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[10px]">
                                 Enabled
                               </span>
@@ -211,26 +210,26 @@ export function IntegrationSettings() {
                           <p className="text-[11px] text-stone-500 mb-1.5 line-clamp-1">{integration.description}</p>
                         )}
 
-                        {/* Error Message */}
-                        {integration.status === 'ERROR' && integration.lastError && (
+                        {/* Error Message — surfaces a failed last-test */}
+                        {integration.lastTestResult === 'FAILED' && (
                           <div className="px-2 py-1 bg-rose-50 border border-rose-200 rounded mb-1.5">
-                            <p className="text-[11px] text-rose-700">{integration.lastError}</p>
+                            <p className="text-[11px] text-rose-700">Last connection test failed.</p>
                           </div>
                         )}
 
-                        {/* Last Checked */}
-                        {integration.lastChecked && (
+                        {/* Last tested */}
+                        {integration.lastTestedAt && (
                           <p className="text-[10px] text-stone-400">
-                            Last checked: {new Date(integration.lastChecked).toLocaleString()}
+                            Last tested: {new Date(integration.lastTestedAt).toLocaleString()}
                           </p>
                         )}
 
-                        {/* Configuration Panel */}
+                        {/* Configuration Panel — reads from `settings` (the real DTO key) */}
                         {selectedIntegration?.integrationId === integration.integrationId && (
                           <div className="mt-2 pt-2 border-t border-stone-200">
                             <h5 className="text-xs font-medium text-stone-900 mb-1.5">Configuration</h5>
                             <div className="space-y-1.5">
-                              {integration.config && Object.entries(integration.config).map(([key, value]) => {
+                              {integration.settings && Object.entries(integration.settings).map(([key, value]) => {
                                 const isSecret = key.toLowerCase().includes('secret') ||
                                   key.toLowerCase().includes('password') ||
                                   key.toLowerCase().includes('key') ||
@@ -273,40 +272,6 @@ export function IntegrationSettings() {
                                 )
                               })}
 
-                              {integration.webhookUrl && (
-                                <div className="flex items-center gap-4">
-                                  <label className="text-sm font-medium text-stone-600 w-32 flex-shrink-0">
-                                    Webhook URL
-                                  </label>
-                                  <div className="flex-1 flex items-center gap-2">
-                                    <Input
-                                      type="text"
-                                      value={integration.webhookUrl}
-                                      readOnly
-                                      className="font-mono text-sm"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => copyToClipboard(integration.webhookUrl!)}
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {integration.documentationUrl && (
-                                <a
-                                  href={integration.documentationUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-sm text-amber-700 hover:text-amber-800"
-                                >
-                                  View Documentation
-                                  <ExternalLink className="h-4 w-4" />
-                                </a>
-                              )}
                             </div>
                           </div>
                         )}
@@ -325,99 +290,6 @@ export function IntegrationSettings() {
         })}
       </div>
 
-      {/* API Keys Section */}
-      <Card className="border-l-4 border-l-amber-500">
-        <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
-          <div className="p-2 bg-amber-100 rounded-lg">
-            <Key className="h-5 w-5 text-amber-700" />
-          </div>
-          API Keys
-        </h3>
-        <p className="text-sm text-stone-600 mb-4">
-          API keys allow external applications to integrate with the FYP system.
-        </p>
-
-        <div className="space-y-3">
-          <div className="p-4 border border-stone-200 rounded-lg bg-stone-50/50 hover:border-stone-300 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h4 className="font-medium text-stone-900">Production API Key</h4>
-                <p className="text-sm text-stone-500">Full access to production endpoints</p>
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full text-xs">
-                Active
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type={showSecrets['prodKey'] ? 'text' : 'password'}
-                value={showSecrets['prodKey'] ? 'fyp_prod_sk_1234567890abcdef' : '••••••••••••••••'}
-                readOnly
-                className="font-mono text-sm bg-white"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleSecretVisibility('prodKey')}
-                className="text-stone-600 hover:text-stone-900"
-              >
-                {showSecrets['prodKey'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard('fyp_prod_sk_1234567890abcdef')}
-                className="text-stone-600 hover:text-stone-900"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-stone-400 mt-2">Created: Jan 15, 2025 • Last used: Today</p>
-          </div>
-
-          <div className="p-4 border border-stone-200 rounded-lg bg-stone-50/50 hover:border-stone-300 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h4 className="font-medium text-stone-900">Test API Key</h4>
-                <p className="text-sm text-stone-500">Limited access for testing</p>
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full text-xs">
-                Active
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type={showSecrets['testKey'] ? 'text' : 'password'}
-                value={showSecrets['testKey'] ? 'fyp_test_sk_abcdef1234567890' : '••••••••••••••••'}
-                readOnly
-                className="font-mono text-sm bg-white"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleSecretVisibility('testKey')}
-                className="text-stone-600 hover:text-stone-900"
-              >
-                {showSecrets['testKey'] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard('fyp_test_sk_abcdef1234567890')}
-                className="text-stone-600 hover:text-stone-900"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-stone-400 mt-2">Created: Jan 10, 2025 • Last used: Yesterday</p>
-          </div>
-        </div>
-
-        <Button variant="secondary" className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-50">
-          <Key className="h-4 w-4 mr-2" />
-          Generate New API Key
-        </Button>
-      </Card>
     </div>
   )
 }

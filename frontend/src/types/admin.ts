@@ -377,6 +377,9 @@ export interface CleanupOptions {
 // Audit Log Types
 // ============================================
 
+// Backend emits domain-specific action strings (USER_APPROVED, CYCLE_ACTIVATED,
+// USER_STATUS_CHANGED, etc.) in addition to the generic CRUD names. Accept any
+// uppercase string and let the UI fall back gracefully for unknown values.
 export type AuditAction =
   | 'CREATE'
   | 'UPDATE'
@@ -384,10 +387,15 @@ export type AuditAction =
   | 'LOGIN'
   | 'LOGOUT'
   | 'VIEW'
+  | 'READ'
   | 'EXPORT'
   | 'IMPORT'
   | 'APPROVE'
   | 'REJECT'
+  | 'LOCK'
+  | 'UNLOCK'
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  | (string & {})
 
 export type AuditEntityType =
   | 'USER'
