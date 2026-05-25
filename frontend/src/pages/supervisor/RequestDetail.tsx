@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisionRequest, useRespondToRequest, useSupervisorProfile } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { assetUrl } from '@/lib/utils/assetUrl'
 import type { RequestStatus } from '@/types'
 
 const statusConfig: Record<RequestStatus, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
@@ -272,9 +273,15 @@ export function RequestDetail() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
+                    <a
+                      href={assetUrl(attachment.storagePath) ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="ghost" size="sm" disabled={!attachment.storagePath}>
+                        View
+                      </Button>
+                    </a>
                   </div>
                 ))}
               </div>

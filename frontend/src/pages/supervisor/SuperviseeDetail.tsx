@@ -232,10 +232,12 @@ export function SuperviseeDetail() {
                   Schedule Meeting
                 </Button>
               </Link>
-              <Button variant="secondary" className="w-full justify-start">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Send Message
-              </Button>
+              <a href={`mailto:${supervisee.email}`} className="block">
+                <Button variant="secondary" className="w-full justify-start">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Email Student
+                </Button>
+              </a>
               <Link to={ROUTES.SUPERVISOR.LOGS} className="block">
                 <Button variant="secondary" className="w-full justify-start">
                   <FileText className="h-4 w-4 mr-2" />
@@ -344,32 +346,52 @@ export function SuperviseeDetail() {
             </Card>
           )}
 
-          {/* Recent Activity - Placeholder */}
+          {/* Recent Activity - derived from real DTO fields */}
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-                <FileText className="h-5 w-5 text-primary-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">Weekly Log Submitted</p>
-                  <p className="text-xs text-neutral-500">Week 3 log submitted on Jan 19, 2025</p>
+            {(() => {
+              const items: Array<{ icon: typeof FileText; iconColor: string; title: string; detail: string }> = []
+              const fmt = (iso?: string | null) => {
+                if (!iso) return null
+                const d = new Date(iso)
+                if (Number.isNaN(d.getTime())) return null
+                return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+              }
+              if (supervisee.lastMeetingDate) {
+                items.push({ icon: Calendar, iconColor: 'text-success-500',
+                  title: 'Last meeting conducted',
+                  detail: fmt(supervisee.lastMeetingDate) ?? '' })
+              }
+              if (supervisee.nextMeetingDate) {
+                items.push({ icon: Calendar, iconColor: 'text-primary-500',
+                  title: 'Upcoming meeting',
+                  detail: fmt(supervisee.nextMeetingDate) ?? '' })
+              }
+              if (supervisee.pendingLogs > 0) {
+                items.push({ icon: FileText, iconColor: 'text-warning-500',
+                  title: `${supervisee.pendingLogs} log${supervisee.pendingLogs === 1 ? '' : 's'} awaiting review`,
+                  detail: `Total submitted: ${supervisee.totalLogs}` })
+              }
+              if (items.length === 0) {
+                return <p className="text-sm text-neutral-500">No recent activity yet.</p>
+              }
+              return (
+                <div className="space-y-3">
+                  {items.map((it, idx) => {
+                    const Icon = it.icon
+                    return (
+                      <div key={idx} className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                        <Icon className={cn('h-5 w-5 mt-0.5', it.iconColor)} />
+                        <div>
+                          <p className="text-sm font-medium text-neutral-900">{it.title}</p>
+                          <p className="text-xs text-neutral-500">{it.detail}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-success-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">Meeting Completed</p>
-                  <p className="text-xs text-neutral-500">Progress review meeting on Jan 15, 2025</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
-                <FolderOpen className="h-5 w-5 text-accent-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">Document Uploaded</p>
-                  <p className="text-xs text-neutral-500">Progress Report uploaded on Jan 10, 2025</p>
-                </div>
-              </div>
-            </div>
+              )
+            })()}
           </Card>
         </div>
       </div>

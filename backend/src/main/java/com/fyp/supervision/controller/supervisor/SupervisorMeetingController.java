@@ -2,7 +2,6 @@ package com.fyp.supervision.controller.supervisor;
 
 import com.fyp.supervision.entity.Meeting;
 import com.fyp.supervision.enums.MeetingStatus;
-import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
@@ -36,6 +35,15 @@ public class SupervisorMeetingController {
         Long userId = Long.parseLong(user.getUsername());
         Meeting meeting = access.requireOwnMeeting(userId, id);
         return ResponseEntity.ok(supervisorService.buildSupervisorMeetingDto(meeting));
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createMeeting(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Map<String, Object> dto = supervisorService.createMeeting(userId, data);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/{id}/respond")

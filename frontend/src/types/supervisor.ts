@@ -151,6 +151,7 @@ export interface SupervisorMeeting {
   meetingId: number
   studentId: string
   studentName: string
+  studentEmail?: string
   title: string
   type: MeetingType
   status: SvMeetingStatus

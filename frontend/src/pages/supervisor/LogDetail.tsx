@@ -20,13 +20,20 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SvLogStatus } from '@/types'
 
-const statusConfig: Record<SvLogStatus, { label: string; color: string; bgColor: string }> = {
+// Accepts the full backend MeetingLogStatus set (DRAFT/SUBMITTED/SUPERVISOR_SIGNED)
+// even though SvLogStatus is narrower — the runtime DTO can carry any of them.
+type SvLogStatusEx = SvLogStatus | 'DRAFT' | 'SUBMITTED' | 'SUPERVISOR_SIGNED'
+const statusConfig: Record<SvLogStatusEx, { label: string; color: string; bgColor: string }> = {
+  DRAFT: { label: 'Draft', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
+  SUBMITTED: { label: 'Awaiting Review', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   PENDING: { label: 'Pending Review', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   APPROVED: { label: 'Approved', color: 'text-success-600', bgColor: 'bg-success-50' },
   REVISION_REQUIRED: { label: 'Needs Revision', color: 'text-orange-600', bgColor: 'bg-orange-50' },
+  SUPERVISOR_SIGNED: { label: 'Signed', color: 'text-primary-600', bgColor: 'bg-primary-50' },
   SIGNED: { label: 'Signed', color: 'text-primary-600', bgColor: 'bg-primary-50' },
   LOCKED: { label: 'Locked', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
 }
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
 
 export function LogDetail() {
   const { id } = useParams<{ id: string }>()
@@ -99,7 +106,7 @@ export function LogDetail() {
     )
   }
 
-  const status = statusConfig[log.status]
+  const status = statusConfig[log.status as SvLogStatusEx] ?? FALLBACK_STATUS
   const canReview = log.status === 'PENDING'
   const canSign = log.status === 'APPROVED' && !log.supervisorSignedAt
 
