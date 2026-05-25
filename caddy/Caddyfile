@@ -1,0 +1,75 @@
+# Caddyfile — HTTPS reverse proxy for the FYP Supervision System.
+#
+# Local dev with the bundled internal CA (no DNS / no Let's Encrypt):
+#   app.localhost  ->  frontend nginx (container :80)
+#   api.localhost  ->  backend spring  (container :8080)
+#
+# Modern Chrome / Firefox auto-resolve *.localhost to 127.0.0.1 (RFC 6761).
+# Trust Caddy's local root once:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml exec caddy \
+#     caddy trust
+#
+# Production: replace app.localhost / api.localhost with your real domains
+# (e.g. app.example.com / api.example.com) and remove `tls internal` — Caddy
+# will auto-issue Let's Encrypt certs over ACME-HTTP-01 on :80.
+
+{
+	# Disable the admin endpoint that ships open by default — we don't need
+	# the runtime API and exposing it on a public host is needless surface.
+	admin off
+	# Email used for Let's Encrypt account when you switch to public certs.
+	# Harmless with `tls internal`.
+	email admin@example.com
+}
+
+# ---------- Frontend (Vite-built SPA served by nginx) -----------------------
+app.localhost {
+	tls internal
+
+	encode zstd gzip
+
+	# Standard hardening — most are HTTPS-only so they belong on the proxy.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		-Server
+	}
+
+	reverse_proxy frontend:80
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# ---------- Backend API (Spring Boot) ---------------------------------------
+api.localhost {
+	tls internal
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Pass the original host/scheme so Spring can build correct redirect URLs
+	# and email links (APP_BASE_URL).
+	reverse_proxy backend:8080 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
