@@ -605,6 +605,43 @@ export function useExportProposalDocx() {
   })
 }
 
+// ==================== PDPA — Right of erasure (account deletion) ===========
+export interface DeletionRequest {
+  requestId: number
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'
+  reason: string | null
+  requestedAt: string | null
+  decidedAt: string | null
+  decidedBy: string | null
+  decisionNote: string | null
+  completedAt: string | null
+}
+
+export function useMyDeletionRequest() {
+  return useQuery({
+    queryKey: ['student', 'me', 'deletion-request'],
+    queryFn: async (): Promise<DeletionRequest | null> => {
+      const response = await apiClient.get<DeletionRequest | Record<string, never>>('/student/me/deletion-request')
+      // Backend returns {} when there's no request — normalise to null.
+      if (!response.data || !(response.data as DeletionRequest).requestId) return null
+      return response.data as DeletionRequest
+    },
+  })
+}
+
+export function useRequestAccountDeletion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (reason: string): Promise<DeletionRequest> => {
+      const response = await apiClient.post<DeletionRequest>('/student/me/deletion-request', { reason })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'me', 'deletion-request'] })
+    },
+  })
+}
+
 // ==================== PDPA — Right of access (data export) ====================
 /**
  * Downloads a JSON file containing all personal data the system holds about
