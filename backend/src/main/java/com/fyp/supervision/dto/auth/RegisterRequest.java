@@ -13,7 +13,10 @@ public class RegisterRequest {
     private String fullName;
 
     @NotBlank
-    @Pattern(regexp = "^\\d{10}$", message = "MMU ID must be exactly 10 digits")
+    @Pattern(
+            regexp = "^(\\d{10}|\\d{3}[A-Za-z]{2}\\d{4}[A-Za-z])$",
+            message = "MMU ID must be 10 digits or in MMU format (e.g. 123AB4567C)"
+    )
     private String mmuId;
 
     @NotBlank

@@ -68,7 +68,7 @@ public class AuthService {
     @Transactional
     public String register(RegisterRequest request) {
         String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
-        String mmuId = request.getMmuId() == null ? "" : request.getMmuId().trim();
+        String mmuId = request.getMmuId() == null ? "" : request.getMmuId().trim().toUpperCase();
 
         if (userAccountRepository.existsByEmail(email)) {
             throw new ConflictException("Email is already registered.");
