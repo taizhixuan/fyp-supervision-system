@@ -25,6 +25,7 @@ import com.fyp.supervision.repository.ProposalVersionRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AiServiceClient;
+import com.fyp.supervision.service.RateLimitService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +62,7 @@ public class StudentChatController {
     private final DeadlineRepository deadlineRepository;
     private final MeetingLogRepository meetingLogRepository;
     private final AiServiceClient aiServiceClient;
+    private final RateLimitService rateLimitService;
 
     @GetMapping
     public ResponseEntity<?> getChat(@AuthenticationPrincipal UserDetails user) {
@@ -108,6 +110,9 @@ public class StudentChatController {
                     "message", "You must consent to AI processing before using the chatbot. Open Account Settings → Privacy."
             ));
         }
+
+        // Rate limit — defends LLM token spend and discourages abusive bursts.
+        rateLimitService.require("chat", userId);
 
         // Get or create session (synchronized prevents double-session race for the same user)
         ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
