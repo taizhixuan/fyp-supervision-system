@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ClipboardList,
@@ -21,6 +21,7 @@ import { useMeetingLogList, useExportMeetingLogsBulk } from '@/lib/hooks/useMeet
 import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { downloadMeetingLogPdf } from '@/lib/utils/pdfGenerator'
 import type { MeetingLog } from '@/types/meetingLog'
 import { MEETING_LOG_STATUS_CONFIG } from '@/types/meetingLog'
 
@@ -284,6 +285,21 @@ interface MeetingLogCardProps {
 function MeetingLogCard({ log }: MeetingLogCardProps) {
   const statusConfig = MEETING_LOG_STATUS_CONFIG[log.status]
   const hasSignatures = log.signatures.length > 0
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false)
+
+  const handleDownloadPdf = async (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (isPdfDownloading) return
+    setIsPdfDownloading(true)
+    try {
+      await downloadMeetingLogPdf(log)
+    } catch (err) {
+      console.error('Failed to generate PDF:', err)
+    } finally {
+      setIsPdfDownloading(false)
+    }
+  }
 
   return (
     <Link to={ROUTES.STUDENT.MEETING_LOG_DETAIL.replace(':id', log.logId)}>
@@ -392,13 +408,13 @@ function MeetingLogCard({ log }: MeetingLogCardProps) {
 
             {log.status === 'LOCKED' && (
               <button
-                onClick={(e) => {
-                  e.preventDefault()
-                }}
-                className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-700"
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isPdfDownloading}
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-700 disabled:opacity-60 disabled:cursor-wait"
               >
                 <Download className="h-3 w-3" />
-                <span>Download PDF</span>
+                <span>{isPdfDownloading ? 'Generating PDF…' : 'Download PDF'}</span>
               </button>
             )}
           </div>
