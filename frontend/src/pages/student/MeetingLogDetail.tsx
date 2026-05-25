@@ -19,7 +19,12 @@ import {
   SignaturePadModal,
   SignatureDisplay,
 } from '@/components/meetingLog'
-import { useMeetingLogDetail, useSignMeetingLog, useSubmitMeetingLog } from '@/lib/hooks/useMeetingLog'
+import {
+  useMeetingLogDetail,
+  useSignMeetingLog,
+  useSubmitMeetingLog,
+  useExportMeetingLog,
+} from '@/lib/hooks/useMeetingLog'
 import { ROUTES } from '@/lib/constants/routes'
 import { MEETING_LOG_STATUS_CONFIG } from '@/types/meetingLog'
 
@@ -31,6 +36,7 @@ export function MeetingLogDetail() {
   const { data: log, isLoading, error } = useMeetingLogDetail(id || '')
   const signMutation = useSignMeetingLog()
   const submitMutation = useSubmitMeetingLog()
+  const exportMutation = useExportMeetingLog()
 
   const handleSign = async (dataUrl: string, sha256Hash: string) => {
     if (!id) return
@@ -53,6 +59,15 @@ export function MeetingLogDetail() {
       await submitMutation.mutateAsync(id)
     } catch (err) {
       // Error handled by mutation
+    }
+  }
+
+  const handleExport = async () => {
+    if (!id) return
+    try {
+      await exportMutation.mutateAsync(id)
+    } catch {
+      // mutation surfaces error via state; no extra handling here
     }
   }
 
@@ -190,13 +205,24 @@ export function MeetingLogDetail() {
         <Badge variant={statusConfig.variant} size="md">
           {statusConfig.label}
         </Badge>
-        {canEdit && (
-          <Link to={ROUTES.STUDENT.MEETING_LOG_EDIT.replace(':id', log.logId)}>
-            <Button variant="secondary" leftIcon={<Edit className="h-4 w-4" />}>
-              Edit
-            </Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {canEdit && (
+            <Link to={ROUTES.STUDENT.MEETING_LOG_EDIT.replace(':id', log.logId)}>
+              <Button variant="secondary" leftIcon={<Edit className="h-4 w-4" />}>
+                Edit
+              </Button>
+            </Link>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExport}
+            isLoading={exportMutation.isPending}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download DOCX
+          </Button>
+        </div>
       </div>
 
       {/* Meeting Log Header */}
