@@ -102,13 +102,23 @@ export function MeetingList() {
     (m) => statusFilter === 'all' || m.status === statusFilter
   )
 
-  const upcomingMeetings = filteredMeetings.filter(
-    (m) => new Date(m.scheduledAt) >= new Date() && m.status !== 'CANCELLED'
-  )
-
-  const pastMeetings = filteredMeetings.filter(
-    (m) => new Date(m.scheduledAt) < new Date() || m.status === 'COMPLETED'
-  )
+  // Categorisation: upcoming = future scheduled time AND still active.
+  // past = scheduled in the past OR resolved (COMPLETED / CANCELLED).
+  // Meetings with no scheduledAt yet (e.g. a fresh PROPOSED without a time)
+  // surface in upcoming so the user notices them.
+  const now = new Date()
+  const upcomingMeetings = filteredMeetings.filter((m) => {
+    if (m.status === 'CANCELLED' || m.status === 'COMPLETED') return false
+    if (!m.scheduledAt) return true
+    const when = new Date(m.scheduledAt)
+    return !Number.isNaN(when.getTime()) && when >= now
+  })
+  const pastMeetings = filteredMeetings.filter((m) => {
+    if (m.status === 'COMPLETED' || m.status === 'CANCELLED') return true
+    if (!m.scheduledAt) return false
+    const when = new Date(m.scheduledAt)
+    return !Number.isNaN(when.getTime()) && when < now
+  })
 
   if (isLoading) {
     return (

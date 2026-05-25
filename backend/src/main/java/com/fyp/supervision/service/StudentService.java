@@ -844,6 +844,8 @@ public class StudentService {
 
         dto.put("title", m.getTitle() != null ? m.getTitle() : "");
         dto.put("agenda", m.getAgenda());
+        dto.put("proposedStartAt", m.getProposedStartAt() != null ? m.getProposedStartAt().toString() : null);
+        dto.put("confirmedStartAt", m.getConfirmedStartAt() != null ? m.getConfirmedStartAt().toString() : null);
         dto.put("scheduledAt", m.getConfirmedStartAt() != null ? m.getConfirmedStartAt().toString() : (m.getProposedStartAt() != null ? m.getProposedStartAt().toString() : ""));
         dto.put("duration", m.getDurationMinutes() != null ? m.getDurationMinutes() : 60);
         dto.put("platform", m.getPlatform() != null ? m.getPlatform() : "OTHER");
@@ -853,6 +855,14 @@ public class StudentService {
         dto.put("notes", m.getNotes());
         dto.put("rescheduleReason", null);
         dto.put("cancelReason", m.getCancelReason());
+        // Who initiated the meeting — 'STUDENT' or 'SUPERVISOR'. Used by the
+        // frontend to decide which actor needs to respond next.
+        String initiatedBy = "STUDENT";
+        if (m.getRequestedBy() != null && m.getProject() != null && m.getProject().getStudent() != null
+                && !m.getRequestedBy().getUserId().equals(m.getProject().getStudent().getUserId())) {
+            initiatedBy = "SUPERVISOR";
+        }
+        dto.put("initiatedBy", initiatedBy);
         dto.put("createdAt", m.getCreatedAt() != null ? m.getCreatedAt().toString() : "");
         dto.put("updatedAt", m.getUpdatedAt() != null ? m.getUpdatedAt().toString() : "");
         return dto;

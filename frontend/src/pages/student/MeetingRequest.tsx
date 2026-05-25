@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,11 +7,17 @@ import {
   ArrowLeft,
   Video,
   MapPin,
-  X,
   CheckCircle,
+  AlertCircle,
+  Calendar as CalendarIcon,
+  Clock,
 } from 'lucide-react'
-import { Card, Button, Input, Badge } from '@/components/ui'
-import { useCreateMeeting, useStudentDashboard } from '@/lib/hooks/useStudent'
+import { Card, Button, Input } from '@/components/ui'
+import {
+  useCreateMeeting,
+  useStudentDashboard,
+  useSupervisorAvailableSlotsRange,
+} from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingPlatform } from '@/types'
@@ -19,7 +25,6 @@ import type { MeetingPlatform } from '@/types'
 const meetingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   agenda: z.string().optional(),
-  duration: z.number().min(15, 'Minimum 15 minutes').max(120, 'Maximum 2 hours'),
   platform: z.enum(['IN_PERSON', 'ZOOM', 'GOOGLE_MEET', 'MICROSOFT_TEAMS', 'OTHER']),
   location: z.string().optional(),
 })
@@ -27,26 +32,53 @@ const meetingSchema = z.object({
 type MeetingFormData = z.infer<typeof meetingSchema>
 
 const PLATFORMS: { value: MeetingPlatform; label: string; icon: typeof Video }[] = [
+  { value: 'IN_PERSON', label: 'In Person', icon: MapPin },
+  { value: 'MICROSOFT_TEAMS', label: 'Microsoft Teams', icon: Video },
   { value: 'ZOOM', label: 'Zoom', icon: Video },
   { value: 'GOOGLE_MEET', label: 'Google Meet', icon: Video },
-  { value: 'MICROSOFT_TEAMS', label: 'Microsoft Teams', icon: Video },
-  { value: 'IN_PERSON', label: 'In Person', icon: MapPin },
   { value: 'OTHER', label: 'Other', icon: Video },
 ]
 
-const DURATIONS = [15, 30, 45, 60, 90, 120]
+const HORIZON_DAYS = 14
+
+function toIsoDateLocal(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function formatTimeShort(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
 
 export function MeetingRequest() {
-  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState<string>('')
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([])
+  const [selectedSlotStart, setSelectedSlotStart] = useState<string | null>(null)
+  const [selectedSlotDuration, setSelectedSlotDuration] = useState<number>(30)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const createMeeting = useCreateMeeting()
   const { data: dashboard } = useStudentDashboard()
-  // Backend infers the supervisor from the project, but the request type still
-  // requires this field — read the paired supervisor from the dashboard.
   const supervisorId = dashboard?.supervisorId ?? ''
+
+  const today = useMemo(() => new Date(), [])
+  const horizon = useMemo(() => {
+    const d = new Date(today)
+    d.setDate(d.getDate() + HORIZON_DAYS)
+    return d
+  }, [today])
+
+  const fromIso = toIsoDateLocal(today)
+  const toIso = toIsoDateLocal(horizon)
+
+  const { data: slotsData, isLoading: loadingSlots } = useSupervisorAvailableSlotsRange(
+    supervisorId,
+    fromIso,
+    toIso
+  )
 
   const {
     register,
@@ -59,59 +91,56 @@ export function MeetingRequest() {
     defaultValues: {
       title: '',
       agenda: '',
-      duration: 30,
-      platform: 'ZOOM',
+      platform: 'IN_PERSON',
     },
   })
 
   const platform = watch('platform')
 
-  // Generate next 14 days for date selection
-  const availableDates = Array.from({ length: 14 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() + i + 1)
-    return date.toISOString().split('T')[0]
-  })
-
-  // Sample time slots
-  const timeSlots = [
-    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-  ]
-
-  const toggleSlot = (time: string) => {
-    if (selectedSlots.includes(time)) {
-      setSelectedSlots(selectedSlots.filter((s) => s !== time))
-    } else if (selectedSlots.length < 3) {
-      setSelectedSlots([...selectedSlots, time])
+  // Build the 14-day grid with per-day slot counts.
+  const dayGrid = useMemo(() => {
+    const out: { date: string; label: string; weekday: string; available: number }[] = []
+    for (let i = 0; i < HORIZON_DAYS; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() + i)
+      const key = toIsoDateLocal(d)
+      const slots = slotsData?.slotsByDay?.[key] ?? []
+      const available = slots.filter((s) => s.available).length
+      out.push({
+        date: key,
+        label: d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' }),
+        weekday: d.toLocaleDateString('en-MY', { weekday: 'short' }),
+        available,
+      })
     }
+    return out
+  }, [today, slotsData])
+
+  const dailySlots = selectedDate ? slotsData?.slotsByDay?.[selectedDate] ?? [] : []
+
+  const handlePickSlot = (start: string, duration: number) => {
+    setSelectedSlotStart(start)
+    setSelectedSlotDuration(duration)
   }
 
   const onSubmit = async (data: MeetingFormData) => {
-    if (selectedSlots.length === 0) {
+    setSubmitError(null)
+    if (!selectedSlotStart) {
+      setSubmitError('Pick a time slot first.')
       return
     }
-
-    const proposedTimes = selectedSlots.map((time) => {
-      const [hours, minutes] = time.split(':')
-      const date = new Date(selectedDate)
-      date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-      return date.toISOString()
-    })
-
     try {
       await createMeeting.mutateAsync({
-        supervisorId,
         title: data.title,
         agenda: data.agenda,
-        proposedTimes,
-        duration: data.duration,
+        proposedStartAt: selectedSlotStart,
+        duration: selectedSlotDuration,
         platform: data.platform,
         location: data.location,
       })
       setSubmitSuccess(true)
-    } catch (err) {
-      // Error handled by mutation
+    } catch (err: any) {
+      setSubmitError(err?.response?.data?.message || err?.message || 'Failed to send request.')
     }
   }
 
@@ -124,7 +153,7 @@ export function MeetingRequest() {
           </div>
           <h2 className="text-xl font-bold text-neutral-900 mb-2">Meeting Request Sent!</h2>
           <p className="text-neutral-600 mb-6">
-            Your meeting request has been sent to your supervisor. You will be notified once they confirm.
+            Your supervisor has been notified and will confirm the slot.
           </p>
           <div className="flex justify-center gap-3">
             <Link to={ROUTES.STUDENT.MEETINGS}>
@@ -140,8 +169,7 @@ export function MeetingRequest() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3 lg:space-y-4">
-      {/* Back Button */}
+    <div className="max-w-3xl mx-auto space-y-3 lg:space-y-4">
       <Link
         to={ROUTES.STUDENT.MEETINGS}
         className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -150,17 +178,16 @@ export function MeetingRequest() {
         Back to Meetings
       </Link>
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">Request Meeting</h1>
-        <p className="text-neutral-600 mt-1">Schedule a meeting with your supervisor</p>
+        <p className="text-neutral-600 mt-1">
+          Pick from your supervisor's published timeslots — no more guessing.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 lg:space-y-4">
-        {/* Meeting Details */}
         <Card>
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Meeting Details</h2>
-
           <div className="space-y-4">
             <Input
               label="Meeting Title"
@@ -182,31 +209,6 @@ export function MeetingRequest() {
               />
             </div>
 
-            {/* Duration */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Duration <span className="text-error-500">*</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {DURATIONS.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setValue('duration', d)}
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      watch('duration') === d
-                        ? 'bg-primary-100 text-primary-700 border-2 border-primary-500'
-                        : 'bg-neutral-100 text-neutral-600 border-2 border-transparent hover:bg-neutral-200'
-                    )}
-                  >
-                    {d} min
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Platform */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Platform <span className="text-error-500">*</span>
@@ -244,114 +246,140 @@ export function MeetingRequest() {
           </div>
         </Card>
 
-        {/* Date & Time Selection */}
         <Card>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Select Date & Time</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-1 flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-primary-600" />
+            Select Date &amp; Time
+          </h2>
           <p className="text-sm text-neutral-500 mb-4">
-            Select a date and up to 3 preferred time slots
+            Pick a day, then choose an open slot from your supervisor's published availability.
           </p>
 
-          {/* Date Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Select Date <span className="text-error-500">*</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availableDates.slice(0, 7).map((date) => {
-                const d = new Date(date)
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6
-                if (isWeekend) return null
-                return (
-                  <button
-                    key={date}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDate(date)
-                      setSelectedSlots([])
-                    }}
-                    className={cn(
-                      'flex flex-col items-center p-3 rounded-lg min-w-[70px] transition-colors',
-                      selectedDate === date
-                        ? 'bg-primary-100 text-primary-700 border-2 border-primary-500'
-                        : 'bg-neutral-100 text-neutral-600 border-2 border-transparent hover:bg-neutral-200'
-                    )}
-                  >
-                    <span className="text-xs">{d.toLocaleDateString('en-MY', { weekday: 'short' })}</span>
-                    <span className="text-lg font-bold">{d.getDate()}</span>
-                    <span className="text-xs">{d.toLocaleDateString('en-MY', { month: 'short' })}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          {loadingSlots && (
+            <p className="text-sm text-neutral-500">Loading available slots…</p>
+          )}
 
-          {/* Time Slots */}
-          {selectedDate && (
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Select Time Slots (up to 3) <span className="text-error-500">*</span>
-              </label>
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {timeSlots.map((time) => (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => toggleSlot(time)}
-                    disabled={!selectedSlots.includes(time) && selectedSlots.length >= 3}
-                    className={cn(
-                      'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                      selectedSlots.includes(time)
-                        ? 'bg-primary-600 text-white'
-                        : selectedSlots.length >= 3
-                        ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                    )}
-                  >
-                    {time}
-                  </button>
-                ))}
+          {!loadingSlots && (
+            <>
+              <div className="mb-5 grid grid-cols-7 gap-2">
+                {dayGrid.map((d) => {
+                  const isSelected = selectedDate === d.date
+                  const disabled = d.available === 0
+                  return (
+                    <button
+                      key={d.date}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => {
+                        setSelectedDate(d.date)
+                        setSelectedSlotStart(null)
+                      }}
+                      className={cn(
+                        'flex flex-col items-center rounded-lg border-2 p-2 transition-colors',
+                        isSelected
+                          ? 'border-primary-500 bg-primary-100 text-primary-700'
+                          : disabled
+                          ? 'border-transparent bg-neutral-50 text-neutral-300 cursor-not-allowed'
+                          : 'border-transparent bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      )}
+                    >
+                      <span className="text-xs">{d.weekday}</span>
+                      <span className="text-lg font-bold">{d.label}</span>
+                      <span
+                        className={cn(
+                          'mt-1 text-[10px] font-medium uppercase tracking-wide',
+                          disabled
+                            ? 'text-neutral-300'
+                            : d.available <= 2
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
+                        )}
+                      >
+                        {disabled ? 'No slots' : `${d.available} slot${d.available === 1 ? '' : 's'}`}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
-              <p className="text-xs text-neutral-500 mt-2">
-                {selectedSlots.length}/3 time slots selected
-              </p>
-            </div>
+
+              {selectedDate && (
+                <div>
+                  <label className="mb-2 flex items-center gap-1 text-sm font-medium text-neutral-700">
+                    <Clock className="h-4 w-4" /> Available slots on{' '}
+                    {new Date(selectedDate).toLocaleDateString('en-MY', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </label>
+                  {dailySlots.length === 0 ? (
+                    <p className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-500">
+                      Your supervisor hasn't published any slots for this day.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                      {dailySlots.map((s) => {
+                        const isSelected = selectedSlotStart === s.start
+                        const disabled = !s.available
+                        const label = `${formatTimeShort(s.start)}–${formatTimeShort(s.end)}`
+                        return (
+                          <button
+                            key={s.start}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => handlePickSlot(s.start, s.durationMinutes)}
+                            className={cn(
+                              'rounded-md border px-2 py-2 text-xs font-medium transition-colors',
+                              isSelected
+                                ? 'border-primary-500 bg-primary-600 text-white'
+                                : disabled
+                                ? 'border-neutral-200 bg-neutral-50 text-neutral-300 line-through cursor-not-allowed'
+                                : 'border-neutral-300 bg-white text-neutral-700 hover:border-primary-400 hover:bg-primary-50'
+                            )}
+                            title={
+                              disabled
+                                ? s.past
+                                  ? 'Past'
+                                  : 'Already taken'
+                                : `${s.durationMinutes}-minute slot`
+                            }
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </Card>
 
-        {/* Selected Summary */}
-        {selectedSlots.length > 0 && (
-          <Card className="bg-primary-50 border-primary-200">
-            <h3 className="font-medium text-primary-900 mb-2">Selected Time Slots</h3>
-            <div className="flex flex-wrap gap-2">
-              {selectedSlots.map((time) => (
-                <Badge key={time} variant="primary" className="pr-1">
-                  {new Date(selectedDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })} at {time}
-                  <button
-                    type="button"
-                    onClick={() => toggleSlot(time)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-primary-700"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <p className="text-xs text-primary-700 mt-2">
-              Your supervisor will choose one of these times
-            </p>
-          </Card>
+        {submitError && (
+          <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            {submitError}
+          </div>
         )}
 
-        {/* Submit */}
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
+        <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
           <p className="text-sm text-neutral-500">
-            Your supervisor will be notified of your request
+            {selectedSlotStart
+              ? `Slot: ${new Date(selectedSlotStart).toLocaleString('en-MY', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })} (${selectedSlotDuration} min)`
+              : 'Pick a slot to enable the request button.'}
           </p>
           <Button
             type="submit"
             variant="primary"
             isLoading={createMeeting.isPending}
-            disabled={!selectedDate || selectedSlots.length === 0}
+            disabled={!selectedSlotStart || !supervisorId}
           >
             Send Request
           </Button>

@@ -24,7 +24,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { Card, Button, Spinner, Modal } from '@/components/ui'
-import { useMeetingDetail, useCancelMeeting } from '@/lib/hooks/useStudent'
+import { useMeetingDetail, useCancelMeeting, useStudentRespondToMeeting } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { detectPlatformFromUrl, getPlatformInfo } from '@/lib/utils/meetingPlatform'
@@ -158,6 +158,48 @@ export function MeetingDetail() {
 
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const cancelMeeting = useCancelMeeting()
+  const respondMutation = useStudentRespondToMeeting()
+  const [reschedDateTime, setReschedDateTime] = useState('')
+  const [reschedReason, setReschedReason] = useState('')
+  const [showReschedModal, setShowReschedModal] = useState(false)
+  const [showDeclineModal, setShowDeclineModal] = useState(false)
+  const [declineReason, setDeclineReason] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  const handleAccept = async () => {
+    setActionError(null)
+    try {
+      await respondMutation.mutateAsync({ meetingId: id!, action: 'ACCEPT' })
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message || err?.message || 'Failed to accept.')
+    }
+  }
+  const handleDeclineSubmit = async () => {
+    setActionError(null)
+    try {
+      await respondMutation.mutateAsync({ meetingId: id!, action: 'DECLINE', reason: declineReason })
+      setShowDeclineModal(false)
+      setDeclineReason('')
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message || err?.message || 'Failed to decline.')
+    }
+  }
+  const handleReschedSubmit = async () => {
+    setActionError(null)
+    try {
+      await respondMutation.mutateAsync({
+        meetingId: id!,
+        action: 'RESCHEDULE',
+        proposedDateTime: new Date(reschedDateTime).toISOString(),
+        reason: reschedReason,
+      })
+      setShowReschedModal(false)
+      setReschedDateTime('')
+      setReschedReason('')
+    } catch (err: any) {
+      setActionError(err?.response?.data?.message || err?.message || 'Failed to reschedule.')
+    }
+  }
 
   // Use sample data
   const displayMeeting = meeting || SAMPLE_MEETING
@@ -216,6 +258,45 @@ export function MeetingDetail() {
         <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
         Back to Meetings
       </Link>
+
+      {/* Response Required (supervisor initiated or rescheduled) */}
+      {(displayMeeting.status === 'PROPOSED' || displayMeeting.status === 'RESCHEDULED') &&
+        displayMeeting.initiatedBy === 'SUPERVISOR' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <h3 className="font-semibold text-amber-900">Action needed: respond to this meeting</h3>
+          <p className="mt-1 text-sm text-amber-800">
+            Your supervisor proposed{' '}
+            {displayMeeting.proposedStartAt
+              ? new Date(displayMeeting.proposedStartAt).toLocaleString('en-MY', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'a meeting time'}
+            . Accept, decline, or propose a new time.
+          </p>
+          {actionError && (
+            <p className="mt-2 text-sm text-rose-700">{actionError}</p>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="primary" onClick={handleAccept} isLoading={respondMutation.isPending}>
+              Accept
+            </Button>
+            <Button variant="secondary" onClick={() => setShowReschedModal(true)}>
+              Reschedule
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeclineModal(true)}
+              className="!border-rose-300 !text-rose-700 hover:!bg-rose-50"
+            >
+              Decline
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Hero Header */}
       <div className={cn(
@@ -643,6 +724,72 @@ export function MeetingDetail() {
               className="flex-1"
             >
               Cancel Meeting
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reschedule Modal */}
+      <Modal isOpen={showReschedModal} onClose={() => setShowReschedModal(false)} size="md">
+        <div className="p-6">
+          <h2 className="mb-2 text-xl font-bold text-neutral-900">Propose a new time</h2>
+          <p className="mb-4 text-sm text-neutral-600">Your supervisor will be notified.</p>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">New date &amp; time</label>
+          <input
+            type="datetime-local"
+            value={reschedDateTime}
+            onChange={(e) => setReschedDateTime(e.target.value)}
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2"
+          />
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Reason (optional)</label>
+          <textarea
+            value={reschedReason}
+            onChange={(e) => setReschedReason(e.target.value)}
+            rows={3}
+            className="mb-4 w-full resize-none rounded-md border border-neutral-300 px-3 py-2"
+            placeholder="e.g., I have a class conflict at that time…"
+          />
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={() => setShowReschedModal(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleReschedSubmit}
+              isLoading={respondMutation.isPending}
+              disabled={!reschedDateTime}
+              className="flex-1"
+            >
+              Propose new time
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Decline Modal */}
+      <Modal isOpen={showDeclineModal} onClose={() => setShowDeclineModal(false)} size="md">
+        <div className="p-6">
+          <h2 className="mb-2 text-xl font-bold text-neutral-900">Decline meeting</h2>
+          <p className="mb-4 text-sm text-neutral-600">Tell your supervisor briefly why.</p>
+          <textarea
+            value={declineReason}
+            onChange={(e) => setDeclineReason(e.target.value)}
+            rows={3}
+            className="mb-4 w-full resize-none rounded-md border border-neutral-300 px-3 py-2"
+            placeholder="Reason for declining…"
+          />
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={() => setShowDeclineModal(false)} className="flex-1">
+              Keep
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeclineSubmit}
+              isLoading={respondMutation.isPending}
+              disabled={!declineReason.trim()}
+              className="flex-1"
+            >
+              Decline
             </Button>
           </div>
         </div>

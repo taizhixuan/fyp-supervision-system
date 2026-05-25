@@ -64,10 +64,17 @@ export function MeetingManagement() {
     )
   })
 
-  const upcomingMeetings = filteredMeetings?.filter(
-    (m) => m.status === 'CONFIRMED' && new Date(m.confirmedDateTime!) > new Date()
+  const now = new Date()
+  const upcomingMeetings = filteredMeetings?.filter((m) => {
+    if (m.status !== 'CONFIRMED') return false
+    const dt = m.confirmedDateTime || m.proposedDateTime
+    return dt ? new Date(dt) > now : false
+  })
+  // Backend uses 'PROPOSED' for student-initiated meetings; the SvMeetingStatus
+  // union still calls them 'PENDING'. Count both as awaiting response.
+  const pendingMeetings = filteredMeetings?.filter(
+    (m) => m.status === 'PENDING' || (m.status as string) === 'PROPOSED' || (m.status as string) === 'RESCHEDULED'
   )
-  const pendingMeetings = filteredMeetings?.filter((m) => m.status === 'PENDING')
 
   if (isLoading) {
     return (

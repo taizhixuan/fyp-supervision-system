@@ -133,6 +133,7 @@ const supervisorNavGroups: NavGroup[] = [
     items: [
       { label: 'Supervisees', href: ROUTES.SUPERVISOR.SUPERVISEES, icon: <Users className="h-5 w-5" /> },
       { label: 'Meetings', href: ROUTES.SUPERVISOR.MEETINGS, icon: <Calendar className="h-5 w-5" /> },
+      { label: 'My Availability', href: ROUTES.SUPERVISOR.AVAILABILITY, icon: <Clock className="h-5 w-5" /> },
       { label: 'Meeting Logs', href: ROUTES.SUPERVISOR.MEETING_LOGS, icon: <ClipboardList className="h-5 w-5" /> },
       { label: 'Documents', href: ROUTES.SUPERVISOR.DOCUMENTS, icon: <FolderOpen className="h-5 w-5" /> },
     ],
