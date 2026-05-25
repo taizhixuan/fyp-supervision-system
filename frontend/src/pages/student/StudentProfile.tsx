@@ -421,7 +421,10 @@ export function StudentProfile() {
           {/* Basic Info */}
           <div className="flex-1">
             <h2 className="text-xl font-bold text-neutral-900">{displayProfile.fullName}</h2>
-            <p className="text-neutral-600">{displayProfile.studentId}</p>
+            <p className="text-neutral-600 mt-0.5">
+              <span className="text-xs uppercase tracking-wider text-neutral-500 mr-1.5">MMU ID</span>
+              <span className="font-mono">{displayProfile.studentId}</span>
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {displayProfile.programCode && <Badge variant="primary">{displayProfile.programCode}</Badge>}
               {displayProfile.specialisation && (
