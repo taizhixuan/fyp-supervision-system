@@ -104,6 +104,13 @@ public class AuthService {
 
         UserStatus initialStatus = preApproved ? UserStatus.ACTIVE : UserStatus.PENDING;
 
+        // Consent capture (PDPA). The DTO already enforces acceptedPrivacyNotice == true
+        // via @AssertTrue, so reaching here means the user ticked the box. Record the
+        // exact timestamp + version they agreed to for audit.
+        String pnVersion = request.getPrivacyNoticeVersion() == null
+                ? "v1"
+                : request.getPrivacyNoticeVersion().trim();
+
         UserAccount user = UserAccount.builder()
                 .mmuId(mmuId)
                 .email(email)
@@ -112,6 +119,8 @@ public class AuthService {
                 .phone(request.getPhone())
                 .role(role)
                 .status(initialStatus)
+                .termsAcceptedAt(LocalDateTime.now())
+                .privacyNoticeVersion(pnVersion)
                 .build();
 
         userAccountRepository.save(user);

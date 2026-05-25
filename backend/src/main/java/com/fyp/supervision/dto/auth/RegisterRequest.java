@@ -39,4 +39,11 @@ public class RegisterRequest {
 
     /** Student-only. The 4-digit calendar year the student joined the programme. */
     private Integer intakeYear;
+
+    /** Must be true — proves the user ticked the consent checkbox before submitting. */
+    @AssertTrue(message = "You must accept the Privacy Notice to register")
+    private boolean acceptedPrivacyNotice;
+
+    /** Version string of the privacy notice the user agreed to. Persisted for audit. */
+    private String privacyNoticeVersion;
 }

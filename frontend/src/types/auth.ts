@@ -42,7 +42,14 @@ export interface RegisterRequest {
   specialisation?: string
   /** Student-only. Backend ignores it for non-STUDENT roles. */
   intakeYear?: number
+  /** Required by the backend — proves the user ticked the consent checkbox. */
+  acceptedPrivacyNotice: boolean
+  /** Version of the privacy notice the user agreed to. */
+  privacyNoticeVersion: string
 }
+
+/** Bump this when the privacy notice content materially changes. */
+export const PRIVACY_NOTICE_VERSION = 'v1'
 
 export interface ForgotPasswordRequest {
   email: string

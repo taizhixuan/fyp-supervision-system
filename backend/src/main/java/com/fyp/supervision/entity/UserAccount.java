@@ -65,6 +65,14 @@ public class UserAccount {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /** When the user ticked "I agree to the Privacy Notice" — null for pre-V42 seeded accounts. */
+    @Column(name = "terms_accepted_at")
+    private LocalDateTime termsAcceptedAt;
+
+    /** Which version of the privacy notice they consented to. Lets us re-prompt on material changes. */
+    @Column(name = "privacy_notice_version", length = 20)
+    private String privacyNoticeVersion;
+
     @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private StudentProfile studentProfile;
