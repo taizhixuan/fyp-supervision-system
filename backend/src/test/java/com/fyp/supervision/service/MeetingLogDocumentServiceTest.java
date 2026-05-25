@@ -202,6 +202,137 @@ class MeetingLogDocumentServiceTest {
         assertThat(foundReadme).isTrue();
     }
 
+    @Test
+    void emptyProgrammeDoesNotProduceLeadingSlash() throws Exception {
+        com.fyp.supervision.entity.StudentProfile sp = new com.fyp.supervision.entity.StudentProfile();
+        sp.setProgramme(null);
+        sp.setSpecialisation("Software Engineering");
+        Mockito.when(studentProfileRepository.findById(10L))
+                .thenReturn(java.util.Optional.of(sp));
+
+        MeetingLog log = headerSampleLog();
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        assertThat(text).contains("Software Engineering");
+        assertThat(text).doesNotContain(" / Software Engineering");
+        assertThat(text).doesNotContain("/ Software Engineering");
+    }
+
+    @Test
+    void programmeAndSpecialisationRenderTogetherWhenBothPresent() throws Exception {
+        com.fyp.supervision.entity.StudentProfile sp = new com.fyp.supervision.entity.StudentProfile();
+        sp.setProgramme("Bachelor of Computer Science");
+        sp.setSpecialisation("Software Engineering");
+        Mockito.when(studentProfileRepository.findById(10L))
+                .thenReturn(java.util.Optional.of(sp));
+
+        MeetingLog log = headerSampleLog();
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        assertThat(text).contains("Bachelor of Computer Science / Software Engineering");
+    }
+
+    @Test
+    void trimesterHeaderPlaceholdersAreSubstituted() throws Exception {
+        // Meeting on 15 May 2026 → "May / June 2026" with Trimester ID blanked
+        MeetingLog log = headerSampleLog();
+        log.setMeetingDate(java.time.LocalDate.of(2026, 5, 15));
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        assertThat(text).contains("May");
+        assertThat(text).contains("June");
+        assertThat(text).contains("2026");
+        assertThat(text).contains("__________");                 // student-fill blank
+        assertThat(text).doesNotContain("[Month of start date]");
+        assertThat(text).doesNotContain("[Next Month of start date]");
+        assertThat(text).doesNotContain("[Type by student later]");
+    }
+
+    @Test
+    void sectionContentRunsUseElevenPointFont() throws Exception {
+        MeetingLog log = headerSampleLog();
+        log.setWorkDoneDetails("UNIQUE_WORKDONE_TOKEN body content here.");
+        byte[] bytes = service.renderLog(log);
+
+        try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
+            boolean found = false;
+            for (var table : doc.getTables()) {
+                for (var row : table.getRows()) {
+                    for (var cell : row.getTableCells()) {
+                        for (var p : cell.getParagraphs()) {
+                            for (var r : p.getRuns()) {
+                                String t = r.getText(0);
+                                if (t != null && t.contains("UNIQUE_WORKDONE_TOKEN")) {
+                                    found = true;
+                                    assertThat(r.getFontSize())
+                                            .as("content run should be 11pt, not the template's 7pt placeholder font")
+                                            .isEqualTo(11);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            assertThat(found).as("token should appear in rendered docx").isTrue();
+        }
+    }
+
+    @Test
+    void commentsDoNotOverwriteSatisfactoryRow() throws Exception {
+        MeetingLog log = headerSampleLog();
+        log.setSupervisorComments("UNIQUE_COMMENTS_TOKEN supervisor comments.");
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        assertThat(text).contains("UNIQUE_COMMENTS_TOKEN supervisor comments.");
+        // The "Not Satisfactory" / "Satisfactory" labels must still be present —
+        // they live in row i+1, comments go to row i+2.
+        assertThat(text).contains("Not Satisfactory");
+        assertThat(text).contains("Satisfactory");
+    }
+
+    @Test
+    void supervisorSignatureTicksSatisfactoryButNotNotSatisfactory() throws Exception {
+        MeetingLog log = headerSampleLog();
+        UserAccount supervisorSigner = new UserAccount();
+        supervisorSigner.setUserId(20L);
+        supervisorSigner.setFullName("Dr Test Supervisor");
+        String pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+        MeetingLogSignature sig = MeetingLogSignature.builder()
+                .signatureId(99L)
+                .signer(supervisorSigner)
+                .signerRole("SUPERVISOR")
+                .signatureImageUrl("data:image/png;base64," + pngBase64)
+                .signedAt(java.time.LocalDateTime.now())
+                .build();
+        log.setSignatures(new java.util.ArrayList<>(java.util.List.of(sig)));
+
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        // Satisfactory ticked, Not Satisfactory left empty
+        assertThat(text).contains("☑ Satisfactory");
+        assertThat(text).contains("☐ Not Satisfactory");
+        // BUG GUARD: "Not Satisfactory" must NOT carry a tick glyph
+        assertThat(text).doesNotContain("Not ☑ Satisfactory");
+        assertThat(text).doesNotContain("☑ Not Satisfactory");
+    }
+
+    @Test
+    void noSignatureKeepsBothSatisfactoryBoxesEmpty() throws Exception {
+        MeetingLog log = headerSampleLog();
+        log.setSignatures(new java.util.ArrayList<>());
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+
+        assertThat(text).contains("☐ Satisfactory");
+        assertThat(text).contains("☐ Not Satisfactory");
+        assertThat(text).doesNotContain("☑ Satisfactory");
+    }
+
     /** Read every w:t element from the rendered DOCX (test helper). */
     private String extractAllText(byte[] bytes) throws java.io.IOException {
         try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {

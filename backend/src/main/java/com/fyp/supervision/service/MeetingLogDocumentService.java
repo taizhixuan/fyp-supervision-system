@@ -25,10 +25,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -49,9 +51,12 @@ public class MeetingLogDocumentService {
     private final FileStorageService fileStorageService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    private static final DateTimeFormatter MONTH_FMT =
+            DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH);
 
     private static final String CHECKBOX_EMPTY = "☐";   // ☐
     private static final String CHECKBOX_TICK  = "☑";   // ☑
+    private static final String TRIMESTER_ID_BLANK = "__________";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -110,6 +115,8 @@ public class MeetingLogDocumentService {
              XWPFDocument doc = new XWPFDocument(in);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
+            fillBodyPlaceholders(doc, log);
+
             for (XWPFTable table : doc.getTables()) {
                 fillHeaderTable(table, headerValues);
             }
@@ -137,10 +144,7 @@ public class MeetingLogDocumentService {
 
             boolean satisfactory = log.getSignatures() != null && log.getSignatures().stream()
                     .anyMatch(s -> "SUPERVISOR".equalsIgnoreCase(s.getSignerRole()));
-            Map<String, Boolean> satBoxes = new LinkedHashMap<>();
-            satBoxes.put("Satisfactory", satisfactory);
-            satBoxes.put("Not Satisfactory", false);
-            setCheckboxes(doc, satBoxes);
+            setSatisfactoryCheckboxes(doc, satisfactory);
 
             embedSignatures(doc, log);
 
@@ -195,14 +199,25 @@ public class MeetingLogDocumentService {
                 ? project.getProjectTitle() : "");
         v.put("student id:", student != null ? nz(student.getMmuId()) : "");
         v.put("student name:", student != null ? nz(student.getFullName()) : "");
-        v.put("student programme and specialisation:", sp != null
-                ? (nz(sp.getProgramme()) + (sp.getSpecialisation() != null ? " / " + sp.getSpecialisation() : ""))
-                : "");
+        v.put("student programme and specialisation:", buildProgrammeSpec(sp));
         v.put("supervisor name:", sup != null ? nz(sup.getFullName()) : "");
         v.put("co-supervisor name:", "");
         v.put("collaborating company:", "");
         v.put("company supervisor name:", "");
         return v;
+    }
+
+    /** Renders "{programme} / {specialisation}" when both present, just the one that is, or empty. */
+    private String buildProgrammeSpec(StudentProfile sp) {
+        if (sp == null) return "";
+        String prog = sp.getProgramme();
+        String spec = sp.getSpecialisation();
+        boolean hasProg = prog != null && !prog.isBlank();
+        boolean hasSpec = spec != null && !spec.isBlank();
+        if (hasProg && hasSpec) return prog + " / " + spec;
+        if (hasProg) return prog;
+        if (hasSpec) return spec;
+        return "";
     }
 
     /**
@@ -221,6 +236,123 @@ public class MeetingLogDocumentService {
                 }
             }
         }
+    }
+
+    /**
+     * Substitute placeholder text in body paragraphs (outside tables). The
+     * trimester header paragraph contains "[Month of start date]",
+     * "[Next Month of start date]", literal "2026", and "[Type by student later]"
+     * — each in its own run. We replace text per-run to preserve the original
+     * font/colour (the "CPT6324..." prefix is blue and the rest is black).
+     */
+    private void fillBodyPlaceholders(XWPFDocument doc, MeetingLog log) {
+        LocalDate date = log.getMeetingDate() != null ? log.getMeetingDate() : LocalDate.now();
+        String thisMonth = date.format(MONTH_FMT);
+        String nextMonth = date.plusMonths(1).format(MONTH_FMT);
+        String year = String.valueOf(date.getYear());
+
+        Map<String, String> replacements = new LinkedHashMap<>();
+        replacements.put("[Month of start date]", thisMonth);
+        replacements.put("[Next Month of start date]", nextMonth);
+        replacements.put("[Type by student later]", TRIMESTER_ID_BLANK);
+        replacements.put("2026", year);
+
+        for (XWPFParagraph p : doc.getParagraphs()) {
+            applyRunReplacements(p, replacements);
+        }
+    }
+
+    private void applyRunReplacements(XWPFParagraph p, Map<String, String> replacements) {
+        // First pass: per-run replacement (cheap, preserves all formatting).
+        for (XWPFRun r : p.getRuns()) {
+            String text = r.getText(0);
+            if (text == null) continue;
+            String newText = text;
+            for (Map.Entry<String, String> e : replacements.entrySet()) {
+                if (newText.contains(e.getKey())) {
+                    newText = newText.replace(e.getKey(), e.getValue());
+                }
+            }
+            if (!newText.equals(text)) {
+                r.setText(newText, 0);
+            }
+        }
+        // Second pass: scan for placeholders that cross run boundaries.
+        // Word often splits text mid-placeholder (e.g. "[" and "Type by ..."
+        // in separate runs). Cap iterations so a replacement that happens to
+        // contain its own needle (e.g. year "2026" → "2026") cannot loop.
+        for (Map.Entry<String, String> e : replacements.entrySet()) {
+            if (e.getKey().equals(e.getValue())) continue;
+            for (int guard = 0; guard < 32; guard++) {
+                if (!paragraphContainsAcrossRuns(p, e.getKey())) break;
+                if (!replaceAcrossRuns(p, e.getKey(), e.getValue())) break;
+                if (e.getValue().contains(e.getKey())) break;
+            }
+        }
+    }
+
+    private boolean paragraphContainsAcrossRuns(XWPFParagraph p, String needle) {
+        StringBuilder sb = new StringBuilder();
+        for (XWPFRun r : p.getRuns()) {
+            String t = r.getText(0);
+            if (t != null) sb.append(t);
+        }
+        return sb.indexOf(needle) >= 0;
+    }
+
+    /**
+     * Replace one occurrence of {@code needle} that may span multiple consecutive
+     * runs. The first overlapping run gets the replacement substring, intermediate
+     * runs are cleared, and the trailing run keeps any suffix after the match.
+     * Returns true if a replacement was made.
+     */
+    private boolean replaceAcrossRuns(XWPFParagraph p, String needle, String replacement) {
+        List<XWPFRun> runs = p.getRuns();
+        StringBuilder joined = new StringBuilder();
+        int[] runEnd = new int[runs.size()];
+        for (int i = 0; i < runs.size(); i++) {
+            String t = runs.get(i).getText(0);
+            if (t != null) joined.append(t);
+            runEnd[i] = joined.length();
+        }
+        int matchStart = joined.indexOf(needle);
+        if (matchStart < 0) return false;
+        int matchEnd = matchStart + needle.length();
+
+        int startRun = -1, endRun = -1;
+        int runStart = 0;
+        for (int i = 0; i < runs.size(); i++) {
+            if (startRun < 0 && matchStart < runEnd[i]) {
+                startRun = i;
+            }
+            if (matchEnd <= runEnd[i]) {
+                endRun = i;
+                break;
+            }
+            runStart = runEnd[i];
+        }
+        if (startRun < 0 || endRun < 0) return false;
+
+        String startText = nz(runs.get(startRun).getText(0));
+        int startRunStart = (startRun == 0) ? 0 : runEnd[startRun - 1];
+        int relStart = matchStart - startRunStart;
+        String prefix = startText.substring(0, relStart);
+
+        if (startRun == endRun) {
+            int relEnd = matchEnd - startRunStart;
+            String suffix = startText.substring(relEnd);
+            runs.get(startRun).setText(prefix + replacement + suffix, 0);
+        } else {
+            runs.get(startRun).setText(prefix + replacement, 0);
+            for (int i = startRun + 1; i < endRun; i++) {
+                runs.get(i).setText("", 0);
+            }
+            int endRunStart = runEnd[endRun - 1];
+            int relEnd = matchEnd - endRunStart;
+            String endText = nz(runs.get(endRun).getText(0));
+            runs.get(endRun).setText(endText.substring(relEnd), 0);
+        }
+        return true;
     }
 
     private String normaliseLabel(String raw) {
@@ -270,33 +402,83 @@ public class MeetingLogDocumentService {
             }
         }
         if (changed) {
-            String fontFamily = "Times New Roman";
-            Integer fontSize = 11;
-            if (!p.getRuns().isEmpty()) {
-                XWPFRun r0 = p.getRuns().get(0);
-                if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
-                if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
-            }
-            for (int i = p.getRuns().size() - 1; i >= 0; i--) {
-                p.removeRun(i);
-            }
-            XWPFRun r = p.createRun();
-            r.setFontFamily(fontFamily);
-            r.setFontSize(fontSize);
-            r.setText(newText);
+            rewriteParagraphPreservingFormatting(p, newText);
         }
     }
 
-    /** Fill the body sections of the meeting log. */
+    /**
+     * Tick exactly one of "Not Satisfactory" / "Satisfactory" labels. Done
+     * separately because String.replace("Satisfactory", ...) would also match
+     * inside "Not Satisfactory", producing "Not ☑ Satisfactory ☑ Satisfactory".
+     * Sentinel-swap avoids the substring overlap.
+     */
+    private void setSatisfactoryCheckboxes(XWPFDocument doc, boolean satisfactory) {
+        // Sign-implies-satisfactory: ticking "Not Satisfactory" needs an
+        // explicit reviewer decision we don't have today, so leave it empty.
+        String notSatGlyph = CHECKBOX_EMPTY;
+        String satGlyph = satisfactory ? CHECKBOX_TICK : CHECKBOX_EMPTY;
+        for (XWPFTable table : doc.getTables()) {
+            for (XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        String fullText = p.getText();
+                        if (fullText == null) continue;
+                        if (!fullText.contains("Satisfactory")) continue;
+                        String newText = fullText
+                                // strip any existing tick markers next to either label
+                                .replace(CHECKBOX_TICK + " Not Satisfactory", "Not Satisfactory")
+                                .replace(CHECKBOX_EMPTY + " Not Satisfactory", "Not Satisfactory")
+                                // protect "Not Satisfactory" before touching standalone "Satisfactory"
+                                .replace("Not Satisfactory", "NOTSAT")
+                                .replace(CHECKBOX_TICK + " Satisfactory", "Satisfactory")
+                                .replace(CHECKBOX_EMPTY + " Satisfactory", "Satisfactory")
+                                .replace("Satisfactory", satGlyph + " Satisfactory")
+                                .replace("NOTSAT", notSatGlyph + " Not Satisfactory");
+                        if (!newText.equals(fullText)) {
+                            rewriteParagraphPreservingFormatting(p, newText);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Rewrite the paragraph's runs as a single run carrying the given text,
+     * preserving the font family / size / colour from the original first run.
+     */
+    private void rewriteParagraphPreservingFormatting(XWPFParagraph p, String newText) {
+        String fontFamily = "Times New Roman";
+        int fontSize = 11;
+        String color = null;
+        if (!p.getRuns().isEmpty()) {
+            XWPFRun r0 = p.getRuns().get(0);
+            if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
+            if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
+            color = r0.getColor();
+        }
+        for (int i = p.getRuns().size() - 1; i >= 0; i--) {
+            p.removeRun(i);
+        }
+        XWPFRun r = p.createRun();
+        r.setFontFamily(fontFamily);
+        r.setFontSize(fontSize);
+        if (color != null) r.setColor(color);
+        r.setText(newText);
+    }
+
+    /**
+     * Fill the body sections (1–4) of the meeting log. Always REPLACES the
+     * content row's contents — that row's empty placeholder paragraph carries
+     * a tiny 7pt rPr that would shrink our content if we appended to it.
+     * Section 4 (Comments) lives at row i+2, not i+1: row i+1 is the
+     * "Not Satisfactory / Satisfactory" labels.
+     */
     private void fillBodySections(XWPFDocument doc, MeetingLog log) {
-        String workDone = (log.getWorkDoneDetails() != null ? log.getWorkDoneDetails() : "")
-                .trim();
-        String workToBeDone = (log.getWorkToBeDone() != null ? log.getWorkToBeDone() : "")
-                .trim();
-        String problems = (log.getProblemsAndSolutions() != null ? log.getProblemsAndSolutions() : "")
-                .trim();
-        String comments = (log.getSupervisorComments() != null ? log.getSupervisorComments() : "")
-                .trim();
+        String workDone = nz(log.getWorkDoneDetails()).trim();
+        String workToBeDone = nz(log.getWorkToBeDone()).trim();
+        String problems = nz(log.getProblemsAndSolutions()).trim();
+        String comments = nz(log.getSupervisorComments()).trim();
 
         for (XWPFTable table : doc.getTables()) {
             var rows = table.getRows();
@@ -305,56 +487,27 @@ public class MeetingLogDocumentService {
                 if (label == null) continue;
                 String upper = label.toUpperCase();
                 if (upper.contains("1. WORK DONE") && i + 1 < rows.size() && !workDone.isEmpty()) {
-                    appendValueParagraph(rows.get(i + 1).getCell(0), workDone);
+                    replaceCellContent(rows.get(i + 1).getCell(0), workDone);
                 } else if (upper.contains("2. WORK TO BE DONE") && i + 1 < rows.size() && !workToBeDone.isEmpty()) {
-                    appendValueParagraph(rows.get(i + 1).getCell(0), workToBeDone);
+                    replaceCellContent(rows.get(i + 1).getCell(0), workToBeDone);
                 } else if (upper.contains("3. PROBLEMS ENCOUNTERED") && i + 1 < rows.size() && !problems.isEmpty()) {
                     replaceCellContent(rows.get(i + 1).getCell(0), problems);
-                } else if (upper.contains("4. COMMENTS") && i + 1 < rows.size() && !comments.isEmpty()) {
-                    replaceCellContent(rows.get(i + 1).getCell(0), comments);
+                } else if (upper.contains("4. COMMENTS") && i + 2 < rows.size() && !comments.isEmpty()) {
+                    // i+1 is the "Not Satisfactory / Satisfactory" labels row; i+2 is empty content.
+                    replaceCellContent(rows.get(i + 2).getCell(0), comments);
                 }
             }
         }
     }
 
     /**
-     * Append a value paragraph to a cell WITHOUT wiping existing template
-     * scaffolding (e.g. the "Details (max 3-5 bullet points):" line stays put).
-     */
-    private void appendValueParagraph(XWPFTableCell cell, String value) {
-        String fontFamily = "Times New Roman";
-        Integer fontSize = 11;
-        if (!cell.getParagraphs().isEmpty() && !cell.getParagraphs().get(0).getRuns().isEmpty()) {
-            XWPFRun r0 = cell.getParagraphs().get(0).getRuns().get(0);
-            if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
-            if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
-        }
-        for (String line : value.split("\\R", -1)) {
-            XWPFParagraph p = cell.addParagraph();
-            p.setAlignment(ParagraphAlignment.LEFT);
-            XWPFRun r = p.createRun();
-            r.setFontFamily(fontFamily);
-            r.setFontSize(fontSize);
-            r.setText(line);
-        }
-    }
-
-    /**
-     * Wipe the cell and write a single paragraph containing the value, preserving
-     * the font from the existing first run. Multi-line values become multiple
-     * paragraphs. Cloned from {@link ProposalDocumentService#replaceCellContent}.
+     * Wipe the cell and write a single paragraph containing the value, with an
+     * explicit Times New Roman 11pt font. Multi-line values become multiple
+     * paragraphs. Cloned from {@link ProposalDocumentService#replaceCellContent}
+     * but we DO NOT copy font size from the existing paragraph — that paragraph
+     * is the template's empty placeholder and carries a 7pt rPr.
      */
     private void replaceCellContent(XWPFTableCell cell, String value) {
-        String fontFamily = "Times New Roman";
-        Integer fontSize = 11;
-        if (!cell.getParagraphs().isEmpty()) {
-            XWPFParagraph p0 = cell.getParagraphs().get(0);
-            if (!p0.getRuns().isEmpty()) {
-                XWPFRun r0 = p0.getRuns().get(0);
-                if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
-                if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
-            }
-        }
         for (int i = cell.getParagraphs().size() - 1; i >= 0; i--) {
             cell.removeParagraph(i);
         }
@@ -363,8 +516,8 @@ public class MeetingLogDocumentService {
             XWPFParagraph p = cell.addParagraph();
             p.setAlignment(ParagraphAlignment.LEFT);
             XWPFRun r = p.createRun();
-            r.setFontFamily(fontFamily);
-            r.setFontSize(fontSize);
+            r.setFontFamily("Times New Roman");
+            r.setFontSize(11);
             r.setText(line);
         }
     }
