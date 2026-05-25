@@ -55,4 +55,16 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
             @Param("projectId") Long projectId,
             @Param("statuses") List<MeetingStatus> statuses,
             @Param("from") LocalDateTime from);
+
+    /** Used by availability slot expansion to mask taken slots. */
+    @Query("select m from Meeting m " +
+           "where m.project.supervisor.userId = :userId " +
+           "and m.status in :statuses " +
+           "and coalesce(m.confirmedStartAt, m.proposedStartAt) >= :from " +
+           "and coalesce(m.confirmedStartAt, m.proposedStartAt) < :to")
+    List<Meeting> findBlockingMeetingsForSupervisor(
+            @Param("userId") Long supervisorUserId,
+            @Param("statuses") List<MeetingStatus> statuses,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }
