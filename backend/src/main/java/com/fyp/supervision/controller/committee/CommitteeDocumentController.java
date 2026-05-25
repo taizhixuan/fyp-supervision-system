@@ -63,7 +63,7 @@ public class CommitteeDocumentController {
             @RequestParam String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String visibility,
+            @RequestParam String visibility,
             @RequestParam(required = false) String cycleScope) {
         Long userId = Long.parseLong(user.getUsername());
         UserAccount uploader = userAccountRepository.findById(userId).orElseThrow();
@@ -78,7 +78,7 @@ public class CommitteeDocumentController {
                 .fileName(file.getOriginalFilename())
                 .storagePath(storagePath)
                 .fileSize(file.getSize())
-                .visibility(visibility != null ? visibility : "PUBLIC")
+                .visibility(visibility)
                 .build();
         ResourceDocument saved = resourceDocRepo.save(doc);
         return ResponseEntity.ok(committeeService.buildResourceDocumentDto(saved));
