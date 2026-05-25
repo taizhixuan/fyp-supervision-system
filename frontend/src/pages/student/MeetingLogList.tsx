@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { Card, Button, Spinner } from '@/components/ui'
 import { TaskSummaryBadges } from '@/components/meetingLog'
-import { useMeetingLogList } from '@/lib/hooks/useMeetingLog'
+import { useMeetingLogList, useExportMeetingLogsBulk } from '@/lib/hooks/useMeetingLog'
 import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
@@ -37,8 +37,10 @@ export function MeetingLogList() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [phaseFilter, setPhaseFilter] = useState<string>('all')
+  const [exportOpen, setExportOpen] = useState(false)
 
   const { data, isLoading } = useMeetingLogList(phaseFilter !== 'all' ? { phase: phaseFilter } : undefined)
+  const bulkExport = useExportMeetingLogsBulk()
   const logs = data?.logs || []
 
   // FCI compliance: ≥ 6 LOCKED logs per phase. Read from the dashboard payload so we
@@ -65,6 +67,15 @@ export function MeetingLogList() {
   const submittedCount = logs.filter((l) => l.status === 'SUBMITTED').length
   const awaitingSignatureCount = logs.filter((l) => l.status === 'SUPERVISOR_SIGNED').length
   const completedCount = logs.filter((l) => l.status === 'LOCKED').length
+
+  const handleBulkExport = async (phase: 'FYP1' | 'FYP2') => {
+    setExportOpen(false)
+    try {
+      await bulkExport.mutateAsync(phase)
+    } catch {
+      // error surfaced via mutation state
+    }
+  }
 
   if (isLoading) {
     return (
@@ -113,6 +124,34 @@ export function MeetingLogList() {
                 New Log
               </Button>
             </Link>
+            <div className="relative">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setExportOpen((v) => !v)}
+                isLoading={bulkExport.isPending}
+                leftIcon={<Download className="h-3.5 w-3.5" />}
+                className="whitespace-nowrap"
+              >
+                Export All
+              </Button>
+              {exportOpen && (
+                <div className="absolute right-0 z-10 mt-1 w-40 rounded-md border border-stone-200 bg-white shadow-lg">
+                  <button
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50"
+                    onClick={() => handleBulkExport('FYP1')}
+                  >
+                    All FYP1 Logs
+                  </button>
+                  <button
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50"
+                    onClick={() => handleBulkExport('FYP2')}
+                  >
+                    All FYP2 Logs
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
