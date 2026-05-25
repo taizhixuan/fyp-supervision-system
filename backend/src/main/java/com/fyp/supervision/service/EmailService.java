@@ -99,7 +99,7 @@ public class EmailService {
         String safeTitle = escape(title == null ? "" : title);
         String safeMessage = escape(message == null ? "" : message);
         String ctaUrl = appBaseUrl + (targetRoute == null || targetRoute.isBlank() ? "/" : targetRoute);
-        String prefsUrl = appBaseUrl + "/student/notification-settings";
+        String prefsUrl = appBaseUrl + "/student/notifications/settings";
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
                 + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
                 + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">FYP Supervision System</td></tr>"

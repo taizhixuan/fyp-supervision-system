@@ -194,6 +194,10 @@ public class ResourceController {
     }
 
     private Map<String, Object> buildResourceDto(ResourceDocument doc) {
+        // isFeatured + tags were placeholders — entity has no columns for them. Dropped
+        // from the response; the optional fields on the frontend Resource type will
+        // simply be undefined, and existing `.filter(r => r.isFeatured)` calls behave
+        // the same as before (empty list).
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("resourceId", doc.getResourceId());
         dto.put("category", doc.getCategory() != null ? doc.getCategory() : "OTHER");
@@ -203,12 +207,10 @@ public class ResourceController {
         dto.put("fileName", doc.getFileName());
         dto.put("fileSize", doc.getFileSize());
         dto.put("visibility", doc.getVisibility() != null ? doc.getVisibility() : "PUBLIC");
-        dto.put("isFeatured", false);
         dto.put("downloadCount", doc.getDownloadCount());
         dto.put("cycleId", doc.getCycle() != null ? doc.getCycle().getCycleId() : null);
         dto.put("cycleType", doc.getCycle() != null ? doc.getCycle().getCycleType() : null);
         dto.put("cycleAcademicYear", doc.getCycle() != null ? doc.getCycle().getAcademicYear() : null);
-        dto.put("tags", List.of());
         dto.put("publishedAt", doc.getPublishedAt() != null ? doc.getPublishedAt().toString() : "");
         return dto;
     }

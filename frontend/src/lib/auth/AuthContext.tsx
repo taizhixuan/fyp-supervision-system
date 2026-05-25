@@ -10,74 +10,6 @@ import type { User, LoginRequest, RegisterRequest } from '@/types'
 import { authApi, tokenStorage } from '@/lib/api/auth'
 import { getApiErrorMessage } from '@/lib/api/client'
 
-// Mock auth for development - set to true to enable mock login flow
-const USE_MOCK_AUTH = false
-
-// Mock users for different roles - matching correct User type
-const MOCK_STUDENT_USER: User = {
-  userId: 1,
-  mmuId: '1201234567',
-  email: 'student@student.mmu.edu.my',
-  fullName: 'Ahmad bin Abdullah',
-  role: 'STUDENT',
-  status: 'ACTIVE',
-  lastLoginAt: new Date().toISOString(),
-  createdAt: '2024-09-01T00:00:00Z',
-  updatedAt: new Date().toISOString(),
-}
-
-const MOCK_SUPERVISOR_USER: User = {
-  userId: 2,
-  mmuId: '2001000001',
-  email: 'sarah.lee@mmu.edu.my',
-  fullName: 'Dr. Sarah Lee',
-  role: 'SUPERVISOR',
-  status: 'ACTIVE',
-  lastLoginAt: new Date().toISOString(),
-  createdAt: '2023-01-15T00:00:00Z',
-  updatedAt: new Date().toISOString(),
-}
-
-const MOCK_COMMITTEE_USER: User = {
-  userId: 3,
-  mmuId: '2001000002',
-  email: 'ahmad.razak@mmu.edu.my',
-  fullName: 'Prof. Ahmad Razak',
-  role: 'FYP_COMMITTEE',
-  status: 'ACTIVE',
-  lastLoginAt: new Date().toISOString(),
-  createdAt: '2022-06-01T00:00:00Z',
-  updatedAt: new Date().toISOString(),
-}
-
-const MOCK_ADMIN_USER: User = {
-  userId: 4,
-  mmuId: '2001000003',
-  email: 'admin@mmu.edu.my',
-  fullName: 'System Administrator',
-  role: 'SYSTEM_ADMIN',
-  status: 'ACTIVE',
-  lastLoginAt: new Date().toISOString(),
-  createdAt: '2020-01-01T00:00:00Z',
-  updatedAt: new Date().toISOString(),
-}
-
-// Mock credentials map - login by email or MMU ID
-const MOCK_CREDENTIALS: Record<string, { user: User; password: string }> = {
-  // Student
-  'student@student.mmu.edu.my': { user: MOCK_STUDENT_USER, password: 'Test@123' },
-  '1201234567': { user: MOCK_STUDENT_USER, password: 'Test@123' },
-  // Supervisor
-  'sarah.lee@mmu.edu.my': { user: MOCK_SUPERVISOR_USER, password: 'Test@123' },
-  '2001000001': { user: MOCK_SUPERVISOR_USER, password: 'Test@123' },
-  // Committee
-  'ahmad.razak@mmu.edu.my': { user: MOCK_COMMITTEE_USER, password: 'Test@123' },
-  '2001000002': { user: MOCK_COMMITTEE_USER, password: 'Test@123' },
-  // Admin
-  'admin@mmu.edu.my': { user: MOCK_ADMIN_USER, password: 'Test@123' },
-  '2001000003': { user: MOCK_ADMIN_USER, password: 'Test@123' },
-}
-
 interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
@@ -101,23 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!user
 
-  // Fetch current user on mount if token exists or mock session persists
   const fetchUser = useCallback(async () => {
-    if (USE_MOCK_AUTH) {
-      // Check for persisted mock session
-      const storedUserId = localStorage.getItem('mock_user_id')
-      if (storedUserId) {
-        const mockUser = Object.values(MOCK_CREDENTIALS).find(
-          (cred) => cred.user.userId.toString() === storedUserId
-        )?.user
-        if (mockUser) {
-          setUser(mockUser)
-        }
-      }
-      setIsLoading(false)
-      return
-    }
-
     const token = tokenStorage.get()
     if (!token) {
       setIsLoading(false)
@@ -144,19 +60,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Defensive: wipe any previous account's cached queries before the new
     // user's components subscribe, so they never momentarily render stale data.
     queryClient.clear()
-
-    if (USE_MOCK_AUTH) {
-      const identifier = data.identifier.toLowerCase().trim()
-      const credential = MOCK_CREDENTIALS[identifier]
-
-      if (!credential || credential.password !== data.password) {
-        throw new Error('Invalid credentials. Please try again.')
-      }
-
-      localStorage.setItem('mock_user_id', credential.user.userId.toString())
-      setUser(credential.user)
-      return
-    }
 
     try {
       const response = await authApi.login(data)
@@ -188,13 +91,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const logout = useCallback(async () => {
-    if (USE_MOCK_AUTH) {
-      localStorage.removeItem('mock_user_id')
-      localStorage.removeItem('mock_user_role')
-      setUser(null)
-      return
-    }
-
     try {
       await authApi.logout()
     } catch {
