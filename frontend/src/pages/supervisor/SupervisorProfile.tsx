@@ -21,6 +21,7 @@ import {
   Target,
   AlertTriangle,
   FolderGit2,
+  Hash,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -295,6 +296,15 @@ export function SupervisorProfile() {
               <div className="p-6 space-y-4">
                 <h3 className="text-sm font-semibold text-stone-800 uppercase tracking-wider">Contact Info</h3>
                 <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50">
+                    <div className="p-2 bg-slate-100 rounded-lg">
+                      <Hash className="h-4 w-4 text-slate-600" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-stone-500 uppercase tracking-wider font-medium">MMU ID</span>
+                      <span className="text-sm font-mono text-stone-700">{profile?.supervisorId}</span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
                     <div className="p-2 bg-sky-100 rounded-lg">
                       <Mail className="h-4 w-4 text-sky-600" />
