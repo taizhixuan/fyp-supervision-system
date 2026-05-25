@@ -337,3 +337,10 @@ __pycache__/
 # Local-only documentation (not pushed to GitHub)
 /docs-project/
 /docs/superpowers/
+
+# Loose images dropped at repo root (chat attachments, scratch screenshots)
+/img.png
+/img_*.png
+/*.png
+!frontend/public/**/*.png
+!backend/src/**/*.png
