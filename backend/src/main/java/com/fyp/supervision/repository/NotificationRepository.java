@@ -17,4 +17,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("UPDATE Notification n SET n.readAt = CURRENT_TIMESTAMP WHERE n.user.userId = :userId AND n.readAt IS NULL")
     void markAllAsRead(@Param("userId") Long userId);
+
+    /** Bulk-delete notifications older than the given cutoff. Returns count purged. */
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.createdAt < :cutoff")
+    int deleteByCreatedAtBefore(@Param("cutoff") java.time.LocalDateTime cutoff);
 }
