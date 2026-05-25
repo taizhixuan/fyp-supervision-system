@@ -185,7 +185,7 @@ public class CommitteeService {
         dto.put("announcementId", ann.getAnnouncementId());
         dto.put("title", ann.getTitle());
         dto.put("content", ann.getContent());
-        dto.put("scope", ann.getScope() != null ? ann.getScope() : "ALL");
+        dto.put("scope", ann.getScope());
         dto.put("priority", ann.getPriority() != null ? ann.getPriority() : "NORMAL");
         dto.put("status", ann.getStatus().name());
         dto.put("publishAt", ann.getPublishAt() != null ? ann.getPublishAt().toString() : "");
