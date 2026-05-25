@@ -336,7 +336,14 @@ export function StudentDashboard() {
                   </>
                 )}
                 {trimester && !trimester.hasStarted && (
-                  <span>{' • '}Trimester starts soon</span>
+                  <span>
+                    {' • '}Briefing period
+                    {reg.trimesterStartDate && (
+                      <>
+                        {' · '}Week 1 begins {new Date(`${reg.trimesterStartDate}T00:00:00+08:00`).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                      </>
+                    )}
+                  </span>
                 )}
                 {trimester && trimester.hasEnded && (
                   <span>{' • '}Trimester ended</span>
