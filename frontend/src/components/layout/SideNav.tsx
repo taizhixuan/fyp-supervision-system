@@ -22,6 +22,7 @@ import {
   Download,
   Shield,
   Sparkles,
+  Bot,
   Send,
   Inbox,
   Lock,
@@ -82,6 +83,7 @@ const studentTopItems: NavItem[] = [
   { label: 'Dashboard', href: ROUTES.STUDENT.DASHBOARD, icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: 'My Profile', href: ROUTES.STUDENT.PROFILE, icon: <User className="h-5 w-5" /> },
   { label: 'Notifications', href: ROUTES.STUDENT.NOTIFICATIONS, icon: <Bell className="h-5 w-5" />, badgeKey: 'notifications' },
+  { label: 'FYP Assistant', href: ROUTES.STUDENT.CHATBOT, icon: <Bot className="h-5 w-5" /> },
 ]
 
 const studentNavGroups: NavGroup[] = [
