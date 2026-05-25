@@ -1,12 +1,15 @@
 package com.fyp.supervision.service;
 
 import com.fyp.supervision.entity.MeetingLog;
+import com.fyp.supervision.entity.MeetingLogSignature;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.util.Units;
+import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -22,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +70,11 @@ public class MeetingLogDocumentService {
         put("DRAFT_REPORT",               "Draft Report");
         put("FINAL_REPORT",               "Final Report");
     }};
+
+    private static final Map<String, String> SIG_LABEL_BY_ROLE = java.util.Map.of(
+            "STUDENT",    "Student’s Signature",
+            "SUPERVISOR", "Supervisor’s Signature"
+    );
 
     /** Parse tasksJson into code → isSelected map. Bad JSON returns empty map. */
     private Map<String, Boolean> parseSelectedTasks(MeetingLog meetingLog) {
@@ -129,6 +138,8 @@ public class MeetingLogDocumentService {
             satBoxes.put("Satisfactory", satisfactory);
             satBoxes.put("Not Satisfactory", false);
             setCheckboxes(doc, satBoxes);
+
+            embedSignatures(doc, log);
 
             doc.write(out);
             return out.toByteArray();
@@ -325,6 +336,77 @@ public class MeetingLogDocumentService {
             r.setFontFamily(fontFamily);
             r.setFontSize(fontSize);
             r.setText(line);
+        }
+    }
+
+    private void embedSignatures(XWPFDocument doc, MeetingLog log) {
+        if (log.getSignatures() == null || log.getSignatures().isEmpty()) return;
+        for (MeetingLogSignature sig : log.getSignatures()) {
+            byte[] imageBytes = decodeSignatureBytes(sig.getSignatureImageUrl());
+            if (imageBytes == null || imageBytes.length == 0) continue;
+            String role = sig.getSignerRole() == null ? "" : sig.getSignerRole().toUpperCase();
+            String wantedLabel = SIG_LABEL_BY_ROLE.get(role);
+            if (wantedLabel == null) continue;
+            attachSignatureBelowLabel(doc, wantedLabel, imageBytes, sig);
+        }
+    }
+
+    private byte[] decodeSignatureBytes(String url) {
+        if (url == null || url.isBlank()) return null;
+        if (url.startsWith("data:image")) {
+            int comma = url.indexOf(',');
+            if (comma <= 0) return null;
+            try { return Base64.getDecoder().decode(url.substring(comma + 1)); }
+            catch (IllegalArgumentException e) { return null; }
+        }
+        try {
+            var resource = fileStorageService.loadFile(url);
+            try (var in = resource.getInputStream()) {
+                return in.readAllBytes();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Find the table row whose cell 0 contains the given label (with curly-quote
+     * normalisation), then replace the next row's cell 0 with an embedded picture
+     * plus a small "Signed: <name> — <timestamp>" caption.
+     */
+    private void attachSignatureBelowLabel(XWPFDocument doc, String labelText,
+                                            byte[] imageBytes, MeetingLogSignature sig) {
+        String normalisedLabel = labelText.replace("’", "'");
+        for (XWPFTable table : doc.getTables()) {
+            var rows = table.getRows();
+            for (int i = 0; i < rows.size(); i++) {
+                String cellText = rows.get(i).getCell(0).getText();
+                if (cellText == null) continue;
+                String normalisedCell = cellText.replace("’", "'");
+                if (!normalisedCell.contains(normalisedLabel)) continue;
+                int targetRow = Math.min(i + 1, rows.size() - 1);
+                XWPFTableCell target = rows.get(targetRow).getCell(0);
+                for (int p = target.getParagraphs().size() - 1; p >= 0; p--) {
+                    target.removeParagraph(p);
+                }
+                XWPFParagraph p = target.addParagraph();
+                XWPFRun r = p.createRun();
+                try (var stream = new java.io.ByteArrayInputStream(imageBytes)) {
+                    r.addPicture(stream, Document.PICTURE_TYPE_PNG, "sig.png",
+                            Units.toEMU(120), Units.toEMU(40));
+                } catch (Exception ignored) {
+                    r.setText("(signature image could not be embedded)");
+                }
+                XWPFParagraph cap = target.addParagraph();
+                XWPFRun cr = cap.createRun();
+                cr.setFontFamily("Times New Roman");
+                cr.setFontSize(9);
+                cr.setText("Signed: " + (sig.getSigner() != null ? sig.getSigner().getFullName() : "")
+                        + " — " + (sig.getSignedAt() != null
+                                ? sig.getSignedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))
+                                : ""));
+                return;
+            }
         }
     }
 }

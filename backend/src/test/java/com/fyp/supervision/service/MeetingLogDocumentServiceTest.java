@@ -1,6 +1,7 @@
 package com.fyp.supervision.service;
 
 import com.fyp.supervision.entity.MeetingLog;
+import com.fyp.supervision.entity.MeetingLogSignature;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.StudentProfileRepository;
@@ -130,6 +131,31 @@ class MeetingLogDocumentServiceTest {
         assertThat(text).contains("Wire signup flow.");
         assertThat(text).contains("Token refresh fails.");
         assertThat(text).contains("Good progress, keep going.");
+    }
+
+    @Test
+    void embedsSignaturePictureWhenSignerHasDataUrl() throws Exception {
+        MeetingLog log = headerSampleLog();
+        UserAccount signer = new UserAccount();
+        signer.setUserId(10L);
+        signer.setFullName("Test Student");
+
+        // 1x1 transparent PNG, base64
+        String pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+        MeetingLogSignature sig = MeetingLogSignature.builder()
+                .signatureId(1L)
+                .signer(signer)
+                .signerRole("STUDENT")
+                .signatureImageUrl("data:image/png;base64," + pngBase64)
+                .signedAt(java.time.LocalDateTime.now())
+                .build();
+        log.setSignatures(new java.util.ArrayList<>(java.util.List.of(sig)));
+
+        byte[] bytes = service.renderLog(log);
+        try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
+            long pictureCount = doc.getAllPictures().size();
+            assertThat(pictureCount).isGreaterThan(0);
+        }
     }
 
     /** Read every w:t element from the rendered DOCX (test helper). */
