@@ -68,6 +68,25 @@ app:
   rate-limit:
     chat-per-hour: ${APP_RATE_LIMIT_CHAT_PER_HOUR:60}
     analyze-per-hour: ${APP_RATE_LIMIT_ANALYZE_PER_HOUR:10}
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
+    expiry-ms: ${JWT_EXPIRY_MS:86400000}
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+  ai:
+    recommendation-url: ${AI_RECOMMENDATION_URL:http://localhost:5001}
+    analyzer-url: ${AI_ANALYZER_URL:http://localhost:5002}
+    chatbot-url: ${AI_CHATBOT_URL:http://localhost:5003}
+  email:
+    enabled: ${APP_EMAIL_ENABLED:false}
+    from: ${APP_EMAIL_FROM:fyp-noreply@mmu.edu.my}
+    app-base-url: ${APP_BASE_URL:http://localhost:3000}
+  push:
+    enabled: ${APP_PUSH_ENABLED:false}
+    vapid:
+      public-key: ${VAPID_PUBLIC_KEY:}
+      private-key: ${VAPID_PRIVATE_KEY:}
+      subject: ${VAPID_SUBJECT:mailto:fyp-noreply@mmu.edu.my}
 
 # Spring Boot actuator + Micrometer Prometheus exporter. Runs on a SEPARATE port
 # (8081) so the Caddy reverse proxy (which only forwards :8080) never exposes
@@ -91,25 +110,6 @@ management:
     metrics:
       export:
         enabled: true
-  jwt:
-    secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
-    expiry-ms: ${JWT_EXPIRY_MS:86400000}
-  file:
-    upload-dir: ${FILE_UPLOAD_DIR:./uploads}
-  ai:
-    recommendation-url: ${AI_RECOMMENDATION_URL:http://localhost:5001}
-    analyzer-url: ${AI_ANALYZER_URL:http://localhost:5002}
-    chatbot-url: ${AI_CHATBOT_URL:http://localhost:5003}
-  email:
-    enabled: ${APP_EMAIL_ENABLED:false}
-    from: ${APP_EMAIL_FROM:fyp-noreply@mmu.edu.my}
-    app-base-url: ${APP_BASE_URL:http://localhost:3000}
-  push:
-    enabled: ${APP_PUSH_ENABLED:false}
-    vapid:
-      public-key: ${VAPID_PUBLIC_KEY:}
-      private-key: ${VAPID_PRIVATE_KEY:}
-      subject: ${VAPID_SUBJECT:mailto:fyp-noreply@mmu.edu.my}
 
 logging:
   level:
