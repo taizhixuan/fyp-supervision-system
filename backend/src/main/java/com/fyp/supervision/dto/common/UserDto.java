@@ -22,6 +22,8 @@ public class UserDto {
     private String lastLoginAt;
     private String createdAt;
     private String updatedAt;
+    /** Privacy-notice version the user agreed to. Null for accounts seeded before PDPA capture. */
+    private String privacyNoticeVersion;
 
     public static UserDto fromEntity(UserAccount user) {
         return UserDto.builder()
@@ -36,6 +38,7 @@ public class UserDto {
                 .lastLoginAt(user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null)
                 .createdAt(user.getCreatedAt().toString())
                 .updatedAt(user.getUpdatedAt().toString())
+                .privacyNoticeVersion(user.getPrivacyNoticeVersion())
                 .build();
     }
 }

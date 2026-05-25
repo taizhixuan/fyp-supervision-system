@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react'
 import { TopBar } from './TopBar'
 import { SideNav } from './SideNav'
 import { NotificationDrawer } from '@/components/common/NotificationDrawer'
+import { PrivacyConsentGate } from '@/components/common/PrivacyConsentGate'
 import { useAuth } from '@/lib/auth/useAuth'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { ROUTES } from '@/lib/constants/routes'
@@ -62,6 +63,9 @@ export function AppShell() {
         isOpen={isNotificationDrawerOpen}
         onClose={() => setIsNotificationDrawerOpen(false)}
       />
+
+      {/* Blocks the app when PRIVACY_NOTICE_VERSION has been bumped past what the user accepted. */}
+      <PrivacyConsentGate />
 
       {/* Floating FYP Assistant button (student only) */}
       {showAssistantFab && (

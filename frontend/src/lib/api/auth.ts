@@ -81,6 +81,15 @@ export const authApi = {
     const response = await api.get(`/auth/verify-reset-token?token=${token}`)
     return response.data
   },
+
+  /**
+   * Record the user's acceptance of the current privacy notice version
+   * (used by the re-consent gate when PRIVACY_NOTICE_VERSION is bumped).
+   */
+  acceptPrivacyNotice: async (version: string): Promise<User> => {
+    const response = await api.post('/auth/accept-privacy-notice', { version })
+    return response.data
+  },
 }
 
 // Helper to store/retrieve auth token
