@@ -38,7 +38,14 @@ services:
   # MySQL reads passwords from files via the official image's *_FILE convention.
   db:
     environment:
-      # Override the dev defaults from the base compose with secret-file lookups.
+      # The base compose sets MYSQL_PASSWORD + MYSQL_ROOT_PASSWORD as plain strings.
+      # Docker Compose merges environment by key, so without explicit nulls here both
+      # the plain var AND the _FILE var would be passed to the container — the
+      # official mysql:8 entrypoint refuses to start in that case. Empty string is
+      # treated as "unset" by the entrypoint's file_env() check, so the _FILE form
+      # is the one that wins.
+      MYSQL_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: ""
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       # MYSQL_USER + MYSQL_DATABASE inherited from the base file — those are not secret.
