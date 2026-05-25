@@ -31,6 +31,7 @@ public class CommitteeService {
     private final ProjectProgressService projectProgressService;
     private final MeetingLogComplianceService meetingLogComplianceService;
     private final MeetingRepository meetingRepository;
+    private final com.fyp.supervision.repository.DeadlineRepository deadlineRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -66,6 +67,22 @@ public class CommitteeService {
         stats.put("fyp2Students", projectRepository.countFyp2Projects());
         stats.put("alerts", buildDashboardAlerts(pendingProposals, overloadedSupervisors));
         stats.put("recentActivities", buildRecentActivities());
+        java.util.List<java.util.Map<String, Object>> upcomingDeadlines =
+                deadlineRepository.findByDueDateAfterOrderByDueDateAsc(java.time.LocalDate.now()).stream()
+                    .limit(5)
+                    .map(d -> {
+                        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+                        m.put("deadlineId", d.getDeadlineId());
+                        m.put("title", d.getTitle());
+                        m.put("description", d.getDescription());
+                        m.put("dueDate", d.getDueDate() != null ? d.getDueDate().toString() : null);
+                        m.put("deadlineType", d.getDeadlineType());
+                        m.put("audience", d.getAudience());
+                        m.put("cycleType", d.getCycle() != null ? d.getCycle().getCycleType() : null);
+                        return m;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+        stats.put("upcomingDeadlines", upcomingDeadlines);
         return stats;
     }
 
@@ -78,7 +95,7 @@ public class CommitteeService {
             a.put("alertId", nextId++);
             a.put("type", "WARNING");
             a.put("title", "Proposals Pending Review");
-            a.put("message", pendingProposals + " proposals awaiting committee review");
+            a.put("message", pendingProposals + (pendingProposals == 1 ? " proposal" : " proposals") + " awaiting committee review");
             a.put("createdAt", nowStr);
             a.put("isRead", false);
             alerts.add(a);
@@ -88,7 +105,7 @@ public class CommitteeService {
             a.put("alertId", nextId++);
             a.put("type", "WARNING");
             a.put("title", "Supervisor Capacity Alert");
-            a.put("message", overloadedSupervisors + " supervisors have exceeded capacity");
+            a.put("message", overloadedSupervisors + (overloadedSupervisors == 1 ? " supervisor has" : " supervisors have") + " exceeded capacity");
             a.put("createdAt", nowStr);
             a.put("isRead", false);
             alerts.add(a);

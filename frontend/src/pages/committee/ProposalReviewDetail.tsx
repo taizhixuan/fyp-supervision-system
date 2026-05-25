@@ -135,10 +135,19 @@ export function ProposalReviewDetail() {
                   {proposal.programme} Programme
                 </p>
               </div>
-              <Button variant="secondary">
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
+              {proposal.documentUrl ? (
+                <a href={proposal.documentUrl} target="_blank" rel="noreferrer noopener">
+                  <Button variant="secondary">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download File
+                  </Button>
+                </a>
+              ) : (
+                <Button variant="secondary" disabled title="No file uploaded">
+                  <Download className="h-4 w-4 mr-2" />
+                  No File
+                </Button>
+              )}
             </div>
 
             {/* Student & Supervisor Info */}
@@ -387,10 +396,19 @@ export function ProposalReviewDetail() {
               </div>
             </div>
 
-            <Button variant="secondary" className="w-full mt-4">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Full Document
-            </Button>
+            {proposal.documentUrl ? (
+              <a href={proposal.documentUrl} target="_blank" rel="noreferrer noopener" className="block w-full mt-4">
+                <Button variant="secondary" className="w-full">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Full Document
+                </Button>
+              </a>
+            ) : (
+              <Button variant="secondary" className="w-full mt-4" disabled title="No file uploaded">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                No Document
+              </Button>
+            )}
           </Card>
 
           {/* Review Form */}
