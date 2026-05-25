@@ -93,6 +93,7 @@ export const ROUTES = {
     MEETINGS: '/supervisor/meetings',
     MEETING_NEW: '/supervisor/meetings/new',
     MEETING_DETAIL: '/supervisor/meetings/:id',
+    AVAILABILITY: '/supervisor/availability',
     // Logs (Weekly Progress)
     LOGS: '/supervisor/logs',
     LOG_DETAIL: '/supervisor/logs/:id',

@@ -23,7 +23,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { useSupervisorMeeting, useRespondToMeeting, useCompleteMeeting } from '@/lib/hooks/useSupervisor'
+import { useSupervisorMeeting, useRespondToMeeting, useCompleteMeeting, useSetMeetingLink } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -84,16 +84,31 @@ export function MeetingDetail() {
 
   const handleReschedule = async () => {
     if (!meeting || !rescheduleDate || !rescheduleTime) return
-    const newDateTime = `${rescheduleDate}T${rescheduleTime}:00Z`
+    const localDateTime = `${rescheduleDate}T${rescheduleTime}`
+    const newDateTime = new Date(localDateTime).toISOString()
     try {
       await respondMutation.mutateAsync({
         meetingId: meeting.meetingId,
         action: 'RESCHEDULE',
-        confirmedDateTime: newDateTime,
+        proposedDateTime: newDateTime,
       })
       setShowRescheduleModal(false)
     } catch (error) {
       console.error('Failed to reschedule meeting:', error)
+    }
+  }
+
+  const setLinkMutation = useSetMeetingLink()
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [newLink, setNewLink] = useState('')
+  const handleSaveLink = async () => {
+    if (!meeting || !newLink.trim()) return
+    try {
+      await setLinkMutation.mutateAsync({ meetingId: meeting.meetingId, meetingUrl: newLink.trim() })
+      setShowLinkModal(false)
+      setNewLink('')
+    } catch (error) {
+      console.error('Failed to save link:', error)
     }
   }
 
@@ -154,9 +169,18 @@ export function MeetingDetail() {
   const type = typeConfig[meeting.type]
   const TypeIcon = type.icon
   const meetingDate = meeting.confirmedDateTime || meeting.proposedDateTime
-  const canRespond = meeting.status === 'PENDING'
+  // Backend emits PROPOSED for student-initiated meetings, but the frontend
+  // type union calls the pre-confirmation state PENDING. Treat both as
+  // "respondable" — supervisor needs to confirm/reschedule/cancel.
+  const canRespond =
+    meeting.status === 'PENDING' ||
+    (meeting.status as string) === 'PROPOSED' ||
+    (meeting.status as string) === 'RESCHEDULED'
   const canComplete = meeting.status === 'CONFIRMED' && new Date(meetingDate) <= new Date()
-  const canCancel = meeting.status === 'PENDING' || meeting.status === 'CONFIRMED'
+  const canCancel = canRespond || meeting.status === 'CONFIRMED'
+  const isOnline = meeting.type === 'ONLINE' || meeting.type === 'HYBRID'
+  const canAddLink = meeting.status === 'CONFIRMED' && isOnline
+  const linkMissing = isOnline && !meeting.meetingUrl
 
   // Platform detection for online/hybrid meetings
   const detectedPlatform = meeting.meetingUrl
@@ -215,7 +239,22 @@ export function MeetingDetail() {
             Mark as Complete
           </Button>
         )}
+        {canAddLink && (
+          <Button variant="secondary" onClick={() => {
+            setNewLink(meeting.meetingUrl ?? '')
+            setShowLinkModal(true)
+          }}>
+            {meeting.meetingUrl ? 'Update meeting link' : 'Add meeting link'}
+          </Button>
+        )}
       </div>
+
+      {linkMissing && meeting.status === 'CONFIRMED' && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          This is an online meeting but you haven't added a meeting link yet. Click
+          "{meeting.meetingUrl ? 'Update' : 'Add'} meeting link" above to share it with your student.
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column */}
@@ -548,6 +587,35 @@ export function MeetingDetail() {
               >
                 {completeMutation.isPending ? <Spinner size="sm" className="mr-2" /> : null}
                 Complete Meeting
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md">
+            <h2 className="text-xl font-bold text-neutral-900">
+              {meeting.meetingUrl ? 'Update' : 'Add'} meeting link
+            </h2>
+            <p className="mt-1 text-sm text-neutral-600">
+              Paste the Teams / Zoom / Google Meet link here. Your student will be notified.
+            </p>
+            <input
+              type="url"
+              value={newLink}
+              onChange={(e) => setNewLink(e.target.value)}
+              className="mt-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              placeholder="https://teams.microsoft.com/l/meetup-join/…"
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setShowLinkModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveLink} disabled={!newLink.trim() || setLinkMutation.isPending}>
+                {setLinkMutation.isPending ? <Spinner size="sm" className="mr-2" /> : null}
+                Save link
               </Button>
             </div>
           </Card>

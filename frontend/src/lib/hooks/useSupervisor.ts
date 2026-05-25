@@ -38,6 +38,45 @@ export const supervisorKeys = {
   announcements: () => [...supervisorKeys.all, 'announcements'] as const,
   announcement: (id: number) => [...supervisorKeys.announcements(), id] as const,
   notifications: () => [...supervisorKeys.all, 'notifications'] as const,
+  availability: () => [...supervisorKeys.all, 'availability'] as const,
+}
+
+export type AvailabilityEntry = {
+  availabilityId?: number
+  dayOfWeek: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+  startTime: string // HH:mm
+  endTime: string // HH:mm
+  slotDurationMinutes: number
+  isActive?: boolean
+}
+
+export function useSupervisorAvailability() {
+  return useQuery({
+    queryKey: supervisorKeys.availability(),
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ entries: AvailabilityEntry[] }>(
+        '/supervisor/availability'
+      )
+      return data.entries
+    },
+    staleTime: 60000,
+  })
+}
+
+export function useSaveAvailability() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (entries: AvailabilityEntry[]) => {
+      const { data } = await apiClient.put<{ entries: AvailabilityEntry[] }>(
+        '/supervisor/availability',
+        { entries }
+      )
+      return data.entries
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: supervisorKeys.availability() })
+    },
+  })
 }
 
 // ============================================
@@ -240,16 +279,22 @@ export function useRespondToMeeting() {
       meetingId,
       action,
       confirmedDateTime,
+      proposedDateTime,
+      reason,
       notes,
     }: {
       meetingId: number
       action: 'CONFIRM' | 'RESCHEDULE' | 'CANCEL'
       confirmedDateTime?: string
+      proposedDateTime?: string
+      reason?: string
       notes?: string
     }) => {
       const { data } = await apiClient.post(`/supervisor/meetings/${meetingId}/respond`, {
         action,
         confirmedDateTime,
+        proposedDateTime,
+        reason,
         notes,
       })
       return data
@@ -257,6 +302,34 @@ export function useRespondToMeeting() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supervisorKeys.meetings() })
       queryClient.invalidateQueries({ queryKey: supervisorKeys.dashboard() })
+    },
+  })
+}
+
+export function useSetMeetingLink() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      meetingId,
+      meetingUrl,
+      platform,
+      location,
+    }: {
+      meetingId: number
+      meetingUrl: string
+      platform?: string
+      location?: string
+    }) => {
+      const { data } = await apiClient.patch(`/supervisor/meetings/${meetingId}/link`, {
+        meetingUrl,
+        platform,
+        location,
+      })
+      return data
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: supervisorKeys.meeting(vars.meetingId) })
+      queryClient.invalidateQueries({ queryKey: supervisorKeys.meetings() })
     },
   })
 }

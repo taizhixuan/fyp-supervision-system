@@ -338,15 +338,17 @@ export interface Meeting {
   notes?: string
   rescheduleReason?: string
   cancelReason?: string
+  initiatedBy?: 'STUDENT' | 'SUPERVISOR'
+  proposedStartAt?: string | null
+  confirmedStartAt?: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateMeetingData {
-  supervisorId: string
   title: string
   agenda?: string
-  proposedTimes: string[] // ISO date strings
+  proposedStartAt: string // single ISO datetime — the slot the student booked
   duration: number
   platform: MeetingPlatform
   location?: string

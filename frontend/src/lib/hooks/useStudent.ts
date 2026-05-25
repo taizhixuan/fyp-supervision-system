@@ -686,6 +686,47 @@ export function useSupervisorAvailableSlots(supervisorId: string, date: string) 
   })
 }
 
+export type AvailableSlot = {
+  start: string
+  end: string
+  durationMinutes: number
+  available: boolean
+  past: boolean
+  taken: boolean
+}
+
+export type AvailableSlotsResponse = {
+  from: string
+  to: string
+  supervisorUserId: number
+  slotsByDay: Record<string, AvailableSlot[]>
+}
+
+export function useSupervisorAvailableSlotsRange(
+  supervisorId: string | number,
+  from?: string,
+  to?: string
+) {
+  return useQuery({
+    queryKey: [
+      ...studentKeys.meetings(),
+      'slotsRange',
+      String(supervisorId),
+      from ?? 'default',
+      to ?? 'default',
+    ],
+    queryFn: async () => {
+      const { data } = await apiClient.get<AvailableSlotsResponse>(
+        `/supervisors/${supervisorId}/available-slots`,
+        { params: { from, to } }
+      )
+      return data
+    },
+    enabled: !!supervisorId,
+    staleTime: 30000,
+  })
+}
+
 export function useCreateMeeting() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -708,6 +749,36 @@ export function useCancelMeeting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studentKeys.meetings() })
+    },
+  })
+}
+
+export type StudentMeetingResponseAction = 'ACCEPT' | 'DECLINE' | 'RESCHEDULE'
+
+export function useStudentRespondToMeeting() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      meetingId,
+      action,
+      proposedDateTime,
+      reason,
+    }: {
+      meetingId: string | number
+      action: StudentMeetingResponseAction
+      proposedDateTime?: string
+      reason?: string
+    }) => {
+      const { data } = await apiClient.post(`/student/meetings/${meetingId}/respond`, {
+        action,
+        proposedDateTime,
+        reason,
+      })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studentKeys.meetings() })
+      queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
     },
   })
 }

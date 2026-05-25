@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class StudentMeetingController {
     private final ProjectRepository projectRepository;
     private final StudentService studentService;
     private final StudentAccessService studentAccessService;
+    private final NotificationService notificationService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(
@@ -71,6 +73,72 @@ public class StudentMeetingController {
 
         Meeting saved = meetingRepository.save(meeting);
         return ResponseEntity.ok(studentService.buildMeetingDto(saved));
+    }
+
+    /**
+     * Student responds to a supervisor-proposed/rescheduled meeting.
+     * action ∈ {ACCEPT, DECLINE, RESCHEDULE}.
+     */
+    @PostMapping("/{id}/respond")
+    public ResponseEntity<?> respond(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        if (meeting.getProject() == null || meeting.getProject().getStudent() == null
+                || !userId.equals(meeting.getProject().getStudent().getUserId())) {
+            throw new BadRequestException("You can only respond to your own meetings.");
+        }
+        String action = data.get("action") == null ? "" : data.get("action").toString().toUpperCase();
+        Long supervisorUserId = meeting.getProject().getSupervisor() != null
+                ? meeting.getProject().getSupervisor().getUserId() : null;
+        String supRoute = "/supervisor/meetings/" + id;
+
+        switch (action) {
+            case "ACCEPT" -> {
+                LocalDateTime start = meeting.getProposedStartAt();
+                if (start == null) throw new BadRequestException("Meeting has no proposed time to accept.");
+                meeting.setStatus(MeetingStatus.CONFIRMED);
+                meeting.setConfirmedStartAt(start);
+                if (meeting.getDurationMinutes() != null) {
+                    meeting.setConfirmedEndAt(start.plusMinutes(meeting.getDurationMinutes()));
+                }
+                if (supervisorUserId != null) {
+                    notificationService.createNotification(supervisorUserId, "MEETING",
+                            "Student accepted meeting",
+                            "Student accepted: " + meeting.getTitle(), supRoute);
+                }
+            }
+            case "DECLINE" -> {
+                String reason = data.get("reason") == null ? "" : data.get("reason").toString().trim();
+                if (reason.isEmpty()) throw new BadRequestException("reason is required when declining");
+                meeting.setStatus(MeetingStatus.CANCELLED);
+                meeting.setCancelReason(reason);
+                if (supervisorUserId != null) {
+                    notificationService.createNotification(supervisorUserId, "MEETING",
+                            "Student declined meeting",
+                            "Student declined: " + meeting.getTitle(), supRoute);
+                }
+            }
+            case "RESCHEDULE" -> {
+                if (data.get("proposedDateTime") == null) {
+                    throw new BadRequestException("proposedDateTime is required for RESCHEDULE");
+                }
+                meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedDateTime").toString()));
+                meeting.setConfirmedStartAt(null);
+                meeting.setConfirmedEndAt(null);
+                meeting.setStatus(MeetingStatus.RESCHEDULED);
+                if (data.get("reason") != null) meeting.setNotes(data.get("reason").toString());
+                if (supervisorUserId != null) {
+                    notificationService.createNotification(supervisorUserId, "MEETING",
+                            "Student proposed a new time",
+                            "Student proposed reschedule: " + meeting.getTitle(), supRoute);
+                }
+            }
+            default -> throw new BadRequestException("Invalid action: must be ACCEPT, DECLINE or RESCHEDULE");
+        }
+        meetingRepository.save(meeting);
+        return ResponseEntity.ok(studentService.buildMeetingDto(meeting));
     }
 
     @PostMapping("/{id}/cancel")

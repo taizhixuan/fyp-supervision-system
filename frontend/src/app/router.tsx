@@ -73,6 +73,7 @@ const ProposalReviewDetail = lazy(() => import('@/pages/supervisor/ProposalRevie
 const MeetingManagement = lazy(() => import('@/pages/supervisor/MeetingManagement').then(m => ({ default: m.MeetingManagement })))
 const SupervisorMeetingDetail = lazy(() => import('@/pages/supervisor/MeetingDetail').then(m => ({ default: m.MeetingDetail })))
 const CreateMeeting = lazy(() => import('@/pages/supervisor/CreateMeeting').then(m => ({ default: m.CreateMeeting })))
+const MyAvailability = lazy(() => import('@/pages/supervisor/MyAvailability').then(m => ({ default: m.MyAvailability })))
 const LogsReview = lazy(() => import('@/pages/supervisor/LogsReview').then(m => ({ default: m.LogsReview })))
 const SupervisorLogDetail = lazy(() => import('@/pages/supervisor/LogDetail').then(m => ({ default: m.LogDetail })))
 const MeetingLogReview = lazy(() => import('@/pages/supervisor/MeetingLogReview').then(m => ({ default: m.MeetingLogReview })))
@@ -619,6 +620,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
             <SupervisorMeetingDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.SUPERVISOR.AVAILABILITY,
+        element: (
+          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+            <MyAvailability />
           </ProtectedRoute>
         ),
       },
