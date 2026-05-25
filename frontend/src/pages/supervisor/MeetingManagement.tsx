@@ -22,7 +22,11 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { MeetingStatus, MeetingType } from '@/types'
 
-const statusConfig: Record<MeetingStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+// Includes PROPOSED (the supervisor-created initial state) and PENDING (legacy/UI alias)
+// because the backend MeetingStatus enum emits PROPOSED on POST /supervisor/meetings.
+type MeetingStatusEx = MeetingStatus | 'PROPOSED'
+const statusConfig: Record<MeetingStatusEx, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+  PROPOSED: { label: 'Proposed', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500', icon: Clock },
   PENDING: { label: 'Pending', color: 'text-amber-600', bgColor: 'bg-amber-100', borderColor: 'border-l-amber-500', icon: Clock },
   CONFIRMED: { label: 'Confirmed', color: 'text-emerald-600', bgColor: 'bg-emerald-100', borderColor: 'border-l-emerald-500', icon: CheckCircle },
   COMPLETED: { label: 'Completed', color: 'text-sky-600', bgColor: 'bg-sky-100', borderColor: 'border-l-sky-500', icon: CheckCircle },
@@ -30,6 +34,7 @@ const statusConfig: Record<MeetingStatus, { label: string; color: string; bgColo
   RESCHEDULED: { label: 'Rescheduled', color: 'text-violet-600', bgColor: 'bg-violet-100', borderColor: 'border-l-violet-500', icon: AlertCircle },
   NO_SHOW: { label: 'No Show', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400', icon: AlertCircle },
 }
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400', icon: Clock }
 
 const typeConfig: Record<MeetingType, { label: string; icon: typeof MapPin }> = {
   IN_PERSON: { label: 'In Person', icon: MapPin },
@@ -156,8 +161,8 @@ export function MeetingManagement() {
       {filteredMeetings && filteredMeetings.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filteredMeetings.map((meeting) => {
-            const status = statusConfig[meeting.status]
-            const type = typeConfig[meeting.type]
+            const status = statusConfig[meeting.status as MeetingStatusEx] ?? FALLBACK_STATUS
+            const type = typeConfig[meeting.type] ?? { label: meeting.type, icon: Calendar }
             const StatusIcon = status.icon
             const TypeIcon = type.icon
             const meetingDate = meeting.confirmedDateTime || meeting.proposedDateTime

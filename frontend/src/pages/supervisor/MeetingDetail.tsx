@@ -33,7 +33,11 @@ import {
 } from '@/lib/utils/meetingPlatform'
 import type { SvMeetingStatus, MeetingType } from '@/types'
 
-const statusConfig: Record<SvMeetingStatus, { label: string; color: string; bgColor: string }> = {
+// PROPOSED is the backend's initial state; SvMeetingStatus doesn't include it but the
+// runtime DTO does, so we accept it and fall back to a generic style for any other value.
+type SvMeetingStatusEx = SvMeetingStatus | 'PROPOSED'
+const statusConfig: Record<SvMeetingStatusEx, { label: string; color: string; bgColor: string }> = {
+  PROPOSED: { label: 'Proposed', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   PENDING: { label: 'Pending Confirmation', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   CONFIRMED: { label: 'Confirmed', color: 'text-success-600', bgColor: 'bg-success-50' },
   COMPLETED: { label: 'Completed', color: 'text-primary-600', bgColor: 'bg-primary-50' },
@@ -41,6 +45,7 @@ const statusConfig: Record<SvMeetingStatus, { label: string; color: string; bgCo
   RESCHEDULED: { label: 'Rescheduled', color: 'text-info-600', bgColor: 'bg-info-50' },
   NO_SHOW: { label: 'No Show', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
 }
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-neutral-600', bgColor: 'bg-neutral-100' }
 
 const typeConfig: Record<MeetingType, { label: string; icon: typeof MapPin }> = {
   IN_PERSON: { label: 'In Person', icon: MapPin },
@@ -145,7 +150,7 @@ export function MeetingDetail() {
     )
   }
 
-  const status = statusConfig[meeting.status]
+  const status = statusConfig[meeting.status as SvMeetingStatusEx] ?? FALLBACK_STATUS
   const type = typeConfig[meeting.type]
   const TypeIcon = type.icon
   const meetingDate = meeting.confirmedDateTime || meeting.proposedDateTime
@@ -225,10 +230,12 @@ export function MeetingDetail() {
               <p className="text-sm text-neutral-500">Supervisee</p>
             </div>
             <div className="mt-4 pt-4 border-t border-neutral-200">
-              <Button variant="secondary" className="w-full">
-                <Mail className="h-4 w-4 mr-2" />
-                Send Email
-              </Button>
+              <a href={`mailto:${meeting.studentEmail ?? ''}`}>
+                <Button variant="secondary" className="w-full" disabled={!meeting.studentEmail}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email
+                </Button>
+              </a>
             </div>
           </Card>
 

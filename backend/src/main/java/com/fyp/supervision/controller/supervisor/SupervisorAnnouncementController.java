@@ -58,9 +58,12 @@ public class SupervisorAnnouncementController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAnnouncement(@PathVariable Long id, @RequestBody Map<String, Object> data) {
-        Announcement announcement = announcementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+    public ResponseEntity<?> updateAnnouncement(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Announcement announcement = requireOwnAnnouncement(userId, id);
         if (data.containsKey("title")) announcement.setTitle((String) data.get("title"));
         if (data.containsKey("content")) announcement.setContent((String) data.get("content"));
         if (data.containsKey("priority")) announcement.setPriority((String) data.get("priority"));
@@ -69,8 +72,22 @@ public class SupervisorAnnouncementController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAnnouncement(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAnnouncement(
+            @AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        requireOwnAnnouncement(userId, id);
         announcementService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Announcement requireOwnAnnouncement(Long supervisorUserId, Long announcementId) {
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        if (announcement.getCreatedBy() == null
+                || !supervisorUserId.equals(announcement.getCreatedBy().getUserId())) {
+            throw new com.fyp.supervision.exception.BadRequestException(
+                    "You can only modify announcements you created.");
+        }
+        return announcement;
     }
 }

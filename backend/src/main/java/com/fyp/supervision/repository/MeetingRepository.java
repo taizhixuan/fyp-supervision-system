@@ -46,4 +46,13 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     java.util.Optional<java.time.LocalDateTime> findMaxConfirmedStartAtByProjectAndStatus(
             @org.springframework.data.repository.query.Param("projectId") Long projectId,
             @org.springframework.data.repository.query.Param("status") com.fyp.supervision.enums.MeetingStatus status);
+
+    @Query("select m from Meeting m where m.project.projectId = :projectId " +
+           "and m.status in :statuses " +
+           "and coalesce(m.confirmedStartAt, m.proposedStartAt) >= :from " +
+           "order by coalesce(m.confirmedStartAt, m.proposedStartAt) asc")
+    List<Meeting> findUpcomingByProjectAndStatusIn(
+            @Param("projectId") Long projectId,
+            @Param("statuses") List<MeetingStatus> statuses,
+            @Param("from") LocalDateTime from);
 }

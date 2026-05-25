@@ -20,18 +20,23 @@ import { cn } from '@/lib/utils/cn'
 import type { LogStatus } from '@/types'
 
 const statusConfig: Record<LogStatus, { label: string; color: string; bgColor: string; borderColor: string; icon: typeof Clock }> = {
+  DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-50', borderColor: 'border-l-stone-400', icon: Clock },
+  SUBMITTED: { label: 'Awaiting Review', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-l-amber-500', icon: Clock },
   PENDING: { label: 'Pending Review', color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-l-amber-500', icon: Clock },
   APPROVED: { label: 'Approved', color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-l-emerald-500', icon: CheckCircle },
   REVISION_REQUIRED: { label: 'Needs Revision', color: 'text-rose-600', bgColor: 'bg-rose-50', borderColor: 'border-l-rose-500', icon: AlertCircle },
-  SIGNED: { label: 'Signed', color: 'text-sky-600', bgColor: 'bg-sky-50', borderColor: 'border-l-sky-500', icon: CheckCircle },
+  SUPERVISOR_SIGNED: { label: 'Signed', color: 'text-sky-600', bgColor: 'bg-sky-50', borderColor: 'border-l-sky-500', icon: CheckCircle },
   LOCKED: { label: 'Locked', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-500', icon: CheckCircle },
 }
 
+const FALLBACK_STATUS = { label: 'Unknown', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-l-stone-400', icon: Clock }
+
 const filterOptions = [
   { value: 'all', label: 'All Logs' },
-  { value: 'PENDING', label: 'Pending' },
+  { value: 'SUBMITTED', label: 'Awaiting' },
   { value: 'APPROVED', label: 'Approved' },
-  { value: 'SIGNED', label: 'Signed' },
+  { value: 'SUPERVISOR_SIGNED', label: 'Signed' },
+  { value: 'LOCKED', label: 'Locked' },
 ]
 
 export function LogsReview() {
@@ -57,7 +62,8 @@ export function LogsReview() {
     })
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
 
-  const pendingCount = data?.logs.filter((l) => l.status === 'PENDING').length ?? 0
+  const pendingCount =
+    data?.logs.filter((l) => l.status === 'SUBMITTED' || l.status === 'PENDING').length ?? 0
 
   if (isLoading) {
     return (
@@ -112,7 +118,7 @@ export function LogsReview() {
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-sky-300">
-                {data.logs.filter((l) => l.status === 'SIGNED').length}
+                {data.logs.filter((l) => l.status === 'SUPERVISOR_SIGNED' || l.status === 'LOCKED').length}
               </div>
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Signed</p>
             </div>
@@ -157,8 +163,9 @@ export function LogsReview() {
       {filteredLogs && filteredLogs.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filteredLogs.map((log) => {
-            const status = statusConfig[log.status]
+            const status = statusConfig[log.status] ?? FALLBACK_STATUS
             const StatusIcon = status.icon
+            const isPending = log.status === 'SUBMITTED' || log.status === 'PENDING'
             return (
               <Link
                 key={log.logId}
@@ -167,7 +174,7 @@ export function LogsReview() {
                 <Card padding="sm" className={cn(
                   'group hover:shadow-md transition-all cursor-pointer border-l-4',
                   status.borderColor,
-                  log.status === 'PENDING' && 'bg-amber-50/30',
+                  isPending && 'bg-amber-50/30',
                 )}>
                   <div className="flex items-start gap-2.5">
                     <div className="w-12 bg-gradient-to-br from-stone-800 to-stone-900 rounded-md p-1.5 text-center shadow flex-shrink-0">

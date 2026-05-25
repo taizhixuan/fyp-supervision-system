@@ -13,7 +13,6 @@ import type {
   SupervisorNotification,
   RequestStatus,
   SvProposalFeedback,
-  ProfileAuditEntry,
 } from '@/types'
 
 // Enable mock data in development mode
@@ -665,7 +664,6 @@ export const supervisorKeys = {
   announcements: () => [...supervisorKeys.all, 'announcements'] as const,
   announcement: (id: number) => [...supervisorKeys.announcements(), id] as const,
   notifications: () => [...supervisorKeys.all, 'notifications'] as const,
-  profileAuditLog: () => [...supervisorKeys.all, 'profileAuditLog'] as const,
 }
 
 // ============================================
@@ -702,103 +700,11 @@ export function useUpdateSupervisorProfile() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (profileData: Partial<SupervisorProfile>) => {
-      if (USE_MOCK_DATA) {
-        // Simulate storing an audit entry in mock mode
-        const previous = MOCK_SUPERVISOR_PROFILE
-        const updated = { ...previous, ...profileData, updatedAt: new Date().toISOString() }
-        Object.assign(MOCK_SUPERVISOR_PROFILE, updated)
-
-        // Build mock audit entries for the changes
-        const now = new Date().toISOString()
-        const newEntries: ProfileAuditEntry[] = []
-        let id = MOCK_PROFILE_AUDIT_LOG.length + 1
-
-        if (profileData.researchAreas && JSON.stringify(profileData.researchAreas) !== JSON.stringify(previous.researchAreas)) {
-          newEntries.push({
-            auditId: id++, supervisorId: previous.supervisorId, action: 'UPDATE_RESEARCH_AREAS',
-            field: 'researchAreas', oldValue: previous.researchAreas.join(', '), newValue: profileData.researchAreas.join(', '), timestamp: now,
-          })
-        }
-        if (profileData.maxSupervisionQuota !== undefined && profileData.maxSupervisionQuota !== previous.maxSupervisionQuota) {
-          newEntries.push({
-            auditId: id++, supervisorId: previous.supervisorId, action: 'UPDATE_QUOTA',
-            field: 'maxSupervisionQuota', oldValue: String(previous.maxSupervisionQuota), newValue: String(profileData.maxSupervisionQuota), timestamp: now,
-          })
-        }
-        if (profileData.isAcceptingStudents !== undefined && profileData.isAcceptingStudents !== previous.isAcceptingStudents) {
-          newEntries.push({
-            auditId: id++, supervisorId: previous.supervisorId, action: 'TOGGLE_AVAILABILITY',
-            field: 'isAcceptingStudents', oldValue: String(previous.isAcceptingStudents), newValue: String(profileData.isAcceptingStudents), timestamp: now,
-          })
-        }
-
-        // Catch-all for any other fields changed
-        const tracked = ['researchAreas', 'maxSupervisionQuota', 'isAcceptingStudents']
-        const otherChanged = Object.keys(profileData).filter(
-          (k) => !tracked.includes(k) && JSON.stringify((profileData as Record<string, unknown>)[k]) !== JSON.stringify((previous as Record<string, unknown>)[k])
-        )
-        if (otherChanged.length > 0) {
-          newEntries.push({
-            auditId: id++, supervisorId: previous.supervisorId, action: 'UPDATE_PROFILE',
-            field: otherChanged.join(', '), oldValue: '(previous values)', newValue: '(updated values)', timestamp: now,
-          })
-        }
-
-        MOCK_PROFILE_AUDIT_LOG.unshift(...newEntries)
-        return updated
-      }
       const { data } = await apiClient.put<SupervisorProfile>('/supervisor/profile', profileData)
       return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supervisorKeys.profile() })
-      queryClient.invalidateQueries({ queryKey: supervisorKeys.profileAuditLog() })
-    },
-  })
-}
-
-// Profile Audit Log
-const MOCK_PROFILE_AUDIT_LOG: ProfileAuditEntry[] = [
-  {
-    auditId: 3,
-    supervisorId: 'sup-001',
-    action: 'TOGGLE_AVAILABILITY',
-    field: 'isAcceptingStudents',
-    oldValue: 'false',
-    newValue: 'true',
-    timestamp: '2025-01-15T09:00:00Z',
-  },
-  {
-    auditId: 2,
-    supervisorId: 'sup-001',
-    action: 'UPDATE_QUOTA',
-    field: 'maxSupervisionQuota',
-    oldValue: '6',
-    newValue: '8',
-    timestamp: '2025-01-10T14:30:00Z',
-  },
-  {
-    auditId: 1,
-    supervisorId: 'sup-001',
-    action: 'UPDATE_RESEARCH_AREAS',
-    field: 'researchAreas',
-    oldValue: 'Artificial Intelligence, Machine Learning',
-    newValue: 'Artificial Intelligence, Machine Learning, Natural Language Processing',
-    timestamp: '2025-01-05T11:00:00Z',
-  },
-]
-
-export function useProfileAuditLog() {
-  return useQuery({
-    queryKey: supervisorKeys.profileAuditLog(),
-    queryFn: async () => {
-      if (USE_MOCK_DATA) {
-        return { entries: MOCK_PROFILE_AUDIT_LOG, total: MOCK_PROFILE_AUDIT_LOG.length }
-      }
-      const { data } = await apiClient.get<{ entries: ProfileAuditEntry[]; total: number }>(
-        '/supervisor/profile/audit-log'
-      )
-      return data
     },
   })
 }
