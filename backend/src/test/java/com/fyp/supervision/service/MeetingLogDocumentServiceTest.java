@@ -168,6 +168,40 @@ class MeetingLogDocumentServiceTest {
         }
     }
 
+    @Test
+    void bulkZipContainsOneDocxPerLog() throws Exception {
+        MeetingLog a = headerSampleLog(); a.setLogId(1L); a.setMeetingNumber(1);
+        MeetingLog b = headerSampleLog(); b.setLogId(2L); b.setMeetingNumber(2);
+        MeetingLog c = headerSampleLog(); c.setLogId(3L); c.setMeetingNumber(3);
+
+        byte[] zipBytes = service.renderLogsAsZip(java.util.List.of(a, b, c), "FYP1", "1191100001");
+
+        java.util.Set<String> entries = new java.util.HashSet<>();
+        try (var zin = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zin.getNextEntry()) != null) {
+                entries.add(entry.getName());
+            }
+        }
+        assertThat(entries).containsExactlyInAnyOrder(
+                "MeetingLog_FYP1_M1_1191100001.docx",
+                "MeetingLog_FYP1_M2_1191100001.docx",
+                "MeetingLog_FYP1_M3_1191100001.docx");
+    }
+
+    @Test
+    void bulkZipWithEmptyListIncludesReadmeNote() throws Exception {
+        byte[] zipBytes = service.renderLogsAsZip(java.util.List.of(), "FYP2", "1191100001");
+        boolean foundReadme = false;
+        try (var zin = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zin.getNextEntry()) != null) {
+                if (entry.getName().equals("README.txt")) foundReadme = true;
+            }
+        }
+        assertThat(foundReadme).isTrue();
+    }
+
     /** Read every w:t element from the rendered DOCX (test helper). */
     private String extractAllText(byte[] bytes) throws java.io.IOException {
         try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
