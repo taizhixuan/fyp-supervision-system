@@ -17,10 +17,13 @@ import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +45,48 @@ public class MeetingLogDocumentService {
 
     private static final String CHECKBOX_EMPTY = "☐";   // ☐
     private static final String CHECKBOX_TICK  = "☑";   // ☑
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final Map<String, String> FYP1_TASKS = new LinkedHashMap<>() {{
+        put("PLANNING",              "Planning");
+        put("LITERATURE_REVIEW",     "Literature Review");
+        put("REQUIREMENT_ANALYSIS",  "Requirement Analysis");
+        put("DESIGN_METHODOLOGY",    "Design & Methodology");
+        put("PROTOTYPE_POC",         "Prototype / Proof of Concept");
+        put("DRAFT_REPORT",          "Draft Report / Report Writing");
+    }};
+    private static final Map<String, String> FYP2_TASKS = new LinkedHashMap<>() {{
+        put("BACKGROUND_STUDY",           "Background Study");
+        put("IMPLEMENTATION",             "Implementation");
+        put("TESTING",                    "Testing");
+        put("EVALUATION",                 "Evaluation");
+        put("COMMERCIALISATION_PROPOSAL", "Commercialisation Proposal");
+        put("RESEARCH_PAPER",             "Research Paper");
+        put("DRAFT_REPORT",               "Draft Report");
+        put("FINAL_REPORT",               "Final Report");
+    }};
+
+    /** Parse tasksJson into code → isSelected map. Bad JSON returns empty map. */
+    private Map<String, Boolean> parseSelectedTasks(MeetingLog meetingLog) {
+        Map<String, Boolean> map = new LinkedHashMap<>();
+        String json = meetingLog.getTasksJson();
+        if (json == null || json.isBlank()) return map;
+        try {
+            List<Map<String, Object>> items = objectMapper.readValue(json,
+                    new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> item : items) {
+                Object code = item.get("taskCode");
+                Object sel = item.get("isSelected");
+                if (code != null) {
+                    map.put(code.toString(), Boolean.TRUE.equals(sel));
+                }
+            }
+        } catch (Exception ignored) {
+            // Bad JSON → no tasks ticked.
+        }
+        return map;
+    }
 
     /** Render a single meeting log into populated DOCX bytes. */
     public byte[] renderLog(MeetingLog log) throws Exception {
@@ -66,6 +111,15 @@ public class MeetingLogDocumentService {
             modeAndType.put("Research-based", false);
             modeAndType.put("Application-based", false);
             setCheckboxes(doc, modeAndType);
+
+            Map<String, String> taskLabels = "FYP2".equalsIgnoreCase(log.getFypPhase())
+                    ? FYP2_TASKS : FYP1_TASKS;
+            Map<String, Boolean> selected = parseSelectedTasks(log);
+            Map<String, Boolean> taskCheckboxes = new LinkedHashMap<>();
+            for (Map.Entry<String, String> entry : taskLabels.entrySet()) {
+                taskCheckboxes.put(entry.getValue(), selected.getOrDefault(entry.getKey(), false));
+            }
+            setCheckboxes(doc, taskCheckboxes);
 
             doc.write(out);
             return out.toByteArray();

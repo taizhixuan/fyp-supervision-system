@@ -99,6 +99,22 @@ class MeetingLogDocumentServiceTest {
         assertThat(text).contains("☐ Online");
     }
 
+    @Test
+    void ticksFyp2TasksThatAreSelectedInTasksJson() throws Exception {
+        MeetingLog log = headerSampleLog();
+        log.setFypPhase("FYP2");
+        log.setTasksJson(
+                "[{\"taskCode\":\"IMPLEMENTATION\",\"isSelected\":true},"
+                + "{\"taskCode\":\"TESTING\",\"isSelected\":true},"
+                + "{\"taskCode\":\"FINAL_REPORT\",\"isSelected\":false}]");
+
+        byte[] bytes = service.renderLog(log);
+        String text = extractAllText(bytes);
+        assertThat(text).contains("☑ Implementation");
+        assertThat(text).contains("☑ Testing");
+        assertThat(text).contains("☐ Final Report");
+    }
+
     /** Read every w:t element from the rendered DOCX (test helper). */
     private String extractAllText(byte[] bytes) throws java.io.IOException {
         try (XWPFDocument doc = new XWPFDocument(new java.io.ByteArrayInputStream(bytes))) {
