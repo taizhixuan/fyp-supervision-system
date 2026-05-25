@@ -229,23 +229,32 @@ export function ProposalAnalysis() {
         <h3 className="text-lg font-semibold text-neutral-900 mb-4">Section-by-Section Analysis</h3>
         <div className="space-y-4">
           {(displayAnalysis.sectionAnalysis ?? []).map((section) => {
-            const StatusIcon = statusIcons[section.status]
+            // Some legacy payloads omit `status` and only carry score+feedback.
+            // Derive a sensible status from the score so the UI still renders.
+            const status =
+              (section as { status?: keyof typeof statusIcons }).status ??
+              (section.score >= 70
+                ? 'COMPLETE'
+                : section.score >= 40
+                  ? 'NEEDS_IMPROVEMENT'
+                  : 'MISSING')
+            const StatusIcon = statusIcons[status]
             return (
               <div
                 key={section.section}
-                className={cn('p-4 rounded-lg', statusBgColors[section.status])}
+                className={cn('p-4 rounded-lg', statusBgColors[status])}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <StatusIcon className={cn('h-5 w-5 flex-shrink-0 mt-0.5', statusColors[section.status])} />
+                    <StatusIcon className={cn('h-5 w-5 flex-shrink-0 mt-0.5', statusColors[status])} />
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-neutral-900">{section.section}</h4>
                         <Badge
-                          variant={section.status === 'COMPLETE' ? 'success' : section.status === 'MISSING' ? 'error' : 'warning'}
+                          variant={status === 'COMPLETE' ? 'success' : status === 'MISSING' ? 'error' : 'warning'}
                           size="sm"
                         >
-                          {section.status.replace(/_/g, ' ')}
+                          {status.replace(/_/g, ' ')}
                         </Badge>
                       </div>
                       <p className="text-sm text-neutral-600 mt-1">{section.feedback}</p>
