@@ -41,6 +41,18 @@ export function CommitteeDashboard() {
   const stats = data ?? null
   const alerts = data?.alerts ?? []
   const recentActivities = data?.recentActivities ?? []
+  const upcomingDeadlines = data?.upcomingDeadlines ?? []
+
+  const deadlineColors = ['rose', 'amber', 'sky', 'violet', 'emerald'] as const
+  const parseDeadline = (d: { dueDate: string; title: string; description?: string }) => {
+    const dt = new Date(d.dueDate)
+    return {
+      date: String(dt.getDate()),
+      month: dt.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
+      title: d.title,
+      desc: d.description ?? '',
+    }
+  }
 
   const kpiCards = [
     {
@@ -364,22 +376,37 @@ export function CommitteeDashboard() {
               <h3 className="text-sm font-bold text-stone-800 uppercase tracking-wide">Upcoming Deadlines</h3>
             </div>
             <div className="space-y-1.5">
-              {[
-                { date: '31', month: 'JAN', title: 'FYP1 Proposal Deadline', desc: 'All FYP1 proposals due', color: 'rose' },
-                { date: '15', month: 'FEB', title: 'Pairing Completion', desc: 'All students must be paired', color: 'amber' },
-                { date: '15', month: 'MAR', title: 'FYP2 Presentations', desc: 'Final presentations begin', color: 'sky' },
-              ].map((d) => (
-                <div key={d.title} className={cn(`flex items-center gap-2 p-2 rounded-md bg-${d.color}-50 border border-${d.color}-100`)}>
-                  <div className={cn(`w-10 bg-${d.color}-100 rounded-md p-1 text-center flex-shrink-0`)}>
-                    <p className={cn(`text-sm font-bold leading-none text-${d.color}-700`)}>{d.date}</p>
-                    <p className={cn(`text-[9px] text-${d.color}-600 font-medium leading-none mt-0.5`)}>{d.month}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{d.title}</p>
-                    <p className="text-[10px] text-stone-500 truncate">{d.desc}</p>
-                  </div>
+              {upcomingDeadlines.length > 0 ? (
+                upcomingDeadlines.slice(0, 5).map((raw, idx) => {
+                  const d = parseDeadline(raw)
+                  const color = deadlineColors[idx % deadlineColors.length]
+                  const palette: Record<typeof deadlineColors[number], { wrap: string; chip: string; date: string; month: string }> = {
+                    rose: { wrap: 'bg-rose-50 border-rose-100', chip: 'bg-rose-100', date: 'text-rose-700', month: 'text-rose-600' },
+                    amber: { wrap: 'bg-amber-50 border-amber-100', chip: 'bg-amber-100', date: 'text-amber-700', month: 'text-amber-600' },
+                    sky: { wrap: 'bg-sky-50 border-sky-100', chip: 'bg-sky-100', date: 'text-sky-700', month: 'text-sky-600' },
+                    violet: { wrap: 'bg-violet-50 border-violet-100', chip: 'bg-violet-100', date: 'text-violet-700', month: 'text-violet-600' },
+                    emerald: { wrap: 'bg-emerald-50 border-emerald-100', chip: 'bg-emerald-100', date: 'text-emerald-700', month: 'text-emerald-600' },
+                  }
+                  const p = palette[color]
+                  return (
+                    <div key={raw.deadlineId} className={cn('flex items-center gap-2 p-2 rounded-md border', p.wrap)}>
+                      <div className={cn('w-10 rounded-md p-1 text-center flex-shrink-0', p.chip)}>
+                        <p className={cn('text-sm font-bold leading-none', p.date)}>{d.date}</p>
+                        <p className={cn('text-[9px] font-medium leading-none mt-0.5', p.month)}>{d.month}</p>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{d.title}</p>
+                        <p className="text-[10px] text-stone-500 truncate">{d.desc}</p>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="py-6 text-center">
+                  <Calendar className="h-8 w-8 text-stone-300 mx-auto mb-1" />
+                  <p className="text-xs text-stone-500">No upcoming deadlines</p>
                 </div>
-              ))}
+              )}
             </div>
           </Card>
         </div>

@@ -1,4 +1,14 @@
 // Committee Dashboard Types
+export interface DashboardDeadline {
+  deadlineId: number
+  title: string
+  description?: string
+  dueDate: string
+  deadlineType?: string
+  audience?: string
+  cycleType?: string
+}
+
 export interface CommitteeDashboardStats {
   totalProposals: number
   pendingReviews: number
@@ -12,6 +22,7 @@ export interface CommitteeDashboardStats {
   completedProjects: number
   fyp1Students: number
   fyp2Students: number
+  upcomingDeadlines?: DashboardDeadline[]
 }
 
 export interface DashboardAlert {
@@ -119,7 +130,7 @@ export interface ProposalForCommitteeReview {
   version: number
   aiAnalysis?: AIProposalAnalysis
   reviewHistory: ProposalReviewEntry[]
-  documentUrl: string
+  documentUrl: string | null
   abstract?: string
   objectives?: string[]
   methodology?: string
