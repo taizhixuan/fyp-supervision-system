@@ -84,8 +84,7 @@ export function MeetingDetail() {
 
   const handleReschedule = async () => {
     if (!meeting || !rescheduleDate || !rescheduleTime) return
-    const localDateTime = `${rescheduleDate}T${rescheduleTime}`
-    const newDateTime = new Date(localDateTime).toISOString()
+    const newDateTime = `${rescheduleDate}T${rescheduleTime}:00`
     try {
       await respondMutation.mutateAsync({
         meetingId: meeting.meetingId,
@@ -294,7 +293,9 @@ export function MeetingDetail() {
                     })}
                   </p>
                   <p className="text-xs text-neutral-500">
-                    {meeting.status === 'PENDING' ? 'Proposed date' : 'Confirmed date'}
+                    {meeting.status === 'CONFIRMED' || meeting.status === 'COMPLETED'
+                      ? 'Confirmed date'
+                      : 'Proposed date'}
                   </p>
                 </div>
               </div>
