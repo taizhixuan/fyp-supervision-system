@@ -4,6 +4,7 @@ import com.fyp.supervision.exception.RateLimitExceededException;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimitService {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
 
     @Value("${app.rate-limit.chat-per-hour:60}")
     private int chatPerHour;
@@ -35,12 +37,17 @@ public class RateLimitService {
     @Value("${app.rate-limit.analyze-per-hour:10}")
     private int analyzePerHour;
 
+    public RateLimitService(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
     public void require(String scope, Long userId) {
         Bucket bucket = bucketFor(scope, userId);
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             Duration retryAfter = Duration.ofNanos(probe.getNanosToWaitForRefill());
             long seconds = Math.max(1, retryAfter.toSeconds());
+            meterRegistry.counter("app_rate_limit_rejections_total", "scope", scope).increment();
             throw new RateLimitExceededException(
                     scope,
                     retryAfter,

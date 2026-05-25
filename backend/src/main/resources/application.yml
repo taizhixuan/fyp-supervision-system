@@ -68,6 +68,29 @@ app:
   rate-limit:
     chat-per-hour: ${APP_RATE_LIMIT_CHAT_PER_HOUR:60}
     analyze-per-hour: ${APP_RATE_LIMIT_ANALYZE_PER_HOUR:10}
+
+# Spring Boot actuator + Micrometer Prometheus exporter. Runs on a SEPARATE port
+# (8081) so the Caddy reverse proxy (which only forwards :8080) never exposes
+# metrics or health to the public internet. Prometheus inside the Docker
+# network scrapes backend:8081/actuator/prometheus.
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: prometheus,health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: fyp-supervision-backend
+  prometheus:
+    metrics:
+      export:
+        enabled: true
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-32-characters-long-for-hs256}
     expiry-ms: ${JWT_EXPIRY_MS:86400000}
