@@ -213,7 +213,7 @@ export function RegisterPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="1201234567"
+                    placeholder="1201234567 or 123AB4567C"
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-stone-300 rounded-lg text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     {...register('mmuId')}
                   />

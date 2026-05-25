@@ -34,7 +34,7 @@ public class AdminRosterService {
 
     private static final Pattern STUDENT_DOMAIN = Pattern.compile("^[A-Za-z0-9._%+-]+@student\\.mmu\\.edu\\.my$");
     private static final Pattern STAFF_DOMAIN = Pattern.compile("^[A-Za-z0-9._%+-]+@mmu\\.edu\\.my$");
-    private static final Pattern MMU_ID = Pattern.compile("^\\d{10}$");
+    private static final Pattern MMU_ID = Pattern.compile("^(\\d{10}|\\d{3}[A-Z]{2}\\d{4}[A-Z])$");
 
     private final ApprovedStudentRosterRepository studentRosterRepository;
     private final ApprovedSupervisorRosterRepository supervisorRosterRepository;
@@ -61,14 +61,14 @@ public class AdminRosterService {
 
         ImportSummary summary = new ImportSummary();
         readCsv(file, (lineNo, columns) -> {
-            String mmuId = column(columns, 0);
+            String mmuId = column(columns, 0).toUpperCase();
             String email = column(columns, 1).toLowerCase();
             if (mmuId.isEmpty() || email.isEmpty()) {
                 summary.errors.add("Line " + lineNo + ": missing mmuId or email");
                 return;
             }
             if (!MMU_ID.matcher(mmuId).matches()) {
-                summary.errors.add("Line " + lineNo + ": mmuId must be 10 digits (" + mmuId + ")");
+                summary.errors.add("Line " + lineNo + ": mmuId must be 10 digits or MMU format e.g. 123AB4567C (" + mmuId + ")");
                 return;
             }
             if (!STUDENT_DOMAIN.matcher(email).matches()) {
@@ -148,14 +148,14 @@ public class AdminRosterService {
 
         ImportSummary summary = new ImportSummary();
         readCsv(file, (lineNo, columns) -> {
-            String mmuId = column(columns, 0);
+            String mmuId = column(columns, 0).toUpperCase();
             String email = column(columns, 1).toLowerCase();
             if (mmuId.isEmpty() || email.isEmpty()) {
                 summary.errors.add("Line " + lineNo + ": missing mmuId or email");
                 return;
             }
             if (!MMU_ID.matcher(mmuId).matches()) {
-                summary.errors.add("Line " + lineNo + ": mmuId must be 10 digits (" + mmuId + ")");
+                summary.errors.add("Line " + lineNo + ": mmuId must be 10 digits or MMU format e.g. 123AB4567C (" + mmuId + ")");
                 return;
             }
             if (!STAFF_DOMAIN.matcher(email).matches()) {

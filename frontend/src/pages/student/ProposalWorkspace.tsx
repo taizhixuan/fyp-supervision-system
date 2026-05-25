@@ -135,11 +135,14 @@ const proposalSchema = z
     }
     // Two-student project → required fields
     if (data.numberOfStudents === 'Two') {
-      if (!data.student2MmuId || !/^\d{10}$/.test(data.student2MmuId.trim())) {
+      if (
+        !data.student2MmuId ||
+        !/^(\d{10}|\d{3}[A-Z]{2}\d{4}[A-Z])$/.test(data.student2MmuId.trim().toUpperCase())
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['student2MmuId'],
-          message: 'Enter a valid 10-digit MMU ID for Student 2',
+          message: 'Enter a valid MMU ID for Student 2 (10 digits or e.g. 123AB4567C)',
         })
       }
       if (!data.student1Subtitle) {
@@ -1341,7 +1344,7 @@ export function ProposalWorkspace() {
                 <p className="text-sm font-medium text-neutral-700">Student 2</p>
                 <Input
                   label="Student 2 MMU ID"
-                  placeholder="10-digit MMU ID"
+                  placeholder="MMU ID (e.g. 1201234567 or 123AB4567C)"
                   disabled={!canEdit}
                   error={errors.student2MmuId?.message}
                   {...register('student2MmuId')}

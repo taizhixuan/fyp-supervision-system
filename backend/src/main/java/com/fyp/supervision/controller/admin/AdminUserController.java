@@ -62,9 +62,10 @@ public class AdminUserController {
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody Map<String, Object> data) {
         String email = (String) data.get("email");
-        String mmuId = (String) data.get("mmuId");
+        String mmuIdRaw = (String) data.get("mmuId");
+        String mmuId = mmuIdRaw == null ? null : mmuIdRaw.trim().toUpperCase();
         if (userRepository.existsByEmail(email)) throw new BadRequestException("Email already exists");
-        if (userRepository.existsByMmuId(mmuId)) throw new BadRequestException("MMU ID already exists");
+        if (mmuId != null && userRepository.existsByMmuId(mmuId)) throw new BadRequestException("MMU ID already exists");
 
         UserAccount user = UserAccount.builder()
                 .mmuId(mmuId)

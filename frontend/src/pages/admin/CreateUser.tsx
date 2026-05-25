@@ -29,7 +29,19 @@ import type { UserRole } from '@/types'
 const createUserSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
-  mmuId: z.string().regex(/^\d{10}$/, 'MMU ID must be 10 digits').optional().or(z.literal('')),
+  mmuId: z
+    .string()
+    .transform((v) => v.trim().toUpperCase())
+    .pipe(
+      z
+        .string()
+        .regex(
+          /^(\d{10}|\d{3}[A-Z]{2}\d{4}[A-Z])$/,
+          'MMU ID must be 10 digits or in MMU format (e.g. 123AB4567C)',
+        ),
+    )
+    .optional()
+    .or(z.literal('')),
   phone: z.string().optional(),
   role: z.enum(['STUDENT', 'SUPERVISOR', 'FYP_COMMITTEE', 'SYSTEM_ADMIN'] as const),
   department: z.string().optional(),
