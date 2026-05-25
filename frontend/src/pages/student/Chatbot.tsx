@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Wand2,
   ArrowRight,
+  Settings,
 } from 'lucide-react'
 import { Button, Spinner, useErrorToast } from '@/components/ui'
 import {
@@ -27,6 +28,12 @@ import {
   useSendChatMessage,
   useClearChatSession,
   useSetChatFeedback,
+  useChatPreferences,
+  useUpdateChatPreferences,
+  type ChatPreferences,
+  type ChatResponseLength,
+  type ChatTone,
+  type ChatLanguage,
 } from '@/lib/hooks/useStudent'
 import { cn } from '@/lib/utils/cn'
 import type { ChatMessage, ChatReference } from '@/types'
@@ -444,6 +451,7 @@ export function Chatbot() {
   const [pendingMessages, setPendingMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const [showPreferences, setShowPreferences] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -573,17 +581,35 @@ export function Chatbot() {
           </div>
         </div>
 
-        {hasMessages && (
+        <div className="relative flex items-center gap-1 flex-shrink-0">
           <button
-            onClick={startNewChat}
-            disabled={clearMutation.isPending}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium transition-colors flex-shrink-0"
+            onClick={() => setShowPreferences((v) => !v)}
+            aria-label="Response style"
+            title="Response style"
+            aria-expanded={showPreferences}
+            className={cn(
+              'inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors',
+              showPreferences
+                ? 'text-primary-700 bg-primary-50'
+                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
+            )}
             type="button"
           >
-            {clearMutation.isPending ? <Spinner size="sm" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            New chat
+            <Settings className="h-3.5 w-3.5" />
           </button>
-        )}
+          {hasMessages && (
+            <button
+              onClick={startNewChat}
+              disabled={clearMutation.isPending}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium transition-colors"
+              type="button"
+            >
+              {clearMutation.isPending ? <Spinner size="sm" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              New chat
+            </button>
+          )}
+          <PreferencesPopover open={showPreferences} onClose={() => setShowPreferences(false)} />
+        </div>
       </header>
 
       {/* Body */}
@@ -687,6 +713,152 @@ function StatusPill({ loading }: { loading: boolean }) {
       <span className="w-1.5 h-1.5 rounded-full bg-success-500 animate-pulse" />
       Online
     </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Style preferences popover
+// ---------------------------------------------------------------------------
+
+const LENGTH_OPTIONS: { value: ChatResponseLength; label: string; hint: string }[] = [
+  { value: 'SHORT', label: 'Short', hint: '1-3 sentences or tight bullets' },
+  { value: 'BALANCED', label: 'Balanced', hint: '1-2 short paragraphs' },
+  { value: 'DETAILED', label: 'Detailed', hint: 'Full explanation with examples' },
+]
+const TONE_OPTIONS: { value: ChatTone; label: string; hint: string }[] = [
+  { value: 'FORMAL', label: 'Formal', hint: 'Academic, third person' },
+  { value: 'NEUTRAL', label: 'Neutral', hint: 'Clear and direct' },
+  { value: 'CASUAL', label: 'Casual', hint: 'Friendly, conversational' },
+]
+const LANGUAGE_OPTIONS: { value: ChatLanguage; label: string }[] = [
+  { value: 'EN', label: 'English' },
+  { value: 'MS', label: 'Bahasa Malaysia' },
+  { value: 'ZH', label: '中文' },
+  { value: 'MIXED', label: 'Mixed (Manglish)' },
+]
+
+function PreferencesPopover({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data, isLoading } = useChatPreferences()
+  const update = useUpdateChatPreferences()
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const handleChange = (patch: Partial<ChatPreferences>) => {
+    if (!data) return
+    update.mutate({ ...data, ...patch })
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 top-12 z-20 w-72 rounded-xl border border-neutral-200 bg-white shadow-xl p-4 space-y-4"
+      role="dialog"
+      aria-label="Response style"
+    >
+      <div>
+        <h3 className="text-sm font-semibold text-neutral-900">Response style</h3>
+        <p className="text-[11px] text-neutral-500">How would you like the assistant to answer?</p>
+      </div>
+
+      {isLoading || !data ? (
+        <div className="flex items-center justify-center py-4">
+          <Spinner size="sm" />
+        </div>
+      ) : (
+        <>
+          <Section title="Length">
+            <SegmentedGroup<ChatResponseLength>
+              value={data.responseLength}
+              options={LENGTH_OPTIONS}
+              onChange={(v) => handleChange({ responseLength: v })}
+            />
+          </Section>
+          <Section title="Tone">
+            <SegmentedGroup<ChatTone>
+              value={data.tone}
+              options={TONE_OPTIONS}
+              onChange={(v) => handleChange({ tone: v })}
+            />
+          </Section>
+          <Section title="Language">
+            <select
+              value={data.language}
+              onChange={(e) => handleChange({ language: e.target.value as ChatLanguage })}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400 transition-all"
+            >
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </Section>
+          <p className="text-[10px] text-neutral-400">
+            Saved automatically. Applies from the next message.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">{title}</p>
+      {children}
+    </div>
+  )
+}
+
+function SegmentedGroup<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T
+  options: { value: T; label: string; hint?: string }[]
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex gap-1 p-0.5 bg-neutral-100 rounded-lg" role="radiogroup">
+      {options.map((opt) => {
+        const active = opt.value === value
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            title={opt.hint}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              'flex-1 text-xs font-medium py-1.5 rounded-md transition-colors',
+              active
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-neutral-500 hover:text-neutral-700',
+            )}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
