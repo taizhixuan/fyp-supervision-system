@@ -1,0 +1,21 @@
+# Prometheus scrape config for the FYP Supervision stack.
+# Scrapes the backend on its management port (8081) — never exposed publicly.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: fyp-supervision
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+
+  - job_name: fyp-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'backend:8081' ]
+        labels:
+          service: backend
+          component: spring-boot

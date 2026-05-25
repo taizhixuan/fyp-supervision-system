@@ -1,6 +1,8 @@
 package com.fyp.supervision.service;
 
 import com.fyp.supervision.exception.AiServiceUnavailableException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -15,6 +17,7 @@ import java.util.Map;
 public class AiServiceClient {
 
     private final RestTemplate restTemplate;
+    private final MeterRegistry meterRegistry;
 
     @Value("${app.ai.recommendation-url}")
     private String recommendationUrl;
@@ -25,8 +28,9 @@ public class AiServiceClient {
     @Value("${app.ai.chatbot-url}")
     private String chatbotUrl;
 
-    public AiServiceClient() {
+    public AiServiceClient(MeterRegistry meterRegistry) {
         this.restTemplate = new RestTemplate();
+        this.meterRegistry = meterRegistry;
     }
 
     /**
@@ -81,17 +85,27 @@ public class AiServiceClient {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> chat(Map<String, Object> payload) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        String outcome = "success";
         try {
             ResponseEntity<Map> response = postJson(chatbotUrl + "/ai/chat", payload);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
             }
+            outcome = "error";
             throw new AiServiceUnavailableException(
                     "Chatbot returned non-2xx status: " + response.getStatusCode());
         } catch (RestClientException e) {
+            outcome = "unavailable";
             log.warn("AI chatbot service unavailable: {}", e.getMessage());
             throw new AiServiceUnavailableException(
                     "Chatbot service unavailable: " + e.getMessage(), e);
+        } finally {
+            sample.stop(Timer.builder("app_ai_chat_seconds")
+                    .description("Latency of /ai/chat calls to the Flask chatbot, tagged by outcome.")
+                    .tag("outcome", outcome)
+                    .publishPercentiles(0.5, 0.95, 0.99)
+                    .register(meterRegistry));
         }
     }
 

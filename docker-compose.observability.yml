@@ -1,0 +1,53 @@
+# Observability overlay: Prometheus scrapes the backend's actuator port and
+# Grafana presents the bundled "FYP Supervision — Overview" dashboard.
+#
+# Merge on top of the base compose (and optionally the prod overlay):
+#
+#   # Local dev with metrics:
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+#
+#   # Production-style with HTTPS + secrets + metrics:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.observability.yml up -d --build
+#
+# Grafana lands at http://localhost:3001 (admin / admin on first login — change it).
+# Prometheus lands at http://localhost:9090 (no auth; localhost only).
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    ports:
+      - "9090:9090"
+    networks:
+      - fyp-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - fyp-network
+
+volumes:
+  prometheus_data:
+  grafana_data:
