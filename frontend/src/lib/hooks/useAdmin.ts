@@ -1876,3 +1876,71 @@ export function useMarkAdminNotificationRead() {
     },
   })
 }
+
+// ============================================
+// PDPA — Account deletion requests (admin side)
+// ============================================
+export interface AdminDeletionRequest {
+  requestId: number
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'
+  reason: string | null
+  requestedAt: string | null
+  decidedAt: string | null
+  decidedBy: string | null
+  decisionNote: string | null
+  completedAt: string | null
+  user?: {
+    userId: number
+    fullName: string
+    mmuId: string
+    email: string
+    role: string
+  }
+}
+
+const deletionRequestKey = (pendingOnly: boolean) =>
+  [...adminKeys.all, 'deletion-requests', { pendingOnly }] as const
+
+export function useAdminDeletionRequests(pendingOnly = false) {
+  return useQuery({
+    queryKey: deletionRequestKey(pendingOnly),
+    queryFn: async (): Promise<AdminDeletionRequest[]> => {
+      const { data } = await apiClient.get<AdminDeletionRequest[]>(
+        `/admin/deletion-requests${pendingOnly ? '?pendingOnly=true' : ''}`,
+      )
+      return data
+    },
+  })
+}
+
+export function useApproveDeletionRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ requestId, note }: { requestId: number; note?: string }) => {
+      const { data } = await apiClient.post<AdminDeletionRequest>(
+        `/admin/deletion-requests/${requestId}/approve`,
+        { note: note ?? '' },
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...adminKeys.all, 'deletion-requests'] })
+    },
+  })
+}
+
+export function useRejectDeletionRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ requestId, note }: { requestId: number; note?: string }) => {
+      const { data } = await apiClient.post<AdminDeletionRequest>(
+        `/admin/deletion-requests/${requestId}/reject`,
+        { note: note ?? '' },
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...adminKeys.all, 'deletion-requests'] })
+    },
+  })
+}

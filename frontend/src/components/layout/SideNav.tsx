@@ -28,6 +28,7 @@ import {
   Lock,
   ShieldCheck,
   Library,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { ROUTES } from '@/lib/constants/routes'
@@ -208,6 +209,7 @@ const adminNavGroups: NavGroup[] = [
       { label: 'Export', href: ROUTES.ADMIN.EXPORT_CONFIG, icon: <Download className="h-5 w-5" /> },
       { label: 'Maintenance', href: ROUTES.ADMIN.MAINTENANCE, icon: <Wrench className="h-5 w-5" /> },
       { label: 'Audit Logs', href: ROUTES.ADMIN.AUDIT_LOGS, icon: <Shield className="h-5 w-5" /> },
+      { label: 'Deletion Requests', href: ROUTES.ADMIN.DELETION_REQUESTS, icon: <Trash2 className="h-5 w-5" /> },
     ],
   },
 ]
