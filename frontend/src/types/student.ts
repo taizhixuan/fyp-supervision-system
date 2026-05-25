@@ -317,7 +317,9 @@ export interface RegistrationTimelineEvent {
 }
 
 // Meeting Types
-export type MeetingStatus = 'PENDING' | 'CONFIRMED' | 'RESCHEDULED' | 'CANCELLED' | 'COMPLETED'
+// PROPOSED is the initial state the backend sets when a student creates a meeting;
+// PENDING is the legacy/UI label some pages still use. Both must be handled.
+export type MeetingStatus = 'PROPOSED' | 'PENDING' | 'CONFIRMED' | 'RESCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
 export type MeetingPlatform = 'IN_PERSON' | 'ZOOM' | 'GOOGLE_MEET' | 'MICROSOFT_TEAMS' | 'OTHER'
 
 export interface Meeting {

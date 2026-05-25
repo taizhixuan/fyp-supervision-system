@@ -182,10 +182,6 @@ export function LogDetail() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-neutral-500">Hours Spent</span>
-                <span className="font-medium">{log.hoursSpent} hours</span>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-neutral-500">Submitted</span>
                 <span className="font-medium">
                   {new Date(log.submittedAt).toLocaleDateString('en-MY', {
@@ -330,9 +326,6 @@ export function LogDetail() {
               </p>
               <p className="text-neutral-700">
                 <strong>Week:</strong> {log.weekNumber} ({new Date(log.weekStartDate).toLocaleDateString()} - {new Date(log.weekEndDate).toLocaleDateString()})
-              </p>
-              <p className="text-neutral-700">
-                <strong>Hours:</strong> {log.hoursSpent} hours
               </p>
             </div>
             <div className="flex justify-end gap-3">

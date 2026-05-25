@@ -11,12 +11,16 @@ import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -75,6 +79,10 @@ public class StudentMeetingController {
         studentAccessService.requireActiveCycle(userId);
         Meeting meeting = meetingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        if (meeting.getProject() == null || meeting.getProject().getStudent() == null
+                || !userId.equals(meeting.getProject().getStudent().getUserId())) {
+            throw new BadRequestException("You can only cancel your own meetings.");
+        }
 
         String reason = data != null && data.get("reason") != null ? ((String) data.get("reason")).trim() : "";
         if (reason.isEmpty()) {
@@ -88,5 +96,66 @@ public class StudentMeetingController {
         meeting.setCancelReason(reason);
         meetingRepository.save(meeting);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Export the student's meetings. Always returns CSV; the frontend's format flag
+     * is accepted for future PDF/ICAL support but not used yet (CSV opens in Excel
+     * and any spreadsheet, so it's the safe default).
+     */
+    @PostMapping("/export")
+    public ResponseEntity<byte[]> exportMeetings(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody(required = false) Map<String, Object> params) {
+        Long userId = Long.parseLong(user.getUsername());
+        List<Meeting> meetings = meetingRepository.findAllByStudentUserId(userId);
+
+        // Optional status filter
+        String statusFilter = params != null ? (String) params.get("status") : null;
+        if (statusFilter != null && !statusFilter.isBlank()) {
+            MeetingStatus s;
+            try { s = MeetingStatus.valueOf(statusFilter); }
+            catch (IllegalArgumentException e) { throw new BadRequestException("Invalid status filter."); }
+            meetings = meetings.stream().filter(m -> m.getStatus() == s).toList();
+        }
+
+        boolean includeAgenda = params == null || !Boolean.FALSE.equals(params.get("includeAgenda"));
+        boolean includeNotes  = params == null || !Boolean.FALSE.equals(params.get("includeNotes"));
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Meeting ID,Title,Status,Proposed Start,Confirmed Start,Platform,Location,Duration (min)");
+        if (includeAgenda) csv.append(",Agenda");
+        if (includeNotes) csv.append(",Notes");
+        csv.append('\n');
+
+        for (Meeting m : meetings) {
+            csv.append(m.getMeetingId()).append(',')
+               .append(csvField(m.getTitle())).append(',')
+               .append(m.getStatus().name()).append(',')
+               .append(m.getProposedStartAt() != null ? m.getProposedStartAt().toString() : "").append(',')
+               .append(m.getConfirmedStartAt() != null ? m.getConfirmedStartAt().toString() : "").append(',')
+               .append(csvField(m.getPlatform())).append(',')
+               .append(csvField(m.getLocation())).append(',')
+               .append(m.getDurationMinutes() != null ? m.getDurationMinutes() : "");
+            if (includeAgenda) csv.append(',').append(csvField(m.getAgenda()));
+            if (includeNotes)  csv.append(',').append(csvField(m.getNotes()));
+            csv.append('\n');
+        }
+
+        byte[] body = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String fileName = "meetings-" + LocalDate.now() + ".csv";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(body);
+    }
+
+    private static String csvField(String raw) {
+        if (raw == null) return "";
+        String escaped = raw.replace("\"", "\"\"");
+        if (escaped.contains(",") || escaped.contains("\n") || escaped.contains("\"")) {
+            return "\"" + escaped + "\"";
+        }
+        return escaped;
     }
 }

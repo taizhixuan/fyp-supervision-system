@@ -193,12 +193,15 @@ const proposalStatusColors: Record<ProposalStatus, string> = {
 }
 
 const meetingStatusColors: Record<MeetingStatus, string> = {
+  PROPOSED: 'bg-warning-100 text-warning-700',
   PENDING: 'bg-warning-100 text-warning-700',
   CONFIRMED: 'bg-success-100 text-success-700',
   RESCHEDULED: 'bg-info-100 text-info-700',
   CANCELLED: 'bg-error-100 text-error-700',
   COMPLETED: 'bg-neutral-100 text-neutral-700',
+  NO_SHOW: 'bg-neutral-100 text-neutral-700',
 }
+const MEETING_STATUS_FALLBACK = 'bg-neutral-100 text-neutral-700'
 
 export function StudentDashboard() {
   const { data, isLoading, error } = useStudentDashboard()
@@ -969,7 +972,7 @@ export function StudentDashboard() {
               >
                 <div className="p-4 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all bg-white">
                   <div className="flex items-start justify-between mb-3">
-                    <Badge className={meetingStatusColors[meeting.status]} size="sm">
+                    <Badge className={meetingStatusColors[meeting.status] ?? MEETING_STATUS_FALLBACK} size="sm">
                       {meeting.status}
                     </Badge>
                     <span className="text-xs text-neutral-500">

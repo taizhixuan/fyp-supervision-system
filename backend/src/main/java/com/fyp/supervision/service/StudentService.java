@@ -616,7 +616,10 @@ public class StudentService {
     }
 
     public Map<String, Object> buildSupervisorSummaryDto(SupervisorProfile sp) {
-        UserAccount user = userAccountRepository.findById(sp.getUserId()).orElse(null);
+        // Use the entity association rather than a fresh findById per row —
+        // saves one repo call per row; the OneToOne is still lazy but Hibernate's
+        // L1 cache and the @MapsId mapping make this strictly fewer queries.
+        UserAccount user = sp.getUser();
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("supervisorId", sp.getUserId().toString());
         dto.put("userId", sp.getUserId().toString());
@@ -1013,7 +1016,10 @@ public class StudentService {
         dto.put("isUpcoming", daysRemaining >= 0 && daysRemaining <= 14);
         dto.put("daysRemaining", daysRemaining);
         dto.put("priority", daysRemaining <= 3 ? "HIGH" : daysRemaining <= 7 ? "MEDIUM" : "LOW");
-        dto.put("isCompleted", false);
+        // A deadline is "completed" from a calendar perspective once its due date has passed.
+        // Per-student completion tracking would require a separate join table; using the
+        // calendar date keeps the counter honest until that feature exists.
+        dto.put("isCompleted", daysRemaining < 0);
         dto.put("reminderSent", false);
         return dto;
     }

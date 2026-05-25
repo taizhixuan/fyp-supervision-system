@@ -218,10 +218,6 @@ export function LogsReview() {
 
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-stone-500">
                         <span className="inline-flex items-center gap-0.5">
-                          <Clock className="h-3 w-3" />
-                          {log.hoursSpent}h
-                        </span>
-                        <span className="inline-flex items-center gap-0.5">
                           <Calendar className="h-3 w-3" />
                           {new Date(log.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
                         </span>

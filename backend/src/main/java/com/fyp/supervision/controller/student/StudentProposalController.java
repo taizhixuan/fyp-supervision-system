@@ -95,8 +95,23 @@ public class StudentProposalController {
                     dto.put("analysisId", r.getCheckId().toString());
                     dto.put("proposalId", proposal.getProposalId().toString());
                     dto.put("overallScore", r.getOverallScore());
-                    dto.put("sectionAnalysis", List.of());
-                    dto.put("suggestions", List.of());
+
+                    // Build sectionAnalysis from the per-section scores the analyzer stored.
+                    java.util.List<Map<String, Object>> sections = new java.util.ArrayList<>();
+                    if (r.getFeasibilityScore() != null) sections.add(Map.of("section", "Feasibility", "score", r.getFeasibilityScore()));
+                    if (r.getInnovationScore() != null)  sections.add(Map.of("section", "Innovation",  "score", r.getInnovationScore()));
+                    if (r.getClarityScore() != null)     sections.add(Map.of("section", "Clarity",     "score", r.getClarityScore()));
+                    if (r.getScopeScore() != null)       sections.add(Map.of("section", "Scope",       "score", r.getScopeScore()));
+                    dto.put("sectionAnalysis", sections);
+
+                    // suggested_improvements is stored as either a JSON array or newline-separated text.
+                    java.util.List<String> suggestions = studentService.parseJsonArray(r.getSuggestedImprovements());
+                    if (suggestions.isEmpty() && r.getSuggestedImprovements() != null && !r.getSuggestedImprovements().isBlank()) {
+                        suggestions = java.util.Arrays.stream(r.getSuggestedImprovements().split("\\r?\\n"))
+                                .map(String::trim).filter(s -> !s.isEmpty()).toList();
+                    }
+                    dto.put("suggestions", suggestions);
+
                     dto.put("strengths", studentService.parseJsonArray(r.getStrengths()));
                     dto.put("weaknesses", studentService.parseJsonArray(r.getWeaknesses()));
                     dto.put("analyzedAt", r.getCheckedAt() != null ? r.getCheckedAt().toString() : "");

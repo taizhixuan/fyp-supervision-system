@@ -98,15 +98,21 @@ export function NotificationSettings() {
   const { data, isLoading } = useNotificationPreferences()
   const updatePreferences = useUpdateNotificationPreferences()
 
-  const [preferences, setPreferences] = useState<NotificationPreferences>(SAMPLE_PREFERENCES)
+  // Start with null so we don't accidentally write SAMPLE_PREFERENCES over real
+  // server state if the user clicks Save before the GET response lands.
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [pushSupported] = useState<boolean>(() => isPushSupported())
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
   const [pushBusy, setPushBusy] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
 
-  // Use sample data
-  const displayPrefs = data || preferences
+  // Hydrate local form state once server data arrives; never fall back to SAMPLE.
+  useEffect(() => {
+    if (data && !preferences) setPreferences(data)
+  }, [data, preferences])
+
+  const displayPrefs = preferences ?? data ?? SAMPLE_PREFERENCES
 
   const pushAvailable = pushSupported && !!vapidPublicKey
 
@@ -131,13 +137,16 @@ export function NotificationSettings() {
     setting: string,
     value: boolean
   ) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [channel]: {
-        ...prev[channel],
-        [setting]: value,
-      },
-    }))
+    setPreferences((prev) => {
+      const base = prev ?? data ?? SAMPLE_PREFERENCES
+      return {
+        ...base,
+        [channel]: {
+          ...base[channel],
+          [setting]: value,
+        },
+      }
+    })
   }
 
   const handlePushChannelToggle = async (value: boolean) => {
@@ -177,16 +186,20 @@ export function NotificationSettings() {
   }
 
   const handleQuietToggle = (setting: string, value: any) => {
-    setPreferences((prev) => ({
-      ...prev,
-      quiet: {
-        ...prev.quiet,
-        [setting]: value,
-      },
-    }))
+    setPreferences((prev) => {
+      const base = prev ?? data ?? SAMPLE_PREFERENCES
+      return {
+        ...base,
+        quiet: {
+          ...base.quiet,
+          [setting]: value,
+        },
+      }
+    })
   }
 
   const handleSave = async () => {
+    if (!preferences) return
     try {
       await updatePreferences.mutateAsync(preferences)
       setSaveSuccess(true)

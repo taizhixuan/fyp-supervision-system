@@ -36,10 +36,14 @@ const SAMPLE_LOG = {
 
 const statusConfig: Record<LogStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; description: string }> = {
   DRAFT: { label: 'Draft', variant: 'default', description: 'This log is saved as a draft' },
+  SUBMITTED: { label: 'Awaiting Review', variant: 'warning', description: 'Waiting for supervisor review' },
   PENDING: { label: 'Pending Review', variant: 'warning', description: 'Waiting for supervisor review' },
   APPROVED: { label: 'Approved', variant: 'success', description: 'Your log has been approved' },
   REVISION_REQUIRED: { label: 'Revision Required', variant: 'error', description: 'Please update based on feedback' },
+  SUPERVISOR_SIGNED: { label: 'Signed', variant: 'success', description: 'Signed by your supervisor' },
+  LOCKED: { label: 'Locked', variant: 'default', description: 'Log is locked and counts toward your minimum' },
 }
+const LOG_STATUS_FALLBACK = { label: 'Unknown', variant: 'default' as const, description: '' }
 
 export function LogDetail() {
   const { id } = useParams<{ id: string }>()
@@ -48,7 +52,7 @@ export function LogDetail() {
 
   // Use sample data
   const displayLog = log || SAMPLE_LOG
-  const status = statusConfig[displayLog.status]
+  const status = statusConfig[displayLog.status] ?? LOG_STATUS_FALLBACK
 
   if (isLoading) {
     return (

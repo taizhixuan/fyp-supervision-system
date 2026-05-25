@@ -109,6 +109,30 @@ const statusConfig: Record<MeetingStatus, {
     bgGradient: 'from-neutral-500 to-neutral-600',
     iconBg: 'bg-neutral-100 text-neutral-600'
   },
+  PROPOSED: {
+    label: 'Awaiting Response',
+    variant: 'warning',
+    description: 'Waiting for supervisor confirmation',
+    icon: <Clock className="h-5 w-5" />,
+    bgGradient: 'from-warning-500 to-warning-600',
+    iconBg: 'bg-warning-100 text-warning-600'
+  },
+  NO_SHOW: {
+    label: 'No Show',
+    variant: 'default',
+    description: 'Meeting was missed',
+    icon: <X className="h-5 w-5" />,
+    bgGradient: 'from-neutral-500 to-neutral-600',
+    iconBg: 'bg-neutral-100 text-neutral-600'
+  },
+}
+const MEETING_STATUS_FALLBACK = {
+  label: 'Unknown',
+  variant: 'default' as const,
+  description: '',
+  icon: <Clock className="h-5 w-5" />,
+  bgGradient: 'from-neutral-500 to-neutral-600',
+  iconBg: 'bg-neutral-100 text-neutral-600',
 }
 
 // Countdown helper
@@ -137,7 +161,7 @@ export function MeetingDetail() {
 
   // Use sample data
   const displayMeeting = meeting || SAMPLE_MEETING
-  const status = statusConfig[displayMeeting.status]
+  const status = statusConfig[displayMeeting.status] ?? MEETING_STATUS_FALLBACK
 
   // Countdown timer
   useEffect(() => {
