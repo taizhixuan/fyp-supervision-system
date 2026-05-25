@@ -22,6 +22,7 @@ const AccessDeniedPage = lazy(() => import('@/pages/common/AccessDeniedPage').th
 const ServerErrorPage = lazy(() => import('@/pages/common/ServerErrorPage').then(m => ({ default: m.ServerErrorPage })))
 const SessionExpiredPage = lazy(() => import('@/pages/common/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })))
 const MaintenancePage = lazy(() => import('@/pages/common/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
+const PrivacyNoticePage = lazy(() => import('@/pages/common/PrivacyNoticePage').then(m => ({ default: m.PrivacyNoticePage })))
 
 // Student pages - All lazy loaded
 const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard').then(m => ({ default: m.StudentDashboard })))
@@ -187,6 +188,11 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.MAINTENANCE,
     element: <MaintenancePage />,
+  },
+  {
+    // PDPA / privacy notice — public route, no auth required
+    path: '/privacy',
+    element: <PrivacyNoticePage />,
   },
 
   // Protected routes (authentication required)

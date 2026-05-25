@@ -14,6 +14,7 @@ import {
   type RegisterFormData,
 } from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
+import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
 import {
   programmeForSpecialisation,
   expectedGraduationYear,
@@ -64,6 +65,8 @@ export function RegisterPage() {
         email: data.email,
         phone: data.phone || undefined,
         password: data.password,
+        acceptedPrivacyNotice: data.acceptTerms,
+        privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
         ...(data.role === 'STUDENT'
           ? { specialisation: data.specialisation, intakeYear: data.intakeYear }
           : {}),
