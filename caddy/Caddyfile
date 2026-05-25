@@ -35,6 +35,12 @@ app.localhost {
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		# CSP. Tight on scripts (no 'unsafe-inline' — the theme bootstrap lives
+		# at /theme-bootstrap.js to satisfy 'self'). Permissive on styles because
+		# React inline style={} attrs and some Tailwind utilities use them.
+		# When you switch to a public domain, replace `https://api.localhost`
+		# below with your real API host (e.g. https://api.example.com).
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://api.localhost; connect-src 'self' https://api.localhost; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
 		-Server
 	}
 
