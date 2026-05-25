@@ -1,12 +1,21 @@
-# Production-style overlay that puts Caddy in front of the stack and removes
-# the direct host port mappings from the app containers. Compose merges this
-# on top of docker-compose.yml when you pass it explicitly:
+# Production-style overlay that puts Caddy in front of the stack, removes the
+# direct host port mappings, and switches critical secrets from `.env` to
+# Docker secrets. Compose merges this on top of docker-compose.yml when you
+# pass it explicitly:
 #
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
 # The dev-only docker-compose.override.yml is NOT auto-loaded by this command
 # (only `up` without -f loads it), so the production nginx frontend image is
 # used as intended.
+#
+# Required files before first `up` (each one line of plaintext, no trailing newline):
+#   secrets/jwt_secret.txt        generate:  openssl rand -base64 48
+#   secrets/db_password.txt       generate:  openssl rand -base64 24
+#   secrets/db_root_password.txt  generate:  openssl rand -base64 24
+#
+# These are mounted into the containers at /run/secrets/<name>; backend / mysql
+# read them via the standard *_FILE env var convention.
 
 services:
   caddy:
@@ -26,6 +35,17 @@ services:
     networks:
       - fyp-network
 
+  # MySQL reads passwords from files via the official image's *_FILE convention.
+  db:
+    environment:
+      # Override the dev defaults from the base compose with secret-file lookups.
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      # MYSQL_USER + MYSQL_DATABASE inherited from the base file — those are not secret.
+    secrets:
+      - db_password
+      - db_root_password
+
   # Stop publishing the frontend on the host — Caddy reaches it on the
   # internal docker network instead. Also rebuild with the proxied API URL
   # so the SPA calls https://api.localhost/api at runtime.
@@ -40,8 +60,24 @@ services:
   backend:
     ports: !override []
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       APP_BASE_URL: https://app.localhost
       APP_CORS_ALLOWED_ORIGINS: https://app.localhost
+      # JWT secret and DB password are loaded from secret files by the entrypoint
+      # script (backend/docker-entrypoint.sh): JWT_SECRET_FILE → JWT_SECRET, etc.
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      DB_PASS_FILE: /run/secrets/db_password
+    secrets:
+      - jwt_secret
+      - db_password
+
+secrets:
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+  db_password:
+    file: ./secrets/db_password.txt
+  db_root_password:
+    file: ./secrets/db_root_password.txt
 
 volumes:
   caddy_data:

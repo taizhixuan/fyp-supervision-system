@@ -212,8 +212,9 @@ docs/_build/
 *.p12
 *.pfx
 
-# Secrets
-secrets/
+# Secrets (Docker secrets dir) — track only the README, never the secret files.
+secrets/*
+!secrets/README.md
 *.secret
 *_secret.*
 
