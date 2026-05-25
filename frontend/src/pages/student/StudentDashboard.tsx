@@ -344,14 +344,18 @@ export function StudentDashboard() {
               </p>
             </div>
           </div>
-          <Link to={ROUTES.STUDENT.CHATBOT} className="flex-shrink-0">
-            <Button
-              size="sm"
-              className="bg-white text-primary-700 hover:bg-primary-50"
-              leftIcon={<Sparkles className="h-4 w-4" />}
-            >
-              AI Assistant
-            </Button>
+          <Link
+            to={ROUTES.STUDENT.CHATBOT}
+            className="group flex-shrink-0 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gradient-to-br from-accent-500 via-accent-600 to-accent-500 text-white font-semibold text-sm shadow-lg shadow-accent-500/30 ring-1 ring-white/30 hover:shadow-xl hover:shadow-accent-500/40 hover:-translate-y-0.5 transition-all"
+          >
+            <span className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 ring-1 ring-white/30">
+              <span className="absolute inset-0 rounded-lg bg-white/20 animate-ping opacity-40" />
+              <Sparkles className="relative h-4 w-4" />
+            </span>
+            <span className="flex flex-col items-start leading-tight">
+              <span className="text-[10px] uppercase tracking-wider opacity-80 font-medium">Ask</span>
+              <span>FYP Assistant</span>
+            </span>
           </Link>
         </div>
       </div>
