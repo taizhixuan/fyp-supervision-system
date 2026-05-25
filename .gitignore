@@ -346,7 +346,6 @@ __pycache__/
 /docs-project/report/chapter5-zh.md
 /docs-project/reports/_facts/
 /docs-project/reports/_plans/
-/docs-project/TODO/
 /docs-project/Demo-Walkthrough.md
 
 # Word lock / temp files (open-document marker)
@@ -355,3 +354,12 @@ __pycache__/
 /docs-project/reports/commit-history.txt
 /docs-project/reports/commit-summary.txt
 /docs-project/reports/
+/docs-project/demo/
+/docs-project/presentation/
+/docs-project/conference-paper/
+/docs-project/concepts/
+/docs-project/report/media/
+/docs-project/report/chapter1.md
+/docs-project/report/chapter2.md
+/docs-project/report/chapter3.md
+/docs-project/report/chapter5-report-version.md
