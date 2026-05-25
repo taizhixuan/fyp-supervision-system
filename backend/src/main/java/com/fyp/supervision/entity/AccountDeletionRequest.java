@@ -28,7 +28,7 @@ public class AccountDeletionRequest {
     private String reason;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20)")
     @Builder.Default
     private DeletionRequestStatus status = DeletionRequestStatus.PENDING;
 
