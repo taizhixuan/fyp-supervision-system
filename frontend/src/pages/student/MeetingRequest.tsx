@@ -62,7 +62,7 @@ export function MeetingRequest() {
 
   const createMeeting = useCreateMeeting()
   const { data: dashboard } = useStudentDashboard()
-  const supervisorId = dashboard?.supervisorId ?? ''
+  const supervisorId = dashboard?.registrationStatus?.supervisorId ?? ''
 
   const today = useMemo(() => new Date(), [])
   const horizon = useMemo(() => {

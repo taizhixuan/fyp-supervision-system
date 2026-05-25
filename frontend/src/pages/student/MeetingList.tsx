@@ -189,7 +189,7 @@ export function MeetingList() {
             <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Confirmed</p>
           </div>
           <div className="bg-white/10 rounded-md px-2 py-1.5">
-            <div className="text-lg font-bold leading-none">{meetings.filter((m) => m.status === 'PENDING').length}</div>
+            <div className="text-lg font-bold leading-none">{meetings.filter((m) => m.status === 'PENDING' || (m.status as string) === 'PROPOSED' || (m.status as string) === 'RESCHEDULED').length}</div>
             <p className="text-[10px] text-primary-200 mt-0.5 uppercase tracking-wide">Pending</p>
           </div>
           <div className="bg-white/10 rounded-md px-2 py-1.5">
