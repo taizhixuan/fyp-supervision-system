@@ -119,6 +119,7 @@ const ExportConfigurationPage = lazy(() => import('@/pages/admin/ExportConfigura
 const MaintenanceCenter = lazy(() => import('@/pages/admin/MaintenanceCenter').then(m => ({ default: m.MaintenanceCenter })))
 const JobHistory = lazy(() => import('@/pages/admin/JobHistory').then(m => ({ default: m.JobHistory })))
 const AuditLogs = lazy(() => import('@/pages/admin/AuditLogs').then(m => ({ default: m.AuditLogs })))
+const DeletionRequests = lazy(() => import('@/pages/admin/DeletionRequests').then(m => ({ default: m.DeletionRequests })))
 const AdminNotificationCenter = lazy(() => import('@/pages/admin/AdminNotificationCenter').then(m => ({ default: m.AdminNotificationCenter })))
 const AdminProfile = lazy(() => import('@/pages/admin/AdminProfile').then(m => ({ default: m.AdminProfile })))
 
@@ -1060,6 +1061,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
             <AuditLogs />
+          </ProtectedRoute>
+        ),
+      },
+
+      // PDPA — Account deletion requests
+      {
+        path: ROUTES.ADMIN.DELETION_REQUESTS,
+        element: (
+          <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
+            <DeletionRequests />
           </ProtectedRoute>
         ),
       },
