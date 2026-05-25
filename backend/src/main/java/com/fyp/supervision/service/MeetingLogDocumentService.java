@@ -121,6 +121,15 @@ public class MeetingLogDocumentService {
             }
             setCheckboxes(doc, taskCheckboxes);
 
+            fillBodySections(doc, log);
+
+            boolean satisfactory = log.getSignatures() != null && log.getSignatures().stream()
+                    .anyMatch(s -> "SUPERVISOR".equalsIgnoreCase(s.getSignerRole()));
+            Map<String, Boolean> satBoxes = new LinkedHashMap<>();
+            satBoxes.put("Satisfactory", satisfactory);
+            satBoxes.put("Not Satisfactory", false);
+            setCheckboxes(doc, satBoxes);
+
             doc.write(out);
             return out.toByteArray();
         }
@@ -234,6 +243,58 @@ public class MeetingLogDocumentService {
             r.setFontFamily(fontFamily);
             r.setFontSize(fontSize);
             r.setText(newText);
+        }
+    }
+
+    /** Fill the body sections of the meeting log. */
+    private void fillBodySections(XWPFDocument doc, MeetingLog log) {
+        String workDone = (log.getWorkDoneDetails() != null ? log.getWorkDoneDetails() : "")
+                .trim();
+        String workToBeDone = (log.getWorkToBeDone() != null ? log.getWorkToBeDone() : "")
+                .trim();
+        String problems = (log.getProblemsAndSolutions() != null ? log.getProblemsAndSolutions() : "")
+                .trim();
+        String comments = (log.getSupervisorComments() != null ? log.getSupervisorComments() : "")
+                .trim();
+
+        for (XWPFTable table : doc.getTables()) {
+            var rows = table.getRows();
+            for (int i = 0; i < rows.size(); i++) {
+                String label = rows.get(i).getCell(0).getText();
+                if (label == null) continue;
+                String upper = label.toUpperCase();
+                if (upper.contains("1. WORK DONE") && i + 1 < rows.size() && !workDone.isEmpty()) {
+                    appendValueParagraph(rows.get(i + 1).getCell(0), workDone);
+                } else if (upper.contains("2. WORK TO BE DONE") && i + 1 < rows.size() && !workToBeDone.isEmpty()) {
+                    appendValueParagraph(rows.get(i + 1).getCell(0), workToBeDone);
+                } else if (upper.contains("3. PROBLEMS ENCOUNTERED") && i + 1 < rows.size() && !problems.isEmpty()) {
+                    replaceCellContent(rows.get(i + 1).getCell(0), problems);
+                } else if (upper.contains("4. COMMENTS") && i + 1 < rows.size() && !comments.isEmpty()) {
+                    replaceCellContent(rows.get(i + 1).getCell(0), comments);
+                }
+            }
+        }
+    }
+
+    /**
+     * Append a value paragraph to a cell WITHOUT wiping existing template
+     * scaffolding (e.g. the "Details (max 3-5 bullet points):" line stays put).
+     */
+    private void appendValueParagraph(XWPFTableCell cell, String value) {
+        String fontFamily = "Times New Roman";
+        Integer fontSize = 11;
+        if (!cell.getParagraphs().isEmpty() && !cell.getParagraphs().get(0).getRuns().isEmpty()) {
+            XWPFRun r0 = cell.getParagraphs().get(0).getRuns().get(0);
+            if (r0.getFontFamily() != null) fontFamily = r0.getFontFamily();
+            if (r0.getFontSize() != -1) fontSize = r0.getFontSize();
+        }
+        for (String line : value.split("\\R", -1)) {
+            XWPFParagraph p = cell.addParagraph();
+            p.setAlignment(ParagraphAlignment.LEFT);
+            XWPFRun r = p.createRun();
+            r.setFontFamily(fontFamily);
+            r.setFontSize(fontSize);
+            r.setText(line);
         }
     }
 
