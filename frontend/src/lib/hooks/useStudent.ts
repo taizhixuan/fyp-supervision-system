@@ -605,6 +605,35 @@ export function useExportProposalDocx() {
   })
 }
 
+// ==================== PDPA — Right of access (data export) ====================
+/**
+ * Downloads a JSON file containing all personal data the system holds about
+ * the signed-in student. Server-side audited.
+ */
+export function useExportPersonalData() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.get<Record<string, unknown>>('/student/me/data-export')
+      const json = JSON.stringify(response.data, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const cd = response.headers?.['content-disposition'] as string | undefined
+      let filename = 'fyp-personal-data.json'
+      if (cd) {
+        const match = cd.match(/filename="?([^";]+)"?/)
+        if (match) filename = match[1]
+      }
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    },
+  })
+}
+
 // ==================== AI Proposal Analysis ====================
 export function useProposalAnalysis() {
   return useQuery({
