@@ -1,5 +1,6 @@
 package com.fyp.supervision.controller.student;
 
+import com.fyp.supervision.entity.ChatMemory;
 import com.fyp.supervision.entity.ChatMessage;
 import com.fyp.supervision.entity.ChatSession;
 import com.fyp.supervision.entity.Deadline;
@@ -8,6 +9,7 @@ import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.MeetingLogStatus;
 import com.fyp.supervision.exception.AiServiceUnavailableException;
+import com.fyp.supervision.repository.ChatMemoryRepository;
 import com.fyp.supervision.repository.ChatMessageRepository;
 import com.fyp.supervision.repository.ChatSessionRepository;
 import com.fyp.supervision.repository.DeadlineRepository;
@@ -19,6 +21,7 @@ import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,12 +37,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/student/chat")
 @RequiredArgsConstructor
 public class StudentChatController {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatMemoryRepository chatMemoryRepository;
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final ProjectRepository projectRepository;
@@ -169,8 +174,56 @@ public class StudentChatController {
         if (session != null) {
             session.setEndedAt(LocalDateTime.now());
             chatSessionRepository.save(session);
+
+            // Summarize the just-ended session into long-term memory. Best-effort:
+            // failures are logged and skipped, never propagated to the user.
+            try {
+                updateChatMemory(userId, session.getSessionId());
+            } catch (Exception ex) {
+                log.warn("Chat memory update failed for user {}: {}", userId, ex.getMessage());
+            }
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Pulls the session's messages, asks the chatbot service to summarize them
+     * (folding in the previous memory if any), and upserts the result into
+     * {@code chat_memory}. Called from {@link #clearChat} on session-end.
+     */
+    private void updateChatMemory(Long userId, Long sessionId) {
+        List<ChatMessage> sessionMessages =
+                chatMessageRepository.findBySession_SessionIdOrderBySentAtAsc(sessionId);
+        if (sessionMessages.size() < 2) return; // nothing useful to summarize
+
+        List<Map<String, String>> messageDtos = sessionMessages.stream()
+                .map(m -> Map.of(
+                        "sender", m.getSender() == null ? "" : m.getSender(),
+                        "content", m.getContent() == null ? "" : m.getContent()))
+                .collect(Collectors.toList());
+
+        String previous = chatMemoryRepository.findById(userId)
+                .map(ChatMemory::getSummaryText)
+                .orElse(null);
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("messages", messageDtos);
+        if (previous != null && !previous.isBlank()) {
+            payload.put("previousSummary", previous);
+        }
+
+        String summary = aiServiceClient.summarizeSession(payload);
+        if (summary == null || summary.isBlank()) return;
+
+        ChatMemory memory = chatMemoryRepository.findById(userId).orElseGet(() -> {
+            UserAccount u = userAccountRepository.findById(userId).orElseThrow();
+            ChatMemory m = new ChatMemory();
+            m.setUserId(userId);
+            m.setUser(u);
+            return m;
+        });
+        memory.setSummaryText(summary);
+        chatMemoryRepository.save(memory);
     }
 
     /**
@@ -248,6 +301,17 @@ public class StudentChatController {
         sb.append("Student context (use only if relevant to the question):\n");
         sb.append("- Today's date: ").append(today).append('\n');
         boolean any = true;
+
+        // Long-term memory carried across past chat sessions.
+        chatMemoryRepository.findById(userId).ifPresent(memory -> {
+            String text = memory.getSummaryText();
+            if (text != null && !text.isBlank()) {
+                sb.append("- Long-term memory from past chats (treat as background, ")
+                  .append("not gospel — verify when in doubt):\n  ")
+                  .append(text.replace("\n", "\n  "))
+                  .append('\n');
+            }
+        });
 
         Optional<StudentProfile> profileOpt = studentProfileRepository.findById(userId);
         if (profileOpt.isPresent()) {

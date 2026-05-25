@@ -189,6 +189,86 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/ai/summarize", methods=["POST"])
+def summarize():
+    """
+    Summarize a closed chat session into ~150 words capturing recurring
+    themes, open concerns, and stated preferences. Used by the backend's
+    cross-session memory feature: when a student clicks "New chat", the
+    just-ended session is summarized and persisted so the next session's
+    context includes long-term memory.
+
+    Body:
+      {
+        "messages": [ { "sender": "user" | "assistant", "content": "..." } ],
+        "previousSummary": "<optional prior memory to fold into the new one>"
+      }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        messages = data.get("messages", [])
+        previous_summary = (data.get("previousSummary") or "").strip()
+
+        if not isinstance(messages, list) or len(messages) < 2:
+            return jsonify({"summary": previous_summary or ""}), 200
+
+        # Build a compact transcript (cap to last 30 exchanges to avoid token bloat).
+        recent = messages[-30:]
+        transcript_lines = []
+        for m in recent:
+            sender = str(m.get("sender", "")).lower()
+            content = str(m.get("content", "")).strip()
+            if not content:
+                continue
+            role = "Student" if sender == "user" else "Assistant"
+            transcript_lines.append(f"{role}: {content}")
+        transcript = "\n".join(transcript_lines)
+
+        if not transcript:
+            return jsonify({"summary": previous_summary or ""}), 200
+
+        # If no remote LLM is configured, return previous_summary unchanged so
+        # we don't blow away long-term memory with a worse heuristic.
+        if llm_client is None:
+            return jsonify({"summary": previous_summary or ""}), 200
+
+        system_prompt = (
+            "You are condensing a student's chat with the FYP Assistant into a "
+            "long-term memory snippet (about 150 words). Keep what's useful "
+            "across future sessions: the student's project topic, recurring "
+            "questions, stated preferences (tone/length/language), unresolved "
+            "concerns, and decisions made. Drop generic chit-chat and anything "
+            "ephemeral. Write as a third-person profile note, not a transcript."
+        )
+        user_prompt = (
+            (f"Previous memory:\n{previous_summary}\n\n" if previous_summary else "")
+            + f"New conversation:\n{transcript}\n\n"
+            "Update the memory to incorporate the new conversation. Output only the "
+            "memory text, no preamble."
+        )
+
+        try:
+            resp = llm_client.chat.completions.create(
+                model=llm_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.3,
+                max_tokens=400,
+            )
+            summary = (resp.choices[0].message.content or "").strip()
+        except Exception as e:
+            logger.warning(f"Summarize LLM call failed: {e}")
+            return jsonify({"summary": previous_summary or ""}), 200
+
+        return jsonify({"summary": summary}), 200
+
+    except Exception as e:
+        logger.error(f"Summarize error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("FLASK_PORT", 5003))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
