@@ -14,6 +14,7 @@ import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.MeetingLogRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.ProposalRepository;
+import com.fyp.supervision.repository.ProposalVersionRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AiServiceClient;
@@ -43,6 +44,7 @@ public class StudentChatController {
     private final StudentProfileRepository studentProfileRepository;
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
+    private final ProposalVersionRepository proposalVersionRepository;
     private final DeadlineRepository deadlineRepository;
     private final MeetingLogRepository meetingLogRepository;
     private final AiServiceClient aiServiceClient;
@@ -105,9 +107,10 @@ public class StudentChatController {
                 .collect(Collectors.toList());
 
         // Personalised context: programme, phase, cycle status, supervisor pairing,
-        // proposal status. Lets the assistant tailor answers to the student's actual
-        // state without the student having to repeat it.
-        String extraContext = buildExtraContext(userId);
+        // proposal status, deadlines, log progress. The proposal text body is folded in
+        // only when the user's message looks proposal-related, keeping handbook RAG
+        // chunks visible for generic questions.
+        String extraContext = buildExtraContext(userId, messageText);
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("message", messageText);
@@ -218,7 +221,28 @@ public class StudentChatController {
      * about the student (so the chatbot doesn't pollute the prompt with empty
      * boilerplate).
      */
-    private String buildExtraContext(Long userId) {
+    // Keywords that suggest the student is asking about THEIR proposal. When matched,
+    // the latest proposal version's text is folded into the context.
+    private static final List<String> PROPOSAL_INTENT_KEYWORDS = List.of(
+            "my proposal", "my project", "my topic", "my research", "my work", "my draft",
+            "my abstract", "my problem", "my methodology", "my literature", "my objective",
+            "my scope", "my idea", "review my", "check my", "feedback on my", "feedback on this",
+            "problem statement", "research question", "literature review", "methodology",
+            "objective", "scope of", "abstract"
+    );
+
+    private static final int PROPOSAL_CONTENT_CHAR_BUDGET = 3000;
+
+    private boolean looksProposalRelated(String messageText) {
+        if (messageText == null || messageText.isBlank()) return false;
+        String lower = messageText.toLowerCase();
+        for (String kw : PROPOSAL_INTENT_KEYWORDS) {
+            if (lower.contains(kw)) return true;
+        }
+        return false;
+    }
+
+    private String buildExtraContext(Long userId, String messageText) {
         StringBuilder sb = new StringBuilder();
         LocalDate today = LocalDate.now();
         sb.append("Student context (use only if relevant to the question):\n");
@@ -268,9 +292,32 @@ public class StudentChatController {
             }
         }
 
+        // Proposal grounding: always include the title (cheap), include the full content
+        // body only when the user's message appears proposal-related.
+        boolean proposalIntent = looksProposalRelated(messageText);
         proposalRepository.findByStudent_UserId(userId).ifPresent(proposal -> {
             if (proposal.getStatus() != null) {
                 sb.append("- Proposal status: ").append(proposal.getStatus()).append('\n');
+            }
+            if (proposal.getTitle() != null && !proposal.getTitle().isBlank()) {
+                sb.append("- Proposal title: ").append(proposal.getTitle()).append('\n');
+            }
+
+            if (proposalIntent) {
+                proposalVersionRepository
+                        .findByProposal_ProposalIdOrderByVersionNoDesc(proposal.getProposalId())
+                        .stream().findFirst()
+                        .ifPresent(version -> {
+                            String content = version.getContentText();
+                            if (content != null && !content.isBlank()) {
+                                String trimmed = content.length() > PROPOSAL_CONTENT_CHAR_BUDGET
+                                        ? content.substring(0, PROPOSAL_CONTENT_CHAR_BUDGET) + "\n... [truncated]"
+                                        : content;
+                                sb.append("- Latest proposal draft (v").append(version.getVersionNo())
+                                        .append(", use this as the authoritative source for questions about the student's own work):\n");
+                                sb.append("\"\"\"\n").append(trimmed).append("\n\"\"\"\n");
+                            }
+                        });
             }
         });
 
