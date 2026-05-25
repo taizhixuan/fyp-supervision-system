@@ -27,11 +27,14 @@ import {
 } from '@/lib/hooks/useMeetingLog'
 import { ROUTES } from '@/lib/constants/routes'
 import { MEETING_LOG_STATUS_CONFIG } from '@/types/meetingLog'
+import { downloadMeetingLogPdf } from '@/lib/utils/pdfGenerator'
 
 export function MeetingLogDetail() {
   const { id } = useParams<{ id: string }>()
 
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
   const { data: log, isLoading, error } = useMeetingLogDetail(id || '')
   const signMutation = useSignMeetingLog()
@@ -68,6 +71,19 @@ export function MeetingLogDetail() {
       await exportMutation.mutateAsync(id)
     } catch {
       // mutation surfaces error via state; no extra handling here
+    }
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!log) return
+    setIsPdfDownloading(true)
+    setPdfError(null)
+    try {
+      await downloadMeetingLogPdf(log)
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : 'Failed to generate PDF.')
+    } finally {
+      setIsPdfDownloading(false)
     }
   }
 
@@ -173,10 +189,8 @@ export function MeetingLogDetail() {
                 size="sm"
                 className="mt-3"
                 leftIcon={<Download className="h-4 w-4" />}
-                onClick={() => {
-                  // TODO: Implement PDF download
-                  alert('PDF export coming soon!')
-                }}
+                onClick={handleDownloadPdf}
+                isLoading={isPdfDownloading}
               >
                 Download PDF
               </Button>
@@ -387,6 +401,13 @@ export function MeetingLogDetail() {
           variant="error"
           title="Failed to submit"
           description={submitMutation.error?.message || 'An error occurred while submitting.'}
+        />
+      )}
+      {pdfError && (
+        <AlertBanner
+          variant="error"
+          title="Failed to generate PDF"
+          description={pdfError}
         />
       )}
     </div>
