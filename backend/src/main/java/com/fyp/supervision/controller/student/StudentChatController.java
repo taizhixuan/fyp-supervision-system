@@ -2,12 +2,16 @@ package com.fyp.supervision.controller.student;
 
 import com.fyp.supervision.entity.ChatMessage;
 import com.fyp.supervision.entity.ChatSession;
+import com.fyp.supervision.entity.Deadline;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
+import com.fyp.supervision.enums.MeetingLogStatus;
 import com.fyp.supervision.exception.AiServiceUnavailableException;
 import com.fyp.supervision.repository.ChatMessageRepository;
 import com.fyp.supervision.repository.ChatSessionRepository;
+import com.fyp.supervision.repository.DeadlineRepository;
+import com.fyp.supervision.repository.MeetingLogRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.ProposalRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
@@ -22,7 +26,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +43,8 @@ public class StudentChatController {
     private final StudentProfileRepository studentProfileRepository;
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
+    private final DeadlineRepository deadlineRepository;
+    private final MeetingLogRepository meetingLogRepository;
     private final AiServiceClient aiServiceClient;
 
     @GetMapping
@@ -211,49 +220,51 @@ public class StudentChatController {
      */
     private String buildExtraContext(Long userId) {
         StringBuilder sb = new StringBuilder();
+        LocalDate today = LocalDate.now();
         sb.append("Student context (use only if relevant to the question):\n");
-        boolean any = false;
+        sb.append("- Today's date: ").append(today).append('\n');
+        boolean any = true;
 
         Optional<StudentProfile> profileOpt = studentProfileRepository.findById(userId);
         if (profileOpt.isPresent()) {
             StudentProfile p = profileOpt.get();
             if (p.getProgramme() != null && !p.getProgramme().isBlank()) {
                 sb.append("- Programme: ").append(p.getProgramme()).append('\n');
-                any = true;
             }
             if (p.getSpecialisation() != null && !p.getSpecialisation().isBlank()) {
                 sb.append("- Specialisation: ").append(p.getSpecialisation()).append('\n');
-                any = true;
             }
         }
 
+        String currentPhase = null;
         Optional<Project> projectOpt = projectRepository.findByStudent_UserId(userId);
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
             if (project.getStage() != null && !project.getStage().isBlank()) {
                 sb.append("- Current phase: ").append(project.getStage()).append('\n');
-                any = true;
             }
             if (project.getCycle() != null) {
+                if (project.getCycle().getCycleType() != null) {
+                    currentPhase = project.getCycle().getCycleType();
+                }
                 if (project.getCycle().getAcademicYear() != null) {
                     sb.append("- Academic year: ").append(project.getCycle().getAcademicYear()).append('\n');
-                    any = true;
                 }
                 if (project.getCycle().getSemester() != null) {
                     sb.append("- Semester: ").append(project.getCycle().getSemester()).append('\n');
-                    any = true;
                 }
                 if (project.getCycle().getStatus() != null) {
                     sb.append("- Cycle status: ").append(project.getCycle().getStatus()).append('\n');
-                    any = true;
                 }
             }
             if (project.getSupervisor() != null) {
-                sb.append("- Supervisor: paired\n");
-                any = true;
+                sb.append("- Supervisor: paired");
+                if (project.getSupervisor().getFullName() != null) {
+                    sb.append(" (").append(project.getSupervisor().getFullName()).append(')');
+                }
+                sb.append('\n');
             } else {
                 sb.append("- Supervisor: not yet paired\n");
-                any = true;
             }
         }
 
@@ -262,6 +273,31 @@ public class StudentChatController {
                 sb.append("- Proposal status: ").append(proposal.getStatus()).append('\n');
             }
         });
+
+        // Meeting log progress for the current phase (FCI requires ≥ 6 LOCKED logs per phase).
+        if (currentPhase != null) {
+            long locked = meetingLogRepository.countByStudent_UserIdAndStatusAndFypPhase(
+                    userId, MeetingLogStatus.LOCKED, currentPhase);
+            sb.append("- Meeting logs (").append(currentPhase).append("): ")
+                    .append(locked).append(" of 6 locked\n");
+        }
+
+        // Upcoming deadlines visible to students (next 3, dated and with days-until).
+        List<Deadline> upcoming = deadlineRepository.findByAudienceAndDueDateAfterOrderByDueDateAsc("STUDENT", today);
+        if (!upcoming.isEmpty()) {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMM yyyy");
+            sb.append("- Upcoming deadlines:\n");
+            upcoming.stream().limit(3).forEach(d -> {
+                LocalDate due = d.getExtendedDate() != null ? d.getExtendedDate() : d.getDueDate();
+                if (due == null) return;
+                long days = ChronoUnit.DAYS.between(today, due);
+                sb.append("    • ")
+                        .append(d.getTitle() != null ? d.getTitle() : "Deadline")
+                        .append(" — ").append(due.format(fmt))
+                        .append(" (").append(days).append(days == 1 ? " day" : " days").append(" away)")
+                        .append('\n');
+            });
+        }
 
         return any ? sb.toString() : null;
     }
