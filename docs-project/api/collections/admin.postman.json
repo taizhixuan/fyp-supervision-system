@@ -1,0 +1,342 @@
+{
+  "info": {
+    "_postman_id": "fyp-admin-collection-2026",
+    "name": "FYP Supervision - Admin",
+    "description": "Admin endpoints. Login as admin@mmu.edu.my / Admin@123 to populate {{token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/dashboard", "host": ["{{baseUrl}}"], "path": ["admin", "dashboard"] } }
+        }
+      ]
+    },
+    {
+      "name": "2. Users",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?role=&status=&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "role", "value": "STUDENT", "disabled": true },
+                { "key": "status", "value": "ACTIVE", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/users/:id", "host": ["{{baseUrl}}"], "path": ["admin", "users", ":id"], "variable": [{ "key": "id", "value": "1" }] } }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"SUPERVISOR\",\n  \"fullName\": \"Dr. New Supervisor\",\n  \"mmuId\": \"2001000099\",\n  \"email\": \"new.supervisor@mmu.edu.my\",\n  \"phone\": \"012-9999999\",\n  \"password\": \"Welcome@2026\",\n  \"status\": \"ACTIVE\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"phone\": \"019-1234567\",\n  \"status\": \"ACTIVE\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/users/:id", "host": ["{{baseUrl}}"], "path": ["admin", "users", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/users/:id", "host": ["{{baseUrl}}"], "path": ["admin", "users", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Bulk Update Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userIds\": [3, 4, 5],\n  \"status\": \"SUSPENDED\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/users/bulk-status", "host": ["{{baseUrl}}"], "path": ["admin", "users", "bulk-status"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Cycles",
+      "item": [
+        {
+          "name": "List Cycles",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/cycles", "host": ["{{baseUrl}}"], "path": ["admin", "cycles"] } }
+        },
+        {
+          "name": "Get Cycle",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/cycles/:id", "host": ["{{baseUrl}}"], "path": ["admin", "cycles", ":id"], "variable": [{ "key": "id", "value": "1" }] } }
+        },
+        {
+          "name": "Create Cycle",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cycleCode\": \"FYP-2026-2027-1\",\n  \"cycleType\": \"FYP1\",\n  \"academicYear\": \"2026/2027\",\n  \"semester\": 1,\n  \"startDate\": \"2026-09-01\",\n  \"endDate\": \"2027-01-31\",\n  \"status\": \"PLANNING\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/cycles", "host": ["{{baseUrl}}"], "path": ["admin", "cycles"] }
+          }
+        },
+        {
+          "name": "Update Cycle",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACTIVE\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/cycles/:id", "host": ["{{baseUrl}}"], "path": ["admin", "cycles", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Deadlines",
+      "item": [
+        {
+          "name": "List Deadlines",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/deadlines", "host": ["{{baseUrl}}"], "path": ["admin", "deadlines"] } }
+        },
+        {
+          "name": "Get Deadline",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/deadlines/:id", "host": ["{{baseUrl}}"], "path": ["admin", "deadlines", ":id"], "variable": [{ "key": "id", "value": "1" }] } }
+        },
+        {
+          "name": "Create Deadline",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cycleId\": 1,\n  \"title\": \"Proposal Submission Deadline\",\n  \"description\": \"Final deadline for proposal submission\",\n  \"deadlineType\": \"PROPOSAL\",\n  \"dueDate\": \"2026-10-15T23:59:59\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/deadlines", "host": ["{{baseUrl}}"], "path": ["admin", "deadlines"] }
+          }
+        },
+        {
+          "name": "Update Deadline",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"dueDate\": \"2026-10-20T23:59:59\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/deadlines/:id", "host": ["{{baseUrl}}"], "path": ["admin", "deadlines", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Delete Deadline",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/deadlines/:id", "host": ["{{baseUrl}}"], "path": ["admin", "deadlines", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. System Parameters",
+      "item": [
+        {
+          "name": "List Parameters",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/parameters", "host": ["{{baseUrl}}"], "path": ["admin", "parameters"] } }
+        },
+        {
+          "name": "Get Parameter",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/parameters/:id", "host": ["{{baseUrl}}"], "path": ["admin", "parameters", ":id"], "variable": [{ "key": "id", "value": "1" }] } }
+        },
+        {
+          "name": "Update Parameter",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"paramValue\": \"10\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/parameters/:id", "host": ["{{baseUrl}}"], "path": ["admin", "parameters", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Integrations",
+      "item": [
+        {
+          "name": "List Integrations",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/integrations", "host": ["{{baseUrl}}"], "path": ["admin", "integrations"] } }
+        },
+        {
+          "name": "Get Integration",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/integrations/:id", "host": ["{{baseUrl}}"], "path": ["admin", "integrations", ":id"], "variable": [{ "key": "id", "value": "1" }] } }
+        },
+        {
+          "name": "Update Integration",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"endpointUrl\": \"http://localhost:5001\",\n  \"apiKey\": \"\",\n  \"isEnabled\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/integrations/:id", "host": ["{{baseUrl}}"], "path": ["admin", "integrations", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Test Integration",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/integrations/:id/test", "host": ["{{baseUrl}}"], "path": ["admin", "integrations", ":id", "test"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Audit Logs",
+      "item": [
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit-logs?page=0&size=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "audit-logs"],
+              "query": [
+                { "key": "page", "value": "0", "disabled": true },
+                { "key": "size", "value": "50", "disabled": true },
+                { "key": "userId", "value": "", "disabled": true },
+                { "key": "action", "value": "", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Export Configs",
+      "item": [
+        {
+          "name": "List Export Configs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/export-configs", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs"] } }
+        },
+        {
+          "name": "Create Export Config",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Weekly User Report\",\n  \"exportType\": \"USERS\",\n  \"format\": \"CSV\",\n  \"schedule\": \"WEEKLY\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/export-configs", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs"] }
+          }
+        },
+        {
+          "name": "Update Export Config",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"schedule\": \"MONTHLY\"\n}" },
+            "url": { "raw": "{{baseUrl}}/admin/export-configs/:id", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Delete Export Config",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/export-configs/:id", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Run Export",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/export-configs/:id/run", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs", ":id", "run"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Download Export",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/export-configs/:id/download", "host": ["{{baseUrl}}"], "path": ["admin", "export-configs", ":id", "download"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Maintenance",
+      "item": [
+        {
+          "name": "List Jobs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/maintenance/jobs", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "jobs"] } }
+        },
+        {
+          "name": "List Backups",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/maintenance/backups", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "backups"] } }
+        },
+        {
+          "name": "List Health Checks",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/maintenance/health-checks", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "health-checks"] } }
+        },
+        {
+          "name": "Trigger Backup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/maintenance/backup", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "backup"] }
+          }
+        },
+        {
+          "name": "Restore from Backup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/maintenance/restore/:id", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "restore", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Run Cleanup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/maintenance/cleanup", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "cleanup"] }
+          }
+        },
+        {
+          "name": "Clear Cache",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/maintenance/clear-cache", "host": ["{{baseUrl}}"], "path": ["admin", "maintenance", "clear-cache"] }
+          }
+        },
+        {
+          "name": "Download Backup",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/maintenance/backups/download?id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "maintenance", "backups", "download"],
+              "query": [{ "key": "id", "value": "1" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

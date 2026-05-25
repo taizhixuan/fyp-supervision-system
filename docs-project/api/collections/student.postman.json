@@ -1,0 +1,489 @@
+{
+  "info": {
+    "_postman_id": "fyp-student-collection-2026",
+    "name": "FYP Supervision - Student",
+    "description": "All 41 student endpoints. Requires STUDENT role token in {{token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/dashboard", "host": ["{{baseUrl}}"], "path": ["student", "dashboard"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/profile", "host": ["{{baseUrl}}"], "path": ["student", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"programme\": \"Bachelor of Computer Science (Hons)\",\n  \"specialisation\": \"Software Engineering\",\n  \"faculty\": \"Faculty of Computing & Informatics\",\n  \"intakeYear\": 2021,\n  \"expectedGraduation\": \"2025-06\",\n  \"cgpa\": 3.50,\n  \"interests\": [\"Artificial Intelligence\", \"Web Development\"],\n  \"skills\": [\"Java\", \"Python\", \"React\"],\n  \"bio\": \"Passionate about AI and full-stack dev.\",\n  \"linkedinUrl\": \"https://linkedin.com/in/username\",\n  \"githubUrl\": \"https://github.com/username\",\n  \"portfolioUrl\": \"https://myportfolio.com\",\n  \"phone\": \"012-3456789\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/profile", "host": ["{{baseUrl}}"], "path": ["student", "profile"] }
+          }
+        },
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": { "raw": "{{baseUrl}}/student/profile/image", "host": ["{{baseUrl}}"], "path": ["student", "profile", "image"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Supervisor Directory",
+      "item": [
+        {
+          "name": "List All Supervisors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/supervisors?search=&availability=AVAILABLE",
+              "host": ["{{baseUrl}}"],
+              "path": ["supervisors"],
+              "query": [
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "availability", "value": "AVAILABLE", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Supervisor by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/supervisors/2", "host": ["{{baseUrl}}"], "path": ["supervisors", "2"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Recommendations",
+      "item": [
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/recommendations", "host": ["{{baseUrl}}"], "path": ["student", "recommendations"] }
+          }
+        },
+        {
+          "name": "Refresh Recommendations",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/recommendations/refresh", "host": ["{{baseUrl}}"], "path": ["student", "recommendations", "refresh"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Supervision Requests",
+      "item": [
+        {
+          "name": "List My Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/supervision-requests", "host": ["{{baseUrl}}"], "path": ["student", "supervision-requests"] }
+          }
+        },
+        {
+          "name": "Create Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supervisorId\": 2,\n  \"topicTitle\": \"AI-Powered FYP Supervision System\",\n  \"message\": \"I'm interested in working with you on this AI/ML project. My background includes...\",\n  \"researchAreas\": [\"Machine Learning\", \"Web Development\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/supervision-requests", "host": ["{{baseUrl}}"], "path": ["student", "supervision-requests"] }
+          }
+        },
+        {
+          "name": "Withdraw Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/supervision-requests/:id/withdraw", "host": ["{{baseUrl}}"], "path": ["student", "supervision-requests", ":id", "withdraw"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Proposal",
+      "item": [
+        {
+          "name": "Get My Proposal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal", "host": ["{{baseUrl}}"], "path": ["student", "proposal"] }
+          }
+        },
+        {
+          "name": "Create Proposal",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AI-Powered FYP Supervision System\",\n  \"problemStatement\": \"Students struggle to find suitable supervisors...\",\n  \"objectives\": [\n    \"Build recommendation system\",\n    \"Implement proposal analyzer\",\n    \"Develop chatbot\"\n  ],\n  \"methodology\": \"Agile development with React and Spring Boot...\",\n  \"scope\": \"Final-year undergraduate students at MMU FCI...\",\n  \"expectedOutcome\": \"A deployable web system with AI features...\",\n  \"researchAreas\": [\"AI\", \"Education Technology\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/proposal", "host": ["{{baseUrl}}"], "path": ["student", "proposal"] }
+          }
+        },
+        {
+          "name": "Update Proposal",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AI-Powered FYP Supervision System (v2)\",\n  \"problemStatement\": \"Updated problem statement...\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/proposal", "host": ["{{baseUrl}}"], "path": ["student", "proposal"] }
+          }
+        },
+        {
+          "name": "Submit Proposal",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal/submit", "host": ["{{baseUrl}}"], "path": ["student", "proposal", "submit"] }
+          }
+        },
+        {
+          "name": "Get Versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal/versions", "host": ["{{baseUrl}}"], "path": ["student", "proposal", "versions"] }
+          }
+        },
+        {
+          "name": "Get Feedback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal/feedback", "host": ["{{baseUrl}}"], "path": ["student", "proposal", "feedback"] }
+          }
+        },
+        {
+          "name": "Get AI Analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal/analysis", "host": ["{{baseUrl}}"], "path": ["student", "proposal", "analysis"] }
+          }
+        },
+        {
+          "name": "Run AI Analysis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/proposal/analyze", "host": ["{{baseUrl}}"], "path": ["student", "proposal", "analyze"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Meetings",
+      "item": [
+        {
+          "name": "List Meetings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/student/meetings?status=CONFIRMED&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "meetings"],
+              "query": [
+                { "key": "status", "value": "CONFIRMED", "disabled": true },
+                { "key": "page", "value": "0", "disabled": true },
+                { "key": "size", "value": "20", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Meeting",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/meetings/:id", "host": ["{{baseUrl}}"], "path": ["student", "meetings", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Request Meeting",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"FYP Progress Discussion - Week 6\",\n  \"agenda\": \"1. Show database design\\n2. Discuss auth implementation\\n3. Plan next sprint\",\n  \"platform\": \"GOOGLE_MEET\",\n  \"location\": \"https://meet.google.com/abc-defg-hij\",\n  \"duration\": 30,\n  \"proposedStartAt\": \"2026-05-07T14:00:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/meetings", "host": ["{{baseUrl}}"], "path": ["student", "meetings"] }
+          }
+        },
+        {
+          "name": "Cancel Meeting",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Conflict with another class\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/meetings/:id/cancel", "host": ["{{baseUrl}}"], "path": ["student", "meetings", ":id", "cancel"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Meeting Logs",
+      "item": [
+        {
+          "name": "List Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/student/logs?status=DRAFT&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "logs"],
+              "query": [
+                { "key": "status", "value": "DRAFT", "disabled": true },
+                { "key": "page", "value": "0", "disabled": true },
+                { "key": "size", "value": "20", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/logs/:id", "host": ["{{baseUrl}}"], "path": ["student", "logs", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Create Log",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meetingId\": 1,\n  \"summary\": \"Discussed database schema, supervisor approved the ER diagram with minor changes.\",\n  \"discussionPoints\": [\n    \"Reviewed 28 tables across 8 logical groups\",\n    \"Confirmed Flyway migration approach\",\n    \"Agreed on RBAC implementation strategy\"\n  ],\n  \"actionItems\": [\n    \"Implement auth module by next week\",\n    \"Add seed data for testing\"\n  ],\n  \"nextMeetingDate\": \"2026-05-14T14:00:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/logs", "host": ["{{baseUrl}}"], "path": ["student", "logs"] }
+          }
+        },
+        {
+          "name": "Update Log",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summary\": \"Updated summary text\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/logs/:id", "host": ["{{baseUrl}}"], "path": ["student", "logs", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Submit Log",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/logs/:id/submit", "host": ["{{baseUrl}}"], "path": ["student", "logs", ":id", "submit"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Sign Log",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"signature\": \"data:image/png;base64,iVBORw0KGgoAAAANSU\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/logs/:id/sign", "host": ["{{baseUrl}}"], "path": ["student", "logs", ":id", "sign"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Documents",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/student/documents?type=PROPOSAL&phase=FYP2",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "documents"],
+              "query": [
+                { "key": "type", "value": "PROPOSAL", "disabled": true },
+                { "key": "phase", "value": "FYP2", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/documents/:id", "host": ["{{baseUrl}}"], "path": ["student", "documents", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Download Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/documents/:id/download", "host": ["{{baseUrl}}"], "path": ["student", "documents", ":id", "download"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "title", "type": "text", "value": "FYP1 Proposal v2" },
+                { "key": "description", "type": "text", "value": "Updated based on feedback" },
+                { "key": "type", "type": "text", "value": "PROPOSAL" },
+                { "key": "phase", "type": "text", "value": "FYP2" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/student/documents", "host": ["{{baseUrl}}"], "path": ["student", "documents"] }
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/documents/:id", "host": ["{{baseUrl}}"], "path": ["student", "documents", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Chatbot",
+      "item": [
+        {
+          "name": "Get Chat History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/chat", "host": ["{{baseUrl}}"], "path": ["student", "chat"] }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What is the deadline for FYP2 proposal submission?\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/chat", "host": ["{{baseUrl}}"], "path": ["student", "chat"] }
+          }
+        },
+        {
+          "name": "Clear Chat",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/chat", "host": ["{{baseUrl}}"], "path": ["student", "chat"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Deadlines & Notifications",
+      "item": [
+        {
+          "name": "Get Deadlines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/deadlines", "host": ["{{baseUrl}}"], "path": ["student", "deadlines"] }
+          }
+        },
+        {
+          "name": "Get Registration Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/registration", "host": ["{{baseUrl}}"], "path": ["student", "registration"] }
+          }
+        },
+        {
+          "name": "Get Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/student/notification-preferences", "host": ["{{baseUrl}}"], "path": ["student", "notification-preferences"] }
+          }
+        },
+        {
+          "name": "Update Notification Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailNotifications\": true,\n  \"inAppNotifications\": true,\n  \"meetingReminders\": true,\n  \"deadlineReminders\": true,\n  \"supervisorMessages\": true,\n  \"announcementUpdates\": false\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/student/notification-preferences", "host": ["{{baseUrl}}"], "path": ["student", "notification-preferences"] }
+          }
+        }
+      ]
+    }
+  ]
+}
