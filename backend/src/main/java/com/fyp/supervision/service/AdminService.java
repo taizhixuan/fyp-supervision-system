@@ -56,6 +56,46 @@ public class AdminService {
         long activeProjects = projectRepository.countByStatus(ProjectStatus.ACTIVE);
         long totalProjects = projectRepository.count();
 
+        // Real JVM + disk metrics — replace the previous hardcoded zeros.
+        Runtime rt = Runtime.getRuntime();
+        long jvmTotalMb = rt.totalMemory() / (1024 * 1024);
+        long jvmUsedMb = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024);
+        long jvmMaxMb = rt.maxMemory() / (1024 * 1024);
+        int memoryPct = jvmMaxMb > 0 ? (int) Math.round(100.0 * jvmUsedMb / jvmMaxMb) : 0;
+
+        java.lang.management.OperatingSystemMXBean osBean =
+                java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+        // OS load average is the closest portable CPU signal across JDKs; normalise
+        // to a 0..100 percentage of available cores. Returns -1 on platforms that
+        // don't support it (most Windows JDKs) — fall back to 0 in that case.
+        double load = osBean.getSystemLoadAverage();
+        int cores = Math.max(1, osBean.getAvailableProcessors());
+        int cpuPct = load < 0 ? 0 : (int) Math.min(100, Math.round(100.0 * load / cores));
+
+        long storageUsedMb = 0;
+        long storageTotalMb = 0;
+        try {
+            Path uploads = fileStorageConfig.getUploadPath();
+            if (Files.exists(uploads)) {
+                java.nio.file.FileStore fs = Files.getFileStore(uploads);
+                storageTotalMb = fs.getTotalSpace() / (1024 * 1024);
+                storageUsedMb  = (fs.getTotalSpace() - fs.getUsableSpace()) / (1024 * 1024);
+            }
+        } catch (java.io.IOException ignored) {
+            // disk metrics unavailable — leave zero
+        }
+
+        long databaseSizeMb = 0;
+        try {
+            Object size = entityManager.createNativeQuery(
+                    "SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024) " +
+                    "FROM information_schema.tables WHERE table_schema = DATABASE()"
+            ).getSingleResult();
+            if (size instanceof Number n) databaseSizeMb = n.longValue();
+        } catch (Exception ignored) {
+            // MySQL-specific query; ignore on other engines or insufficient privs
+        }
+
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalUsers", totalUsers);
         stats.put("activeUsers", activeUsers);
@@ -63,18 +103,46 @@ public class AdminService {
         stats.put("totalProjects", totalProjects);
         stats.put("activeProjects", activeProjects);
         stats.put("systemUptime", "Running");
-        stats.put("lastBackup", LocalDateTime.now().minusHours(6).toString());
-        stats.put("storageUsed", 0);
-        stats.put("storageTotal", 100);
-        stats.put("cpuUsage", 0);
-        stats.put("memoryUsage", 0);
-        stats.put("databaseSize", 0);
+        stats.put("lastBackup", lookupLastBackup());
+        stats.put("storageUsed", storageUsedMb);
+        stats.put("storageTotal", storageTotalMb);
+        stats.put("cpuUsage", cpuPct);
+        stats.put("memoryUsage", memoryPct);
+        stats.put("databaseSize", databaseSizeMb);
 
         Map<String, Object> dashboard = new LinkedHashMap<>();
         dashboard.put("stats", stats);
         dashboard.put("alerts", List.of());
-        dashboard.put("recentActivity", List.of());
+        dashboard.put("recentActivity", buildRecentActivityForDashboard());
         return dashboard;
+    }
+
+    /**
+     * Most recent backup timestamp from the maintenance_job log, or null if there
+     * has never been a successful backup.
+     */
+    private String lookupLastBackup() {
+        try {
+            Object result = entityManager.createNativeQuery(
+                    "SELECT completed_at FROM maintenance_job " +
+                    "WHERE job_type = 'BACKUP' AND status = 'COMPLETED' " +
+                    "ORDER BY completed_at DESC LIMIT 1"
+            ).getSingleResult();
+            if (result == null) return null;
+            return result.toString();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /** Latest 10 audit rows, mapped to the dashboard's RecentAdminActivity shape. */
+    private List<Map<String, Object>> buildRecentActivityForDashboard() {
+        return auditLogRepository
+                .findWithFilters(null, null, null, null, null,
+                        org.springframework.data.domain.PageRequest.of(0, 10))
+                .getContent().stream()
+                .map(this::buildAuditLogDto)
+                .collect(Collectors.toList());
     }
 
     // ========== Users ==========
@@ -98,20 +166,45 @@ public class AdminService {
             page = userAccountRepository.findAll(pageable);
         }
 
+        // Batch-fetch profiles for the page rather than firing one findById per row.
+        List<Long> studentIds = page.getContent().stream()
+                .filter(u -> u.getRole() == UserRole.STUDENT)
+                .map(UserAccount::getUserId).toList();
+        List<Long> supervisorIds = page.getContent().stream()
+                .filter(u -> u.getRole() == UserRole.SUPERVISOR)
+                .map(UserAccount::getUserId).toList();
+        Map<Long, StudentProfile> studentProfiles = studentIds.isEmpty()
+                ? Map.of()
+                : studentProfileRepository.findAllById(studentIds).stream()
+                        .collect(Collectors.toMap(StudentProfile::getUserId, sp -> sp));
+        Map<Long, SupervisorProfile> supervisorProfiles = supervisorIds.isEmpty()
+                ? Map.of()
+                : supervisorProfileRepository.findAllById(supervisorIds).stream()
+                        .collect(Collectors.toMap(SupervisorProfile::getUserId, sp -> sp));
+
         List<Map<String, Object>> users = page.getContent().stream()
-                .map(this::buildAdminUserListItem)
+                .map(u -> buildAdminUserListItem(u, studentProfiles, supervisorProfiles))
                 .collect(Collectors.toList());
 
         return Map.of("users", users, "total", page.getTotalElements());
     }
 
     public Map<String, Object> buildAdminUserListItem(UserAccount user) {
+        return buildAdminUserListItem(user, Map.of(), Map.of());
+    }
+
+    public Map<String, Object> buildAdminUserListItem(
+            UserAccount user,
+            Map<Long, StudentProfile> studentProfileCache,
+            Map<Long, SupervisorProfile> supervisorProfileCache) {
         String department = "";
         if (user.getRole() == UserRole.STUDENT) {
-            StudentProfile sp = studentProfileRepository.findById(user.getUserId()).orElse(null);
+            StudentProfile sp = studentProfileCache.get(user.getUserId());
+            if (sp == null) sp = studentProfileRepository.findById(user.getUserId()).orElse(null);
             department = sp != null && sp.getFaculty() != null ? sp.getFaculty() : "";
         } else if (user.getRole() == UserRole.SUPERVISOR) {
-            SupervisorProfile svp = supervisorProfileRepository.findById(user.getUserId()).orElse(null);
+            SupervisorProfile svp = supervisorProfileCache.get(user.getUserId());
+            if (svp == null) svp = supervisorProfileRepository.findById(user.getUserId()).orElse(null);
             department = svp != null && svp.getFaculty() != null ? svp.getFaculty() : "";
         }
 

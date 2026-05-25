@@ -130,8 +130,8 @@ export function UserDetail() {
 
   const handleResendInvite = async () => {
     try {
-      await resendInviteMutation.mutateAsync(user.userId)
-      successToast('Invitation Resent', `Invite email sent to ${user.email}`)
+      await resendInviteMutation.mutateAsync(user.email)
+      successToast('Invitation Resent', `Reset email sent to ${user.email}`)
     } catch (error) {
       errorToast('Failed to Resend', 'Could not send the invitation email.')
     }
@@ -139,7 +139,7 @@ export function UserDetail() {
 
   const handleSendResetLink = async () => {
     try {
-      await sendCredentialsMutation.mutateAsync({ userId: user.userId, method: 'RESET_LINK' })
+      await sendCredentialsMutation.mutateAsync({ email: user.email, method: 'RESET_LINK' })
       successToast('Reset Link Sent', `Password reset link sent to ${user.email}`)
     } catch (error) {
       errorToast('Failed to Send', 'Could not send the password reset link.')

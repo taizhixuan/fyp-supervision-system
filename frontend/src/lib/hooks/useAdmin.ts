@@ -1205,14 +1205,15 @@ export function useDeleteUser() {
   })
 }
 
+// Both "Resend Invite" and "Send Reset Link" go through the public
+// /auth/forgot-password flow, which already emails the user a password-reset
+// link (and is the only mailer wired to UserAccount). The admin-only endpoints
+// the page used to call (`/admin/users/{id}/resend-invite` and
+// `/admin/users/{id}/send-credentials`) were never implemented on the backend.
 export function useResendInvite() {
   return useMutation({
-    mutationFn: async (userId: string) => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        return { success: true, message: 'Invitation email resent' }
-      }
-      const { data } = await apiClient.post(`/admin/users/${userId}/resend-invite`)
+    mutationFn: async (email: string) => {
+      const { data } = await apiClient.post('/auth/forgot-password', { email })
       return data
     },
   })
@@ -1220,12 +1221,8 @@ export function useResendInvite() {
 
 export function useSendCredentials() {
   return useMutation({
-    mutationFn: async ({ userId, method }: { userId: string; method: 'EMAIL' | 'RESET_LINK' }) => {
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        return { success: true, message: `Credentials sent via ${method.toLowerCase().replace('_', ' ')}` }
-      }
-      const { data } = await apiClient.post(`/admin/users/${userId}/send-credentials`, { method })
+    mutationFn: async ({ email }: { email: string; method?: 'EMAIL' | 'RESET_LINK' }) => {
+      const { data } = await apiClient.post('/auth/forgot-password', { email })
       return data
     },
   })

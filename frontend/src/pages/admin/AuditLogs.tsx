@@ -28,9 +28,10 @@ import { useAuditLogs } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
 import type { AuditAction, AuditEntityType } from '@/types'
 
-const actionConfig: Record<AuditAction, { label: string; icon: typeof Eye; color: string }> = {
+const actionConfig: Record<string, { label: string; icon: typeof Eye; color: string }> = {
   CREATE: { label: 'Create', icon: Plus, color: 'text-success-600' },
   READ: { label: 'Read', icon: Eye, color: 'text-info-600' },
+  VIEW: { label: 'View', icon: Eye, color: 'text-info-600' },
   UPDATE: { label: 'Update', icon: Edit, color: 'text-warning-600' },
   DELETE: { label: 'Delete', icon: Trash2, color: 'text-error-600' },
   LOGIN: { label: 'Login', icon: LogIn, color: 'text-success-600' },
@@ -41,6 +42,12 @@ const actionConfig: Record<AuditAction, { label: string; icon: typeof Eye; color
   REJECT: { label: 'Reject', icon: AlertTriangle, color: 'text-error-600' },
   LOCK: { label: 'Lock', icon: Lock, color: 'text-error-600' },
   UNLOCK: { label: 'Unlock', icon: Unlock, color: 'text-success-600' },
+}
+// Backend emits domain-specific action strings (USER_APPROVED, CYCLE_ACTIVATED,
+// USER_STATUS_CHANGED, etc.) — pretty-print them and avoid crashing on unknown values.
+const FALLBACK_ACTION = { label: 'Action', icon: Eye, color: 'text-neutral-600' }
+function resolveAction(action: string) {
+  return actionConfig[action] ?? { ...FALLBACK_ACTION, label: action.replace(/_/g, ' ') }
 }
 
 const entityTypeLabels: Record<AuditEntityType, string> = {
@@ -68,8 +75,8 @@ export function AuditLogs() {
   const { data, isLoading, refetch } = useAuditLogs({
     action: actionFilter !== 'ALL' ? actionFilter : undefined,
     entityType: entityFilter !== 'ALL' ? entityFilter : undefined,
-    startDate: dateRange.start || undefined,
-    endDate: dateRange.end || undefined,
+    dateFrom: dateRange.start || undefined,
+    dateTo: dateRange.end || undefined,
     page,
     limit: 20,
   })
@@ -78,16 +85,36 @@ export function AuditLogs() {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
-      log.userName.toLowerCase().includes(query) ||
-      log.entityType.toLowerCase().includes(query) ||
-      log.action.toLowerCase().includes(query) ||
+      log.performedByName?.toLowerCase().includes(query) ||
+      log.entityType?.toLowerCase().includes(query) ||
+      log.action?.toLowerCase().includes(query) ||
       log.ipAddress?.toLowerCase().includes(query)
     )
   })
 
   const handleExport = () => {
-    console.log('Exporting audit logs...')
-    // Implement export functionality
+    if (!filteredLogs || filteredLogs.length === 0) return
+    const header = ['Timestamp', 'Action', 'Entity Type', 'Entity ID', 'Performed By', 'IP', 'Details']
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v)
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? '"' + s.replace(/"/g, '""') + '"'
+        : s
+    }
+    const lines = [
+      header.join(','),
+      ...filteredLogs.map((l) =>
+        [l.timestamp, l.action, l.entityType, l.entityId, l.performedByName, l.ipAddress, l.details]
+          .map(escape).join(',')
+      ),
+    ]
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   if (isLoading) {
@@ -207,8 +234,8 @@ export function AuditLogs() {
       <div className="space-y-2">
         {filteredLogs && filteredLogs.length > 0 ? (
           filteredLogs.map((log, idx) => {
-            const action = actionConfig[log.action]
-            const ActionIcon = action?.icon || Eye
+            const action = resolveAction(log.action)
+            const ActionIcon = action.icon
             const rowKey = String(log.logId ?? log.auditId ?? `${log.timestamp ?? 'log'}-${idx}`)
             const isExpanded = expandedLog === rowKey
 
@@ -227,13 +254,13 @@ export function AuditLogs() {
                       log.action === 'UPDATE' ? 'bg-warning-50' :
                       'bg-neutral-100'
                     )}>
-                      <ActionIcon className={cn('h-5 w-5', action?.color || 'text-neutral-600')} />
+                      <ActionIcon className={cn('h-5 w-5', action.color)} />
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-neutral-900">{log.userName}</span>
+                        <span className="font-medium text-neutral-900">{log.performedByName ?? '—'}</span>
                         <span className={cn(
                           'px-2 py-0.5 rounded-full text-xs font-medium',
                           log.action === 'DELETE' || log.action === 'LOCK' || log.action === 'REJECT' ? 'bg-error-50 text-error-600' :
@@ -241,7 +268,7 @@ export function AuditLogs() {
                           log.action === 'UPDATE' ? 'bg-warning-50 text-warning-600' :
                           'bg-neutral-100 text-neutral-600'
                         )}>
-                          {action?.label || log.action}
+                          {action.label}
                         </span>
                         <span className="text-neutral-500">
                           {entityTypeLabels[log.entityType] || log.entityType}

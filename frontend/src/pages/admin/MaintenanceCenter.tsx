@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   Shield,
   Calendar,
-  FileText,
   History,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
@@ -410,54 +409,24 @@ export function MaintenanceCenter() {
       <Card className="border-stone-200">
         <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
           <Clock className="h-5 w-5 text-amber-600" />
-          Scheduled Maintenance
+          Scheduled Tasks
         </h3>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-xl">
-                <HardDrive className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-stone-900">Daily Database Backup</h4>
-                <p className="text-sm text-stone-500">Every day at 3:00 AM</p>
-              </div>
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-xl">
+              <Clock className="h-5 w-5 text-amber-600" />
             </div>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
-              Active
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-rose-50/50 to-pink-50/50 rounded-xl border border-rose-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-100 rounded-xl">
-                <Trash2 className="h-5 w-5 text-rose-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-stone-900">Weekly Cleanup</h4>
-                <p className="text-sm text-stone-500">Every Sunday at 2:00 AM</p>
-              </div>
+            <div>
+              <h4 className="font-medium text-stone-900">Deadline Reminders</h4>
+              <p className="text-sm text-stone-500">
+                Sent daily at 09:00 server time. Other maintenance (backups,
+                restores, cleanup) is triggered manually from this page.
+              </p>
             </div>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
-              Active
-            </span>
           </div>
-
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-sky-50/50 to-cyan-50/50 rounded-xl border border-sky-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-100 rounded-xl">
-                <FileText className="h-5 w-5 text-sky-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-stone-900">Monthly Full Backup</h4>
-                <p className="text-sm text-stone-500">1st of every month at 1:00 AM</p>
-              </div>
-            </div>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
-              Active
-            </span>
-          </div>
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-medium">
+            Active
+          </span>
         </div>
       </Card>
 
