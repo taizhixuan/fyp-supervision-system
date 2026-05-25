@@ -43,6 +43,13 @@ public class ChatPreferences {
     @Builder.Default
     private String language = "EN";
 
+    /** PDPA consent for sending data to overseas LLM (Groq / OpenAI). Null until asked. */
+    @Column(name = "ai_processing_consented")
+    private Boolean aiProcessingConsented;
+
+    @Column(name = "ai_consent_decided_at")
+    private LocalDateTime aiConsentDecidedAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

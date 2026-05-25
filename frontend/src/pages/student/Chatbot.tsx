@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, Fragment, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Bot,
   Send,
@@ -21,6 +22,7 @@ import {
   Wand2,
   ArrowRight,
   Settings,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button, Spinner, useErrorToast } from '@/components/ui'
 import {
@@ -458,6 +460,13 @@ export function Chatbot() {
 
   const errorToast = useErrorToast()
 
+  // PDPA gate — if the user hasn't consented to AI processing yet, render the
+  // consent prompt instead of the chat shell. Returning early avoids the
+  // sessionQuery / sendMutation firing before consent is granted.
+  const prefsQuery = useChatPreferences()
+  const prefsLoaded = !prefsQuery.isLoading
+  const consentGranted = prefsQuery.data?.aiProcessingConsented === true
+
   const sessionQuery = useChatSession()
   const sendMutation = useSendChatMessage()
   const clearMutation = useClearChatSession()
@@ -565,6 +574,12 @@ export function Chatbot() {
     } catch {
       errorToast('Could not end the previous chat. Starting fresh anyway.')
     }
+  }
+
+  // PDPA gate — placed after all hooks to satisfy rules-of-hooks. The chat
+  // shell only renders when consent has been explicitly granted.
+  if (prefsLoaded && !consentGranted) {
+    return <AiConsentPrompt />
   }
 
   return (
@@ -879,6 +894,98 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
       <Button variant="primary" onClick={onRetry} type="button">
         Retry
       </Button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// PDPA consent prompt — blocks the chat until the student opts in to having
+// messages processed by an overseas LLM provider (Groq / OpenAI).
+// ---------------------------------------------------------------------------
+function AiConsentPrompt() {
+  const update = useUpdateChatPreferences()
+  const prefs = useChatPreferences()
+  const [agreed, setAgreed] = useState(false)
+  const errorToast = useErrorToast()
+
+  const handleConsent = async () => {
+    if (!agreed || update.isPending || !prefs.data) return
+    try {
+      await update.mutateAsync({
+        responseLength: prefs.data.responseLength,
+        tone: prefs.data.tone,
+        language: prefs.data.language,
+        aiProcessingConsented: true,
+      })
+    } catch (err) {
+      errorToast(err instanceof Error ? err.message : 'Could not save your consent. Please try again.')
+    }
+  }
+
+  const explicitlyDenied = prefs.data?.aiProcessingConsented === false
+
+  return (
+    <div className="h-[calc(100dvh-7rem)] min-h-0 flex items-center justify-center bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden p-6">
+      <div className="max-w-lg w-full">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="h-5 w-5 text-primary-700" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-neutral-900">FYP Assistant uses an external AI provider</h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              {explicitlyDenied
+                ? 'AI processing is currently disabled for your account.'
+                : 'One-time consent required before the chatbot can be used.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 mb-4 text-sm text-neutral-700 leading-relaxed space-y-2">
+          <p>
+            Your chat messages and the supporting context the system attaches (your proposal title, recent meeting
+            logs, document metadata) are sent to a third-party large language model provider — Groq or OpenAI —
+            hosted outside Malaysia.
+          </p>
+          <p>
+            The provider processes the message to produce a reply and does not store your data beyond its stated
+            retention policy. Your name, MMU ID, email, phone, and password are never sent.
+          </p>
+          <p className="text-xs text-neutral-500">
+            Full details in the{' '}
+            <Link to="/privacy" className="font-medium text-primary-600 hover:text-primary-700 inline-flex items-center gap-0.5">
+              Privacy Notice <ExternalLink className="h-3 w-3" />
+            </Link>
+            . You can revoke this consent at any time in Account Settings → Privacy.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-2.5 mb-4 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+          />
+          <span className="text-sm text-neutral-700">
+            I consent to my chat messages being processed by an external AI provider as described above.
+          </span>
+        </label>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={handleConsent}
+            disabled={!agreed || update.isPending}
+            isLoading={update.isPending}
+          >
+            {explicitlyDenied ? 'Re-enable FYP Assistant' : 'Enable FYP Assistant'}
+          </Button>
+          <Link to="/student/dashboard" className="text-sm font-medium text-neutral-600 hover:text-neutral-900 ml-2">
+            Not now
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

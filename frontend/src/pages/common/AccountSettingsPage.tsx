@@ -19,6 +19,8 @@ import {
   useExportPersonalData,
   useMyDeletionRequest,
   useRequestAccountDeletion,
+  useChatPreferences,
+  useUpdateChatPreferences,
   type DeletionRequest,
 } from '@/lib/hooks/useStudent'
 import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
@@ -143,8 +145,95 @@ function PrivacyTab() {
         )}
       </Card>
 
+      {isStudent && <AiConsentCard />}
       {isStudent && <DeletionRequestCard />}
     </div>
+  )
+}
+
+function AiConsentCard() {
+  const prefs = useChatPreferences()
+  const update = useUpdateChatPreferences()
+  const showSuccessToast = useSuccessToast()
+  const [error, setError] = useState<string | null>(null)
+
+  const consent = prefs.data?.aiProcessingConsented
+  const consentDecidedAt = prefs.data?.aiConsentDecidedAt
+
+  const setConsent = async (granted: boolean) => {
+    if (!prefs.data) return
+    setError(null)
+    try {
+      await update.mutateAsync({
+        responseLength: prefs.data.responseLength,
+        tone: prefs.data.tone,
+        language: prefs.data.language,
+        aiProcessingConsented: granted,
+      })
+      showSuccessToast(
+        granted ? 'AI processing enabled' : 'AI processing disabled',
+        granted
+          ? 'You can now use the FYP Assistant.'
+          : 'The FYP Assistant is blocked until you re-enable consent.'
+      )
+    } catch (err) {
+      setError(getApiErrorMessage(err))
+    }
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-1">
+        <ShieldCheck className="h-5 w-5 text-neutral-400" />
+        <h2 className="text-lg font-semibold text-neutral-900">AI processing consent</h2>
+      </div>
+      <p className="text-sm text-neutral-500 mb-4">
+        The FYP Assistant sends your chat messages and supporting context to a third-party large language model
+        provider (Groq or OpenAI) hosted outside Malaysia. You can revoke consent at any time — once revoked, the
+        chatbot is blocked until you re-enable it here.
+      </p>
+
+      {error && (
+        <AlertBanner
+          variant="error"
+          description={error}
+          dismissible
+          onDismiss={() => setError(null)}
+          className="mb-4"
+        />
+      )}
+
+      <div className="flex items-center justify-between rounded-md border border-neutral-200 p-3">
+        <div>
+          <p className="text-sm font-medium text-neutral-900">
+            {consent === true ? 'Consent granted' : consent === false ? 'Consent revoked' : 'Not asked yet'}
+          </p>
+          {consentDecidedAt && (
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Last updated {new Date(consentDecidedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+        {consent === true ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setConsent(false)}
+            isLoading={update.isPending}
+          >
+            Revoke consent
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={() => setConsent(true)}
+            isLoading={update.isPending}
+          >
+            Grant consent
+          </Button>
+        )}
+      </div>
+    </Card>
   )
 }
 
