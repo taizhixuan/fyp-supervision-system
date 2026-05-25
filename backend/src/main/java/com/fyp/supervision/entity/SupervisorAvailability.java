@@ -26,7 +26,7 @@ public class SupervisorAvailability {
     private UserAccount supervisor;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false, length = 10)
+    @Column(name = "day_of_week", nullable = false, length = 10, columnDefinition = "VARCHAR(10)")
     private DayOfWeek dayOfWeek;
 
     @Column(name = "start_time", nullable = false)
