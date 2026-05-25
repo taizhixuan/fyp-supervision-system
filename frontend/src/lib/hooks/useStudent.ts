@@ -1105,6 +1105,41 @@ export function useChatbot() {
   return useSendChatMessage()
 }
 
+// ==================== Chat preferences (style / tone / language) ====================
+
+export type ChatResponseLength = 'SHORT' | 'BALANCED' | 'DETAILED'
+export type ChatTone = 'FORMAL' | 'NEUTRAL' | 'CASUAL'
+export type ChatLanguage = 'EN' | 'MS' | 'ZH' | 'MIXED'
+
+export interface ChatPreferences {
+  responseLength: ChatResponseLength
+  tone: ChatTone
+  language: ChatLanguage
+}
+
+export function useChatPreferences() {
+  return useQuery({
+    queryKey: [...studentKeys.all, 'chat', 'preferences'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ChatPreferences>('/student/chat/preferences')
+      return data
+    },
+  })
+}
+
+export function useUpdateChatPreferences() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (prefs: ChatPreferences) => {
+      const { data } = await apiClient.put<ChatPreferences>('/student/chat/preferences', prefs)
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData([...studentKeys.all, 'chat', 'preferences'], data)
+    },
+  })
+}
+
 // ==================== Notifications ====================
 interface Notification {
   notificationId: number

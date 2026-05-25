@@ -2,6 +2,7 @@ package com.fyp.supervision.controller.student;
 
 import com.fyp.supervision.entity.ChatMemory;
 import com.fyp.supervision.entity.ChatMessage;
+import com.fyp.supervision.entity.ChatPreferences;
 import com.fyp.supervision.entity.ChatSession;
 import com.fyp.supervision.entity.Deadline;
 import com.fyp.supervision.entity.MeetingLog;
@@ -13,6 +14,7 @@ import com.fyp.supervision.enums.MeetingLogStatus;
 import com.fyp.supervision.exception.AiServiceUnavailableException;
 import com.fyp.supervision.repository.ChatMemoryRepository;
 import com.fyp.supervision.repository.ChatMessageRepository;
+import com.fyp.supervision.repository.ChatPreferencesRepository;
 import com.fyp.supervision.repository.ChatSessionRepository;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.MeetingLogRepository;
@@ -49,6 +51,7 @@ public class StudentChatController {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatMemoryRepository chatMemoryRepository;
+    private final ChatPreferencesRepository chatPreferencesRepository;
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final ProjectRepository projectRepository;
@@ -169,6 +172,55 @@ public class StudentChatController {
         chatMessageRepository.save(aiMsg);
 
         return ResponseEntity.ok(toMessageDto(aiMsg, mapper));
+    }
+
+    @GetMapping("/preferences")
+    public ResponseEntity<Map<String, Object>> getPreferences(@AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.parseLong(user.getUsername());
+        ChatPreferences prefs = chatPreferencesRepository.findById(userId).orElse(null);
+        Map<String, Object> body = new HashMap<>();
+        body.put("responseLength", prefs != null ? prefs.getResponseLength() : "BALANCED");
+        body.put("tone", prefs != null ? prefs.getTone() : "NEUTRAL");
+        body.put("language", prefs != null ? prefs.getLanguage() : "EN");
+        return ResponseEntity.ok(body);
+    }
+
+    @PutMapping("/preferences")
+    public ResponseEntity<Map<String, Object>> updatePreferences(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+
+        String length = normalisePreference((String) data.get("responseLength"),
+                List.of("SHORT", "BALANCED", "DETAILED"), "BALANCED");
+        String tone = normalisePreference((String) data.get("tone"),
+                List.of("FORMAL", "NEUTRAL", "CASUAL"), "NEUTRAL");
+        String language = normalisePreference((String) data.get("language"),
+                List.of("EN", "MS", "ZH", "MIXED"), "EN");
+
+        ChatPreferences prefs = chatPreferencesRepository.findById(userId).orElseGet(() -> {
+            UserAccount u = userAccountRepository.findById(userId).orElseThrow();
+            ChatPreferences p = new ChatPreferences();
+            p.setUserId(userId);
+            p.setUser(u);
+            return p;
+        });
+        prefs.setResponseLength(length);
+        prefs.setTone(tone);
+        prefs.setLanguage(language);
+        chatPreferencesRepository.save(prefs);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("responseLength", length);
+        body.put("tone", tone);
+        body.put("language", language);
+        return ResponseEntity.ok(body);
+    }
+
+    private String normalisePreference(String value, List<String> allowed, String fallback) {
+        if (value == null) return fallback;
+        String upper = value.trim().toUpperCase();
+        return allowed.contains(upper) ? upper : fallback;
     }
 
     @DeleteMapping
@@ -327,9 +379,45 @@ public class StudentChatController {
         return trimmed.length() > max ? trimmed.substring(0, max) + "…" : trimmed;
     }
 
+    private String describeLength(String code) {
+        return switch (code == null ? "BALANCED" : code) {
+            case "SHORT" -> "short — 1-3 sentences or a tight bullet list. No preamble.";
+            case "DETAILED" -> "detailed — full explanation with examples, sub-points, and rationale.";
+            default -> "balanced — 1-2 short paragraphs or a focused bullet list.";
+        };
+    }
+
+    private String describeTone(String code) {
+        return switch (code == null ? "NEUTRAL" : code) {
+            case "FORMAL" -> "formal academic — third person, no slang or emoji.";
+            case "CASUAL" -> "casual — friendly second-person 'you', conversational, contractions OK.";
+            default -> "neutral — clear and direct, lightly friendly, no slang.";
+        };
+    }
+
+    private String describeLanguage(String code) {
+        return switch (code == null ? "EN" : code) {
+            case "MS" -> "Bahasa Malaysia. Technical terms may stay in English where standard.";
+            case "ZH" -> "Mandarin Chinese (Simplified). Technical terms may stay in English where standard.";
+            case "MIXED" -> "Malaysian-style English — primarily English, but mixing in Bahasa or Mandarin words is fine when natural.";
+            default -> "English.";
+        };
+    }
+
     private String buildExtraContext(Long userId, String messageText) {
         StringBuilder sb = new StringBuilder();
         LocalDate today = LocalDate.now();
+
+        // Style directive — leads the context so the LLM honours it from the
+        // first token of generation. Falls back to balanced/neutral/EN when
+        // the student hasn't set explicit preferences.
+        chatPreferencesRepository.findById(userId).ifPresent(prefs -> {
+            sb.append("Response style directive (the student set these — honour them):\n");
+            sb.append("- Length: ").append(describeLength(prefs.getResponseLength())).append('\n');
+            sb.append("- Tone: ").append(describeTone(prefs.getTone())).append('\n');
+            sb.append("- Language: ").append(describeLanguage(prefs.getLanguage())).append("\n\n");
+        });
+
         sb.append("Student context (use only if relevant to the question):\n");
         sb.append("- Today's date: ").append(today).append('\n');
         boolean any = true;
