@@ -329,37 +329,11 @@ __pycache__/
 
 
 /.vscode/
-/docs-project/FYP2-UC-ERD-Analysis.md
-/docs-project/Data-Dictionary-Report.docx
-/docs-project/reference-arial9.docx
-/docs-project/reference-default.docx
-/docs-project/Changes.md
-/docs-project/Meeting-Progress/
-/docs-project/postman/
-/docs-project/TODO/
-/docs-project/reports/chapter5.md
-/docs-project/reports/chapter6.md
-/docs-project/report/chapter4.md
-/docs-project/report/chapter5.md
-/docs-project/report/chapter6.md
-/docs-project/report/chapter7.md
-/docs-project/report/chapter5-zh.md
-/docs-project/reports/_facts/
-/docs-project/reports/_plans/
-/docs-project/Demo-Walkthrough.md
 
 # Word lock / temp files (open-document marker)
 ~$*.docx
 ~$*.doc
-/docs-project/reports/commit-history.txt
-/docs-project/reports/commit-summary.txt
-/docs-project/reports/
-/docs-project/demo/
-/docs-project/presentation/
-/docs-project/conference-paper/
-/docs-project/concepts/
-/docs-project/report/media/
-/docs-project/report/chapter1.md
-/docs-project/report/chapter2.md
-/docs-project/report/chapter3.md
-/docs-project/report/chapter5-report-version.md
+
+# Local-only documentation (not pushed to GitHub)
+/docs-project/
+/docs/superpowers/
