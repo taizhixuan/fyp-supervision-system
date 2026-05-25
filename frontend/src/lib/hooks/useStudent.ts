@@ -1181,7 +1181,13 @@ export interface ChatPreferences {
   responseLength: ChatResponseLength
   tone: ChatTone
   language: ChatLanguage
+  /** PDPA consent for sending data to overseas LLM. null = not yet asked. */
+  aiProcessingConsented?: boolean | null
+  aiConsentDecidedAt?: string | null
 }
+
+/** Subset accepted by the PUT endpoint. Omitting `aiProcessingConsented` leaves it untouched. */
+export type ChatPreferencesUpdate = Partial<ChatPreferences> & Pick<ChatPreferences, 'responseLength' | 'tone' | 'language'>
 
 export function useChatPreferences() {
   return useQuery({
@@ -1196,7 +1202,7 @@ export function useChatPreferences() {
 export function useUpdateChatPreferences() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (prefs: ChatPreferences) => {
+    mutationFn: async (prefs: ChatPreferencesUpdate) => {
       const { data } = await apiClient.put<ChatPreferences>('/student/chat/preferences', prefs)
       return data
     },

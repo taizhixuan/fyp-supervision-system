@@ -100,6 +100,15 @@ public class StudentChatController {
             return ResponseEntity.badRequest().body(Map.of("message", "Message cannot be empty"));
         }
 
+        // PDPA gate — must explicitly consent before any cross-border AI call.
+        Boolean consent = chatPreferencesRepository.findById(userId).map(ChatPreferences::getAiProcessingConsented).orElse(null);
+        if (consent == null || !consent) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "errorCode", "AI_CONSENT_REQUIRED",
+                    "message", "You must consent to AI processing before using the chatbot. Open Account Settings → Privacy."
+            ));
+        }
+
         // Get or create session (synchronized prevents double-session race for the same user)
         ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
                 .orElseGet(() -> chatSessionRepository.save(ChatSession.builder().user(account).build()));
@@ -182,6 +191,9 @@ public class StudentChatController {
         body.put("responseLength", prefs != null ? prefs.getResponseLength() : "BALANCED");
         body.put("tone", prefs != null ? prefs.getTone() : "NEUTRAL");
         body.put("language", prefs != null ? prefs.getLanguage() : "EN");
+        body.put("aiProcessingConsented", prefs != null ? prefs.getAiProcessingConsented() : null);
+        body.put("aiConsentDecidedAt", prefs != null && prefs.getAiConsentDecidedAt() != null
+                ? prefs.getAiConsentDecidedAt().toString() : null);
         return ResponseEntity.ok(body);
     }
 
@@ -208,12 +220,25 @@ public class StudentChatController {
         prefs.setResponseLength(length);
         prefs.setTone(tone);
         prefs.setLanguage(language);
+
+        // Optional explicit consent toggle — only updated when the caller sends the key,
+        // so the style-only update path (Chatbot settings popover) leaves consent untouched.
+        if (data.containsKey("aiProcessingConsented")) {
+            Object rawConsent = data.get("aiProcessingConsented");
+            Boolean consent = rawConsent instanceof Boolean ? (Boolean) rawConsent
+                    : rawConsent == null ? null : Boolean.parseBoolean(rawConsent.toString());
+            prefs.setAiProcessingConsented(consent);
+            prefs.setAiConsentDecidedAt(LocalDateTime.now());
+        }
+
         chatPreferencesRepository.save(prefs);
 
         Map<String, Object> body = new HashMap<>();
         body.put("responseLength", length);
         body.put("tone", tone);
         body.put("language", language);
+        body.put("aiProcessingConsented", prefs.getAiProcessingConsented());
+        body.put("aiConsentDecidedAt", prefs.getAiConsentDecidedAt() != null ? prefs.getAiConsentDecidedAt().toString() : null);
         return ResponseEntity.ok(body);
     }
 
