@@ -95,6 +95,27 @@ public class AiServiceClient {
         }
     }
 
+    /**
+     * Summarize a closed chat session into a long-term memory snippet. Returns
+     * empty string on any failure — the caller treats memory as best-effort
+     * and never blocks the user-facing flow on a summary failure.
+     */
+    @SuppressWarnings("unchecked")
+    public String summarizeSession(Map<String, Object> payload) {
+        try {
+            ResponseEntity<Map> response = postJson(chatbotUrl + "/ai/summarize", payload);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Object summary = response.getBody().get("summary");
+                return summary == null ? "" : summary.toString();
+            }
+            log.warn("Summarize returned non-2xx: {}", response.getStatusCode());
+            return "";
+        } catch (RestClientException e) {
+            log.warn("Summarize unavailable: {}", e.getMessage());
+            return "";
+        }
+    }
+
     public boolean isRecommendationServiceHealthy() {
         return checkHealth(recommendationUrl);
     }
