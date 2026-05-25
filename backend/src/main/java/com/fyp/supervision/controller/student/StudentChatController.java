@@ -4,6 +4,8 @@ import com.fyp.supervision.entity.ChatMemory;
 import com.fyp.supervision.entity.ChatMessage;
 import com.fyp.supervision.entity.ChatSession;
 import com.fyp.supervision.entity.Deadline;
+import com.fyp.supervision.entity.MeetingLog;
+import com.fyp.supervision.entity.ProjectDocument;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.UserAccount;
@@ -14,6 +16,7 @@ import com.fyp.supervision.repository.ChatMessageRepository;
 import com.fyp.supervision.repository.ChatSessionRepository;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.MeetingLogRepository;
+import com.fyp.supervision.repository.ProjectDocumentRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.ProposalRepository;
 import com.fyp.supervision.repository.ProposalVersionRepository;
@@ -22,6 +25,7 @@ import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AiServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,6 +54,7 @@ public class StudentChatController {
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
     private final ProposalVersionRepository proposalVersionRepository;
+    private final ProjectDocumentRepository projectDocumentRepository;
     private final DeadlineRepository deadlineRepository;
     private final MeetingLogRepository meetingLogRepository;
     private final AiServiceClient aiServiceClient;
@@ -286,13 +291,40 @@ public class StudentChatController {
 
     private static final int PROPOSAL_CONTENT_CHAR_BUDGET = 3000;
 
-    private boolean looksProposalRelated(String messageText) {
+    private static final List<String> MEETING_LOG_INTENT_KEYWORDS = List.of(
+            "meeting log", "last meeting", "previous meeting", "recent meeting",
+            "what did we discuss", "what we discussed", "we talked about",
+            "agreed on", "action item", "follow up", "follow-up",
+            "in my meeting", "in our meeting", "supervisor said", "supervisor told",
+            "supervisor mentioned", "she said", "he said", "they said",
+            "what's next", "what should i do next", "where am i", "where i am",
+            "my logs", "my meetings"
+    );
+
+    private static final List<String> DOCUMENT_INTENT_KEYWORDS = List.of(
+            "my document", "my documents", "i uploaded", "i submitted",
+            "my upload", "my submission", "my report", "my draft",
+            "interim report", "final report", "progress report",
+            "what have i uploaded", "documents i", "files i"
+    );
+
+    private boolean matchesAny(String messageText, List<String> keywords) {
         if (messageText == null || messageText.isBlank()) return false;
         String lower = messageText.toLowerCase();
-        for (String kw : PROPOSAL_INTENT_KEYWORDS) {
+        for (String kw : keywords) {
             if (lower.contains(kw)) return true;
         }
         return false;
+    }
+
+    private boolean looksProposalRelated(String messageText) {
+        return matchesAny(messageText, PROPOSAL_INTENT_KEYWORDS);
+    }
+
+    private String truncate(String s, int max) {
+        if (s == null) return "";
+        String trimmed = s.trim().replaceAll("\\s+", " ");
+        return trimmed.length() > max ? trimmed.substring(0, max) + "…" : trimmed;
     }
 
     private String buildExtraContext(Long userId, String messageText) {
@@ -395,8 +427,8 @@ public class StudentChatController {
 
         // Upcoming deadlines visible to students (next 3, dated and with days-until).
         List<Deadline> upcoming = deadlineRepository.findByAudienceAndDueDateAfterOrderByDueDateAsc("STUDENT", today);
+        DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("d MMM yyyy");
         if (!upcoming.isEmpty()) {
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMM yyyy");
             sb.append("- Upcoming deadlines:\n");
             upcoming.stream().limit(3).forEach(d -> {
                 LocalDate due = d.getExtendedDate() != null ? d.getExtendedDate() : d.getDueDate();
@@ -404,10 +436,69 @@ public class StudentChatController {
                 long days = ChronoUnit.DAYS.between(today, due);
                 sb.append("    • ")
                         .append(d.getTitle() != null ? d.getTitle() : "Deadline")
-                        .append(" — ").append(due.format(fmt))
+                        .append(" — ").append(due.format(dayFmt))
                         .append(" (").append(days).append(days == 1 ? " day" : " days").append(" away)")
                         .append('\n');
             });
+        }
+
+        // Recent meeting logs — only when the message looks meeting-related.
+        // The bot can then quote what was discussed instead of asking the
+        // student to repeat it.
+        if (matchesAny(messageText, MEETING_LOG_INTENT_KEYWORDS)) {
+            List<MeetingLog> recentLogs = meetingLogRepository
+                    .findByStudent_UserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 3))
+                    .getContent();
+            if (!recentLogs.isEmpty()) {
+                DateTimeFormatter shortFmt = DateTimeFormatter.ofPattern("d MMM");
+                sb.append("- Recent meeting logs (most recent first; refer to these instead of asking the student to repeat):\n");
+                for (MeetingLog log : recentLogs) {
+                    sb.append("    [#").append(log.getMeetingNumber() != null ? log.getMeetingNumber() : "?")
+                            .append(" · ");
+                    if (log.getMeetingDate() != null) {
+                        sb.append(log.getMeetingDate().format(shortFmt));
+                    } else {
+                        sb.append("?");
+                    }
+                    if (log.getFypPhase() != null && !log.getFypPhase().isBlank()) {
+                        sb.append(" · ").append(log.getFypPhase());
+                    }
+                    sb.append(" · ").append(log.getStatus()).append("]\n");
+                    if (log.getDiscussionSummary() != null && !log.getDiscussionSummary().isBlank()) {
+                        sb.append("      Discussion: ").append(truncate(log.getDiscussionSummary(), 280)).append('\n');
+                    }
+                    if (log.getActionItems() != null && !log.getActionItems().isBlank()) {
+                        sb.append("      Action items: ").append(truncate(log.getActionItems(), 200)).append('\n');
+                    }
+                    if (log.getWorkToBeDone() != null && !log.getWorkToBeDone().isBlank()) {
+                        sb.append("      Next: ").append(truncate(log.getWorkToBeDone(), 200)).append('\n');
+                    }
+                    if (log.getSupervisorComments() != null && !log.getSupervisorComments().isBlank()) {
+                        sb.append("      Supervisor: ").append(truncate(log.getSupervisorComments(), 200)).append('\n');
+                    }
+                }
+            }
+        }
+
+        // Document metadata — body content not parsed (binaries), but the bot
+        // can still reference what the student has uploaded.
+        if (matchesAny(messageText, DOCUMENT_INTENT_KEYWORDS)) {
+            List<ProjectDocument> recentDocs = projectDocumentRepository
+                    .findByProject_Student_UserIdOrderByUploadedAtDesc(userId, PageRequest.of(0, 5))
+                    .getContent();
+            if (!recentDocs.isEmpty()) {
+                sb.append("- Recent documents (titles only — file bodies are not available to read):\n");
+                for (ProjectDocument doc : recentDocs) {
+                    sb.append("    • ");
+                    if (doc.getDocType() != null) sb.append("[").append(doc.getDocType()).append("] ");
+                    sb.append(doc.getTitle() != null ? doc.getTitle() : doc.getFileName());
+                    if (doc.getVersionNo() != null) sb.append(" (v").append(doc.getVersionNo()).append(")");
+                    if (doc.getUploadedAt() != null) {
+                        sb.append(" — ").append(doc.getUploadedAt().toLocalDate().format(dayFmt));
+                    }
+                    sb.append('\n');
+                }
+            }
         }
 
         return any ? sb.toString() : null;
