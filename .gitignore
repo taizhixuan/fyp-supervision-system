@@ -329,21 +329,24 @@ __pycache__/
 
 
 /.vscode/
-/Project-info/FYP2-UC-ERD-Analysis.md
-/Project-info/Data-Dictionary-Report.docx
-/Project-info/reference-arial9.docx
-/Project-info/reference-default.docx
-/Project-info/Changes.md
-/Project-info/Meeting-Progress/
-/Project-info/postman/
-/Project-info/TODO/
-/Project-info/reports/chapter5.md
-/Project-info/reports/chapter6.md
-/Project-info/reports/_facts/
-/Project-info/reports/_plans/
-/Project-info/TODO/
-/Project-info/Demo-Walkthrough.md
+/docs-project/FYP2-UC-ERD-Analysis.md
+/docs-project/Data-Dictionary-Report.docx
+/docs-project/reference-arial9.docx
+/docs-project/reference-default.docx
+/docs-project/Changes.md
+/docs-project/Meeting-Progress/
+/docs-project/postman/
+/docs-project/TODO/
+/docs-project/reports/chapter5.md
+/docs-project/reports/chapter6.md
+/docs-project/reports/_facts/
+/docs-project/reports/_plans/
+/docs-project/TODO/
+/docs-project/Demo-Walkthrough.md
 
 # Word lock / temp files (open-document marker)
 ~$*.docx
 ~$*.doc
+/docs-project/reports/commit-history.txt
+/docs-project/reports/commit-summary.txt
+/docs-project/reports/
