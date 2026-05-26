@@ -1109,7 +1109,7 @@ export function useSystemAlerts() {
 // User Management Hooks (UC30)
 // ============================================
 
-export function useAdminUsers(filters?: { role?: string; status?: string; search?: string }) {
+export function useAdminUsers(filters?: { role?: string; status?: string; search?: string; cycleId?: number }) {
   return useQuery({
     queryKey: [...adminKeys.users(), filters],
     queryFn: async () => {
@@ -1122,6 +1122,9 @@ export function useAdminUsers(filters?: { role?: string; status?: string; search
         if (filters?.status && filters.status !== 'ALL') {
           users = users.filter((u) => u.status === filters.status)
         }
+        if (filters?.cycleId) {
+          users = users.filter((u) => u.role === 'STUDENT')
+        }
         if (filters?.search) {
           const query = filters.search.toLowerCase()
           users = users.filter(
@@ -1132,7 +1135,14 @@ export function useAdminUsers(filters?: { role?: string; status?: string; search
         }
         return { users, total: users.length }
       }
-      const { data } = await apiClient.get('/admin/users', { params: { role: filters?.role, status: filters?.status, search: filters?.search } })
+      const { data } = await apiClient.get('/admin/users', {
+        params: {
+          role: filters?.role,
+          status: filters?.status,
+          search: filters?.search,
+          cycleId: filters?.cycleId,
+        },
+      })
       return data
     },
   })

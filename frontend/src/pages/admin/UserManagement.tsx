@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
-import { useAdminUsers, useUpdateUser, useBulkUpdateUserStatus } from '@/lib/hooks/useAdmin'
+import { useAdminUsers, useUpdateUser, useBulkUpdateUserStatus, useFYPCycles } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { avatarInitial } from '@/lib/utils/name'
@@ -42,12 +42,20 @@ export function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL')
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL')
+  const [cycleFilter, setCycleFilter] = useState<number | 'ALL'>('ALL')
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
 
+  // Cycle list for the filter dropdown — only active/planning shown; backend
+  // filter `?cycleId=N` is student-only (other roles don't enrol in a cycle),
+  // so the dropdown is hidden unless the role filter is ALL or STUDENT.
+  const { data: cyclesData } = useFYPCycles({})
+  const showCycleFilter = roleFilter === 'ALL' || roleFilter === 'STUDENT'
+
   const { data, isLoading } = useAdminUsers({
-    role: roleFilter !== 'ALL' ? roleFilter : undefined,
+    role: showCycleFilter && cycleFilter !== 'ALL' ? 'STUDENT' : roleFilter !== 'ALL' ? roleFilter : undefined,
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
     search: searchQuery || undefined,
+    cycleId: showCycleFilter && cycleFilter !== 'ALL' ? (cycleFilter as number) : undefined,
   })
 
   const updateMutation = useUpdateUser()
@@ -189,6 +197,21 @@ export function UserManagement() {
             <option value="FYP_COMMITTEE">Committee</option>
             <option value="SYSTEM_ADMIN">Admins</option>
           </select>
+          {showCycleFilter && (
+            <select
+              value={cycleFilter}
+              onChange={(e) => setCycleFilter(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+              className="px-2.5 h-9 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-amber-500"
+              title="Filter students by their FYP cycle"
+            >
+              <option value="ALL">All Cycles</option>
+              {(cyclesData?.cycles ?? []).map((c) => (
+                <option key={c.cycleId} value={c.cycleId}>
+                  {c.cycleCode} ({c.type}) — {c.status}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as UserStatus | 'ALL')}
