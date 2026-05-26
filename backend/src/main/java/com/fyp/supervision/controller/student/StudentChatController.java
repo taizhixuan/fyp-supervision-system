@@ -217,8 +217,12 @@ public class StudentChatController {
 
         ChatPreferences prefs = chatPreferencesRepository.findById(userId).orElseGet(() -> {
             UserAccount u = userAccountRepository.findById(userId).orElseThrow();
+            // @MapsId on ChatPreferences.user derives the @Id from the user association at
+            // persist time. Setting only the association lets Hibernate fill the @Id
+            // correctly; setting both led to the "null identifier" AssertionFailure when
+            // the row was created for the first time (e.g. fresh chat_preferences after
+            // a docker compose down -v).
             ChatPreferences p = new ChatPreferences();
-            p.setUserId(userId);
             p.setUser(u);
             return p;
         });
@@ -304,8 +308,9 @@ public class StudentChatController {
 
         ChatMemory memory = chatMemoryRepository.findById(userId).orElseGet(() -> {
             UserAccount u = userAccountRepository.findById(userId).orElseThrow();
+            // Same @MapsId fix as ChatPreferences — set only the association, let Hibernate
+            // derive the @Id at persist time.
             ChatMemory m = new ChatMemory();
-            m.setUserId(userId);
             m.setUser(u);
             return m;
         });
