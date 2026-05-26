@@ -164,9 +164,15 @@ public class AdminUserController {
         auditService.record(adminUser, "USER_APPROVED", "USER_ACCOUNT", String.valueOf(id),
                 "approved " + user.getRole() + " " + user.getEmail(), httpRequest);
         if (user.getRole() == UserRole.STUDENT) {
-            // After-commit attach — see AuthService.schedulePlaceholderAttach for why.
-            // Calling inline here would deadlock the same way (parent tx holds X lock on
-            // user_account; inner tx's INSERT into project can't read it for FK validation).
+            // Attach a placeholder Project so the student is reachable from the cycle.
+            // Mirrors AuthService.schedulePlaceholderAttach: register the call as an
+            // after-commit synchronisation when a parent transaction exists (the
+            // inline INSERT would deadlock — parent tx holds an X lock on user_account
+            // until commit, so the inner INSERT can't read it for FK validation);
+            // otherwise call inline so the controller-without-@Transactional path
+            // still attaches. Without the inline branch the attach was silently
+            // skipped for every PENDING student approved through the User Management
+            // queue, which is why the active cycle showed 0 students.
             final Long sid = user.getUserId();
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -179,6 +185,13 @@ public class AdminUserController {
                         }
                     }
                 });
+            } else {
+                try {
+                    UserAccount fresh = userRepository.findById(sid).orElse(null);
+                    if (fresh != null) cycleLifecycleService.attachStudentToActiveFyp1(fresh);
+                } catch (Exception e) {
+                    log.warn("Placeholder attach (inline) failed for approved user {}: {}", sid, e.getMessage());
+                }
             }
         }
         notificationService.createNotification(
