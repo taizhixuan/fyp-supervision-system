@@ -50,8 +50,9 @@ public class AdminUserController {
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long cycleId,
             Pageable pageable) {
-        return ResponseEntity.ok(adminService.getUserList(role, status, search, pageable));
+        return ResponseEntity.ok(adminService.getUserList(role, status, search, cycleId, pageable));
     }
 
     @GetMapping("/{id}")

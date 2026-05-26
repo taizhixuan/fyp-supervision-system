@@ -33,6 +33,25 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
     @Query("SELECT u FROM UserAccount u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%',:search,'%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%',:search,'%')) OR u.mmuId LIKE CONCAT('%',:search,'%')")
     Page<UserAccount> searchByTerm(@Param("search") String search, Pageable pageable);
 
+    // ---- Cycle-scoped student queries (admin UserManagement cycle filter) ---
+    // Students enrolled in a given cycle = users with a Project whose cycle_id matches.
+    // Returns distinct students; status/search optional. Roles other than STUDENT can't
+    // be in a cycle, so these finders implicitly scope to STUDENT.
+
+    @Query("SELECT DISTINCT u FROM UserAccount u JOIN Project p ON p.student.userId = u.userId " +
+           "WHERE p.cycle.cycleId = :cycleId AND u.role = com.fyp.supervision.enums.UserRole.STUDENT")
+    Page<UserAccount> findStudentsByCycle(@Param("cycleId") Long cycleId, Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM UserAccount u JOIN Project p ON p.student.userId = u.userId " +
+           "WHERE p.cycle.cycleId = :cycleId AND u.role = com.fyp.supervision.enums.UserRole.STUDENT " +
+           "AND u.status = :status")
+    Page<UserAccount> findStudentsByCycleAndStatus(@Param("cycleId") Long cycleId, @Param("status") UserStatus status, Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM UserAccount u JOIN Project p ON p.student.userId = u.userId " +
+           "WHERE p.cycle.cycleId = :cycleId AND u.role = com.fyp.supervision.enums.UserRole.STUDENT " +
+           "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%',:search,'%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%',:search,'%')) OR u.mmuId LIKE CONCAT('%',:search,'%'))")
+    Page<UserAccount> searchStudentsByCycleAndTerm(@Param("cycleId") Long cycleId, @Param("search") String search, Pageable pageable);
+
     long countByRole(UserRole role);
     long countByStatus(UserStatus status);
     long countByRoleAndStatus(UserRole role, UserStatus status);

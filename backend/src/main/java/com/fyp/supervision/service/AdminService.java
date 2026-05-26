@@ -147,9 +147,20 @@ public class AdminService {
 
     // ========== Users ==========
 
-    public Map<String, Object> getUserList(String role, String status, String search, Pageable pageable) {
+    public Map<String, Object> getUserList(String role, String status, String search, Long cycleId, Pageable pageable) {
         Page<UserAccount> page;
-        if (search != null && !search.isBlank()) {
+        // cycleId only applies to students (no other role enrols in a cycle).
+        // When provided, it short-circuits the regular branches and implicitly
+        // forces role=STUDENT via the cycle-scoped repository queries.
+        if (cycleId != null) {
+            if (search != null && !search.isBlank()) {
+                page = userAccountRepository.searchStudentsByCycleAndTerm(cycleId, search, pageable);
+            } else if (status != null && !status.isBlank() && !"ALL".equals(status)) {
+                page = userAccountRepository.findStudentsByCycleAndStatus(cycleId, UserStatus.valueOf(status), pageable);
+            } else {
+                page = userAccountRepository.findStudentsByCycle(cycleId, pageable);
+            }
+        } else if (search != null && !search.isBlank()) {
             if (role != null && !role.isBlank() && !"ALL".equals(role)) {
                 page = userAccountRepository.searchByRoleAndTerm(UserRole.valueOf(role), search, pageable);
             } else {
