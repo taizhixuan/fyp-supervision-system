@@ -345,3 +345,6 @@ __pycache__/
 /*.png
 !frontend/public/**/*.png
 !backend/src/**/*.png
+
+# Local DB / volume backups
+/backups/
