@@ -37,6 +37,9 @@ const visibilityConfig: Record<DocumentVisibility, { label: string; color: strin
   COMMITTEE_ONLY: { label: 'Committee Only', color: 'text-rose-600' },
 }
 
+const FALLBACK_CATEGORY = categoryConfig.OTHER
+const FALLBACK_VISIBILITY = { label: 'Unknown', color: 'text-stone-500' }
+
 export function DocumentsManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<CommitteeDocumentCategory | 'ALL'>('ALL')
@@ -165,8 +168,8 @@ export function DocumentsManagement() {
       {filteredDocuments && filteredDocuments.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
           {filteredDocuments.map((document) => {
-            const category = categoryConfig[document.category]
-            const visibility = visibilityConfig[document.visibility]
+            const category = categoryConfig[document.category] ?? FALLBACK_CATEGORY
+            const visibility = visibilityConfig[document.visibility] ?? FALLBACK_VISIBILITY
             const Icon = category.icon
 
             return (
