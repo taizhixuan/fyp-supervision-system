@@ -31,7 +31,7 @@ from typing import Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from nlp_utils import analyze_proposal_nlp
+from nlp_utils import analyze_proposal_nlp, collapse_redundancy, redundancy_ratio
 
 app = Flask(__name__)
 CORS(app)
@@ -425,9 +425,14 @@ def analyze_proposal(text):
     3. Optional LLM enhanced feedback (Groq / OpenAI)
     4. Composite scoring (transparent weighted sum over the model's traits)
     """
-    nlp_results = analyze_proposal_nlp(text)
-    trait_scores = predict_trait_scores(text)       # multi-trait, in-domain
-    legacy_quality = predict_quality_score(text)    # legacy single-output
+    # Redundancy guard: score on the de-duplicated text so pasting the same
+    # sentence repeatedly cannot inflate the score (see penalty below).
+    redundancy = redundancy_ratio(text)
+    scoring_text = collapse_redundancy(text) if redundancy > 0.05 else text
+
+    nlp_results = analyze_proposal_nlp(scoring_text)
+    trait_scores = predict_trait_scores(scoring_text)      # multi-trait, in-domain
+    legacy_quality = predict_quality_score(scoring_text)   # legacy single-output
 
     if trait_scores is not None:
         using_model, model_type = True, "multitrait"
@@ -436,8 +441,6 @@ def analyze_proposal(text):
         scope_score = trait_scores["scope"]
         innovation_score = trait_scores["innovation"]
         feasibility_score = trait_scores["feasibility"]
-        overall_score = round(sum(trait_scores[d] * OVERALL_WEIGHTS[d] for d in DIMENSIONS), 1)
-        logger.info("Multi-trait scores: %s -> overall %.1f", trait_scores, overall_score)
     elif legacy_quality is not None:
         using_model, model_type = True, "legacy_quality"
         clarity_score = nlp_results["clarity_score"]
@@ -445,8 +448,6 @@ def analyze_proposal(text):
         scope_score = nlp_results["scope_score"]
         innovation_score = nlp_results["innovation_score"]
         feasibility_score = round(legacy_quality * 0.4 + scope_score * 0.3 + structure_score * 0.3, 1)
-        overall_score = round(legacy_quality * 0.30 + clarity_score * 0.20 + structure_score * 0.20
-                              + scope_score * 0.15 + innovation_score * 0.15, 1)
     else:
         using_model, model_type = False, "nlp_only"
         clarity_score = nlp_results["clarity_score"]
@@ -454,11 +455,34 @@ def analyze_proposal(text):
         scope_score = nlp_results["scope_score"]
         innovation_score = nlp_results["innovation_score"]
         feasibility_score = round(scope_score * 0.5 + structure_score * 0.3 + clarity_score * 0.2, 1)
+
+    # Heavy duplicate-sentence padding is a writing/organisation defect — penalise
+    # clarity & structure so padding scores LOWER, never higher.
+    if redundancy >= 0.25:
+        penalty = min(20.0, (redundancy - 0.10) * 40.0)
+        clarity_score = max(0.0, round(clarity_score - penalty, 1))
+        structure_score = max(0.0, round(structure_score - penalty, 1))
+
+    if model_type == "multitrait":
+        overall_score = round(
+            clarity_score * OVERALL_WEIGHTS["clarity"]
+            + structure_score * OVERALL_WEIGHTS["structure"]
+            + scope_score * OVERALL_WEIGHTS["scope"]
+            + innovation_score * OVERALL_WEIGHTS["innovation"]
+            + feasibility_score * OVERALL_WEIGHTS["feasibility"], 1)
+        logger.info("Multi-trait overall %.1f (redundancy %.2f)", overall_score, redundancy)
+    elif model_type == "legacy_quality":
+        overall_score = round(legacy_quality * 0.30 + clarity_score * 0.20 + structure_score * 0.20
+                              + scope_score * 0.15 + innovation_score * 0.15, 1)
+    else:
         overall_score = round(clarity_score * 0.25 + structure_score * 0.25
                               + scope_score * 0.25 + innovation_score * 0.25, 1)
 
     strengths, weaknesses, suggestions = build_feedback_from_scores(
         clarity_score, structure_score, scope_score, innovation_score, feasibility_score, nlp_results)
+    if redundancy >= 0.15:
+        weaknesses.append("Repeated or duplicated sentences detected — the same text appears multiple times.")
+        suggestions.append("Remove the duplicated sentences and add new, specific content instead.")
 
     enhanced = get_llm_enhanced_feedback(text, nlp_results)
     if enhanced:
@@ -511,6 +535,7 @@ def analyze_proposal(text):
             "modelType": model_type,
             "structureScore": round(structure_score),
             "sectionCompleteness": nlp_results["section_completeness"],
+            "redundancy": round(redundancy, 3),
             "llmEnhanced": enhanced is not None,
         },
     }

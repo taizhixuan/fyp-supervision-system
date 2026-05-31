@@ -303,6 +303,73 @@ def detect_sections(text):
     return results, round(completeness, 1)
 
 
+# ============================================================================
+# Redundancy guard (anti-padding)
+# ============================================================================
+# Pasting the same sentence many times must NOT inflate the score. We collapse
+# exact-duplicate sentences before scoring, and `redundancy_ratio` measures how
+# much was padding so the caller can additionally penalise heavy repetition.
+
+_REBUILD_ORDER = [
+    ("title", "Title"), ("problem_statement", "Problem Statement"),
+    ("objectives", "Objectives"), ("methodology", "Methodology"),
+    ("scope", "Scope"), ("expected_outcomes", "Expected Outcomes"),
+    ("timeline", "Timeline"),
+]
+
+
+def _dedupe_body(body, seen):
+    """Drop exact-normalised duplicate sentences within a body (keeping the first
+    occurrence), preserving line structure. `seen` accumulates across sections so a
+    sentence pasted into several fields is collapsed too. List numbering is ignored
+    when comparing so '1. X' and '2. X' both count as the sentence 'X'."""
+    out_lines = []
+    for line in body.split("\n"):
+        if not line.strip():
+            out_lines.append("")
+            continue
+        kept = []
+        for s in re.split(r"(?<=[.!?])\s+", line):
+            norm = re.sub(r"^\s*\d+[.)]\s*", "", s)
+            norm = re.sub(r"\s+", " ", norm).strip().lower()
+            if len(norm) < 8:
+                kept.append(s)          # keep short fragments / labels / markers
+                continue
+            if norm in seen:
+                continue                # drop the duplicate
+            seen.add(norm)
+            kept.append(s)
+        out_lines.append(" ".join(x.strip() for x in kept if x.strip()))
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out_lines)).strip()
+
+
+def collapse_redundancy(text):
+    """Return the proposal with exact-duplicate sentences removed, so repeating a
+    sentence cannot inflate (or change) the score. Preserves the labelled-section
+    structure so downstream parsing/scoring still works."""
+    seen = set()
+    parsed = parse_labeled_sections(text)
+    if not parsed:
+        return _dedupe_body(text, seen)
+    blocks = []
+    for key, label in _REBUILD_ORDER:
+        if key in parsed:
+            body = _dedupe_body(parsed[key], seen)
+            if body.strip():
+                blocks.append(f"{label}:\n{body.strip()}")
+    return "\n\n".join(blocks)
+
+
+def redundancy_ratio(text):
+    """Fraction of words removed by collapsing exact-duplicate sentences.
+    0 = no repetition; → 1 = heavily padded with duplicates."""
+    orig = len(split_words(text))
+    if orig == 0:
+        return 0.0
+    deduped = len(split_words(collapse_redundancy(text)))
+    return max(0.0, round((orig - deduped) / orig, 3))
+
+
 def compute_structure_score(text):
     """
     Compute a structure/completeness score (0-100) for the proposal.
