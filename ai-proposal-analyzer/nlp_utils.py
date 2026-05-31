@@ -227,23 +227,75 @@ PROPOSAL_SECTIONS = {
 }
 
 
+# The backend (StudentProposalController.buildAnalyzerProse) emits each section
+# under a fixed label, e.g. "Methodology:\n<body>". Mapping section key -> label
+# lets us score the BODY after each label instead of the mere presence of the
+# label text — which the backend injects regardless of content.
+SECTION_LABELS = {
+    "title": "Title",
+    "problem_statement": "Problem Statement",
+    "objectives": "Objectives",
+    "methodology": "Methodology",
+    "scope": "Scope",
+    "expected_outcomes": "Expected Outcomes",
+    "timeline": "Timeline",
+}
+
+# Minimum body word count for a labelled section to count as genuinely present.
+# This is what closes the "label leak": a one-word "Methodology: x" must NOT
+# score like a developed methodology section.
+SECTION_MIN_WORDS = {
+    "title": 2, "timeline": 5, "objectives": 6, "expected_outcomes": 6,
+    "problem_statement": 12, "methodology": 12, "scope": 10,
+}
+
+
+def parse_labeled_sections(text):
+    """Split the backend's labelled prose into a {section_key: body} map.
+    Robust to missing sections and arbitrary order. Returns only sections whose
+    label is present; the body is everything up to the next known label."""
+    label_to_key = {v: k for k, v in SECTION_LABELS.items()}
+    pattern = re.compile(
+        r"(?im)^[ \t]*(" + "|".join(re.escape(v) for v in SECTION_LABELS.values()) + r")[ \t]*:[ \t]*$"
+    )
+    matches = list(pattern.finditer(text))
+    out = {}
+    for idx, m in enumerate(matches):
+        key = label_to_key.get(m.group(1).strip())
+        if not key:
+            continue
+        start = m.end()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+        out[key] = text[start:end].strip()
+    return out
+
+
 def detect_sections(text):
     """
-    Detect which proposal sections are present in the text.
-    Returns a dict with section name -> {found: bool, score: float}.
+    Detect which proposal sections are present AND substantive.
+
+    A labelled section counts only when its BODY clears a minimum word count, so
+    the section_completeness metric reflects content rather than the labels the
+    backend prepends. literature_review has no dedicated form field, so it still
+    falls back to keyword evidence anywhere in the text.
+    Returns (dict section -> {found, weight, body_words}, completeness%).
     """
     text_lower = text.lower()
+    parsed = parse_labeled_sections(text)
     results = {}
-    total_weight = 0
-    found_weight = 0
+    total_weight = 0.0
+    found_weight = 0.0
 
     for section, config in PROPOSAL_SECTIONS.items():
-        found = any(kw in text_lower for kw in config["keywords"])
-        results[section] = {
-            "found": found,
-            "weight": config["weight"],
-        }
         total_weight += config["weight"]
+        if section in SECTION_LABELS:
+            body = parsed.get(section, "")
+            wc = len(split_words(body))
+            found = wc >= SECTION_MIN_WORDS.get(section, 12)
+        else:
+            wc = 0
+            found = any(kw in text_lower for kw in config["keywords"])
+        results[section] = {"found": found, "weight": config["weight"], "body_words": wc}
         if found:
             found_weight += config["weight"]
 
@@ -358,13 +410,19 @@ def compute_scope_score(text):
 # Innovation / Novelty Analysis
 # ============================================================================
 
-NOVELTY_INDICATORS = [
-    "novel", "new approach", "innovative", "original", "unique",
-    "first time", "proposed method", "our approach", "contribute",
-    "contribution", "advance", "improvement", "enhance", "extend",
-    "overcome", "address the gap", "fill the gap", "unlike existing",
-    "different from", "compared to existing", "state-of-the-art",
-    "cutting-edge", "emerging", "recent advance",
+# Cheap novelty CLAIMS — writing these words is not evidence of novelty, so they
+# are capped hard below. SUBSTANTIVE indicators imply actual reasoning about a
+# contribution (improving / comparing / bridging a gap) and are rewarded more.
+NOVELTY_CLAIM_WORDS = [
+    "novel", "innovative", "original", "unique", "first time",
+    "state-of-the-art", "cutting-edge", "groundbreaking", "revolutionary",
+]
+
+NOVELTY_SUBSTANTIVE = [
+    "new approach", "proposed method", "contribute", "contribution", "advance",
+    "improvement", "improve", "enhance", "extend", "overcome", "address the gap",
+    "fill the gap", "unlike existing", "different from", "compared to existing",
+    "outperform", "reduce", "increase accuracy", "more efficient", "bridge the gap",
 ]
 
 EXISTING_WORK_REFERENCES = [
@@ -386,19 +444,18 @@ def compute_innovation_score(text):
     if len(words) < 30:
         return 20.0
 
-    # Count novelty indicators
-    novelty_count = sum(1 for kw in NOVELTY_INDICATORS if kw in text_lower)
-
-    # Count existing work references
+    claim_count = sum(1 for kw in NOVELTY_CLAIM_WORDS if kw in text_lower)
+    subst_count = sum(1 for kw in NOVELTY_SUBSTANTIVE if kw in text_lower)
     ref_count = sum(1 for kw in EXISTING_WORK_REFERENCES if kw in text_lower)
 
-    # Novelty claims score
-    if novelty_count >= 3:
-        novelty_score = 80.0
-    elif novelty_count >= 1:
-        novelty_score = 55.0
-    else:
-        novelty_score = 25.0
+    # Novelty is carried by SUBSTANTIVE reasoning; claim words add only a small,
+    # capped bonus and cannot stand alone (a proposal that just says "novel,
+    # innovative, unique" with no reasoning is capped at 30).
+    base = min(subst_count, 4) * 18.0          # up to 72
+    claim_bonus = min(claim_count, 2) * 4.0    # up to 8
+    novelty_score = min(80.0, base + claim_bonus)
+    if subst_count == 0:
+        novelty_score = min(novelty_score, 30.0)
 
     # Awareness of existing work (important for academic proposals)
     if ref_count >= 4:
@@ -410,11 +467,8 @@ def compute_innovation_score(text):
     else:
         awareness_score = 20.0
 
-    # Balance: both novelty claims AND existing work awareness
-    if novelty_count >= 2 and ref_count >= 2:
-        balance_bonus = 15.0
-    else:
-        balance_bonus = 0.0
+    # Balance: a substantiated contribution AND existing-work awareness
+    balance_bonus = 15.0 if (subst_count >= 2 and ref_count >= 2) else 0.0
 
     innovation = (novelty_score * 0.45 + awareness_score * 0.45 + balance_bonus * 0.10)
     return round(min(100.0, max(0.0, innovation)), 1)
@@ -439,17 +493,29 @@ def analyze_proposal_nlp(text):
     scope_score = compute_scope_score(text)
     innovation_score = compute_innovation_score(text)
 
-    # Build section analysis
+    # Build section analysis from BODY depth, not mere label presence.
     section_analysis = []
     for section_name, section_info in sections_detected.items():
-        status = "present" if section_info["found"] else "missing"
-        section_score = 80 if section_info["found"] else 20
-        feedback = (
-            f"Section '{section_name.replace('_', ' ')}' was detected in the proposal."
-            if section_info["found"]
-            else f"Section '{section_name.replace('_', ' ')}' appears to be missing. "
-                 f"Consider adding this section to strengthen your proposal."
-        )
+        wc = section_info.get("body_words", 0)
+        present = section_info["found"]
+        if section_name in SECTION_LABELS:
+            target = SECTION_MIN_WORDS.get(section_name, 12) * 3  # ~3x floor = well-developed
+            depth = min(1.0, wc / target) if target else (1.0 if present else 0.0)
+            section_score = int(round(20 + 70 * depth)) if (present or wc > 0) else 15
+        else:
+            section_score = 70 if present else 20
+        status = "present" if present else ("thin" if wc > 0 else "missing")
+        label = section_name.replace('_', ' ')
+        if present and section_score >= 70:
+            feedback = f"Section '{label}' is present and reasonably developed."
+        elif wc > 0 and not present:
+            feedback = (f"Section '{label}' is present but too thin ({wc} words). "
+                        f"Expand it with specific detail.")
+        elif present:
+            feedback = f"Section '{label}' is present; add more depth to strengthen it."
+        else:
+            feedback = (f"Section '{label}' appears to be missing. "
+                        f"Consider adding it to strengthen your proposal.")
         section_analysis.append({
             "section": section_name,
             "status": status,

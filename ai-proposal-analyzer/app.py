@@ -115,7 +115,17 @@ else:
 # ============================================================================
 # Fine-tuned DistilBERT model
 # ============================================================================
-MODEL_DIR = Path(__file__).parent / "models" / "essay_scorer"
+# Prefer the in-domain multi-trait FYP scorer (models/proposal_scorer/, 5 outputs)
+# trained by train_multitrait.py via LLM-teacher distillation. Fall back to the
+# legacy single-output ASAP model (models/essay_scorer/) for backward compat.
+DIMENSIONS = ["clarity", "structure", "scope", "innovation", "feasibility"]
+# Transparent overall weighting over the 5 model traits (mirrors train_multitrait).
+OVERALL_WEIGHTS = {"clarity": 0.20, "structure": 0.20, "scope": 0.15,
+                   "innovation": 0.15, "feasibility": 0.30}
+
+MODELS_ROOT = Path(__file__).parent / "models"
+MULTITRAIT_DIR = MODELS_ROOT / "proposal_scorer"
+LEGACY_DIR = MODELS_ROOT / "essay_scorer"
 
 QUALITY_MAX_TOKENS = 512   # DistilBERT-base hard limit
 CHUNK_TOKEN_BUDGET = 480   # Leave headroom for [CLS] / [SEP]
@@ -123,28 +133,52 @@ CHUNK_STRIDE_TOKENS = 384  # ~25% overlap so context isn't sliced at chunk seams
 
 quality_model = None
 quality_tokenizer = None
+model_kind = None          # "multi" (5 traits) | "single" (legacy quality) | None
+model_dir = None
+calibration = None         # per-dim {x:[...], y:[...]} from calibration.json
 
-if MODEL_DIR.exists() and (MODEL_DIR / "config.json").exists():
+
+def _select_model_dir():
+    if MULTITRAIT_DIR.exists() and (MULTITRAIT_DIR / "config.json").exists():
+        return MULTITRAIT_DIR
+    if LEGACY_DIR.exists() and (LEGACY_DIR / "config.json").exists():
+        return LEGACY_DIR
+    return None
+
+
+model_dir = _select_model_dir()
+if model_dir is not None:
     try:
+        import json as _json
         import torch
         from transformers import (
             DistilBertForSequenceClassification,
             DistilBertTokenizer,
         )
-        logger.info("Loading fine-tuned DistilBERT from %s ...", MODEL_DIR)
-        quality_tokenizer = DistilBertTokenizer.from_pretrained(str(MODEL_DIR))
-        quality_model = DistilBertForSequenceClassification.from_pretrained(str(MODEL_DIR))
+        logger.info("Loading fine-tuned DistilBERT from %s ...", model_dir)
+        quality_tokenizer = DistilBertTokenizer.from_pretrained(str(model_dir))
         # Switch to inference mode (PyTorch torch.nn.Module.eval()).
-        quality_model = quality_model.eval()
-
+        quality_model = DistilBertForSequenceClassification.from_pretrained(str(model_dir)).eval()
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         quality_model.to(device)
-        logger.info("DistilBERT model loaded on %s", device)
+        n_out = quality_model.config.num_labels
+        model_kind = "multi" if n_out >= len(DIMENSIONS) else "single"
+        cal_path = model_dir / "calibration.json"
+        if cal_path.exists():
+            try:
+                calibration = _json.loads(cal_path.read_text(encoding="utf-8")) or None
+            except Exception:
+                calibration = None
+        logger.info("DistilBERT loaded on %s | outputs=%d | kind=%s | calibrated=%s",
+                    device, n_out, model_kind, calibration is not None)
     except Exception as e:
         logger.warning("Failed to load DistilBERT model: %s", e)
         logger.info("Will use NLP-only analysis pipeline")
+        quality_model = None
+        quality_tokenizer = None
+        model_kind = None
 else:
-    logger.info("No fine-tuned model found at models/essay_scorer/. NLP-only analysis.")
+    logger.info("No fine-tuned model found (looked in proposal_scorer/, essay_scorer/). NLP-only.")
 
 
 # ============================================================================
@@ -168,32 +202,41 @@ def _chunk_token_ids(token_ids):
     return chunks
 
 
-def predict_quality_score(text):
-    """Predict overall text quality, 0–100. Returns None if no model loaded.
+def _apply_calibration(dim, x01):
+    """Map a raw 0-1 model output through the per-dimension isotonic calibration
+    (stored as (x,y) points) so the score distribution matches the teacher's and
+    the low end is pinned for weak proposals. Identity if no calibration."""
+    if not calibration or dim not in calibration:
+        return x01
+    c = calibration[dim]
+    try:
+        import numpy as _np
+        return float(_np.interp(x01, c["x"], c["y"]))
+    except Exception:
+        return x01
 
-    Long proposals are split into overlapping 480-token windows; each chunk
-    runs through DistilBERT and the final score is a length-weighted average.
-    The previous implementation truncated to the first ~400 words, so a
-    3000-word proposal was effectively scored on its intro only."""
+
+def predict_model_vector(text):
+    """Return the model's length-num_labels output as a 0-1 list, chunk-and-
+    length-weighted-averaged over the FULL text (no first-paragraph truncation).
+    Works for both the 5-output multi-trait model and the legacy 1-output model.
+    Returns None if no model is loaded."""
     if quality_model is None or quality_tokenizer is None:
         return None
     try:
         import torch
         device = next(quality_model.parameters()).device
 
-        encoding = quality_tokenizer(
-            text, add_special_tokens=False, return_tensors=None
-        )
+        encoding = quality_tokenizer(text, add_special_tokens=False, return_tensors=None)
         token_ids = encoding["input_ids"]
         if not token_ids:
             return None
         chunks = _chunk_token_ids(token_ids)
 
-        weighted_sum = 0.0
+        weighted = None
         total_weight = 0
         for chunk in chunks:
-            ids = quality_tokenizer.build_inputs_with_special_tokens(chunk)
-            ids = ids[:QUALITY_MAX_TOKENS]
+            ids = quality_tokenizer.build_inputs_with_special_tokens(chunk)[:QUALITY_MAX_TOKENS]
             attention = [1] * len(ids)
             pad = QUALITY_MAX_TOKENS - len(ids)
             if pad > 0:
@@ -203,17 +246,43 @@ def predict_quality_score(text):
             attention_mask = torch.tensor([attention], dtype=torch.long, device=device)
             with torch.no_grad():
                 out = quality_model(input_ids=input_ids, attention_mask=attention_mask)
-            raw = out.logits.squeeze().item()
-            score01 = max(0.0, min(1.0, raw))
-            weight = len(chunk)
-            weighted_sum += score01 * weight
-            total_weight += weight
+            row = out.logits.squeeze(0).tolist()
+            if not isinstance(row, list):
+                row = [row]
+            row = [max(0.0, min(1.0, v)) for v in row]
+            w = len(chunk)
+            weighted = [v * w for v in row] if weighted is None else [a + v * w for a, v in zip(weighted, row)]
+            total_weight += w
 
-        avg01 = weighted_sum / total_weight if total_weight else 0.0
-        return round(avg01 * 100, 1)
+        if not weighted or total_weight == 0:
+            return None
+        return [v / total_weight for v in weighted]
     except Exception as e:
-        logger.warning("Quality model prediction failed: %s", e, exc_info=True)
+        logger.warning("Model prediction failed: %s", e, exc_info=True)
         return None
+
+
+def predict_trait_scores(text):
+    """Multi-trait path -> {clarity,structure,scope,innovation,feasibility} each
+    0-100 (calibrated). None unless the multi-trait model is loaded."""
+    if model_kind != "multi":
+        return None
+    vec = predict_model_vector(text)
+    if vec is None:
+        return None
+    return {dim: round(_apply_calibration(dim, vec[i] if i < len(vec) else 0.0) * 100, 1)
+            for i, dim in enumerate(DIMENSIONS)}
+
+
+def predict_quality_score(text):
+    """Legacy single-output path -> overall text quality 0-100. None unless the
+    legacy 1-output model is loaded."""
+    if model_kind != "single":
+        return None
+    vec = predict_model_vector(text)
+    if vec is None:
+        return None
+    return round(max(0.0, min(1.0, vec[0])) * 100, 1)
 
 
 # ============================================================================
@@ -290,54 +359,108 @@ def get_llm_enhanced_feedback(text, nlp_analysis):
 # Main Analysis Pipeline
 # ============================================================================
 
+def build_feedback_from_scores(clarity, structure, scope, innovation, feasibility, nlp_results):
+    """Coherent strengths/weaknesses/suggestions derived from the FINAL dimension
+    scores (so the prose matches what is displayed regardless of whether the model
+    or the rule layer produced them)."""
+    strengths, weaknesses, suggestions = [], [], []
+
+    if clarity >= 70:
+        strengths.append("Writing is clear with appropriate academic language.")
+    elif clarity >= 50:
+        weaknesses.append("Writing clarity could be improved for readability.")
+        suggestions.append("Tighten sentence structure and keep the academic writing concise.")
+    else:
+        weaknesses.append("Writing clarity needs significant improvement.")
+        suggestions.append("Simplify complex sentences and improve paragraph flow.")
+
+    thin = [sa["section"].replace("_", " ") for sa in nlp_results["section_analysis"]
+            if sa.get("status") != "present"]
+    if structure >= 70:
+        strengths.append("Proposal is well organised with the key sections developed.")
+    elif structure >= 50:
+        weaknesses.append("Some required sections are present but thin.")
+        if thin:
+            suggestions.append("Develop these sections with more detail: " + ", ".join(thin[:3]) + ".")
+    else:
+        weaknesses.append("Proposal lacks well-developed sections.")
+        suggestions.append("Develop every required section with specific detail rather than one-liners.")
+
+    if scope >= 70:
+        strengths.append("Project scope is well defined and appropriately bounded.")
+    elif scope >= 50:
+        suggestions.append("Sharpen the scope with explicit boundaries and what is in/out.")
+    else:
+        weaknesses.append("Project scope is poorly defined or unrealistic.")
+        suggestions.append("State clear scope boundaries and a realistic, achievable extent.")
+
+    if innovation >= 70:
+        strengths.append("Shows a clear contribution and awareness of existing work.")
+    elif innovation >= 50:
+        suggestions.append("Strengthen novelty by comparing to existing solutions and stating the gap.")
+    else:
+        weaknesses.append("Limited novelty or awareness of existing work.")
+        suggestions.append("Review related work and state explicitly how your approach differs.")
+
+    if feasibility >= 70:
+        strengths.append("The project looks feasible with a concrete approach.")
+    elif feasibility >= 50:
+        suggestions.append("Add methodology detail (techniques, tools, data, evaluation) to raise feasibility.")
+    else:
+        weaknesses.append("Feasibility is unclear; the methodology is too vague.")
+        suggestions.append("Specify concrete methods, tools, datasets and an evaluation plan.")
+
+    wc = nlp_results["word_count"]
+    if wc < 120:
+        weaknesses.append(f"Proposal is very brief ({wc} words) for proper evaluation.")
+        suggestions.append("Expand into a fuller proposal with specific detail in each section.")
+    return strengths, weaknesses, suggestions
+
+
 def analyze_proposal(text):
     """Full proposal analysis pipeline:
-    1. NLP metrics (always)
-    2. Fine-tuned DistilBERT (if available, chunk-and-averaged)
+    1. NLP metrics (always; now content-aware section scoring)
+    2. Fine-tuned DistilBERT — multi-trait (5 dims, in-domain) if available, else
+       legacy single-output, chunk-and-averaged over the full text
     3. Optional LLM enhanced feedback (Groq / OpenAI)
-    4. Composite scoring (transparent weighted sum)
+    4. Composite scoring (transparent weighted sum over the model's traits)
     """
     nlp_results = analyze_proposal_nlp(text)
-    model_quality_score = predict_quality_score(text)
-    using_model = model_quality_score is not None
-    if using_model:
-        logger.info("Model quality score: %.1f", model_quality_score)
-    else:
-        logger.info("Using NLP-only scoring (no trained model)")
+    trait_scores = predict_trait_scores(text)       # multi-trait, in-domain
+    legacy_quality = predict_quality_score(text)    # legacy single-output
 
-    clarity_score = nlp_results["clarity_score"]
-    structure_score = nlp_results["structure_score"]
-    scope_score = nlp_results["scope_score"]
-    innovation_score = nlp_results["innovation_score"]
-
-    if using_model:
-        feasibility_score = round(
-            model_quality_score * 0.4 + scope_score * 0.3 + structure_score * 0.3, 1
-        )
-        overall_score = round(
-            model_quality_score * 0.30
-            + clarity_score * 0.20
-            + structure_score * 0.20
-            + scope_score * 0.15
-            + innovation_score * 0.15,
-            1,
-        )
+    if trait_scores is not None:
+        using_model, model_type = True, "multitrait"
+        clarity_score = trait_scores["clarity"]
+        structure_score = trait_scores["structure"]
+        scope_score = trait_scores["scope"]
+        innovation_score = trait_scores["innovation"]
+        feasibility_score = trait_scores["feasibility"]
+        overall_score = round(sum(trait_scores[d] * OVERALL_WEIGHTS[d] for d in DIMENSIONS), 1)
+        logger.info("Multi-trait scores: %s -> overall %.1f", trait_scores, overall_score)
+    elif legacy_quality is not None:
+        using_model, model_type = True, "legacy_quality"
+        clarity_score = nlp_results["clarity_score"]
+        structure_score = nlp_results["structure_score"]
+        scope_score = nlp_results["scope_score"]
+        innovation_score = nlp_results["innovation_score"]
+        feasibility_score = round(legacy_quality * 0.4 + scope_score * 0.3 + structure_score * 0.3, 1)
+        overall_score = round(legacy_quality * 0.30 + clarity_score * 0.20 + structure_score * 0.20
+                              + scope_score * 0.15 + innovation_score * 0.15, 1)
     else:
-        feasibility_score = round(
-            scope_score * 0.5 + structure_score * 0.3 + clarity_score * 0.2, 1
-        )
-        overall_score = round(
-            clarity_score * 0.25
-            + structure_score * 0.25
-            + scope_score * 0.25
-            + innovation_score * 0.25,
-            1,
-        )
+        using_model, model_type = False, "nlp_only"
+        clarity_score = nlp_results["clarity_score"]
+        structure_score = nlp_results["structure_score"]
+        scope_score = nlp_results["scope_score"]
+        innovation_score = nlp_results["innovation_score"]
+        feasibility_score = round(scope_score * 0.5 + structure_score * 0.3 + clarity_score * 0.2, 1)
+        overall_score = round(clarity_score * 0.25 + structure_score * 0.25
+                              + scope_score * 0.25 + innovation_score * 0.25, 1)
+
+    strengths, weaknesses, suggestions = build_feedback_from_scores(
+        clarity_score, structure_score, scope_score, innovation_score, feasibility_score, nlp_results)
 
     enhanced = get_llm_enhanced_feedback(text, nlp_results)
-    strengths = nlp_results["strengths"]
-    weaknesses = nlp_results["weaknesses"]
-    suggestions = nlp_results["suggestions"]
     if enhanced:
         strengths = enhanced.get("detailed_strengths", strengths)
         weaknesses = enhanced.get("detailed_weaknesses", weaknesses)
@@ -355,12 +478,11 @@ def analyze_proposal(text):
         summary = enhanced["summary"]
     else:
         word_count = nlp_results["word_count"]
-        model_note = "AI model + NLP pipeline" if using_model else "NLP pipeline"
-        verdict = (
-            "The proposal demonstrates good academic writing."
-            if overall_score >= 65
-            else "The proposal has areas that need improvement."
-        )
+        model_note = {"multitrait": "in-domain AI model + NLP pipeline",
+                      "legacy_quality": "AI model + NLP pipeline",
+                      "nlp_only": "NLP pipeline"}[model_type]
+        verdict = ("The proposal demonstrates good academic writing."
+                   if overall_score >= 65 else "The proposal has areas that need improvement.")
         summary = (
             f"Analysis of proposal ({word_count} words) using {model_note}. "
             f"Overall quality score: {overall_score}/100. {verdict} "
@@ -386,6 +508,8 @@ def analyze_proposal(text):
             "readabilityGrade": nlp_results["readability_grade"],
             "readingEase": nlp_results["reading_ease"],
             "modelUsed": using_model,
+            "modelType": model_type,
+            "structureScore": round(structure_score),
             "sectionCompleteness": nlp_results["section_completeness"],
             "llmEnhanced": enhanced is not None,
         },
@@ -402,6 +526,9 @@ def health():
         "status": "ok",
         "service": "ai-proposal-analyzer",
         "model_loaded": quality_model is not None,
+        "model_kind": model_kind,
+        "model_dir": model_dir.name if model_dir else None,
+        "calibrated": calibration is not None,
         "analysis_mode": "model+nlp" if quality_model else "nlp_only",
         "remote_llm": {
             "configured": llm_client is not None,
