@@ -320,7 +320,11 @@ ai-recommendation/models/*.pkl
 ai-recommendation/models/*.json
 ai-recommendation/data/
 ai-proposal-analyzer/models/essay_scorer/
+ai-proposal-analyzer/models/proposal_scorer/
 ai-proposal-analyzer/data/*.tsv
+ai-proposal-analyzer/data/_wf/
+ai-proposal-analyzer/data/_*.log
+ai-proposal-analyzer/data/corpus.jsonl
 ai-chatbot/vector_store/
 
 # Python virtual environments
