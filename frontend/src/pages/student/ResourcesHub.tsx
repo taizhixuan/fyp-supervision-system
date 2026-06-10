@@ -22,27 +22,16 @@ import { Card, Badge, Spinner } from '@/components/ui'
 import { useResources } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { Resource as ApiResource } from '@/types/resource'
 
-type ResourceType = 'GUIDELINE' | 'TEMPLATE' | 'VIDEO' | 'DOCUMENT' | 'LINK'
-type ResourceCategory = 'GENERAL' | 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'SUBMISSION'
-
-interface Resource {
-  resourceId: string
-  title: string
-  description: string
-  type: ResourceType
-  category: ResourceCategory
-  fileUrl?: string
-  externalUrl?: string
-  fileSize?: number
+// UI model: the API resource plus a couple of display-only optional fields the
+// cards reference. The API type is assignable to this since both extras are optional.
+type Resource = ApiResource & {
   duration?: string
-  isFeatured: boolean
-  viewCount: number
-  createdAt: string
-  updatedAt: string
+  viewCount?: number
 }
 
-const typeConfig: Record<ResourceType, { label: string; color: string; bgColor: string; icon: typeof FileText }> = {
+const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof FileText }> = {
   GUIDELINE: { label: 'Guideline', color: 'bg-amber-100 text-amber-700', bgColor: 'bg-amber-500', icon: BookOpen },
   TEMPLATE: { label: 'Template', color: 'bg-emerald-100 text-emerald-700', bgColor: 'bg-emerald-500', icon: FileSpreadsheet },
   VIDEO: { label: 'Video', color: 'bg-rose-100 text-rose-700', bgColor: 'bg-rose-500', icon: Video },
@@ -50,7 +39,7 @@ const typeConfig: Record<ResourceType, { label: string; color: string; bgColor: 
   LINK: { label: 'Link', color: 'bg-violet-100 text-violet-700', bgColor: 'bg-violet-500', icon: ExternalLink },
 }
 
-const categoryConfig: Record<ResourceCategory, string> = {
+const categoryConfig: Record<string, string> = {
   GENERAL: 'General',
   PROPOSAL: 'Proposal',
   REPORT: 'Report',
@@ -79,7 +68,7 @@ export function ResourcesHub() {
     const matchesCategory = categoryFilter === 'all' || res.category === categoryFilter
     const matchesSearch = searchQuery === '' ||
       res.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (res.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
     return matchesType && matchesCategory && matchesSearch
   })
 
@@ -211,11 +200,11 @@ export function ResourcesHub() {
 }
 
 function FeaturedResourceCard({ resource }: { resource: Resource }) {
-  const config = typeConfig[resource.type as ResourceType] ?? typeConfig.DOCUMENT
+  const config = typeConfig[resource.type ?? ''] ?? typeConfig.DOCUMENT
   const Icon = config.icon
 
   return (
-    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)} className="h-full">
+    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', String(resource.resourceId))} className="h-full">
       <Card padding="sm" className="h-full group hover:shadow-md transition-all border-l-4 border-l-warning-400 flex flex-col">
         <div className="flex items-start gap-2.5 mb-2">
           <div className={cn(
@@ -258,12 +247,12 @@ function FeaturedResourceCard({ resource }: { resource: Resource }) {
 }
 
 function ResourceRow({ resource }: { resource: Resource }) {
-  const config = typeConfig[resource.type as ResourceType] ?? typeConfig.DOCUMENT
+  const config = typeConfig[resource.type ?? ''] ?? typeConfig.DOCUMENT
   const Icon = config.icon
-  const categoryLabel = categoryConfig[resource.category as ResourceCategory] ?? resource.category ?? 'General'
+  const categoryLabel = categoryConfig[resource.category] ?? resource.category ?? 'General'
 
   return (
-    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', resource.resourceId)}>
+    <Link to={ROUTES.STUDENT.RESOURCE_DETAIL.replace(':id', String(resource.resourceId))}>
       <Card padding="sm" className="group hover:shadow-md transition-all border-l-4 border-l-stone-200 hover:border-l-primary-400">
         <div className="flex items-center gap-2.5">
           {/* Icon */}
