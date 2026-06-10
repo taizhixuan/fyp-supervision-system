@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   CheckCircle,
@@ -32,11 +32,10 @@ const statusConfig: Record<SvProposalStatus, { label: string; color: string; bgC
 
 export function ProposalReviewDetail() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const [feedbackContent, setFeedbackContent] = useState('')
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [showFeedbackHistory, setShowFeedbackHistory] = useState(false)
-  const [actionType, setActionType] = useState<SvProposalFeedback['feedbackType'] | null>(null)
+  const [, setActionType] = useState<SvProposalFeedback['feedbackType'] | null>(null)
 
   const { data: proposal, isLoading } = useProposalForReview(Number(id))
   const submitFeedback = useSubmitSvProposalFeedback()
