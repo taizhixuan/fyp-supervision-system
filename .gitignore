@@ -361,3 +361,4 @@ __pycache__/
 /.codex/hooks.json
 /.serena/project.yml
 .obsidian/
+/.codegraph/
