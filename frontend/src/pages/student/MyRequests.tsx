@@ -345,7 +345,7 @@ export function MyRequests() {
             <ModalBody>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Badge variant={statusConfig[selectedRequest.status].variant} size="lg">
+                  <Badge variant={statusConfig[selectedRequest.status].variant} size="md">
                     {statusConfig[selectedRequest.status].label}
                   </Badge>
                   <span className="text-sm text-neutral-500">
@@ -463,7 +463,7 @@ export function MyRequests() {
           >
             Cancel
           </Button>
-          <Button variant="error" onClick={handleWithdraw} isLoading={withdrawRequest.isPending}>
+          <Button variant="danger" onClick={handleWithdraw} isLoading={withdrawRequest.isPending}>
             Withdraw Request
           </Button>
         </ModalFooter>
