@@ -378,6 +378,8 @@ export interface SupervisionLog {
   status: LogStatus
   studentSignedAt?: string
   supervisorSignedAt?: string
+  submittedAt?: string
+  approvedAt?: string
   lockedAt?: string
   createdAt: string
   updatedAt: string

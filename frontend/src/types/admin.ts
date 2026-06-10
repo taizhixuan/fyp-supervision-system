@@ -397,17 +397,11 @@ export type AuditAction =
   // eslint-disable-next-line @typescript-eslint/ban-types
   | (string & {})
 
-export type AuditEntityType =
-  | 'USER'
-  | 'PROJECT'
-  | 'PROPOSAL'
-  | 'MEETING'
-  | 'DOCUMENT'
-  | 'ANNOUNCEMENT'
-  | 'PARAMETER'
-  | 'CYCLE'
-  | 'DEADLINE'
-  | 'INTEGRATION'
+// Backend stores entity_name as a free-form label (USER, PROJECT, REPORT,
+// MILESTONE, BACKUP, USER_ACCOUNT, FYP_GRADE, …) and echoes it verbatim as
+// `entityType`. It is not a closed enum, so keep it a plain string: label maps
+// in the UI are partial and fall back gracefully for unknown values.
+export type AuditEntityType = string
 
 export interface AuditLog {
   auditId: number
@@ -432,6 +426,8 @@ export interface AuditLogFilters {
   performedBy?: string
   dateFrom?: string
   dateTo?: string
+  page?: number
+  limit?: number
 }
 
 // ============================================

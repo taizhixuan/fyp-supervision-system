@@ -1,5 +1,7 @@
 // Supervisor types for the FYP Supervision System
 
+import type { LogStatus } from './student'
+
 // Base supervisor profile
 export interface SupervisorProfile {
   supervisorId: string
@@ -172,6 +174,7 @@ export interface SupervisorMeeting {
 }
 
 // Supervision Log for review
+// Legacy narrow union kept for back-compat with pages that still reference it.
 export type SvLogStatus = 'PENDING' | 'APPROVED' | 'REVISION_REQUIRED' | 'SIGNED' | 'LOCKED'
 
 export interface SupervisionLogForReview {
@@ -181,7 +184,9 @@ export interface SupervisionLogForReview {
   weekNumber: number
   weekStartDate: string
   weekEndDate: string
-  status: SvLogStatus
+  // Backend emits MeetingLog.status (DRAFT/SUBMITTED/SUPERVISOR_SIGNED/LOCKED/…).
+  // Use the broad LogStatus union the review pages are built around.
+  status: LogStatus
   activities: string
   progressSummary: string
   challenges?: string
