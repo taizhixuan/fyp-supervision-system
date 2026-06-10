@@ -29,7 +29,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
       children,
       ...props
     },
-    ref
+    _ref
   ) => {
     const modalRef = useRef<HTMLDivElement>(null)
     // Hold the latest onClose without re-running the open-effect every render —

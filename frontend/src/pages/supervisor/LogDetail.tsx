@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   FileText,
@@ -37,7 +37,6 @@ const FALLBACK_STATUS = { label: 'Unknown', color: 'text-neutral-600', bgColor: 
 
 export function LogDetail() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const [comment, setComment] = useState('')
   const [showSignModal, setShowSignModal] = useState(false)
 

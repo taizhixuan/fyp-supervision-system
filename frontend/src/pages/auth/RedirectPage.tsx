@@ -41,7 +41,7 @@ export function RedirectPage() {
       return
     }
 
-    if (user.status === 'INACTIVE') {
+    if (user.status === 'SUSPENDED') {
       navigate(ROUTES.LOGIN, { replace: true })
       return
     }

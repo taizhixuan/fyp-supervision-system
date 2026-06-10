@@ -23,6 +23,7 @@ import {
   useUpdateAnnouncement,
   useSupervisees,
 } from '@/lib/hooks/useSupervisor'
+import type { CreateSupervisorAnnouncementData } from '@/types/supervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 
@@ -96,22 +97,34 @@ export function CreateAnnouncement() {
       const cleanedLinks = links
         .map((l) => ({ label: l.label.trim(), url: l.url.trim() }))
         .filter((l) => l.label && l.url)
-      const payload = {
-        ...data,
-        publishAt: new Date(data.publishAt).toISOString(),
-        expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
-        isActive: true,
-        attachments: files,
-        links: cleanedLinks,
-      }
+      const publishAt = new Date(data.publishAt).toISOString()
+      const expiresAt = data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined
 
       if (isEditing && existingAnnouncement) {
         await updateMutation.mutateAsync({
           announcementId: existingAnnouncement.announcementId,
-          ...payload,
+          title: data.title,
+          content: data.content,
+          visibility: data.visibility,
+          priority: data.priority,
+          targetStudentIds: data.targetStudentIds,
+          publishAt,
+          expiresAt,
+          isActive: true,
         })
       } else {
-        await createMutation.mutateAsync(payload)
+        const createPayload: CreateSupervisorAnnouncementData = {
+          title: data.title,
+          content: data.content,
+          visibility: data.visibility,
+          priority: data.priority,
+          targetStudentIds: data.targetStudentIds,
+          publishAt,
+          expiresAt,
+          attachments: files,
+          links: cleanedLinks,
+        }
+        await createMutation.mutateAsync(createPayload)
       }
       navigate(ROUTES.SUPERVISOR.ANNOUNCEMENTS)
     } catch (error) {

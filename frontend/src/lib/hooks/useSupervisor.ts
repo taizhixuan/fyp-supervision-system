@@ -9,6 +9,7 @@ import type {
   SupervisionLogForReview,
   SuperviseeDocument,
   SupervisorAnnouncement,
+  CreateSupervisorAnnouncementData,
   SupervisorDashboardStats,
   SupervisorNotification,
   RequestStatus,
@@ -540,10 +541,7 @@ export function useCreateAnnouncement() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (
-      announcementData: Partial<SupervisorAnnouncement> & {
-        attachments?: File[]
-        links?: { label: string; url: string }[]
-      },
+      announcementData: CreateSupervisorAnnouncementData,
     ) => {
       const { attachments, ...rest } = announcementData
       const formData = new FormData()

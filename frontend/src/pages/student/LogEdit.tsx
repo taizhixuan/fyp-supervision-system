@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,6 +14,7 @@ import { Card, Button, Spinner } from '@/components/ui'
 import { useLogDetail, useUpdateLog, useMeetingList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { SupervisionLog, UpdateLogData } from '@/types'
 
 const logSchema = z.object({
   weekNumber: z.number().min(1, 'Week number is required').max(52, 'Invalid week number'),
@@ -27,7 +28,7 @@ const logSchema = z.object({
 type LogFormData = z.infer<typeof logSchema>
 
 // Sample data
-const SAMPLE_LOG = {
+const SAMPLE_LOG: SupervisionLog = {
   logId: '3',
   studentId: '1',
   supervisorId: '1',
@@ -42,7 +43,7 @@ const SAMPLE_LOG = {
   updatedAt: '2025-01-27T10:00:00Z',
 }
 
-const SAMPLE_LOG_WITH_REVISION = {
+const SAMPLE_LOG_WITH_REVISION: SupervisionLog = {
   logId: '4',
   studentId: '1',
   supervisorId: '1',
@@ -66,7 +67,6 @@ const SAMPLE_MEETINGS = [
 
 export function LogEdit() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
 
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [isDraft, setIsDraft] = useState(false)
@@ -83,7 +83,6 @@ export function LogEdit() {
     register,
     handleSubmit,
     watch,
-    setValue,
     reset,
     formState: { errors },
   } = useForm<LogFormData>({
@@ -117,8 +116,10 @@ export function LogEdit() {
     try {
       await updateLog.mutateAsync({
         logId: id!,
-        ...data,
-        status: asDraft ? 'DRAFT' : 'PENDING',
+        logData: {
+          ...data,
+          status: asDraft ? 'DRAFT' : 'PENDING',
+        } as UpdateLogData,
       })
       setSubmitSuccess(true)
     } catch (err) {

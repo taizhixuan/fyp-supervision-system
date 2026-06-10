@@ -17,9 +17,36 @@ import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useResourceDetail, useDownloadResource } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { Resource } from '@/types'
 
 type ResourceType = 'GUIDELINE' | 'TEMPLATE' | 'VIDEO' | 'DOCUMENT' | 'LINK'
 type ResourceCategory = 'GENERAL' | 'PROPOSAL' | 'REPORT' | 'PRESENTATION' | 'SUBMISSION'
+
+// Optional fields the backend may return on a resource detail payload that are
+// not part of the shared Resource list shape.
+interface ResourceContentSection {
+  title: string
+  description: string
+}
+
+interface ResourceRelatedResource {
+  id: string
+  type: string
+  title: string
+}
+
+interface ResourceDetailExtras {
+  externalUrl?: string
+  duration?: string
+  viewCount?: number
+  fileName?: string | null
+  content?: {
+    sections?: ResourceContentSection[]
+    relatedResources?: ResourceRelatedResource[]
+  }
+}
+
+type ResourceDetailData = Resource & ResourceDetailExtras
 
 const typeConfig: Record<ResourceType, { label: string; color: string; icon: typeof FileText }> = {
   GUIDELINE: { label: 'Guideline', color: 'bg-primary-100 text-primary-700', icon: BookOpen },
@@ -75,7 +102,7 @@ export function ResourceDetail() {
     )
   }
 
-  const displayResource = resource
+  const displayResource = resource as ResourceDetailData
   const config = typeConfig[displayResource.type as ResourceType] ?? typeConfig.DOCUMENT
   const Icon = config.icon
   const categoryLabel = categoryConfig[displayResource.category as ResourceCategory] ?? displayResource.category ?? 'General'
@@ -226,7 +253,7 @@ export function ResourceDetail() {
                   onClick={() =>
                     downloadMutation.mutate({
                       resourceId: displayResource.resourceId,
-                      fileName: (displayResource as { fileName?: string | null }).fileName ?? displayResource.title,
+                      fileName: displayResource.fileName ?? displayResource.title,
                     })
                   }
                   disabled={downloadMutation.isPending}

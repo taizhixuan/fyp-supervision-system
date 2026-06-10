@@ -97,7 +97,7 @@ export function RegistrationStatus() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Badge className={cn(status.bgColor, status.color)} size="lg">
+              <Badge className={cn(status.bgColor, status.color)} size="md">
                 {status.label}
               </Badge>
               <span className="text-neutral-500">•</span>

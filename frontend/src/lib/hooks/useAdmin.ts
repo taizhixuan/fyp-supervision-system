@@ -325,6 +325,7 @@ const MOCK_PARAMETERS: AdminSystemParameter[] = [
 const MOCK_CYCLES: FYPCycle[] = [
   {
     cycleId: 1,
+    cycleCode: 'FYP1-2425-S2',
     name: 'FYP1 2024/2025 Sem 2',
     type: 'FYP1',
     academicYear: '2024/2025',
@@ -336,11 +337,13 @@ const MOCK_CYCLES: FYPCycle[] = [
     totalStudents: 156,
     pairedStudents: 142,
     completedProjects: 0,
+    deadlineCount: 0,
     createdAt: '2024-11-01T00:00:00Z',
     updatedAt: '2025-01-15T00:00:00Z',
   },
   {
     cycleId: 2,
+    cycleCode: 'FYP2-2425-S2',
     name: 'FYP2 2024/2025 Sem 2',
     type: 'FYP2',
     academicYear: '2024/2025',
@@ -352,11 +355,13 @@ const MOCK_CYCLES: FYPCycle[] = [
     totalStudents: 134,
     pairedStudents: 134,
     completedProjects: 12,
+    deadlineCount: 0,
     createdAt: '2024-11-01T00:00:00Z',
     updatedAt: '2025-01-15T00:00:00Z',
   },
   {
     cycleId: 3,
+    cycleCode: 'FYP1-2425-S1',
     name: 'FYP1 2024/2025 Sem 1',
     type: 'FYP1',
     academicYear: '2024/2025',
@@ -368,6 +373,7 @@ const MOCK_CYCLES: FYPCycle[] = [
     totalStudents: 148,
     pairedStudents: 148,
     completedProjects: 148,
+    deadlineCount: 0,
     createdAt: '2024-06-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z',
   },

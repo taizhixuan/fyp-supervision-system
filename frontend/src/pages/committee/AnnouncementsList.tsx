@@ -19,7 +19,7 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { getPriorityDisplay, getScopeLabel } from '@/lib/utils/announcementDisplay'
 import { formatDate } from '@/lib/utils/formatDate'
-import type { AnnouncementScope, AnnouncementStatus } from '@/types'
+import type { AnnouncementScope, AnnouncementStatus, FYPAnnouncement } from '@/types'
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   DRAFT: { label: 'Draft', color: 'text-stone-600', bgColor: 'bg-stone-100' },
@@ -37,7 +37,7 @@ export function AnnouncementsList() {
   const archiveMutation = useArchiveAnnouncement()
 
   const filteredAnnouncements = data?.announcements
-    .filter((announcement) => {
+    .filter((announcement: FYPAnnouncement) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
         if (
@@ -55,7 +55,7 @@ export function AnnouncementsList() {
       }
       return true
     })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a: FYPAnnouncement, b: FYPAnnouncement) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   const handleArchive = async (announcementId: number) => {
     if (!confirm('Are you sure you want to archive this announcement?')) return
@@ -106,19 +106,19 @@ export function AnnouncementsList() {
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-emerald-300">
-                {data.announcements.filter((a) => a.status === 'PUBLISHED').length}
+                {data.announcements.filter((a: FYPAnnouncement) => a.status === 'PUBLISHED').length}
               </div>
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Published</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-rose-300">
-                {data.announcements.filter((a) => a.priority === 'URGENT').length}
+                {data.announcements.filter((a: FYPAnnouncement) => a.priority === 'URGENT').length}
               </div>
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Urgent</p>
             </div>
             <div className="bg-stone-700/40 rounded-md px-2 py-1.5 ring-1 ring-stone-600/40">
               <div className="text-base font-bold leading-none text-sky-300">
-                {data.announcements.reduce((sum, a) => sum + a.viewCount, 0)}
+                {data.announcements.reduce((sum: number, a: FYPAnnouncement) => sum + a.viewCount, 0)}
               </div>
               <p className="text-[10px] text-stone-300 mt-0.5 uppercase tracking-wide">Views</p>
             </div>
@@ -169,7 +169,7 @@ export function AnnouncementsList() {
       {/* Announcements List — 2-col grid */}
       {filteredAnnouncements && filteredAnnouncements.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-          {filteredAnnouncements.map((announcement) => {
+          {filteredAnnouncements.map((announcement: FYPAnnouncement) => {
             const priority = getPriorityDisplay(announcement.priority)
             const PriorityIcon = priority.Icon
             const scopeLabel = getScopeLabel(announcement.scope)

@@ -44,7 +44,9 @@ export function NotificationsCenter() {
   const markReadMutation = useMarkCommitteeNotificationRead()
   const markAllReadMutation = useMarkAllCommitteeNotificationsRead()
 
-  const filteredNotifications = data?.notifications.filter((notification) => {
+  const notifications: CommitteeNotification[] = data?.notifications ?? []
+
+  const filteredNotifications = notifications.filter((notification) => {
     if (typeFilter !== 'ALL' && notification.type !== typeFilter) return false
     if (readFilter === 'UNREAD' && notification.isRead) return false
     if (readFilter === 'READ' && !notification.isRead) return false
@@ -182,7 +184,7 @@ export function NotificationsCenter() {
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'PROPOSAL').length ?? 0}
+                {notifications.filter((n) => n.type === 'PROPOSAL').length ?? 0}
               </p>
               <p className="text-xs text-neutral-500">Proposals</p>
             </div>
@@ -202,7 +204,7 @@ export function NotificationsCenter() {
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'DEADLINE').length ?? 0}
+                {notifications.filter((n) => n.type === 'DEADLINE').length ?? 0}
               </p>
               <p className="text-xs text-neutral-500">Deadlines</p>
             </div>
@@ -222,7 +224,7 @@ export function NotificationsCenter() {
             </div>
             <div>
               <p className="text-xl font-bold text-neutral-900">
-                {data?.notifications.filter((n) => n.type === 'REGISTRATION_PENDING').length ?? 0}
+                {notifications.filter((n) => n.type === 'REGISTRATION_PENDING').length ?? 0}
               </p>
               <p className="text-xs text-neutral-500">Pending Users</p>
             </div>
@@ -367,7 +369,7 @@ export function NotificationsCenter() {
               Showing {filteredNotifications?.length ?? 0} of {data.total} notifications
             </span>
             <span className="text-neutral-500">
-              {data.notifications.filter((n) => !n.isRead).length} unread
+              {notifications.filter((n) => !n.isRead).length} unread
             </span>
           </div>
         </Card>

@@ -110,8 +110,8 @@ export function LogList() {
   const filteredLogs = logs.filter((log) => {
     const matchesStatus = statusFilter === 'all' || log.status === statusFilter
     const matchesSearch = searchQuery === '' ||
-      log.activitiesCompleted.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.plannedActivities.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.activitiesCompleted?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.plannedActivities?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       `Week ${log.weekNumber}`.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesStatus && matchesSearch
   })
@@ -368,18 +368,18 @@ function LogCard({ log }: { log: SupervisionLog }) {
                   <div
                     className={cn(
                       'h-full rounded-full transition-all',
-                      log.progressPercentage >= 75 ? 'bg-success-500' :
-                      log.progressPercentage >= 50 ? 'bg-warning-500' :
-                      log.progressPercentage >= 25 ? 'bg-info-500' : 'bg-stone-400'
+                      (log.progressPercentage ?? 0) >= 75 ? 'bg-success-500' :
+                      (log.progressPercentage ?? 0) >= 50 ? 'bg-warning-500' :
+                      (log.progressPercentage ?? 0) >= 25 ? 'bg-info-500' : 'bg-stone-400'
                     )}
                     style={{ width: `${log.progressPercentage}%` }}
                   />
                 </div>
                 <span className={cn(
                   'text-sm font-bold px-2 py-0.5 rounded',
-                  log.progressPercentage >= 75 ? 'bg-success-100 text-success-700' :
-                  log.progressPercentage >= 50 ? 'bg-warning-100 text-warning-700' :
-                  log.progressPercentage >= 25 ? 'bg-info-100 text-info-700' : 'bg-stone-100 text-stone-600'
+                  (log.progressPercentage ?? 0) >= 75 ? 'bg-success-100 text-success-700' :
+                  (log.progressPercentage ?? 0) >= 50 ? 'bg-warning-100 text-warning-700' :
+                  (log.progressPercentage ?? 0) >= 25 ? 'bg-info-100 text-info-700' : 'bg-stone-100 text-stone-600'
                 )}>
                   {log.progressPercentage}%
                 </span>

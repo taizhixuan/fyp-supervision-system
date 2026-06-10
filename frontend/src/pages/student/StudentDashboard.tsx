@@ -25,11 +25,11 @@ import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { trimesterProgress } from '@/lib/utils/trimester'
-import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus } from '@/types'
+import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus, RegistrationStep, StudentDashboardData } from '@/types'
 
 // Build the 4-step strip from the backend-derived registration status.
 // Spec UC4 → UC6 → UC7 → UC9 maps cleanly: Find Supervisor → Submit Proposal → Committee Review → Registered.
-const getRegistrationSteps = (status: RegistrationStatus) => {
+const getRegistrationSteps = (status: RegistrationStatus): RegistrationStep[] => {
   const titles = [
     { step: 1, title: 'Find Supervisor', description: 'Browse directory and send a request' },
     { step: 2, title: 'Submit Proposal', description: 'Submit your proposal' },
@@ -65,7 +65,7 @@ const getRegistrationSteps = (status: RegistrationStatus) => {
 }
 
 // Sample data for design preview
-const SAMPLE_DASHBOARD = {
+const SAMPLE_DASHBOARD: StudentDashboardData = {
   profile: {
     userId: '1',
     studentId: '1201234567',
@@ -148,8 +148,8 @@ const SAMPLE_DASHBOARD = {
     },
   ],
   recentDocuments: [
-    { documentId: '1', studentId: '1', title: 'FYP1 Proposal Draft v1', type: 'PROPOSAL' as const, phase: 'FYP1' as const, fileName: 'proposal_v1.pdf', fileSize: 2048000, fileUrl: '#', mimeType: 'application/pdf', version: 1, uploadedAt: '2025-01-10T08:00:00Z', updatedAt: '2025-01-10T08:00:00Z' },
-    { documentId: '2', studentId: '1', title: 'Literature Review Notes', type: 'OTHER' as const, phase: 'FYP1' as const, fileName: 'lit_review.docx', fileSize: 512000, fileUrl: '#', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', version: 1, uploadedAt: '2025-01-08T14:30:00Z', updatedAt: '2025-01-08T14:30:00Z' },
+    { documentId: '1', studentId: '1', title: 'FYP1 Proposal Draft v1', type: 'PROPOSAL' as const, phase: 'FYP1' as const, fileName: 'proposal_v1.pdf', fileSize: 2048000, fileUrl: '#', downloadUrl: '#', mimeType: 'application/pdf', version: 1, uploadedAt: '2025-01-10T08:00:00Z', updatedAt: '2025-01-10T08:00:00Z' },
+    { documentId: '2', studentId: '1', title: 'Literature Review Notes', type: 'OTHER' as const, phase: 'FYP1' as const, fileName: 'lit_review.docx', fileSize: 512000, fileUrl: '#', downloadUrl: '#', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', version: 1, uploadedAt: '2025-01-08T14:30:00Z', updatedAt: '2025-01-08T14:30:00Z' },
   ],
   upcomingDeadlines: [
     { deadlineId: '1', title: 'FYP1 Proposal Submission', dueDate: '2025-02-15T23:59:00Z', type: 'PROPOSAL' as const, phase: 'FYP1' as const, isUpcoming: true, daysRemaining: 26 },

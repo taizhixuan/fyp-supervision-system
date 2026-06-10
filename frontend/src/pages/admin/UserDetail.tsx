@@ -30,7 +30,7 @@ import { useAdminUser, useUpdateUser, useDeleteUser, useResendInvite, useSendCre
 import { ROUTES } from '@/lib/constants/routes'
 import { avatarInitial } from '@/lib/utils/name'
 import { cn } from '@/lib/utils/cn'
-import type { UserRole, UserStatus } from '@/types'
+import type { UserRole, UserStatus, UserDetail as AdminUserDetail, UserSession, UserActivityLog } from '@/types'
 
 const roleConfig: Record<UserRole, { label: string; color: string; bgColor: string }> = {
   STUDENT: { label: 'Student', color: 'text-info-600', bgColor: 'bg-info-50' },
@@ -52,7 +52,8 @@ export function UserDetail() {
   const [showConfirmSuspend, setShowConfirmSuspend] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
 
-  const { data: user, isLoading } = useAdminUser(id!)
+  const { data, isLoading } = useAdminUser(id!)
+  const user: AdminUserDetail | undefined = data
   const updateMutation = useUpdateUser()
   const deleteMutation = useDeleteUser()
   const resendInviteMutation = useResendInvite()
@@ -277,7 +278,7 @@ export function UserDetail() {
 
           {user.sessions.length > 0 ? (
             <div className="space-y-1.5">
-              {user.sessions.map((session) => (
+              {user.sessions.map((session: UserSession) => (
                 <div
                   key={session.sessionId}
                   className="flex items-center justify-between gap-2 p-2 bg-neutral-50 rounded-md"
@@ -312,7 +313,7 @@ export function UserDetail() {
 
           {user.activityLog.length > 0 ? (
             <div className="space-y-1.5">
-              {user.activityLog.map((log) => (
+              {user.activityLog.map((log: UserActivityLog) => (
                 <div key={log.logId} className="flex items-start gap-2 p-2 bg-neutral-50 rounded-md">
                   <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <Activity className="h-3 w-3 text-amber-600" />

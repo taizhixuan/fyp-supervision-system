@@ -36,7 +36,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to={ROUTES.ACCOUNT_BLOCKED} replace />
   }
 
-  if (user.status === 'INACTIVE') {
+  if (user.status === 'SUSPENDED') {
     return <Navigate to={ROUTES.LOGIN} replace />
   }
 
@@ -51,11 +51,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 }
 
 // Higher-order component for role-based routes
-interface RoleBasedRouteProps {
-  children: React.ReactNode
-  role: UserRole
-}
-
 export function StudentRoute({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute allowedRoles={['STUDENT']}>{children}</ProtectedRoute>
 }

@@ -329,7 +329,7 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
             <Input
               label="Email"
               type="email"
-              startIcon={<Mail className="h-4 w-4" />}
+              leftIcon={<Mail className="h-4 w-4" />}
               {...register('email')}
               error={errors.email?.message}
             />
@@ -337,7 +337,7 @@ export function BasicProfilePage({ title = 'My Profile', roleLabelOverride }: Ba
               label="Phone"
               type="tel"
               placeholder="+60 12-345 6789"
-              startIcon={<Phone className="h-4 w-4" />}
+              leftIcon={<Phone className="h-4 w-4" />}
               {...register('phone')}
               error={errors.phone?.message}
             />

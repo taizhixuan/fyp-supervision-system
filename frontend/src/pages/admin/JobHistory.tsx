@@ -43,6 +43,21 @@ const jobStatusConfig: Record<string, { label: string; color: string; bgColor: s
   CANCELLED: { label: 'Cancelled', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Pause },
 }
 
+// Shape the page consumes from /admin/maintenance/jobs (jobId surfaced as a string id).
+interface JobHistoryEntry {
+  jobId: string
+  name: string
+  type: string
+  status: string
+  startedAt: string
+  completedAt?: string
+  triggeredBy?: string
+  progress?: number
+  error?: string
+  output?: string
+  metadata?: Record<string, unknown>
+}
+
 export function JobHistory() {
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('ALL')
@@ -52,7 +67,7 @@ export function JobHistory() {
 
   const { data, isLoading, refetch } = useMaintenanceJobs()
 
-  const filteredJobs = data?.jobs.filter((job) => {
+  const filteredJobs = data?.jobs.filter((job: JobHistoryEntry) => {
     if (typeFilter !== 'ALL' && job.type !== typeFilter) return false
     if (statusFilter !== 'ALL' && job.status !== statusFilter) return false
     if (!searchQuery) return true
@@ -85,9 +100,9 @@ export function JobHistory() {
 
   const stats = {
     total: data?.jobs.length ?? 0,
-    completed: data?.jobs.filter((j) => j.status === 'COMPLETED').length ?? 0,
-    failed: data?.jobs.filter((j) => j.status === 'FAILED').length ?? 0,
-    running: data?.jobs.filter((j) => j.status === 'RUNNING').length ?? 0,
+    completed: data?.jobs.filter((j: JobHistoryEntry) => j.status === 'COMPLETED').length ?? 0,
+    failed: data?.jobs.filter((j: JobHistoryEntry) => j.status === 'FAILED').length ?? 0,
+    running: data?.jobs.filter((j: JobHistoryEntry) => j.status === 'RUNNING').length ?? 0,
   }
 
   return (
@@ -187,7 +202,7 @@ export function JobHistory() {
       {/* Jobs List */}
       <div className="space-y-3">
         {filteredJobs && filteredJobs.length > 0 ? (
-          filteredJobs.map((job) => {
+          filteredJobs.map((job: JobHistoryEntry) => {
             const type = jobTypeConfig[job.type] || jobTypeConfig.BACKUP
             const status = jobStatusConfig[job.status]
             const TypeIcon = type.icon
