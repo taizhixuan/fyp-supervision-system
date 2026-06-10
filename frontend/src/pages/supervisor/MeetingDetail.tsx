@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   Calendar,
@@ -55,7 +55,6 @@ const typeConfig: Record<MeetingType, { label: string; icon: typeof MapPin }> = 
 
 export function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const [showRescheduleModal, setShowRescheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [rescheduleDate, setRescheduleDate] = useState('')

@@ -106,7 +106,6 @@ export function SupervisorProfile() {
   const watchedResearchAreas = watch('researchAreas') ?? []
   const watchedExpertise = watch('expertise') ?? []
   const watchedProjectTypes = watch('preferredProjectTypes') ?? []
-  const watchedIsAccepting = watch('isAcceptingStudents')
   const watchedQuota = watch('maxSupervisionQuota')
 
   const handleStartEditing = () => {
