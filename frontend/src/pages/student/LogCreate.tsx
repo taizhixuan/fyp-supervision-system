@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,6 +13,7 @@ import { Card, Button, AlertBanner } from '@/components/ui'
 import { useCreateLog, useMeetingList } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { CreateLogData } from '@/types'
 
 const logSchema = z.object({
   weekNumber: z.number().min(1, 'Week number is required').max(52, 'Invalid week number'),
@@ -32,7 +33,6 @@ const SAMPLE_MEETINGS = [
 ]
 
 export function LogCreate() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const meetingIdFromUrl = searchParams.get('meetingId')
 
@@ -52,7 +52,6 @@ export function LogCreate() {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<LogFormData>({
     resolver: zodResolver(logSchema),
@@ -68,12 +67,15 @@ export function LogCreate() {
 
   const progressPercentage = watch('progressPercentage')
 
-  const onSubmit = async (data: LogFormData, asDraft: boolean = false) => {
+  const onSubmit = async (data: LogFormData, _asDraft: boolean = false) => {
     try {
-      await createLog.mutateAsync({
-        ...data,
-        status: asDraft ? 'DRAFT' : 'PENDING',
-      })
+      const payload: CreateLogData = {
+        meetingId: data.meetingId ?? '',
+        discussionSummary: data.activitiesCompleted,
+        actionItems: [],
+        nextMeetingPlan: data.plannedActivities,
+      }
+      await createLog.mutateAsync(payload)
       setSubmitSuccess(true)
     } catch (err) {
       // Error handled by mutation

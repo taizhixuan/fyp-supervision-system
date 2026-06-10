@@ -15,6 +15,13 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorLoadDetail } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { SupervisorStudentSummary } from '@/types'
+
+type SupervisorLoadStudent = SupervisorStudentSummary & {
+  projectId?: number | string
+  status?: 'ACTIVE' | 'COMPLETED' | 'SUSPENDED' | 'DROPPED' | string
+  lastMeeting?: string
+}
 
 export function SupervisorLoadDetail() {
   const { id } = useParams<{ id: string }>()
@@ -148,7 +155,7 @@ export function SupervisorLoadDetail() {
           Expertise Areas
         </h3>
         <div className="flex flex-wrap gap-2">
-          {supervisor.expertise.map((area) => (
+          {supervisor.expertise.map((area: string) => (
             <span
               key={area}
               className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium"
@@ -168,7 +175,7 @@ export function SupervisorLoadDetail() {
 
         {supervisor.students.length > 0 ? (
           <div className="space-y-3">
-            {supervisor.students.map((student) => {
+            {supervisor.students.map((student: SupervisorLoadStudent) => {
               const progressColor = student.progress >= 70
                 ? 'text-success-600'
                 : student.progress >= 40

@@ -292,7 +292,7 @@ export function DocumentDetail() {
             Cancel
           </Button>
           <Button
-            variant="error"
+            variant="danger"
             onClick={handleDelete}
             isLoading={deleteDocument.isPending}
           >

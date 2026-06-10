@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorLoads } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { SupervisorLoad as SupervisorLoadType } from '@/types'
 
 export function SupervisorLoad() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,7 +23,7 @@ export function SupervisorLoad() {
 
   const { data, isLoading } = useSupervisorLoads()
 
-  const filteredSupervisors = data?.supervisors.filter((supervisor) => {
+  const filteredSupervisors = data?.supervisors.filter((supervisor: SupervisorLoadType) => {
     if (filter === 'OVERLOADED' && !supervisor.isOverloaded) return false
     if (filter === 'AVAILABLE' && supervisor.currentLoad >= supervisor.maxCapacity) return false
     if (!searchQuery) return true
@@ -31,7 +32,7 @@ export function SupervisorLoad() {
       supervisor.fullName.toLowerCase().includes(query) ||
       supervisor.email.toLowerCase().includes(query) ||
       supervisor.department.toLowerCase().includes(query) ||
-      supervisor.expertise.some((e) => e.toLowerCase().includes(query))
+      supervisor.expertise.some((e: string) => e.toLowerCase().includes(query))
     )
   })
 
@@ -45,8 +46,8 @@ export function SupervisorLoad() {
 
   const stats = {
     total: data?.supervisors.length ?? 0,
-    overloaded: data?.supervisors.filter((s) => s.isOverloaded).length ?? 0,
-    available: data?.supervisors.filter((s) => s.currentLoad < s.maxCapacity).length ?? 0,
+    overloaded: data?.supervisors.filter((s: SupervisorLoadType) => s.isOverloaded).length ?? 0,
+    available: data?.supervisors.filter((s: SupervisorLoadType) => s.currentLoad < s.maxCapacity).length ?? 0,
   }
 
   return (
@@ -132,7 +133,7 @@ export function SupervisorLoad() {
       {/* Supervisors List */}
       <div className="space-y-3">
         {filteredSupervisors && filteredSupervisors.length > 0 ? (
-          filteredSupervisors.map((supervisor) => {
+          filteredSupervisors.map((supervisor: SupervisorLoadType) => {
             const utilizationColor = supervisor.utilizationRate > 100
               ? 'text-error-600'
               : supervisor.utilizationRate >= 80
@@ -210,7 +211,7 @@ export function SupervisorLoad() {
 
                       {/* Expertise */}
                       <div className="mt-2">
-                        {supervisor.expertise.slice(0, 3).map((area) => (
+                        {supervisor.expertise.slice(0, 3).map((area: string) => (
                           <span
                             key={area}
                             className="inline-block px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-xs mr-1"
@@ -251,7 +252,7 @@ export function SupervisorLoad() {
               Showing {filteredSupervisors?.length ?? 0} of {data.total} supervisors
             </span>
             <span className="text-neutral-500">
-              Total capacity: {data.supervisors.reduce((sum, s) => sum + s.maxCapacity, 0)} students
+              Total capacity: {data.supervisors.reduce((sum: number, s: SupervisorLoadType) => sum + s.maxCapacity, 0)} students
             </span>
           </div>
         </Card>
