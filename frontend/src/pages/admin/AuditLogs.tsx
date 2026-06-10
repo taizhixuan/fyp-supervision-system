@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAuditLogs } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
-import type { AuditAction, AuditEntityType } from '@/types'
+import type { AuditAction, AuditEntityType, AuditLog } from '@/types'
 
 const actionConfig: Record<string, { label: string; icon: typeof Eye; color: string }> = {
   CREATE: { label: 'Create', icon: Plus, color: 'text-success-600' },
@@ -48,6 +48,16 @@ const actionConfig: Record<string, { label: string; icon: typeof Eye; color: str
 const FALLBACK_ACTION = { label: 'Action', icon: Eye, color: 'text-neutral-600' }
 function resolveAction(action: string) {
   return actionConfig[action] ?? { ...FALLBACK_ACTION, label: action.replace(/_/g, ' ') }
+}
+
+// The list/detail UI also surfaces a few fields that the standard AuditLog DTO
+// doesn't carry (legacy detail rows). Model them as optional so unknown values
+// render blank instead of crashing the type-check.
+type AuditLogRow = AuditLog & {
+  logId?: string | number
+  userId?: string | number
+  sessionId?: string
+  changes?: { before?: unknown; after?: unknown }
 }
 
 const entityTypeLabels: Record<AuditEntityType, string> = {
@@ -81,7 +91,7 @@ export function AuditLogs() {
     limit: 20,
   })
 
-  const filteredLogs = data?.logs.filter((log) => {
+  const filteredLogs = data?.logs.filter((log: AuditLogRow) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -103,7 +113,7 @@ export function AuditLogs() {
     }
     const lines = [
       header.join(','),
-      ...filteredLogs.map((l) =>
+      ...filteredLogs.map((l: AuditLog) =>
         [l.timestamp, l.action, l.entityType, l.entityId, l.performedByName, l.ipAddress, l.details]
           .map(escape).join(',')
       ),
@@ -127,13 +137,13 @@ export function AuditLogs() {
 
   const stats = {
     total: data?.total ?? 0,
-    today: data?.logs.filter((l) => {
+    today: data?.logs.filter((l: AuditLog) => {
       const logDate = new Date(l.timestamp).toDateString()
       const today = new Date().toDateString()
       return logDate === today
     }).length ?? 0,
-    security: data?.logs.filter((l) => ['LOGIN', 'LOGOUT', 'LOCK', 'UNLOCK'].includes(l.action)).length ?? 0,
-    changes: data?.logs.filter((l) => ['CREATE', 'UPDATE', 'DELETE'].includes(l.action)).length ?? 0,
+    security: data?.logs.filter((l: AuditLog) => ['LOGIN', 'LOGOUT', 'LOCK', 'UNLOCK'].includes(l.action)).length ?? 0,
+    changes: data?.logs.filter((l: AuditLog) => ['CREATE', 'UPDATE', 'DELETE'].includes(l.action)).length ?? 0,
   }
 
   return (
@@ -233,7 +243,7 @@ export function AuditLogs() {
       {/* Logs List */}
       <div className="space-y-2">
         {filteredLogs && filteredLogs.length > 0 ? (
-          filteredLogs.map((log, idx) => {
+          filteredLogs.map((log: AuditLogRow, idx: number) => {
             const action = resolveAction(log.action)
             const ActionIcon = action.icon
             const rowKey = String(log.logId ?? log.auditId ?? `${log.timestamp ?? 'log'}-${idx}`)
@@ -341,7 +351,7 @@ export function AuditLogs() {
                         <div>
                           <p className="text-sm text-neutral-500 mb-2">Changes</p>
                           <div className="space-y-2">
-                            {log.changes.before && (
+                            {!!log.changes.before && (
                               <div className="p-3 bg-error-50 rounded-lg">
                                 <p className="text-xs font-medium text-error-700 mb-1">Before</p>
                                 <pre className="text-xs text-error-800 overflow-x-auto">
@@ -349,7 +359,7 @@ export function AuditLogs() {
                                 </pre>
                               </div>
                             )}
-                            {log.changes.after && (
+                            {!!log.changes.after && (
                               <div className="p-3 bg-success-50 rounded-lg">
                                 <p className="text-xs font-medium text-success-700 mb-1">After</p>
                                 <pre className="text-xs text-success-800 overflow-x-auto">
