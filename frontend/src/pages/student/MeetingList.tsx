@@ -89,9 +89,7 @@ const platformIcons = {
 }
 
 export function MeetingList() {
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const { data, isLoading } = useMeetingList()
 

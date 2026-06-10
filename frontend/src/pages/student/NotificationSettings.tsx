@@ -251,7 +251,7 @@ export function NotificationSettings() {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={preferences.email.enabled}
+                checked={displayPrefs.email.enabled}
                 onChange={(e) => handleToggle('email', 'enabled', e.target.checked)}
                 className="sr-only peer"
               />
@@ -259,7 +259,7 @@ export function NotificationSettings() {
             </label>
           </div>
 
-          {preferences.email.enabled && (
+          {displayPrefs.email.enabled && (
             <div className="space-y-3 pl-13 border-t border-neutral-100 pt-4">
               {notificationCategories.map((category) => (
                 <SettingRow
@@ -267,7 +267,7 @@ export function NotificationSettings() {
                   label={category.label}
                   description={category.description}
                   icon={category.icon}
-                  checked={preferences.email[category.id as keyof typeof preferences.email] as boolean}
+                  checked={displayPrefs.email[category.id as keyof typeof displayPrefs.email] as boolean}
                   onChange={(value) => handleToggle('email', category.id, value)}
                 />
               ))}
@@ -275,7 +275,7 @@ export function NotificationSettings() {
                 label="Weekly Digest"
                 description="Receive a weekly summary of your FYP progress"
                 icon={Calendar}
-                checked={preferences.email.weeklyDigest}
+                checked={displayPrefs.email.weeklyDigest ?? false}
                 onChange={(value) => handleToggle('email', 'weeklyDigest', value)}
               />
             </div>
@@ -303,7 +303,7 @@ export function NotificationSettings() {
             <label className={`relative inline-flex items-center ${pushAvailable && !pushBusy ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
               <input
                 type="checkbox"
-                checked={preferences.push.enabled}
+                checked={displayPrefs.push.enabled}
                 onChange={(e) => handlePushChannelToggle(e.target.checked)}
                 disabled={!pushAvailable || pushBusy}
                 className="sr-only peer"
@@ -316,7 +316,7 @@ export function NotificationSettings() {
             <p className="text-sm text-red-600 mb-3">{pushError}</p>
           )}
 
-          {preferences.push.enabled && pushAvailable && (
+          {displayPrefs.push.enabled && pushAvailable && (
             <div className="space-y-3 pl-13 border-t border-neutral-100 pt-4">
               {notificationCategories.map((category) => (
                 <SettingRow
@@ -324,7 +324,7 @@ export function NotificationSettings() {
                   label={category.label}
                   description={category.description}
                   icon={category.icon}
-                  checked={preferences.push[category.id as keyof typeof preferences.push] as boolean}
+                  checked={displayPrefs.push[category.id as keyof typeof displayPrefs.push] as boolean}
                   onChange={(value) => handleToggle('push', category.id, value)}
                 />
               ))}
@@ -347,7 +347,7 @@ export function NotificationSettings() {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={preferences.inApp.enabled}
+                checked={displayPrefs.inApp.enabled}
                 onChange={(e) => handleToggle('inApp', 'enabled', e.target.checked)}
                 className="sr-only peer"
               />
@@ -355,7 +355,7 @@ export function NotificationSettings() {
             </label>
           </div>
 
-          {preferences.inApp.enabled && (
+          {displayPrefs.inApp.enabled && (
             <div className="space-y-3 pl-13 border-t border-neutral-100 pt-4">
               {notificationCategories.map((category) => (
                 <SettingRow
@@ -363,7 +363,7 @@ export function NotificationSettings() {
                   label={category.label}
                   description={category.description}
                   icon={category.icon}
-                  checked={preferences.inApp[category.id as keyof typeof preferences.inApp] as boolean}
+                  checked={displayPrefs.inApp[category.id as keyof typeof displayPrefs.inApp] as boolean}
                   onChange={(value) => handleToggle('inApp', category.id, value)}
                 />
               ))}
@@ -386,7 +386,7 @@ export function NotificationSettings() {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={preferences.quiet.enabled}
+                checked={displayPrefs.quiet.enabled}
                 onChange={(e) => handleQuietToggle('enabled', e.target.checked)}
                 className="sr-only peer"
               />
@@ -394,7 +394,7 @@ export function NotificationSettings() {
             </label>
           </div>
 
-          {preferences.quiet.enabled && (
+          {displayPrefs.quiet.enabled && (
             <div className="border-t border-neutral-100 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -403,7 +403,7 @@ export function NotificationSettings() {
                   </label>
                   <input
                     type="time"
-                    value={preferences.quiet.startTime}
+                    value={displayPrefs.quiet.startTime}
                     onChange={(e) => handleQuietToggle('startTime', e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
@@ -414,7 +414,7 @@ export function NotificationSettings() {
                   </label>
                   <input
                     type="time"
-                    value={preferences.quiet.endTime}
+                    value={displayPrefs.quiet.endTime}
                     onChange={(e) => handleQuietToggle('endTime', e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />

@@ -57,7 +57,9 @@ export function MeetingExport() {
     try {
       await exportMeetings.mutateAsync({
         format,
-        dateRange: dateRange === 'custom' ? { start: startDate, end: endDate } : dateRange,
+        dateRange,
+        startDate: dateRange === 'custom' ? startDate : undefined,
+        endDate: dateRange === 'custom' ? endDate : undefined,
         status: statusFilter === 'all' ? undefined : statusFilter,
         includeNotes,
         includeAgenda,
