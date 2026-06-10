@@ -93,7 +93,6 @@ export function CreateUser() {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),

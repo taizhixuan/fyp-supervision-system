@@ -19,7 +19,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useGeneralDocuments, useDeleteGeneralDocument } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { CommitteeDocumentCategory, DocumentVisibility } from '@/types'
+import type { CommitteeDocumentCategory, DocumentVisibility, GeneralDocument } from '@/types'
 
 const categoryConfig: Record<CommitteeDocumentCategory, { label: string; icon: typeof FileText; color: string; bgColor: string }> = {
   TEMPLATE: { label: 'Template', icon: FileText, color: 'text-sky-600', bgColor: 'bg-sky-100' },
@@ -51,7 +51,9 @@ export function DocumentsManagement() {
   })
   const deleteMutation = useDeleteGeneralDocument()
 
-  const filteredDocuments = data?.documents.filter((doc) => {
+  const documents: GeneralDocument[] = data?.documents ?? []
+
+  const filteredDocuments = documents.filter((doc) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -112,7 +114,7 @@ export function DocumentsManagement() {
         <div className="relative mt-3 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
           {(Object.keys(categoryConfig) as CommitteeDocumentCategory[]).map((category) => {
             const config = categoryConfig[category]
-            const count = data?.documents.filter((d) => d.category === category).length ?? 0
+            const count = documents.filter((d) => d.category === category).length ?? 0
             const Icon = config.icon
             const active = categoryFilter === category
             return (

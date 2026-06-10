@@ -80,6 +80,8 @@ export const ROUTES = {
     // Dashboard & Profile
     DASHBOARD: '/supervisor/dashboard',
     PROFILE: '/supervisor/profile',
+    // Topics (no route/page yet — referenced by dashboard Quick Actions)
+    TOPICS: '/supervisor/topics',
     // Requests
     REQUESTS: '/supervisor/requests',
     REQUEST_DETAIL: '/supervisor/requests/:id',

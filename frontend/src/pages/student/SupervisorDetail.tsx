@@ -14,12 +14,13 @@ import {
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorDetail } from '@/lib/hooks/useStudent'
+import type { SupervisorDetail as SupervisorDetailType } from '@/types/student'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { assetUrl } from '@/lib/utils/assetUrl'
 
 // Sample data for design preview
-const SAMPLE_SUPERVISOR = {
+const SAMPLE_SUPERVISOR: SupervisorDetailType = {
   supervisorId: '1',
   userId: '101',
   fullName: 'Dr. Sarah Lee Wei Lin',
@@ -165,7 +166,7 @@ export function SupervisorDetail() {
             <div className="mt-4">
               {displaySupervisor.isAcceptingStudents ? (
                 <div className="flex items-center gap-4">
-                  <Badge variant="success" size="lg">
+                  <Badge variant="success" size="md">
                     Accepting Students
                   </Badge>
                   <span className="text-sm text-neutral-600">
@@ -173,7 +174,7 @@ export function SupervisorDetail() {
                   </span>
                 </div>
               ) : (
-                <Badge variant="error" size="lg">
+                <Badge variant="error" size="md">
                   Not Accepting Students
                 </Badge>
               )}
@@ -233,7 +234,7 @@ export function SupervisorDetail() {
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Research Areas</h2>
             <div className="flex flex-wrap gap-2">
               {displaySupervisor.researchAreas.map((area) => (
-                <Badge key={area} variant="primary" size="lg">
+                <Badge key={area} variant="primary" size="md">
                   {area}
                 </Badge>
               ))}

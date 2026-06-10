@@ -13,10 +13,10 @@ import {
 import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useLogDetail } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
-import type { LogStatus } from '@/types'
+import type { LogStatus, SupervisionLog } from '@/types'
 
 // Sample data
-const SAMPLE_LOG = {
+const SAMPLE_LOG: SupervisionLog = {
   logId: '1',
   studentId: '1',
   supervisorId: '1',
@@ -88,7 +88,7 @@ export function LogDetail() {
               : `Created on ${new Date(displayLog.createdAt).toLocaleDateString('en-MY')}`}
           </p>
         </div>
-        <Badge variant={status.variant} size="lg">{status.label}</Badge>
+        <Badge variant={status.variant} size="md">{status.label}</Badge>
       </div>
 
       {/* Status Banner */}
@@ -102,7 +102,7 @@ export function LogDetail() {
                 Your supervisor has requested changes to this log. Please review the feedback and update accordingly.
               </p>
               <Link to={ROUTES.STUDENT.LOG_EDIT.replace(':id', displayLog.logId)}>
-                <Button variant="error" size="sm" className="mt-3" leftIcon={<Edit className="h-4 w-4" />}>
+                <Button variant="danger" size="sm" className="mt-3" leftIcon={<Edit className="h-4 w-4" />}>
                   Edit Log
                 </Button>
               </Link>

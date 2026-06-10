@@ -24,6 +24,7 @@ import {
 } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { CreateAnnouncementData } from '@/types'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
@@ -90,7 +91,7 @@ export function CreateAnnouncement() {
       const cleanedLinks = links
         .map((l) => ({ label: l.label.trim(), url: l.url.trim() }))
         .filter((l) => l.label && l.url)
-      const payload = {
+      const payload: CreateAnnouncementData = {
         ...data,
         publishAt: new Date(data.publishAt).toISOString(),
         expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
@@ -101,7 +102,12 @@ export function CreateAnnouncement() {
       if (isEditing && existingAnnouncement) {
         await updateMutation.mutateAsync({
           announcementId: existingAnnouncement.announcementId,
-          ...payload,
+          title: payload.title,
+          content: payload.content,
+          scope: payload.scope,
+          priority: payload.priority,
+          publishAt: payload.publishAt,
+          expiresAt: payload.expiresAt,
         })
       } else {
         await createMutation.mutateAsync(payload)

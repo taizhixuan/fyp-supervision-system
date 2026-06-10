@@ -75,13 +75,17 @@ export function IntegrationSettings() {
     )
   }
 
-  const integrationsByType = data?.integrations.reduce((acc, integration) => {
-    if (!acc[integration.type]) {
-      acc[integration.type] = []
-    }
-    acc[integration.type].push(integration)
-    return acc
-  }, {} as Record<IntegrationType, Integration[]>) || {}
+  const integrationsByType: Record<IntegrationType, Integration[]> =
+    data?.integrations.reduce(
+      (acc: Record<IntegrationType, Integration[]>, integration: Integration) => {
+        if (!acc[integration.type]) {
+          acc[integration.type] = []
+        }
+        acc[integration.type].push(integration)
+        return acc
+      },
+      {} as Record<IntegrationType, Integration[]>,
+    ) || {}
 
   return (
     <div className="space-y-3 lg:space-y-4">
@@ -108,9 +112,9 @@ export function IntegrationSettings() {
         <div className="relative mt-3 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           {[
             { label: 'Total', value: data?.integrations.length || 0, color: 'text-stone-200' },
-            { label: 'Active', value: data?.integrations.filter((i) => i.status === 'ACTIVE').length || 0, color: 'text-emerald-300' },
-            { label: 'Errors', value: data?.integrations.filter((i) => i.status === 'ERROR').length || 0, color: 'text-rose-300' },
-            { label: 'Configuring', value: data?.integrations.filter((i) => i.status === 'CONFIGURING').length || 0, color: 'text-amber-300' },
+            { label: 'Active', value: data?.integrations.filter((i: Integration) => i.status === 'ACTIVE').length || 0, color: 'text-emerald-300' },
+            { label: 'Errors', value: data?.integrations.filter((i: Integration) => i.status === 'ERROR').length || 0, color: 'text-rose-300' },
+            { label: 'Configuring', value: data?.integrations.filter((i: Integration) => i.status === 'CONFIGURING').length || 0, color: 'text-amber-300' },
           ].map((chip) => (
             <div key={chip.label} className="bg-stone-700/40 ring-1 ring-stone-600/40 rounded-md px-2 py-1.5">
               <div className={cn('text-base font-bold leading-none', chip.color)}>{chip.value}</div>

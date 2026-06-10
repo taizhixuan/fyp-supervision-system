@@ -59,7 +59,7 @@ export function SystemParameters() {
   )
   const updateMutation = useUpdateParameter()
 
-  const filteredParams = data?.parameters.filter((param) => {
+  const filteredParams: AdminSystemParameter[] | undefined = data?.parameters.filter((param: AdminSystemParameter) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -137,7 +137,7 @@ export function SystemParameters() {
   }
 
   // Group parameters by category
-  const groupedParams = filteredParams?.reduce((acc, param) => {
+  const groupedParams = filteredParams?.reduce((acc: Record<ParameterCategory, AdminSystemParameter[]>, param: AdminSystemParameter) => {
     if (!acc[param.category]) {
       acc[param.category] = []
     }
@@ -221,7 +221,7 @@ export function SystemParameters() {
                 {config.label}
               </h3>
               <div className="space-y-1.5">
-                {params.map((param) => (
+                {params.map((param: AdminSystemParameter) => (
                   <ParameterRow
                     key={param.parameterId}
                     param={param}
@@ -243,7 +243,7 @@ export function SystemParameters() {
       ) : (
         <Card padding="sm" className="border-stone-200">
           <div className="space-y-1.5">
-            {filteredParams?.map((param) => (
+            {filteredParams?.map((param: AdminSystemParameter) => (
               <ParameterRow
                 key={param.parameterId}
                 param={param}

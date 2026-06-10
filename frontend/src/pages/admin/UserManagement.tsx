@@ -21,7 +21,7 @@ import { useAdminUsers, useUpdateUser, useBulkUpdateUserStatus, useFYPCycles } f
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { avatarInitial } from '@/lib/utils/name'
-import type { UserRole, UserStatus } from '@/types'
+import type { AdminUserListItem, UserRole, UserStatus } from '@/types'
 
 const roleConfig: Record<UserRole, { label: string; color: string; bgColor: string; borderColor: string }> = {
   STUDENT: { label: 'Student', color: 'text-sky-700', bgColor: 'bg-sky-100', borderColor: 'border-sky-200' },
@@ -77,7 +77,7 @@ export function UserManagement() {
     if (selectedUsers.size === data.users.length) {
       setSelectedUsers(new Set())
     } else {
-      setSelectedUsers(new Set(data.users.map((u) => u.userId)))
+      setSelectedUsers(new Set(data.users.map((u: AdminUserListItem) => u.userId)))
     }
   }
 
@@ -112,9 +112,9 @@ export function UserManagement() {
 
   const stats = {
     total: data?.users.length ?? 0,
-    active: data?.users.filter((u) => u.status === 'ACTIVE').length ?? 0,
-    pending: data?.users.filter((u) => u.status === 'PENDING').length ?? 0,
-    suspended: data?.users.filter((u) => u.status === 'SUSPENDED').length ?? 0,
+    active: data?.users.filter((u: AdminUserListItem) => u.status === 'ACTIVE').length ?? 0,
+    pending: data?.users.filter((u: AdminUserListItem) => u.status === 'PENDING').length ?? 0,
+    suspended: data?.users.filter((u: AdminUserListItem) => u.status === 'SUSPENDED').length ?? 0,
   }
 
   const allSelected = data?.users && data.users.length > 0 && selectedUsers.size === data.users.length
@@ -276,7 +276,7 @@ export function UserManagement() {
       {/* Users grid */}
       {data?.users && data.users.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-          {data.users.map((user) => {
+          {data.users.map((user: AdminUserListItem) => {
             const role = roleConfig[user.role]
             const status = statusConfig[user.status]
 

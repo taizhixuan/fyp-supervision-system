@@ -23,6 +23,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useCommitteeDashboard } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { DashboardAlert, RecentActivity, DashboardDeadline } from '@/types'
 
 export function CommitteeDashboard() {
   const { data, isLoading } = useCommitteeDashboard()
@@ -39,9 +40,9 @@ export function CommitteeDashboard() {
   // `recentActivities`. The mock used a nested `{ stats: {...} }` shape that
   // the real API doesn't follow; reading `data.stats` left every widget at 0.
   const stats = data ?? null
-  const alerts = data?.alerts ?? []
-  const recentActivities = data?.recentActivities ?? []
-  const upcomingDeadlines = data?.upcomingDeadlines ?? []
+  const alerts: DashboardAlert[] = data?.alerts ?? []
+  const recentActivities: RecentActivity[] = data?.recentActivities ?? []
+  const upcomingDeadlines: DashboardDeadline[] = data?.upcomingDeadlines ?? []
 
   const deadlineColors = ['rose', 'amber', 'sky', 'violet', 'emerald'] as const
   const parseDeadline = (d: { dueDate: string; title: string; description?: string }) => {

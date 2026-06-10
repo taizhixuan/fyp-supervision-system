@@ -168,7 +168,7 @@ export function MaintenanceCenter() {
                 System Health: {overallHealth}
               </h3>
               <p className="text-sm text-stone-600">
-                {healthData?.checks.filter((c) => c.status === 'HEALTHY').length} of {healthData?.checks.length} services healthy
+                {healthData?.checks.filter((c: SystemHealthCheck) => c.status === 'HEALTHY').length} of {healthData?.checks.length} services healthy
               </p>
             </div>
           </div>
@@ -273,7 +273,7 @@ export function MaintenanceCenter() {
         </div>
 
         <div className="space-y-3">
-          {healthData?.checks.map((check) => (
+          {healthData?.checks.map((check: SystemHealthCheck) => (
             <div
               key={check.checkId}
               className={cn(
@@ -328,7 +328,7 @@ export function MaintenanceCenter() {
 
         {backupsData?.backups && backupsData.backups.length > 0 ? (
           <div className="space-y-3">
-            {backupsData.backups.slice(0, 5).map((backup) => (
+            {backupsData.backups.slice(0, 5).map((backup: BackupInfo) => (
               <div
                 key={backup.backupId}
                 className={cn(
@@ -547,9 +547,9 @@ export function MaintenanceCenter() {
                   Select a backup to restore:
                 </p>
                 {backupsData?.backups
-                  .filter((b) => b.status === 'AVAILABLE')
+                  .filter((b: BackupInfo) => b.status === 'AVAILABLE')
                   .slice(0, 5)
-                  .map((backup) => (
+                  .map((backup: BackupInfo) => (
                     <button
                       key={backup.backupId}
                       type="button"

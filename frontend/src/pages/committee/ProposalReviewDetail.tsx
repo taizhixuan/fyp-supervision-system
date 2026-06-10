@@ -23,7 +23,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useCommitteeProposal, useSubmitCommitteeProposalReview } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
-import type { CommitteeProposalStatus } from '@/types'
+import type { CommitteeProposalStatus, ProposalForCommitteeReview } from '@/types'
 
 const statusConfig: Record<CommitteeProposalStatus, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
   PENDING_REVIEW: { label: 'Pending Review', color: 'text-warning-600', bgColor: 'bg-warning-50', icon: Clock },
@@ -40,7 +40,8 @@ export function ProposalReviewDetail() {
   const [feedback, setFeedback] = useState('')
   const [internalNotes, setInternalNotes] = useState('')
 
-  const { data: proposal, isLoading } = useCommitteeProposal(Number(id))
+  const { data, isLoading } = useCommitteeProposal(Number(id))
+  const proposal = data as ProposalForCommitteeReview | undefined
   const submitReview = useSubmitCommitteeProposalReview()
 
   const handleSubmitReview = async () => {

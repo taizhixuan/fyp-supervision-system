@@ -122,7 +122,7 @@ export function DeadlineManagement() {
     },
   })
 
-  const filteredDeadlines = data?.deadlines.filter((deadline) => {
+  const filteredDeadlines = data?.deadlines.filter((deadline: AdminDeadline) => {
     if (typeFilter !== 'ALL' && deadline.type !== typeFilter) return false
     if (statusFilter !== 'ALL' && deadline.status !== statusFilter) return false
     if (!searchQuery) return true
@@ -211,7 +211,7 @@ export function DeadlineManagement() {
   const getCalendarData = () => {
     if (!filteredDeadlines) return {}
     const calendar: Record<string, AdminDeadline[]> = {}
-    filteredDeadlines.forEach((deadline) => {
+    filteredDeadlines.forEach((deadline: AdminDeadline) => {
       const monthKey = new Date(deadline.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
       if (!calendar[monthKey]) calendar[monthKey] = []
       calendar[monthKey].push(deadline)
@@ -284,13 +284,13 @@ export function DeadlineManagement() {
       </div>
 
       {/* Upcoming Deadlines Alert */}
-      {filteredDeadlines?.some((d) => d.status === 'ACTIVE' && getDaysUntil(d.dueDate) <= 7) && (
+      {filteredDeadlines?.some((d: AdminDeadline) => d.status === 'ACTIVE' && getDaysUntil(d.dueDate) <= 7) && (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border-l-4 border-l-amber-500 bg-amber-50">
           <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-neutral-900">Upcoming Deadlines</p>
             <p className="text-xs text-neutral-600">
-              {filteredDeadlines?.filter((d) => d.status === 'ACTIVE' && getDaysUntil(d.dueDate) <= 7).length} deadline(s) due within the next 7 days
+              {filteredDeadlines?.filter((d: AdminDeadline) => d.status === 'ACTIVE' && getDaysUntil(d.dueDate) <= 7).length} deadline(s) due within the next 7 days
             </p>
           </div>
         </div>
@@ -346,7 +346,7 @@ export function DeadlineManagement() {
       {viewMode === 'list' ? (
         <div className="space-y-3">
           {filteredDeadlines && filteredDeadlines.length > 0 ? (
-            filteredDeadlines.map((deadline) => {
+            filteredDeadlines.map((deadline: AdminDeadline) => {
               const type = getTypeConfig(deadline.type)
               const status = getStatusConfig(deadline.status)
               const TypeIcon = type.icon

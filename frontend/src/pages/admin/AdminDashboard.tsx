@@ -25,6 +25,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useAdminDashboard, useSystemHealthChecks } from '@/lib/hooks/useAdmin'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import type { SystemAlert, RecentAdminActivity, SystemHealthCheck } from '@/types'
 
 export function AdminDashboard() {
   const { data, isLoading } = useAdminDashboard()
@@ -156,9 +157,9 @@ export function AdminDashboard() {
       )}
 
       {/* System Alerts — compact inline strips */}
-      {alerts && alerts.filter((a) => !a.isResolved).length > 0 && (
+      {alerts && alerts.filter((a: SystemAlert) => !a.isResolved).length > 0 && (
         <div className="space-y-1.5">
-          {alerts.filter((a) => !a.isResolved).map((alert) => (
+          {alerts.filter((a: SystemAlert) => !a.isResolved).map((alert: SystemAlert) => (
             <div
               key={alert.alertId}
               className={cn(
@@ -319,7 +320,7 @@ export function AdminDashboard() {
             </div>
             <div className="divide-y divide-stone-100">
               {recentActivity && recentActivity.length > 0 ? (
-                recentActivity.slice(0, 6).map((activity, index) => (
+                recentActivity.slice(0, 6).map((activity: RecentAdminActivity, index: number) => (
                   <div key={activity.activityId} className="py-1.5 flex items-start gap-2 hover:bg-stone-50/50 transition-colors">
                     <div className={cn(
                       'p-1 rounded flex-shrink-0',
@@ -378,7 +379,7 @@ export function AdminDashboard() {
               </div>
             ) : (
               <div className="space-y-1.5">
-                {healthData?.checks.map((check) => (
+                {healthData?.checks.map((check: SystemHealthCheck) => (
                   <div
                     key={check.checkId}
                     className={cn(
