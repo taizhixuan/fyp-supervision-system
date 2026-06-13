@@ -384,7 +384,7 @@ export function LandingPage() {
               </span>
             </h2>
             <p className="text-lg text-blue-100/80 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Register with your MMU student or staff account to access supervisor matching, proposal submission, and progress tracking.
+              Create an account to access AI supervisor matching, proposal submission, and progress tracking. New registrations are reviewed and approved before first sign-in.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to={ROUTES.REGISTER}>
