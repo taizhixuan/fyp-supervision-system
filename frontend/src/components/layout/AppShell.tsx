@@ -23,9 +23,12 @@ export function AppShell() {
     return null
   }
 
-  // Floating "Ask AI" button — student only, hidden on the chatbot page itself
+  // Floating "Ask AI" button — student only, hidden on the chatbot page itself and
+  // while the mobile nav drawer is open (otherwise it collides with the sidebar edge).
   const showAssistantFab =
-    user.role === 'STUDENT' && !location.pathname.startsWith('/student/chatbot')
+    user.role === 'STUDENT' &&
+    !location.pathname.startsWith('/student/chatbot') &&
+    !isMobileMenuOpen
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -71,14 +74,14 @@ export function AppShell() {
       {showAssistantFab && (
         <Link
           to={ROUTES.STUDENT.CHATBOT}
-          className="group fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 pl-3 pr-4 py-3 rounded-full bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white shadow-2xl shadow-primary-900/40 ring-1 ring-white/20 hover:shadow-primary-900/50 hover:-translate-y-0.5 transition-all"
-          aria-label="Open FYP Assistant"
+          className="group fixed bottom-5 right-5 z-40 inline-flex items-center justify-center gap-2 rounded-full p-3.5 lg:py-3 lg:pl-3 lg:pr-5 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white shadow-2xl shadow-primary-900/40 ring-1 ring-white/20 hover:shadow-primary-900/50 hover:-translate-y-0.5 transition-all"
+          aria-label="Ask FYP Assistant"
         >
           <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/15 ring-1 ring-white/30">
             <span className="absolute inset-0 rounded-full bg-primary-300/40 animate-ping opacity-60" />
             <Sparkles className="relative h-4 w-4" />
           </span>
-          <span className="hidden sm:inline text-sm font-semibold">Ask FYP Assistant</span>
+          <span className="hidden lg:inline text-sm font-semibold">Ask FYP Assistant</span>
         </Link>
       )}
     </div>
