@@ -31,17 +31,17 @@ const FEATURES = [
   {
     icon: Bot,
     title: 'FYP Assistant',
-    description: 'Ask about deadlines, procedures, and your own project — answers are grounded in the FCI handbook.',
+    description: 'Ask about deadlines, procedures, and your own project.',
   },
   {
     icon: Calendar,
     title: 'Meetings & Logs',
-    description: 'Book supervision sessions and keep signed meeting logs that meet the FCI six-log requirement.',
+    description: 'Book supervision sessions and keep signed meeting logs of each consultation.',
   },
   {
     icon: FileText,
-    title: 'Document Submission',
-    description: 'Submit proposals, reports, slides, and source code, organised by FYP 1 and FYP 2 phase.',
+    title: 'Documents',
+    description: 'Share reports, slides, and source code for your supervisor to review during FYP 1 and FYP 2 meetings.',
   },
   {
     icon: TrendingUp,
@@ -55,7 +55,7 @@ const STAGES = [
   { label: 'Match', sub: 'AI supervisor pairing', icon: Target },
   { label: 'Propose', sub: 'Submit & AI review', icon: FileText },
   { label: 'Supervise', sub: 'Meetings & signed logs', icon: ClipboardList },
-  { label: 'Complete', sub: 'Final report & slides', icon: GraduationCap },
+  { label: 'Complete', sub: 'Finish FYP 2', icon: GraduationCap },
 ]
 
 const AI_CHIPS = [
@@ -145,7 +145,7 @@ export function LandingPage() {
 
                 <p className="text-lg sm:text-xl text-blue-100/80 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                   The official platform for FCI final year project supervision.
-                  Connect with supervisors, track progress from FYP 1 to FYP 2, and manage submissions seamlessly.
+                  Connect with supervisors, track progress from FYP 1 to FYP 2, and keep your meetings, logs, and documents in one place.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4">
@@ -290,7 +290,7 @@ export function LandingPage() {
                 Your FYP journey
               </span>
               <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-stone-800">
-                From registration to final submission
+                From registration to FYP completion
               </h2>
             </div>
 
