@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  Users,
+  UserPlus,
   FileText,
+  FileCheck2,
   Calendar,
   CheckCircle2,
   GraduationCap,
@@ -18,33 +19,43 @@ import { ROUTES } from '@/lib/constants/routes'
 
 const FEATURES = [
   {
-    icon: Users,
-    title: 'Supervisor Matching',
-    description: 'Find the right supervisor based on your research interests and expertise alignment within FCI.',
+    icon: Sparkles,
+    title: 'AI Supervisor Matching',
+    description: 'Get ranked supervisor suggestions with an explainable match score, then send a supervision request.',
   },
   {
-    icon: ClipboardList,
-    title: 'Progress Tracking',
-    description: 'Track milestones from FYP 1 proposal through FYP 2 completion with clear status updates.',
+    icon: FileCheck2,
+    title: 'AI Proposal Analysis',
+    description: 'Check your proposal structure, readability, and section coverage before your supervisor reviews it.',
   },
   {
-    icon: FileText,
-    title: 'Document Management',
-    description: 'Submit proposals, reports, and presentations in one centralized platform.',
+    icon: Bot,
+    title: 'FYP Assistant',
+    description: 'Ask about deadlines, procedures, and your own project — answers are grounded in the FCI handbook.',
   },
   {
     icon: Calendar,
-    title: 'Meeting Scheduler',
-    description: 'Schedule supervision meetings and keep a log of all consultation sessions.',
+    title: 'Meetings & Logs',
+    description: 'Book supervision sessions and keep signed meeting logs that meet the FCI six-log requirement.',
+  },
+  {
+    icon: FileText,
+    title: 'Document Submission',
+    description: 'Submit proposals, reports, slides, and source code, organised by FYP 1 and FYP 2 phase.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Progress & Announcements',
+    description: 'Follow your status from FYP 1 to FYP 2 with a live dashboard, deadlines, and targeted announcements.',
   },
 ]
 
 const STAGES = [
-  { label: 'Register', sub: 'MMU account', icon: Users },
+  { label: 'Register', sub: 'Sign up & approval', icon: UserPlus },
   { label: 'Match', sub: 'AI supervisor pairing', icon: Target },
-  { label: 'Proposal', sub: 'Submit & review', icon: FileText },
-  { label: 'FYP 1 → FYP 2', sub: 'Track progress', icon: TrendingUp },
-  { label: 'Defense', sub: 'Final submission', icon: GraduationCap },
+  { label: 'Propose', sub: 'Submit & AI review', icon: FileText },
+  { label: 'Supervise', sub: 'Meetings & signed logs', icon: ClipboardList },
+  { label: 'Complete', sub: 'Final report & slides', icon: GraduationCap },
 ]
 
 const AI_CHIPS = [
@@ -279,7 +290,7 @@ export function LandingPage() {
                 Your FYP journey
               </span>
               <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-stone-800">
-                From registration to defense
+                From registration to final submission
               </h2>
             </div>
 
@@ -342,7 +353,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {FEATURES.map((feature) => (
                 <div
                   key={feature.title}
