@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.*;
 import com.fyp.supervision.exception.BadRequestException;
+import com.fyp.supervision.exception.ForbiddenException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -69,9 +70,8 @@ public class SupervisorService {
         if (updates.containsKey("linkedinUrl")) profile.setLinkedinUrl((String) updates.get("linkedinUrl"));
         if (updates.containsKey("googleScholarUrl")) profile.setGoogleScholarUrl((String) updates.get("googleScholarUrl"));
         if (updates.containsKey("preferredProjectTypes")) profile.setPreferredProjectTypes(toJson(updates.get("preferredProjectTypes")));
-        if (updates.containsKey("maxSupervisionQuota")) profile.setSupervisionQuota(((Number) updates.get("maxSupervisionQuota")).intValue());
-        if (updates.containsKey("isAcceptingStudents")) {
-            boolean accepting = (Boolean) updates.get("isAcceptingStudents");
+        if (updates.get("maxSupervisionQuota") instanceof Number quota) profile.setSupervisionQuota(quota.intValue());
+        if (updates.get("isAcceptingStudents") instanceof Boolean accepting) {
             profile.setAvailabilityStatus(accepting ? "AVAILABLE" : "UNAVAILABLE");
         }
         supervisorProfileRepository.save(profile);
@@ -334,6 +334,15 @@ public class SupervisorService {
                             .registeredAt(LocalDateTime.now())
                             .build());
             if (project.getCycle() == null) project.setCycle(activeCycle);
+            // The student is already paired with another supervisor — block the second
+            // accept instead of silently reassigning them and leaking the first
+            // supervisor's load count.
+            if (project.getSupervisor() != null
+                    && !project.getSupervisor().getUserId().equals(userId)) {
+                throw new BadRequestException("This student already has an assigned supervisor.");
+            }
+            boolean alreadyMine = project.getSupervisor() != null
+                    && project.getSupervisor().getUserId().equals(userId);
             project.setSupervisor(request.getSupervisorUser());
             project.setProjectTitle(title);
             if (project.getStage() == null) project.setStage("FYP1");
@@ -341,10 +350,10 @@ public class SupervisorService {
             if (project.getRegisteredAt() == null) project.setRegisteredAt(LocalDateTime.now());
             projectRepository.save(project);
 
-            SupervisorProfile profile = supervisorProfileRepository.findById(userId).orElse(null);
-            if (profile != null) {
-                profile.setCurrentLoad(profile.getCurrentLoad() + 1);
-                supervisorProfileRepository.save(profile);
+            // Atomic increment avoids a lost update if the supervisor accepts two
+            // requests concurrently. Only count a newly-paired student.
+            if (!alreadyMine) {
+                supervisorProfileRepository.incrementCurrentLoad(userId);
             }
 
             notificationService.createNotification(
@@ -569,6 +578,15 @@ public class SupervisorService {
     public Map<String, Object> provideFeedback(Long proposalId, Long userId, Map<String, Object> data) {
         Proposal proposal = proposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+
+        // Defense in depth: only the owning supervisor may review this proposal.
+        Long owner = proposal.getSupervisor() != null ? proposal.getSupervisor().getUserId() : null;
+        if (owner == null && proposal.getProject() != null && proposal.getProject().getSupervisor() != null) {
+            owner = proposal.getProject().getSupervisor().getUserId();
+        }
+        if (owner == null || !owner.equals(userId)) {
+            throw new ForbiddenException("You can only review your own students' proposals.");
+        }
 
         ProposalReview review = ProposalReview.builder()
                 .proposal(proposal)

@@ -112,10 +112,31 @@ public class AdminUserController {
     public ResponseEntity<?> bulkStatusUpdate(@RequestBody Map<String, Object> data,
                                               @AuthenticationPrincipal UserDetails admin,
                                               HttpServletRequest httpRequest) {
-        @SuppressWarnings("unchecked")
-        List<Number> userIds = (List<Number>) data.get("userIds");
-        UserStatus status = UserStatus.valueOf((String) data.get("status"));
-        List<Long> ids = userIds.stream().map(Number::longValue).toList();
+        Object userIdsRaw = data.get("userIds");
+        if (!(userIdsRaw instanceof List<?> rawList) || rawList.isEmpty()) {
+            throw new BadRequestException("userIds is required");
+        }
+        Object statusRaw = data.get("status");
+        if (!(statusRaw instanceof String statusStr) || statusStr.isBlank()) {
+            throw new BadRequestException("status is required");
+        }
+        UserStatus status;
+        try {
+            status = UserStatus.valueOf(statusStr);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid status: " + statusStr);
+        }
+        List<Long> ids = new java.util.ArrayList<>();
+        for (Object o : rawList) {
+            if (o instanceof Number n) ids.add(n.longValue());
+            else if (o != null) {
+                try {
+                    ids.add(Long.parseLong(o.toString().trim()));
+                } catch (NumberFormatException e) {
+                    throw new BadRequestException("userIds must be numeric");
+                }
+            }
+        }
         List<UserAccount> users = userRepository.findByUserIdIn(ids);
         users.forEach(u -> u.setStatus(status));
         userRepository.saveAll(users);

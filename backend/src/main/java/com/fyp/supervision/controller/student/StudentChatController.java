@@ -42,6 +42,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,6 +65,11 @@ public class StudentChatController {
     private final MeetingLogRepository meetingLogRepository;
     private final AiServiceClient aiServiceClient;
     private final RateLimitService rateLimitService;
+
+    // Per-user locks guard only the get-or-create-session step. Keyed by userId so two
+    // different students never block each other (the old method-level `synchronized`
+    // serialized every chat POST across all users on the single controller instance).
+    private final ConcurrentHashMap<Long, ReentrantLock> userSessionLocks = new ConcurrentHashMap<>();
 
     @GetMapping
     public ResponseEntity<?> getChat(@AuthenticationPrincipal UserDetails user) {
@@ -93,7 +100,7 @@ public class StudentChatController {
     }
 
     @PostMapping
-    public synchronized ResponseEntity<?> sendMessage(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> sendMessage(@AuthenticationPrincipal UserDetails user, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         UserAccount account = userAccountRepository.findById(userId).orElseThrow();
 
@@ -114,9 +121,18 @@ public class StudentChatController {
         // Rate limit — defends LLM token spend and discourages abusive bursts.
         rateLimitService.require("chat", userId);
 
-        // Get or create session (synchronized prevents double-session race for the same user)
-        ChatSession session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
-                .orElseGet(() -> chatSessionRepository.save(ChatSession.builder().user(account).build()));
+        // Get or create session under a per-user lock so the same user's concurrent requests
+        // can't open two sessions, without serializing other users or holding any lock across
+        // the remote AI call below.
+        ReentrantLock sessionLock = userSessionLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+        sessionLock.lock();
+        ChatSession session;
+        try {
+            session = chatSessionRepository.findTopByUser_UserIdAndEndedAtIsNullOrderByStartedAtDesc(userId)
+                    .orElseGet(() -> chatSessionRepository.save(ChatSession.builder().user(account).build()));
+        } finally {
+            sessionLock.unlock();
+        }
 
         // Save user message
         ChatMessage userMsg = ChatMessage.builder()

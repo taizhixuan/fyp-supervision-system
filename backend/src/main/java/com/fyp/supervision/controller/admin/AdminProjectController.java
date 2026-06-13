@@ -85,7 +85,21 @@ public class AdminProjectController {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         Object passedRaw = data.get("passed");
-        Boolean passed = passedRaw == null ? null : (Boolean) passedRaw;
+        Boolean passed;
+        if (passedRaw == null) {
+            passed = null;
+        } else if (passedRaw instanceof Boolean b) {
+            passed = b;
+        } else {
+            String s = passedRaw.toString().trim().toLowerCase();
+            if (s.equals("true") || s.equals("1") || s.equals("pass") || s.equals("passed")) {
+                passed = Boolean.TRUE;
+            } else if (s.equals("false") || s.equals("0") || s.equals("fail") || s.equals("failed")) {
+                passed = Boolean.FALSE;
+            } else {
+                throw new BadRequestException("Invalid value for 'passed': " + passedRaw);
+            }
+        }
         Boolean previous = project.getFyp1Passed();
         project.setFyp1Passed(passed);
         projectRepository.save(project);

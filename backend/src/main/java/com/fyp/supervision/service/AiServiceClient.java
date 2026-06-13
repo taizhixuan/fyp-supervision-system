@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -29,7 +30,12 @@ public class AiServiceClient {
     private String chatbotUrl;
 
     public AiServiceClient(MeterRegistry meterRegistry) {
-        this.restTemplate = new RestTemplate();
+        // Bound the wait on a slow/hung AI service so a request thread (and any lock it
+        // holds) can't block indefinitely. Read timeout is generous for LLM generation.
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);
+        factory.setReadTimeout(120_000);
+        this.restTemplate = new RestTemplate(factory);
         this.meterRegistry = meterRegistry;
     }
 

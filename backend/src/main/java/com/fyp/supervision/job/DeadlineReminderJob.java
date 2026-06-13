@@ -48,7 +48,9 @@ public class DeadlineReminderJob {
 
     public int run() {
         LocalDate today = LocalDate.now();
-        List<Deadline> upcoming = deadlineRepository.findByDueDateAfterOrderByDueDateAsc(today.minusDays(1));
+        // Select on the effective due date and fetch the cycle eagerly so the scheduled
+        // thread (no open session) can read cycle.cycleType without a LazyInitializationException.
+        List<Deadline> upcoming = deadlineRepository.findUpcomingByEffectiveDate(today);
         int totalFired = 0;
         for (Deadline deadline : upcoming) {
             try {

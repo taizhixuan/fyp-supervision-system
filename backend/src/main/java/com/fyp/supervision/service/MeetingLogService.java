@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.MeetingLogStatus;
 import com.fyp.supervision.exception.BadRequestException;
+import com.fyp.supervision.exception.ForbiddenException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -139,10 +140,10 @@ public class MeetingLogService {
             throw new BadRequestException("Log cannot be edited in its current status.");
         }
 
-        if (data.containsKey("meetingDate")) log.setMeetingDate(LocalDate.parse(data.get("meetingDate").toString()));
-        if (data.containsKey("meetingNumber")) log.setMeetingNumber(((Number) data.get("meetingNumber")).intValue());
-        if (data.containsKey("meetingMode")) log.setMeetingMode(data.get("meetingMode").toString());
-        if (data.containsKey("fypPhase")) log.setFypPhase(data.get("fypPhase").toString());
+        if (data.get("meetingDate") != null) log.setMeetingDate(LocalDate.parse(data.get("meetingDate").toString()));
+        if (data.get("meetingNumber") instanceof Number n) log.setMeetingNumber(n.intValue());
+        if (data.get("meetingMode") != null) log.setMeetingMode(data.get("meetingMode").toString());
+        if (data.get("fypPhase") != null) log.setFypPhase(data.get("fypPhase").toString());
         if (data.containsKey("tasks")) log.setTasksJson(toJson(data.get("tasks")));
         if (data.containsKey("workDoneDetails")) log.setWorkDoneDetails((String) data.get("workDoneDetails"));
         if (data.containsKey("workToBeDone")) log.setWorkToBeDone((String) data.get("workToBeDone"));
@@ -185,6 +186,18 @@ public class MeetingLogService {
         MeetingLog log = getLog(logId);
         UserAccount signer = userAccountRepository.findById(userId).orElseThrow();
         String role = signer.getRole().name();
+
+        // Ownership: a caller may only sign their own log, otherwise any supervisor or
+        // student could forge a signature on another pair's log by guessing its id.
+        if (role.equals("SUPERVISOR")) {
+            if (log.getSupervisor() == null || !log.getSupervisor().getUserId().equals(userId)) {
+                throw new ForbiddenException("You can only sign your own students' logs.");
+            }
+        } else if (role.equals("STUDENT")) {
+            if (log.getStudent() == null || !log.getStudent().getUserId().equals(userId)) {
+                throw new ForbiddenException("You can only sign your own logs.");
+            }
+        }
 
         // Determine expected status for signing
         if (role.equals("SUPERVISOR") && log.getStatus() != MeetingLogStatus.SUBMITTED) {

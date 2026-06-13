@@ -108,9 +108,10 @@ public class AnnouncementController {
 
     @GetMapping("/{id}/attachments/{attachmentId}")
     public ResponseEntity<Resource> downloadAttachment(
+            @AuthenticationPrincipal UserDetails user,
             @PathVariable Long id,
             @PathVariable Long attachmentId) {
-        AnnouncementAttachment att = announcementService.loadAttachment(id, attachmentId);
+        AnnouncementAttachment att = announcementService.loadAttachment(id, attachmentId, parseUserId(user));
         Resource resource = fileStorageService.loadFile(att.getFilePath());
         String contentType = att.getMimeType() != null ? att.getMimeType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
         return ResponseEntity.ok()

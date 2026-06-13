@@ -170,7 +170,19 @@ public class AdminCycleController {
         if (data.containsKey("status")) {
             CycleStatus next = parseStatus(stringField(data, "status"));
             validateTransition(cycle, next);
-            cycleLifecycleService.setCycleStatus(cycle.getCycleId(), next);
+            if (next == CycleStatus.ACTIVE) {
+                // Route through the same demoting path as /activate so we never leave two
+                // ACTIVE cycles of the same type (setCycleStatus only flips this one row).
+                cycleLifecycleService.activateCycleAtomically(cycle.getCycleId(), cycle.getCycleType());
+                try {
+                    FypCycle refreshed = cycleRepository.findById(cycle.getCycleId()).orElse(null);
+                    if (refreshed != null) cycleLifecycleService.backfillFyp1Placeholders(refreshed);
+                } catch (Exception ex) {
+                    log.warn("Backfill after activating cycle {} failed", cycle.getCycleId(), ex);
+                }
+            } else {
+                cycleLifecycleService.setCycleStatus(cycle.getCycleId(), next);
+            }
             return ResponseEntity.ok(Map.of("cycleId", cycle.getCycleId(), "status", next.name()));
         }
         return ResponseEntity.ok(Map.of(

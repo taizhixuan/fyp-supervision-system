@@ -1,6 +1,7 @@
 package com.fyp.supervision.controller.admin;
 
 import com.fyp.supervision.entity.SystemParameter;
+import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.SystemParameterRepository;
 import com.fyp.supervision.service.AdminService;
@@ -32,6 +33,9 @@ public class AdminParameterController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateParameter(@PathVariable Long id, @RequestBody Map<String, Object> data) {
         SystemParameter param = parameterRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        if (Boolean.FALSE.equals(param.getIsEditable())) {
+            throw new BadRequestException("This parameter is not editable.");
+        }
         if (data.containsKey("value")) param.setParamValue((String) data.get("value"));
         parameterRepository.save(param);
         return ResponseEntity.ok(adminService.buildParameterDto(param));
