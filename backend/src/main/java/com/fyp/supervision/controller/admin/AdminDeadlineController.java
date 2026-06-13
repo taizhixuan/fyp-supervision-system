@@ -108,6 +108,9 @@ public class AdminDeadlineController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDeadline(@PathVariable Long id) {
+        if (!deadlineRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Deadline not found");
+        }
         deadlineRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }

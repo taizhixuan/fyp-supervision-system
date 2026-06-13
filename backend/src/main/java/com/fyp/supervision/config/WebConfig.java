@@ -13,7 +13,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+        // Only profile images are public. Everything else under uploads/ (resources,
+        // documents, announcement attachments, reports, exports, backups) is gated and
+        // must be served through the authenticated controller endpoints that enforce
+        // ownership/visibility — never statically. Serving the whole tree here would let
+        // anyone fetch a gated file by URL, bypassing those checks.
+        registry.addResourceHandler("/uploads/profiles/**")
+                .addResourceLocations("file:" + uploadDir + "/profiles/");
     }
 }

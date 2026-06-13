@@ -22,6 +22,27 @@ public class FileStorageService {
 
     private final FileStorageConfig fileStorageConfig;
 
+    // Avatars are served from the public /uploads tree, so an uploaded .svg/.html could
+    // execute script in the app origin. Restrict to real raster images (SVG excluded).
+    private static final java.util.Set<String> ALLOWED_IMAGE_TYPES =
+            java.util.Set.of("image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif");
+    private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+
+    /** Validates that the upload is a reasonably-sized raster image, then stores it. */
+    public String storeImage(MultipartFile file, String entity, Long userId) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("No image file provided.");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new BadRequestException("Only PNG, JPEG, WEBP or GIF images are allowed.");
+        }
+        if (file.getSize() > MAX_IMAGE_BYTES) {
+            throw new BadRequestException("Image must be 5 MB or smaller.");
+        }
+        return storeFile(file, entity, userId);
+    }
+
     public String storeFile(MultipartFile file, String entity, Long userId) {
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
 

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
 @RequestMapping("/student/me/deletion-request")
@@ -20,13 +22,24 @@ public class StudentDeletionRequestController {
 
     private final AccountDeletionService accountDeletionService;
 
+    // Per-user lock so a double-click can't create two PENDING requests via the
+    // check-then-insert race. Held across the service call so the transaction commits
+    // (and the PENDING row becomes visible) before the next request runs its check.
+    private final ConcurrentHashMap<Long, ReentrantLock> requestLocks = new ConcurrentHashMap<>();
+
     @PostMapping
     public ResponseEntity<Map<String, Object>> request(
             @AuthenticationPrincipal UserDetails user,
             @RequestBody(required = false) Map<String, String> body) {
         Long userId = Long.parseLong(user.getUsername());
         String reason = body == null ? null : body.get("reason");
-        return ResponseEntity.ok(accountDeletionService.requestDeletion(userId, reason));
+        ReentrantLock lock = requestLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            return ResponseEntity.ok(accountDeletionService.requestDeletion(userId, reason));
+        } finally {
+            lock.unlock();
+        }
     }
 
     @GetMapping

@@ -246,7 +246,16 @@ public class StudentService {
 
     @Transactional
     public Map<String, Object> createSupervisionRequest(Long userId, Map<String, Object> data) {
-        Long supervisorId = Long.valueOf(data.get("supervisorId").toString());
+        Object supervisorIdRaw = data.get("supervisorId");
+        if (supervisorIdRaw == null || supervisorIdRaw.toString().isBlank()) {
+            throw new BadRequestException("supervisorId is required");
+        }
+        Long supervisorId;
+        try {
+            supervisorId = Long.valueOf(supervisorIdRaw.toString().trim());
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("supervisorId must be numeric");
+        }
 
         if (supervisorRequestRepository.existsByStudent_UserIdAndSupervisorUser_UserIdAndStatus(userId, supervisorId, RequestStatus.PENDING)) {
             throw new BadRequestException("You already have a pending request to this supervisor.");
@@ -255,6 +264,9 @@ public class StudentService {
         UserAccount student = userAccountRepository.findById(userId).orElseThrow();
         UserAccount supervisor = userAccountRepository.findById(supervisorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Supervisor not found"));
+        if (supervisor.getRole() != UserRole.SUPERVISOR || supervisor.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException("Selected supervisor is not valid.");
+        }
 
         SupervisorRequest request = SupervisorRequest.builder()
                 .student(student)
@@ -350,6 +362,12 @@ public class StudentService {
     public Map<String, Object> updateProposal(Long userId, Map<String, Object> data) {
         Proposal proposal = proposalRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        // Content is frozen once the proposal leaves an editable state, otherwise a
+        // student could rewrite what a supervisor is reviewing / has already approved.
+        if (proposal.getStatus() != ProposalStatus.DRAFT
+                && proposal.getStatus() != ProposalStatus.REVISION_REQUIRED) {
+            throw new BadRequestException("Proposal cannot be edited in its current status.");
+        }
         validateProposalPayload(data);
 
         if (data.containsKey("title")) proposal.setTitle((String) data.get("title"));

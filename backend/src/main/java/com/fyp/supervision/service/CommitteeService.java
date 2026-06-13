@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fyp.supervision.entity.*;
 import com.fyp.supervision.enums.*;
+import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -224,7 +225,13 @@ public class CommitteeService {
             String mapped = status;
             if ("PENDING_REVIEW".equals(mapped)) mapped = "SUBMITTED";
             else if ("REVISION_REQUESTED".equals(mapped)) mapped = "REVISION_REQUIRED";
-            page = proposalRepository.findByStatus(ProposalStatus.valueOf(mapped), pageable);
+            ProposalStatus parsed;
+            try {
+                parsed = ProposalStatus.valueOf(mapped);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Unknown proposal status: " + status);
+            }
+            page = proposalRepository.findByStatus(parsed, pageable);
         } else {
             page = proposalRepository.findAll(pageable);
         }

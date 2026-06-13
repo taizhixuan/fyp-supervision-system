@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -28,4 +29,9 @@ public interface SupervisorProfileRepository
 
     @Query("select count(sp) from SupervisorProfile sp where sp.currentLoad > sp.supervisionQuota")
     long countOverloaded();
+
+    /** Atomic increment so concurrent accepts can't lose an update (see respondToRequest). */
+    @Modifying
+    @Query("UPDATE SupervisorProfile sp SET sp.currentLoad = sp.currentLoad + 1 WHERE sp.userId = :userId")
+    int incrementCurrentLoad(@Param("userId") Long userId);
 }

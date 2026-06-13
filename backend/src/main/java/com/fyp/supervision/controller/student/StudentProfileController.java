@@ -36,7 +36,7 @@ public class StudentProfileController {
     @PostMapping("/image")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal UserDetails user, @RequestParam("file") MultipartFile file) {
         Long userId = Long.parseLong(user.getUsername());
-        String path = fileStorageService.storeFile(file, "profiles", userId);
+        String path = fileStorageService.storeImage(file, "profiles", userId);
         UserAccount account = userAccountRepository.findById(userId).orElseThrow();
         account.setProfileImagePath(path);
         userAccountRepository.save(account);

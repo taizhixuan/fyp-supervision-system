@@ -144,6 +144,31 @@ public class AnnouncementService {
         return authorRole == UserRole.FYP_COMMITTEE || authorRole == UserRole.SYSTEM_ADMIN;
     }
 
+    /**
+     * Whether {@code userId} is allowed to see this announcement. Committee/admin and the
+     * author see everything; supervisors get inbox visibility; students must match the
+     * per-row audience filter. Used to gate the by-id read and the attachment download so
+     * they can't bypass the audience scoping the list views enforce.
+     */
+    private boolean isVisibleToUser(Announcement a, Long userId) {
+        if (userId == null) return false;
+        UserAccount user = userAccountRepository.findById(userId).orElse(null);
+        if (user == null) return false;
+        UserRole role = user.getRole();
+        if (role == UserRole.FYP_COMMITTEE || role == UserRole.SYSTEM_ADMIN) return true;
+        if (a.getCreatedBy() != null && Objects.equals(a.getCreatedBy().getUserId(), userId)) return true;
+        if (role == UserRole.SUPERVISOR) return isVisibleToSupervisor(a, userId);
+        return matchesAudience(a, loadStudentContext(userId));
+    }
+
+    private boolean isAuthorOrPrivileged(Announcement a, Long userId) {
+        if (userId == null) return false;
+        if (a.getCreatedBy() != null && Objects.equals(a.getCreatedBy().getUserId(), userId)) return true;
+        UserAccount user = userAccountRepository.findById(userId).orElse(null);
+        return user != null
+                && (user.getRole() == UserRole.FYP_COMMITTEE || user.getRole() == UserRole.SYSTEM_ADMIN);
+    }
+
     public Map<String, Object> get(Long announcementId) {
         Announcement a = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
@@ -153,9 +178,18 @@ public class AnnouncementService {
     public Map<String, Object> getForUser(Long announcementId, Long userId) {
         Announcement a = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        // 404 (not 403) when out of audience so a user can't probe which ids exist.
+        if (!isVisibleToUser(a, userId)) {
+            throw new ResourceNotFoundException("Announcement not found");
+        }
         Set<Long> readIds = userId == null ? Set.of()
                 : announcementReadRepository.readIdsForUser(userId, List.of(announcementId));
-        return buildDto(a, readIds);
+        Map<String, Object> dto = buildDto(a, readIds);
+        // Don't leak the recipient list to non-authors.
+        if (!isAuthorOrPrivileged(a, userId)) {
+            dto.remove("targetStudentIds");
+        }
+        return dto;
     }
 
     /**
@@ -173,12 +207,8 @@ public class AnnouncementService {
         int inserted = announcementReadRepository.insertIgnore(userId, announcementId);
         if (inserted > 0) {
             // Only bump the counter on a genuinely new read so refreshes don't inflate it.
-            Announcement a = announcementRepository.findById(announcementId).orElse(null);
-            if (a != null) {
-                int current = a.getViewCount() == null ? 0 : a.getViewCount();
-                a.setViewCount(current + 1);
-                announcementRepository.save(a);
-            }
+            // Atomic UPDATE so two concurrent first-time readers can't lose an increment.
+            announcementRepository.incrementViewCount(announcementId);
             return true;
         }
         return false;
@@ -205,9 +235,14 @@ public class AnnouncementService {
         return newly;
     }
 
-    public AnnouncementAttachment loadAttachment(Long announcementId, Long attachmentId) {
+    public AnnouncementAttachment loadAttachment(Long announcementId, Long attachmentId, Long userId) {
         Announcement a = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Announcement not found"));
+        // Gate the file behind the same audience filter as the announcement itself,
+        // otherwise any authenticated user could pull an attachment they can't see.
+        if (!isVisibleToUser(a, userId)) {
+            throw new ResourceNotFoundException("Attachment not found");
+        }
         return a.getAttachments().stream()
                 .filter(att -> Objects.equals(att.getAttachmentId(), attachmentId))
                 .findFirst()

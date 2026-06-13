@@ -38,6 +38,7 @@ public class SupervisorProposalController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
+        access.requireOwnProposal(userId, id);
         return ResponseEntity.ok(supervisorService.provideFeedback(id, userId, data));
     }
 }

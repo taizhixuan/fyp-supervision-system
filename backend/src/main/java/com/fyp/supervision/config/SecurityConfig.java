@@ -58,7 +58,7 @@ public class SecurityConfig {
                     "/auth/verify-reset-token",
                     "/announcements/latest",
                     "/system/parameters/public",
-                    "/uploads/**"
+                    "/uploads/profiles/**"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasAuthority("SYSTEM_ADMIN")
                 .requestMatchers("/committee/**").hasAuthority("FYP_COMMITTEE")

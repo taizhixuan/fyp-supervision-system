@@ -56,6 +56,18 @@ public class StudentMeetingController {
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No active project found."));
 
+        int durationMinutes = 60;
+        Object durationRaw = data.get("duration");
+        if (durationRaw instanceof Number n) {
+            durationMinutes = n.intValue();
+        } else if (durationRaw != null) {
+            try {
+                durationMinutes = Integer.parseInt(durationRaw.toString().trim());
+            } catch (NumberFormatException e) {
+                throw new BadRequestException("duration must be a number");
+            }
+        }
+
         Meeting meeting = Meeting.builder()
                 .project(project)
                 .requestedBy(project.getStudent())
@@ -63,12 +75,16 @@ public class StudentMeetingController {
                 .agenda((String) data.get("agenda"))
                 .platform((String) data.get("platform"))
                 .location((String) data.get("location"))
-                .durationMinutes(data.get("duration") != null ? ((Number) data.get("duration")).intValue() : 60)
+                .durationMinutes(durationMinutes)
                 .status(MeetingStatus.PROPOSED)
                 .build();
 
         if (data.get("proposedStartAt") != null) {
-            meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedStartAt").toString()));
+            try {
+                meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedStartAt").toString()));
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new BadRequestException("proposedStartAt is not a valid date-time");
+            }
         }
 
         Meeting saved = meetingRepository.save(meeting);

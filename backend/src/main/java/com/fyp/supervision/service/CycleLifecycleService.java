@@ -42,6 +42,7 @@ public class CycleLifecycleService {
     private final UserAccountRepository userAccountRepository;
     private final DeadlineRepository deadlineRepository;
     private final NotificationService notificationService;
+    private final CyclePlaceholderWriter placeholderWriter;
 
     public Optional<FypCycle> findActiveCycle(String cycleType) {
         if (cycleType == null) return Optional.empty();
@@ -88,44 +89,24 @@ public class CycleLifecycleService {
      * FYP1 cycle is being activated. Returns the count attached. Skips students who
      * already have any Project so this is safe to re-run.
      *
-     * <p>Uses REQUIRES_NEW so a per-row failure (e.g. unique-constraint hit) cannot
-     * poison the caller's activate transaction — even if every save fails, the cycle's
-     * status update still commits. Must be called via the Spring proxy (i.e. from a
-     * different bean) for REQUIRES_NEW to take effect.
+     * <p>Each student is written in its own REQUIRES_NEW transaction (via
+     * {@link CyclePlaceholderWriter}) so one row failing can't poison the whole batch.
+     * This method itself does no writes, so it doesn't need a transaction.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int backfillFyp1Placeholders(FypCycle cycle) {
         if (cycle == null || !"FYP1".equalsIgnoreCase(cycle.getCycleType())) return 0;
         if (cycle.getStatus() != CycleStatus.ACTIVE) return 0;
         List<UserAccount> students = userAccountRepository.findByRoleAndStatus(UserRole.STUDENT, UserStatus.ACTIVE);
         int count = 0;
         for (UserAccount student : students) {
-            var existing = projectRepository.findByStudent_UserId(student.getUserId());
-            if (existing.isPresent()) {
-                // Re-attach stale placeholders pointing to a finished cycle. A placeholder
-                // is identified by no supervisor — actual paired projects are left alone
-                // (those students may be repeating or in transition; admin handles them).
-                Project p = existing.get();
-                FypCycle oldCycle = p.getCycle();
-                boolean stalePlaceholder = p.getSupervisor() == null
-                        && oldCycle != null
-                        && (oldCycle.getStatus() == CycleStatus.COMPLETED
-                                || oldCycle.getStatus() == CycleStatus.ARCHIVED);
-                if (stalePlaceholder) {
-                    p.setCycle(cycle);
-                    p.setStage("FYP1");
-                    p.setRegisteredAt(LocalDateTime.now());
-                    try {
-                        projectRepository.save(p);
-                        count++;
-                    } catch (Exception e) {
-                        log.warn("Failed to re-attach stale placeholder for student {}: {}",
-                                student.getUserId(), e.getMessage());
-                    }
-                }
-                continue;
+            try {
+                if (placeholderWriter.attachOne(cycle, student)) count++;
+            } catch (Exception e) {
+                // Stale paired projects are deliberately left alone; a genuine DB failure
+                // for one student must not stop the rest from being attached.
+                log.warn("Failed to attach student {} to FYP1 cycle {}: {}",
+                        student.getUserId(), cycle.getCycleId(), e.getMessage());
             }
-            if (savePlaceholder(cycle, student).isPresent()) count++;
         }
         return count;
     }

@@ -54,13 +54,14 @@ public class AdminMaintenanceService {
             "generated_report", "file_path",
             "project_document", "storage_path",
             "proposal_version", "upload_file_path",
-            "resource_document", "storage_path"
+            "resource_document", "storage_path",
+            "export_config", "last_export_path"
     );
 
     // Subdirs under uploads/ that the orphan sweeper should never touch (they're not
     // tied to entity rows — backups are first-class admin artefacts, temp is its own
     // option, reports live behind generated_report rows already covered above).
-    private static final Set<String> ORPHAN_SKIP_DIRS = Set.of("backups", "temp", "tmp");
+    private static final Set<String> ORPHAN_SKIP_DIRS = Set.of("backups", "temp", "tmp", "exports");
 
     public Map<String, Object> getJobs() {
         List<Map<String, Object>> jobs = maintenanceJobRepository.findAllByOrderByCreatedAtDesc().stream()

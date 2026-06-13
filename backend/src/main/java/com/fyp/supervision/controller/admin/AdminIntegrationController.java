@@ -9,9 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -63,12 +65,16 @@ public class AdminIntegrationController {
         }
 
         long start = System.currentTimeMillis();
+        HttpURLConnection conn = null;
         try {
-            HttpURLConnection conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
+            validateOutboundUrl(url);
+            conn = (HttpURLConnection) URI.create(url).toURL().openConnection();
             conn.setRequestMethod("HEAD");
             conn.setConnectTimeout(5_000);
             conn.setReadTimeout(5_000);
-            conn.setInstanceFollowRedirects(true);
+            // Don't follow redirects — a 30x could bounce to an internal host and defeat
+            // the address check below (SSRF).
+            conn.setInstanceFollowRedirects(false);
             int code = conn.getResponseCode();
             long elapsed = System.currentTimeMillis() - start;
             boolean ok = code > 0 && code < 400;
@@ -87,6 +93,35 @@ public class AdminIntegrationController {
             result.put("message", e.getClass().getSimpleName() + ": " + e.getMessage());
             result.put("responseTime", elapsed);
             return ResponseEntity.ok(result);
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    /**
+     * Reject anything that isn't a plain http/https URL pointing at a public host, so the
+     * server can't be tricked into probing internal services or cloud metadata (SSRF).
+     */
+    private void validateOutboundUrl(String url) throws Exception {
+        URI uri = URI.create(url);
+        String scheme = uri.getScheme();
+        if (scheme == null
+                || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+            throw new IllegalArgumentException("Only http/https endpoints are allowed.");
+        }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            throw new IllegalArgumentException("Endpoint URL has no host.");
+        }
+        String h = host.toLowerCase(Locale.ROOT);
+        if (h.equals("metadata.google.internal")) {
+            throw new IllegalArgumentException("Endpoint resolves to a disallowed internal address.");
+        }
+        for (InetAddress addr : InetAddress.getAllByName(host)) {
+            if (addr.isLoopbackAddress() || addr.isAnyLocalAddress() || addr.isLinkLocalAddress()
+                    || addr.isSiteLocalAddress() || addr.isMulticastAddress()) {
+                throw new IllegalArgumentException("Endpoint resolves to a disallowed internal address.");
+            }
         }
     }
 }
