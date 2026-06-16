@@ -10,6 +10,16 @@ Managing an FYP project can be overwhelming. Students need to find the right sup
 
 The system includes AI-powered features like supervisor recommendations based on project topics, automated proposal analysis, and an intelligent chatbot to answer FYP-related questions. Everything is designed to make the supervision process smoother for students, supervisors, and administrators.
 
+## Screenshots
+
+Captured from the live deployment at [app.supervisi.me](https://app.supervisi.me).
+
+![Landing page](docs/screenshots/landing.png)
+
+| Sign in | Register |
+|---|---|
+| ![Login page](docs/screenshots/login.png) | ![Registration page](docs/screenshots/register.png) |
+
 ## Key Features
 
 ### For Students
