@@ -1,3 +1,6 @@
+---
+tags: [folder/frontend, path/frontend\src\pages\committee\committee_screens_descriptions, component/src-pages-committee]
+---
 # Committee Module Screen Descriptions
 
 This document provides brief descriptions of each screen in the FYP Committee module of the FYP Supervision System.

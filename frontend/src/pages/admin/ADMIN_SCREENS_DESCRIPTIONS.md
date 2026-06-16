@@ -1,3 +1,6 @@
+---
+tags: [folder/frontend, path/frontend\src\pages\admin\admin_screens_descriptions, component/src-pages-admin]
+---
 # Admin Module Screen Descriptions
 
 This document provides brief descriptions of each screen in the System Admin module of the FYP Supervision System.

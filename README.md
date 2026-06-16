@@ -1,3 +1,6 @@
+---
+tags: [folder/., path/readme]
+---
 # FYP Supervision System
 
 A comprehensive web-based platform designed to streamline and digitize the Final Year Project (FYP) supervision process at MMU FCI. This system helps students find supervisors, manage proposals, track meetings, and maintain supervision logs—all in one place.
@@ -354,3 +357,9 @@ This project is developed as part of a Final Year Project at MMU FCI.
 ---
 
 **Note:** This system is designed specifically for MMU FCI's FYP supervision process. Some features may be tailored to MMU's specific requirements and workflows.
+
+## Related Files
+
+- [[CLAUDE.md]] — Complete architecture guide for developers
+- [[docs-project/README.md]] — Full documentation index and folder structure
+- [[docs-project/demo/walkthrough.md]] — 30-minute live demo script for supervisors

@@ -1,3 +1,6 @@
+---
+tags: [folder/frontend, path/frontend\implementation-session-summary]
+---
 # Implementation Session Summary
 
 ## Session Date: February 2025

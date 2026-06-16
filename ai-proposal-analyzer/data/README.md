@@ -1,3 +1,6 @@
+---
+tags: [folder/ai-proposal-analyzer, path/ai-proposal-analyzer\data\readme, component/data]
+---
 # Training Data for Proposal Analyzer
 
 ## ASAP Automated Essay Scoring (AES) Dataset

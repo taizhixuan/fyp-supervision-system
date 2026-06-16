@@ -1,3 +1,6 @@
+---
+tags: [folder/secrets, path/secrets\readme]
+---
 # Docker secrets
 
 Files in this directory are mounted into the production-overlay containers

@@ -1,3 +1,6 @@
+---
+tags: [folder/frontend, path/frontend\src\pages\supervisor\supervisor_screens_descriptions, component/src-pages-supervisor]
+---
 # Supervisor Module Screen Descriptions
 
 This document provides brief descriptions of each screen in the Supervisor module of the FYP Supervision System.

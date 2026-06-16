@@ -1,3 +1,6 @@
+---
+tags: [folder/backend, path/backend\src\main\resources\templates\readme, component/src-main-resources-templates]
+---
 # Meeting Log Templates
 
 These two files are runtime copies of the MMU FCI meeting log templates.
