@@ -2,6 +2,8 @@
 
 A comprehensive web-based platform designed to streamline and digitize the Final Year Project (FYP) supervision process at MMU FCI. This system helps students find supervisors, manage proposals, track meetings, and maintain supervision logs—all in one place.
 
+> **Live demo:** [app.supervisi.me](https://app.supervisi.me) — the portfolio build, deployed on a DigitalOcean droplet over HTTPS (API at `api.supervisi.me/api`).
+
 ## What It Does
 
 Managing an FYP project can be overwhelming. Students need to find the right supervisor, submit proposals, schedule meetings, keep track of supervision logs, and manage documents—often using multiple tools and manual processes. This system brings everything together in a single, easy-to-use platform.
@@ -90,8 +92,11 @@ fyp-supervision-system/
 ├── ai-recommendation/      # Flask service for supervisor recommendations
 ├── ai-proposal-analyzer/   # Flask service for proposal analysis
 ├── ai-chatbot/            # Flask service for chatbot
-├── docker-compose.yml      # Docker Compose configuration
-└── .env.example           # Environment variables template
+├── docker-compose.yml               # Base stack (db, backend, 3× AI, frontend)
+├── docker-compose.override.yml      # Auto-merged: frontend Vite dev mode (HMR)
+├── docker-compose.prod.yml          # Production overlay (Caddy, secrets)
+├── docker-compose.observability.yml # Prometheus + Grafana overlay
+└── .env.example                     # Environment variables template
 ```
 
 ## Prerequisites
@@ -102,7 +107,7 @@ Before you begin, make sure you have the following installed:
 - **Node.js 18+** and **npm**
 - **Docker** and **Docker Compose**
 - **MySQL 8** (if running database locally)
-- **OpenAI API Key** (for AI features)
+- **Groq or OpenAI API key** — only for the chatbot and the proposal analyzer's optional LLM pass; the supervisor-recommendation engine runs locally and needs no key
 
 ## Getting Started
 
@@ -123,9 +128,10 @@ cp .env.example .env
 
 Edit `.env` and set:
 - `JWT_SECRET` - A secure secret key (at least 32 characters). **Do not use the default in production.**
-- `OPENAI_API_KEY` - Your OpenAI API key for AI features
+- `GROQ_API_KEY` or `OPENAI_API_KEY` - LLM key for the chatbot and the proposal analyzer's optional LLM pass (Groq is the default provider). The recommendation engine runs locally and needs no key.
 - `VITE_API_BASE_URL` - Backend API base URL for the frontend (e.g. `http://localhost:8080/api` when frontend runs on host; when both run in Docker, use `http://backend:8080/api` or the public URL of the backend)
 - `DB_URL`, `DB_USER`, `DB_PASS` - Database connection (required for backend; use strong credentials in production)
+- **Email (optional)** - set `APP_EMAIL_ENABLED=true` plus `MAIL_HOST`/`MAIL_PORT`/`MAIL_USERNAME`/`MAIL_PASSWORD` and `APP_EMAIL_FROM` to send real email (registration verification codes, notifications, password reset). Left `false` (default), those codes/links are written to the backend log instead. See `.env.example`.
 
 ### 3. Run with Docker Compose (Recommended)
 
@@ -135,15 +141,15 @@ The easiest way to get everything running:
 docker-compose up --build
 ```
 
-This will start the full stack:
-- **MySQL** on port 3306
+This will start the full stack. `docker-compose.override.yml` is **auto-merged**, so the default run uses the frontend Vite dev server with hot-reload:
+- **MySQL** on host port **3307** (→ container 3306; the offset avoids clashing with a local MySQL on 3306)
 - **Backend API** on port 8080 (context path `/api`)
-- **Frontend** on port 3000 (served by nginx in container; build uses `VITE_API_BASE_URL` from `.env`)
+- **Frontend (dev)** on port **5173** — Vite dev server with HMR, source mounted for live edits. Remove or rename `docker-compose.override.yml` to run the nginx production build on port **3000** instead.
 - **AI recommendation** on port 5001
 - **AI proposal analyzer** on port 5002
 - **AI chatbot** on port 5003
 
-For local frontend development (hot reload), run the frontend separately: `cd frontend && npm run dev`, and set `VITE_API_BASE_URL=http://localhost:8080/api` so it talks to the backend.
+Because the override mounts the frontend source, you don't need to run Vite separately. To run the frontend on the host instead, `cd frontend && npm run dev` and set `VITE_API_BASE_URL=http://localhost:8080/api`.
 
 ### 4. Run Locally (Development)
 
@@ -206,6 +212,17 @@ JWT tokens are used for authentication. Configure via:
 - `JWT_SECRET` - Secret key for signing tokens
 - `JWT_EXPIRY_MS` - Token expiration time in milliseconds (default: 24 hours)
 
+### Email & Notifications
+
+Transactional email (registration verification codes, system notifications, password reset) is sent over SMTP and is **off by default**:
+- `APP_EMAIL_ENABLED` - `true` to send email; `false` (default) writes codes/links to the backend log instead
+- `MAIL_HOST` / `MAIL_PORT` - SMTP server (e.g. `smtp.gmail.com:587`, or a transactional relay such as Brevo on port `2525`)
+- `MAIL_USERNAME` / `MAIL_PASSWORD` - SMTP credentials
+- `APP_EMAIL_FROM` - sender address
+- `APP_BASE_URL` - base URL used in email links (e.g. the password-reset link)
+
+> Many cloud hosts block outbound SMTP ports (25/587/465). If direct SMTP is blocked, use a transactional relay that offers port `2525` (Brevo, SendGrid, Mailgun).
+
 ### CORS and cross-origin
 
 When the frontend and backend run on different origins (e.g. frontend on port 3000, backend on 8080), the backend is configured to allow the frontend origin. For production, ensure CORS allowed origins and cookie/same-site settings match your deployment (e.g. same site or trusted domain).
@@ -223,13 +240,17 @@ The system supports four user roles:
 
 The backend API is available at `http://localhost:8080/api`. Key endpoints include:
 
-- `/auth/*` - Authentication endpoints (login, register, password reset)
-- `/students/*` - Student-specific endpoints
-- `/supervisors/*` - Supervisor-specific endpoints
+- `/auth/*` - Authentication (login, register + email verification, password reset)
+- `/student/*` - Student endpoints
+- `/supervisor/*` - Supervisor endpoints
+- `/supervisors/*` - Student-facing supervisor directory (browsable by students)
 - `/committee/*` - FYP Committee endpoints
 - `/admin/*` - System admin endpoints
-- `/notifications` - Notification management
-- `/resources` - Resource documents
+- `/announcements/*` - Announcements (audience-filtered per student)
+- `/notifications/*` - Notification management
+- `/resources/*` - Resource documents
+
+Authority is derived from the URL prefix in `SecurityConfig` (e.g. `/student/**` requires the `STUDENT` role); see `CLAUDE.md` for the full prefix → role table.
 
 ## Development
 
@@ -300,7 +321,7 @@ If a port is already in use, either:
 
 ### AI Services Not Working
 
-- Verify `OPENAI_API_KEY` is set correctly in `.env`
+- Verify `GROQ_API_KEY` (or `OPENAI_API_KEY`) is set in `.env` — only the chatbot and the proposal analyzer's LLM pass need it; the recommendation engine runs locally
 - Check that AI services are running and accessible
 - Review logs: `docker-compose logs ai-recommendation`
 
