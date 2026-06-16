@@ -103,6 +103,15 @@ export const registerSchema = z
 
 export type RegisterFormData = z.infer<typeof registerSchema>
 
+export const verifyOtpSchema = z.object({
+  code: z
+    .string()
+    .transform((v) => v.replace(/\s/g, ''))
+    .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit code')),
+})
+
+export type VerifyOtpFormData = z.infer<typeof verifyOtpSchema>
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 })

@@ -1,17 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { UserPlus, GraduationCap, Briefcase, User, Mail, Phone, Lock, Hash, BookOpen, Calendar } from 'lucide-react'
+import { UserPlus, GraduationCap, Briefcase, User, Mail, Phone, Lock, Hash, BookOpen, Calendar, MailCheck, ArrowLeft } from 'lucide-react'
 import { AuthLayout } from '@/components/layout/AuthLayout'
-import { Button, AlertBanner } from '@/components/ui'
+import { Button, AlertBanner, useSuccessToast } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
+import { authApi } from '@/lib/api/auth'
+import { getApiErrorMessage } from '@/lib/api/client'
 import {
   registerSchema,
+  verifyOtpSchema,
   STUDENT_SPECIALISATIONS,
   INTAKE_YEAR_MIN,
   INTAKE_YEAR_MAX,
   type RegisterFormData,
+  type VerifyOtpFormData,
 } from '@/lib/validators/auth'
 import { ROUTES } from '@/lib/constants/routes'
 import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
@@ -21,10 +25,18 @@ import {
 } from '@/lib/constants/programmes'
 import { cn } from '@/lib/utils/cn'
 
+const RESEND_COOLDOWN_SECONDS = 60
+
 export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
+  const [step, setStep] = useState<'form' | 'otp'>('form')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [resendIn, setResendIn] = useState(0)
+  const [isResending, setIsResending] = useState(false)
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
+  const showSuccessToast = useSuccessToast()
 
   const {
     register,
@@ -47,6 +59,11 @@ export function RegisterPage() {
     },
   })
 
+  const otpForm = useForm<VerifyOtpFormData>({
+    resolver: zodResolver(verifyOtpSchema),
+    defaultValues: { code: '' },
+  })
+
   const selectedRole = watch('role')
   const selectedSpecialisation = watch('specialisation')
   const selectedIntakeYear = watch('intakeYear')
@@ -54,6 +71,13 @@ export function RegisterPage() {
   const derivedGraduationYear = expectedGraduationYear(
     typeof selectedIntakeYear === 'number' ? selectedIntakeYear : undefined
   )
+
+  // Resend cooldown ticker.
+  useEffect(() => {
+    if (resendIn <= 0) return
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendIn])
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null)
@@ -71,10 +95,139 @@ export function RegisterPage() {
           ? { specialisation: data.specialisation, intakeYear: data.intakeYear }
           : {}),
       })
-      navigate(ROUTES.ACCOUNT_PENDING)
+      // Account is NOT created yet — move to the email-verification step.
+      setPendingEmail(data.email.trim().toLowerCase())
+      otpForm.reset({ code: '' })
+      setOtpError(null)
+      setResendIn(RESEND_COOLDOWN_SECONDS)
+      setStep('otp')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
     }
+  }
+
+  const onVerify = async (data: VerifyOtpFormData) => {
+    setOtpError(null)
+    try {
+      const result = await authApi.verifyRegistration({ email: pendingEmail, code: data.code })
+      if (result.status === 'ACTIVE') {
+        showSuccessToast('Account verified', 'Your account is active — please sign in.')
+        navigate(ROUTES.LOGIN)
+      } else {
+        navigate(ROUTES.ACCOUNT_PENDING)
+      }
+    } catch (err) {
+      setOtpError(getApiErrorMessage(err))
+    }
+  }
+
+  const onResend = async () => {
+    if (resendIn > 0 || isResending) return
+    setOtpError(null)
+    setIsResending(true)
+    try {
+      await authApi.resendRegistrationOtp({ email: pendingEmail })
+      otpForm.reset({ code: '' })
+      setResendIn(RESEND_COOLDOWN_SECONDS)
+    } catch (err) {
+      setOtpError(getApiErrorMessage(err))
+    } finally {
+      setIsResending(false)
+    }
+  }
+
+  const backToForm = () => {
+    setStep('form')
+    setOtpError(null)
+    setError(null)
+  }
+
+  if (step === 'otp') {
+    return (
+      <AuthLayout maxWidth="md">
+        <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-200 overflow-hidden">
+          <div className="bg-gradient-to-br from-primary-900 to-[#0f1f33] px-6 py-6 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-accent-500 rounded-xl mb-3 shadow-lg">
+              <MailCheck className="h-7 w-7 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-white lg:text-2xl">Verify your email</h1>
+            <p className="text-stone-400 text-sm mt-1">
+              Enter the 6-digit code we emailed to{' '}
+              <span className="font-medium text-stone-200 break-all">{pendingEmail}</span>
+            </p>
+          </div>
+
+          <div className="px-6 py-6">
+            {otpError && (
+              <AlertBanner
+                variant="error"
+                description={otpError}
+                dismissible
+                onDismiss={() => setOtpError(null)}
+                className="mb-4"
+              />
+            )}
+
+            <form onSubmit={otpForm.handleSubmit(onVerify)} className="space-y-4">
+              <div>
+                <label htmlFor="otp-code" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Verification code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="otp-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="000000"
+                  autoFocus
+                  className="w-full px-4 py-3 text-center text-2xl font-semibold tracking-[0.5em] border border-stone-300 rounded-lg text-stone-900 placeholder-stone-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  {...otpForm.register('code')}
+                />
+                {otpForm.formState.errors.code && (
+                  <p className="mt-1 text-xs text-red-500">{otpForm.formState.errors.code.message}</p>
+                )}
+                <p className="mt-1.5 text-xs text-stone-500">
+                  The code expires in 10 minutes. Check your spam folder if it doesn&apos;t arrive.
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-primary-900 hover:bg-primary-800 text-white py-2.5 rounded-lg font-medium shadow-lg shadow-primary-900/25 hover:shadow-primary-900/40 transition-all"
+                isLoading={otpForm.formState.isSubmitting}
+              >
+                Verify &amp; create account
+              </Button>
+            </form>
+
+            <div className="mt-5 pt-4 border-t border-stone-200 flex items-center justify-between text-sm">
+              <button
+                type="button"
+                onClick={backToForm}
+                className="inline-flex items-center gap-1 text-stone-600 hover:text-stone-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Use a different email
+              </button>
+              <button
+                type="button"
+                onClick={onResend}
+                disabled={resendIn > 0 || isResending}
+                className={cn(
+                  'font-semibold',
+                  resendIn > 0 || isResending
+                    ? 'text-stone-400 cursor-not-allowed'
+                    : 'text-primary-700 hover:text-primary-900'
+                )}
+              >
+                {resendIn > 0 ? `Resend code (${resendIn}s)` : isResending ? 'Sending…' : 'Resend code'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </AuthLayout>
+    )
   }
 
   return (

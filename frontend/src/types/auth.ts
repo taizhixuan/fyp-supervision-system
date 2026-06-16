@@ -53,6 +53,22 @@ export interface RegisterRequest {
 /** Bump this when the privacy notice content materially changes. */
 export const PRIVACY_NOTICE_VERSION = 'v1'
 
+export interface VerifyRegistrationRequest {
+  email: string
+  /** 6-digit code emailed to the registrant. */
+  code: string
+}
+
+export interface VerifyRegistrationResponse {
+  message: string
+  /** ACTIVE = roster auto-approved (sign in now); PENDING = awaiting admin approval. */
+  status: 'ACTIVE' | 'PENDING'
+}
+
+export interface ResendRegistrationOtpRequest {
+  email: string
+}
+
 export interface ForgotPasswordRequest {
   email: string
 }

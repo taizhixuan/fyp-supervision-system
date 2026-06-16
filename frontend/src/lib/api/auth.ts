@@ -4,6 +4,9 @@ import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
+  VerifyRegistrationRequest,
+  VerifyRegistrationResponse,
+  ResendRegistrationOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
@@ -16,6 +19,26 @@ export const authApi = {
    */
   register: async (data: RegisterRequest): Promise<{ message: string }> => {
     const response = await api.post('/auth/register', data)
+    return response.data
+  },
+
+  /**
+   * Verify the 6-digit code emailed during registration. Creates the account on success.
+   */
+  verifyRegistration: async (
+    data: VerifyRegistrationRequest,
+  ): Promise<VerifyRegistrationResponse> => {
+    const response = await api.post('/auth/register/verify', data)
+    return response.data
+  },
+
+  /**
+   * Re-send the registration verification code (subject to a server-side cooldown).
+   */
+  resendRegistrationOtp: async (
+    data: ResendRegistrationOtpRequest,
+  ): Promise<{ message: string }> => {
+    const response = await api.post('/auth/register/resend', data)
     return response.data
   },
 

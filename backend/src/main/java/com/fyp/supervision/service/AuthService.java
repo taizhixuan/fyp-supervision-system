@@ -4,6 +4,7 @@ import com.fyp.supervision.dto.auth.*;
 import com.fyp.supervision.dto.common.UserDto;
 import com.fyp.supervision.entity.FypCycle;
 import com.fyp.supervision.entity.PasswordResetToken;
+import com.fyp.supervision.entity.PendingRegistration;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.StudentProfile;
 import com.fyp.supervision.entity.SupervisorProfile;
@@ -18,6 +19,7 @@ import com.fyp.supervision.repository.ApprovedStudentRosterRepository;
 import com.fyp.supervision.repository.ApprovedSupervisorRosterRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.PasswordResetTokenRepository;
+import com.fyp.supervision.repository.PendingRegistrationRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
@@ -41,6 +43,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -50,6 +54,12 @@ public class AuthService {
     private static final long RESET_TOKEN_TTL_MINUTES = 60;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /** Pending-registration OTP tuning. A 6-digit code has only 1M values, so the
+     *  attempt cap is the real brute-force defence; the TTL bounds the guessing window. */
+    private static final long REGISTRATION_OTP_TTL_MINUTES = 10;
+    private static final int  MAX_OTP_ATTEMPTS = 5;
+    private static final long RESEND_COOLDOWN_SECONDS = 60;
+
     private final UserAccountRepository userAccountRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final SupervisorProfileRepository supervisorProfileRepository;
@@ -58,6 +68,7 @@ public class AuthService {
     private final ProjectRepository projectRepository;
     private final FypCycleRepository fypCycleRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final PendingRegistrationRepository pendingRegistrationRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final NotificationService notificationService;
@@ -65,6 +76,14 @@ public class AuthService {
     private final CycleLifecycleService cycleLifecycleService;
     private final AuditService auditService;
 
+    /**
+     * Step 1 of registration. Validates the request and stashes it (with the password
+     * already bcrypt'd and a hashed 6-digit OTP) in {@code pending_registration}, then
+     * emails the code. <strong>No {@code user_account} is created here</strong> — the
+     * email / MMU ID stay free to register so a real student can never be locked out by
+     * someone else's unverified attempt. The account is created only in
+     * {@link #verifyRegistration} once the code is entered.
+     */
     @Transactional
     public String register(RegisterRequest request) {
         String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
@@ -77,25 +96,157 @@ public class AuthService {
             throw new ConflictException("MMU ID is already registered.");
         }
 
-        UserRole role;
-        try {
-            role = UserRole.valueOf(request.getRole());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid role. Must be STUDENT or SUPERVISOR.");
+        UserRole role = parseSelfRegisterRole(request.getRole());
+        requireRoleDomainMatch(role, email);
+
+        // Consent capture (PDPA). The DTO already enforces acceptedPrivacyNotice == true
+        // via @AssertTrue, so reaching here means the user ticked the box. Record the
+        // exact timestamp + version they agreed to for audit (carried onto the account).
+        String pnVersion = request.getPrivacyNoticeVersion() == null
+                ? "v1"
+                : request.getPrivacyNoticeVersion().trim();
+
+        // One live pending row per email — a fresh start supersedes any earlier attempt
+        // (including an attacker's), so the code always lands in the rightful mailbox.
+        pendingRegistrationRepository.deleteAllByEmail(email);
+
+        String code = generateOtpCode();
+        LocalDateTime now = LocalDateTime.now();
+
+        PendingRegistration pending = PendingRegistration.builder()
+                .email(email)
+                .mmuId(mmuId)
+                .role(role.name())
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .specialisation(request.getSpecialisation())
+                .intakeYear(request.getIntakeYear())
+                .privacyNoticeVersion(pnVersion)
+                .termsAcceptedAt(now)
+                .otpHash(sha256Hex(code))
+                .expiresAt(now.plusMinutes(REGISTRATION_OTP_TTL_MINUTES))
+                .lastSentAt(now)
+                .build();
+        pendingRegistrationRepository.save(pending);
+
+        emailService.sendRegistrationOtpEmail(email, request.getFullName(), code);
+
+        return "We've emailed a 6-digit verification code to " + email
+                + ". Enter it to finish creating your account.";
+    }
+
+    /**
+     * Step 2 of registration. Verifies the OTP for a pending registration and, only on
+     * success, creates the real {@code user_account} (running the same roster
+     * auto-approve / pending-admin logic that the old single-step register did).
+     *
+     * @return a map with {@code status} ("ACTIVE" | "PENDING") and a user-facing {@code message}.
+     */
+    @Transactional
+    public Map<String, Object> verifyRegistration(VerifyRegistrationRequest request) {
+        String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        String code = request.getCode() == null ? "" : request.getCode().trim();
+
+        PendingRegistration pending = pendingRegistrationRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException(
+                        "No pending registration for this email. Please register again."));
+
+        if (pending.getUsedAt() != null) {
+            throw new BadRequestException("This registration has already been completed. Please sign in.");
+        }
+        if (pending.getExpiresAt() == null || pending.getExpiresAt().isBefore(LocalDateTime.now())) {
+            pendingRegistrationRepository.deleteAllByEmail(email);
+            throw new BadRequestException("This code has expired. Please register again to get a new one.");
         }
 
-        if (role != UserRole.STUDENT && role != UserRole.SUPERVISOR) {
-            throw new BadRequestException("Only STUDENT and SUPERVISOR roles can self-register.");
+        if (!sha256Hex(code).equals(pending.getOtpHash())) {
+            int attempts = (pending.getAttempts() == null ? 0 : pending.getAttempts()) + 1;
+            if (attempts >= MAX_OTP_ATTEMPTS) {
+                pendingRegistrationRepository.deleteAllByEmail(email);
+                throw new BadRequestException(
+                        "Too many incorrect attempts. Please register again to get a new code.");
+            }
+            pending.setAttempts(attempts);
+            pendingRegistrationRepository.save(pending);
+            int left = MAX_OTP_ATTEMPTS - attempts;
+            throw new BadRequestException(
+                    "Incorrect code. " + left + " attempt" + (left == 1 ? "" : "s") + " remaining.");
         }
 
-        // Role / domain pairing — students use @student.mmu.edu.my, staff use @mmu.edu.my (and not the student subdomain).
-        if (role == UserRole.STUDENT && !email.endsWith("@student.mmu.edu.my")) {
-            throw new BadRequestException("Students must register with a @student.mmu.edu.my email address.");
+        // Code is correct. Re-check duplicates — a real account for this email/MMU ID
+        // could have been created in the window since the code was issued.
+        if (userAccountRepository.existsByEmail(email)) {
+            pendingRegistrationRepository.deleteAllByEmail(email);
+            throw new ConflictException("Email is already registered.");
         }
-        if (role == UserRole.SUPERVISOR
-                && (!email.endsWith("@mmu.edu.my") || email.endsWith("@student.mmu.edu.my"))) {
-            throw new BadRequestException("Supervisors must register with a @mmu.edu.my email address.");
+        if (userAccountRepository.existsByMmuId(pending.getMmuId())) {
+            pendingRegistrationRepository.deleteAllByEmail(email);
+            throw new ConflictException("MMU ID is already registered.");
         }
+
+        AccountCreationOutcome outcome = createAccountFromPending(pending);
+
+        // Done — drop the pending row (don't keep the duplicated bcrypt hash around).
+        pendingRegistrationRepository.deleteAllByEmail(email);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", outcome.status().name());
+        result.put("message", outcome.message());
+        return result;
+    }
+
+    /**
+     * Re-issues a fresh OTP for an in-progress registration, subject to a resend
+     * cooldown. Returns a generic message regardless of whether a pending row exists,
+     * to avoid leaking which emails are mid-registration.
+     */
+    @Transactional
+    public String resendRegistrationOtp(ResendRegistrationOtpRequest request) {
+        String genericResponse =
+                "If a registration is awaiting verification for that email, a new code has been sent.";
+        String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        if (email.isBlank()) {
+            return genericResponse;
+        }
+
+        PendingRegistration pending = pendingRegistrationRepository.findByEmail(email).orElse(null);
+        if (pending == null || pending.getUsedAt() != null) {
+            return genericResponse;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (pending.getLastSentAt() != null
+                && pending.getLastSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS).isAfter(now)) {
+            long wait = java.time.Duration.between(
+                    now, pending.getLastSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS)).getSeconds() + 1;
+            throw new BadRequestException(
+                    "Please wait " + wait + " second" + (wait == 1 ? "" : "s") + " before requesting another code.");
+        }
+
+        String code = generateOtpCode();
+        pending.setOtpHash(sha256Hex(code));
+        pending.setExpiresAt(now.plusMinutes(REGISTRATION_OTP_TTL_MINUTES));
+        pending.setLastSentAt(now);
+        pending.setAttempts(0);
+        pendingRegistrationRepository.save(pending);
+
+        emailService.sendRegistrationOtpEmail(email, pending.getFullName(), code);
+        return genericResponse;
+    }
+
+    /** Outcome of materialising a verified pending registration into a real account. */
+    private record AccountCreationOutcome(UserStatus status, String message) {}
+
+    /**
+     * Materialises a verified {@link PendingRegistration} into a real {@code user_account}
+     * plus its role profile. The pre-approve / pending-admin behaviour is identical to the
+     * old single-step register — only the inputs moved from the request to the pending row.
+     */
+    private AccountCreationOutcome createAccountFromPending(PendingRegistration pending) {
+        UserRole role = UserRole.valueOf(pending.getRole());
+        String email = pending.getEmail();
+        String mmuId = pending.getMmuId();
 
         // Pre-approved roster lookup. Match requires both mmuId and email so a leaked CSV row can't unlock a different account.
         boolean preApproved = role == UserRole.STUDENT
@@ -104,36 +255,28 @@ public class AuthService {
 
         UserStatus initialStatus = preApproved ? UserStatus.ACTIVE : UserStatus.PENDING;
 
-        // Consent capture (PDPA). The DTO already enforces acceptedPrivacyNotice == true
-        // via @AssertTrue, so reaching here means the user ticked the box. Record the
-        // exact timestamp + version they agreed to for audit.
-        String pnVersion = request.getPrivacyNoticeVersion() == null
-                ? "v1"
-                : request.getPrivacyNoticeVersion().trim();
-
         UserAccount user = UserAccount.builder()
                 .mmuId(mmuId)
                 .email(email)
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
+                .passwordHash(pending.getPasswordHash()) // already bcrypt'd at register time
+                .fullName(pending.getFullName())
+                .phone(pending.getPhone())
                 .role(role)
                 .status(initialStatus)
-                .termsAcceptedAt(LocalDateTime.now())
-                .privacyNoticeVersion(pnVersion)
+                .termsAcceptedAt(pending.getTermsAcceptedAt())
+                .privacyNoticeVersion(pending.getPrivacyNoticeVersion())
                 .build();
-
         userAccountRepository.save(user);
 
         // Create role-specific profile
         if (role == UserRole.STUDENT) {
             StudentProfile profile = StudentProfile.builder()
                     .user(user)
-                    .specialisation(request.getSpecialisation())
-                    .intakeYear(request.getIntakeYear())
-                    .programme(programmeForSpecialisation(request.getSpecialisation()))
-                    .faculty(facultyForSpecialisation(request.getSpecialisation()))
-                    .expectedGraduation(expectedGraduationFor(request.getIntakeYear()))
+                    .specialisation(pending.getSpecialisation())
+                    .intakeYear(pending.getIntakeYear())
+                    .programme(programmeForSpecialisation(pending.getSpecialisation()))
+                    .faculty(facultyForSpecialisation(pending.getSpecialisation()))
+                    .expectedGraduation(expectedGraduationFor(pending.getIntakeYear()))
                     .build();
             studentProfileRepository.save(profile);
         } else {
@@ -148,17 +291,17 @@ public class AuthService {
 
         if (preApproved) {
             if (role == UserRole.STUDENT) {
-                // Defer the placeholder Project attach to AFTER this register transaction
-                // commits. Calling it inline (even via REQUIRES_NEW) deadlocks: the inner
+                // Defer the placeholder Project attach to AFTER this transaction commits.
+                // Calling it inline (even via REQUIRES_NEW) deadlocks: the inner
                 // transaction's INSERT into project needs to read the new user_account row
-                // for FK validation, but this register transaction holds an X lock on that
-                // row until commit, so the inner INSERT times out at innodb_lock_wait_timeout.
+                // for FK validation, but this transaction holds an X lock on that row until
+                // commit, so the inner INSERT times out at innodb_lock_wait_timeout.
                 // After-commit synchronization runs in a fresh tx with the user_account
                 // already visible.
-                final Long savedUserId = user.getUserId();
-                schedulePlaceholderAttach(savedUserId);
+                schedulePlaceholderAttach(user.getUserId());
             }
-            return "Registration successful. Your account has been auto-approved — you can now sign in.";
+            return new AccountCreationOutcome(UserStatus.ACTIVE,
+                    "Registration successful. Your account has been auto-approved — you can now sign in.");
         }
 
         // Notify all system admins so they can approve from the registration queue.
@@ -168,11 +311,42 @@ public class AuthService {
                         admin.getUserId(),
                         "REGISTRATION_PENDING",
                         "New " + role.name().toLowerCase() + " registration",
-                        request.getFullName() + " (" + mmuId + ") needs approval.",
+                        pending.getFullName() + " (" + mmuId + ") needs approval.",
                         "/admin/registrations"
                 ));
 
-        return "Registration successful. Your account is pending approval.";
+        return new AccountCreationOutcome(UserStatus.PENDING,
+                "Registration successful. Your account is pending approval.");
+    }
+
+    /** Parses the self-registration role string, rejecting anything but STUDENT / SUPERVISOR. */
+    private UserRole parseSelfRegisterRole(String raw) {
+        UserRole role;
+        try {
+            role = UserRole.valueOf(raw);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid role. Must be STUDENT or SUPERVISOR.");
+        }
+        if (role != UserRole.STUDENT && role != UserRole.SUPERVISOR) {
+            throw new BadRequestException("Only STUDENT and SUPERVISOR roles can self-register.");
+        }
+        return role;
+    }
+
+    /** Role / domain pairing — students use @student.mmu.edu.my, staff use @mmu.edu.my (and not the student subdomain). */
+    private void requireRoleDomainMatch(UserRole role, String email) {
+        if (role == UserRole.STUDENT && !email.endsWith("@student.mmu.edu.my")) {
+            throw new BadRequestException("Students must register with a @student.mmu.edu.my email address.");
+        }
+        if (role == UserRole.SUPERVISOR
+                && (!email.endsWith("@mmu.edu.my") || email.endsWith("@student.mmu.edu.my"))) {
+            throw new BadRequestException("Supervisors must register with a @mmu.edu.my email address.");
+        }
+    }
+
+    /** A zero-padded 6-digit code, e.g. "048213". */
+    private static String generateOtpCode() {
+        return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
     }
 
     /**

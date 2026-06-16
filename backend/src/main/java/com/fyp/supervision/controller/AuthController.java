@@ -33,6 +33,18 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(message));
     }
 
+    @PostMapping("/register/verify")
+    public ResponseEntity<Map<String, Object>> verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request) {
+        Map<String, Object> result = authService.verifyRegistration(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @PostMapping("/register/resend")
+    public ResponseEntity<MessageResponse> resendRegistrationOtp(@Valid @RequestBody ResendRegistrationOtpRequest request) {
+        String message = authService.resendRegistrationOtp(request);
+        return ResponseEntity.ok(new MessageResponse(message));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);

@@ -73,6 +73,54 @@ public class EmailService {
         }
     }
 
+    /**
+     * Emails the 6-digit registration verification code. When email is disabled (local
+     * dev), the code is logged at INFO so a developer can complete registration without
+     * SMTP — this is the ONLY path that logs the code; it is never logged when email is
+     * enabled (prod).
+     */
+    @Async("emailExecutor")
+    public void sendRegistrationOtpEmail(String recipientEmail, String recipientName, String code) {
+        if (!enabled) {
+            log.info("Registration OTP for {} (email disabled): {}", recipientEmail, code);
+            return;
+        }
+        if (recipientEmail == null || recipientEmail.isBlank() || code == null) {
+            return;
+        }
+        try {
+            MimeMessage mime = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mime, false, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(recipientEmail);
+            helper.setSubject("Your FYP Supervision verification code");
+            helper.setText(buildRegistrationOtpHtml(recipientName, code), true);
+            mailSender.send(mime);
+            log.info("Sent registration OTP email to={}", recipientEmail);
+        } catch (Exception ex) {
+            log.warn("Failed to send registration OTP email to={}: {}", recipientEmail, ex.getMessage());
+        }
+    }
+
+    private String buildRegistrationOtpHtml(String name, String code) {
+        String safeName = escape(name == null ? "there" : name);
+        String safeCode = escape(code);
+        return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
+                + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
+                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">FYP Supervision System</td></tr>"
+                + "<tr><td style=\"padding:24px;color:#111827;\">"
+                + "<p style=\"margin:0 0 12px 0;\">Hi " + safeName + ",</p>"
+                + "<h2 style=\"margin:0 0 12px 0;font-size:18px;\">Verify your email</h2>"
+                + "<p style=\"margin:0 0 16px 0;line-height:1.5;\">Use the code below to finish creating your FYP Supervision account. "
+                + "It expires in 10 minutes.</p>"
+                + "<p style=\"margin:0 0 24px 0;text-align:center;\"><span style=\"display:inline-block;font-family:'Courier New',monospace;font-size:32px;font-weight:bold;letter-spacing:8px;color:#1f2937;background:#f3f4f6;border-radius:8px;padding:12px 24px;\">" + safeCode + "</span></p>"
+                + "<p style=\"margin:0;font-size:13px;color:#6b7280;\">If you didn't try to register, you can ignore this email — no account will be created.</p>"
+                + "</td></tr>"
+                + "<tr><td style=\"padding:16px 24px;background:#f9fafb;color:#6b7280;font-size:12px;\">"
+                + "FYP Supervision System &middot; Multimedia University"
+                + "</td></tr></table></body></html>";
+    }
+
     private String buildResetHtml(String name, String resetUrl) {
         String safeName = escape(name == null ? "there" : name);
         String safeUrl = escape(resetUrl);

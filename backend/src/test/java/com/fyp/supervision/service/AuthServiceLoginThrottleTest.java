@@ -10,6 +10,7 @@ import com.fyp.supervision.repository.ApprovedStudentRosterRepository;
 import com.fyp.supervision.repository.ApprovedSupervisorRosterRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.PasswordResetTokenRepository;
+import com.fyp.supervision.repository.PendingRegistrationRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
@@ -47,6 +48,7 @@ class AuthServiceLoginThrottleTest {
     @Mock ProjectRepository projectRepository;
     @Mock FypCycleRepository fypCycleRepository;
     @Mock PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock PendingRegistrationRepository pendingRegistrationRepository;
     @Mock NotificationService notificationService;
     @Mock EmailService emailService;
     @Mock CycleLifecycleService cycleLifecycleService;
