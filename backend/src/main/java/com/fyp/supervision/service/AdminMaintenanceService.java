@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AuditLogRepository;
 import com.fyp.supervision.repository.MaintenanceJobRepository;
 import com.fyp.supervision.repository.PasswordResetTokenRepository;
+import com.fyp.supervision.repository.PendingRegistrationRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -39,6 +40,7 @@ public class AdminMaintenanceService {
     private final UserAccountRepository userAccountRepository;
     private final AuditLogRepository auditLogRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final PendingRegistrationRepository pendingRegistrationRepository;
     private final FileStorageConfig fileStorageConfig;
     private final DataSource dataSource;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -453,6 +455,9 @@ public class AdminMaintenanceService {
                 int n = passwordResetTokenRepository.deleteExpiredOrUsed(LocalDateTime.now());
                 result.put("expiredSessionsDeleted", n);
                 notes.add(n + " expired reset tokens");
+                int p = pendingRegistrationRepository.deleteExpiredOrUsed(LocalDateTime.now());
+                result.put("expiredPendingRegistrationsDeleted", p);
+                notes.add(p + " expired pending registrations");
             }
             if (clearOrphans) {
                 int n = sweepOrphanFiles();
