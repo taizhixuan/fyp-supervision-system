@@ -50,3 +50,8 @@ The Reports Module enables committee members to generate comprehensive analytica
 ---
 
 *Document generated for FYP Supervision System - Committee Module*
+
+## Related Files
+
+- [[docs-project/modules/committee.md]] — Feature inventory that these screens implement
+- [[frontend/CLAUDE.md]] — Frontend conventions followed in implementing these screens

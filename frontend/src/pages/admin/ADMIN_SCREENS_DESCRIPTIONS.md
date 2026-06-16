@@ -57,3 +57,9 @@ The Maintenance Center provides tools for system maintenance, backup, and recove
 ---
 
 *Document generated for FYP Supervision System - Admin Module*
+
+## Related Files
+
+- [[docs-project/modules/admin.md]] — Feature inventory that these screens implement
+- [[frontend/CLAUDE.md]] — Frontend conventions followed in implementing these screens
+- [[docs-project/concepts/frontend-architecture.md]] — Architectural patterns (routing, feature gates, API calls) used in admin screens

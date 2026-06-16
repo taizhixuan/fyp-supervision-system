@@ -77,4 +77,9 @@ The Notifications Center consolidates all supervisor-related notifications in on
 
 ---
 
+## Related Files
+
+- [[docs-project/modules/supervisor.md]] — Feature inventory that these screens implement
+- [[frontend/CLAUDE.md]] — Frontend conventions followed in implementing these screens
+
 *Document generated for FYP Supervision System - Supervisor Module*
