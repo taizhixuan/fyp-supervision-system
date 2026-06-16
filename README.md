@@ -56,15 +56,21 @@ The system includes AI-powered features like supervisor recommendations based on
 - **React Hook Form** + **Zod** for form validation
 - **React Router** for navigation
 
-### AI Services
-- **Flask** microservices for:
-  - Supervisor recommendation engine
-  - Proposal analysis service
-  - FYP chatbot
+### AI / ML
+- **Flask** microservices (served by **Gunicorn**) for three independent engines:
+  - Supervisor recommendation — **Sentence-BERT** (BGE) embeddings + a deterministic weighted scorer
+  - Proposal analysis — **DistilBERT** + rule-based NLP, with an optional remote LLM
+  - FYP chatbot — **FAISS** vector search + a remote LLM (Groq / OpenAI)
+- **PyTorch**, **Hugging Face Transformers**, **sentence-transformers**
+- **scikit-learn**, **NumPy**, **pandas** for the scoring and analysis pipelines
 
-### Infrastructure
-- **Docker** and **Docker Compose** for containerization
-- **MySQL** database with persistent volumes
+### DevOps & Infrastructure
+- **Docker** and **Docker Compose** (base + prod + observability overlays) orchestrating the full 9-service stack
+- **Caddy** reverse proxy with automatic **Let's Encrypt** HTTPS in production
+- **Nginx** serving the production frontend build
+- **Prometheus** and **Grafana** for metrics and dashboards
+- **MySQL 8** with persistent volumes; schema managed by **Flyway**
+- Deployed on a **DigitalOcean** droplet
 
 ## Project Structure
 
