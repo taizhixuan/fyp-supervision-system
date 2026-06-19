@@ -263,7 +263,7 @@ The backend API is available at `http://localhost:8080/api`. Key endpoints inclu
 - `/notifications/*` - Notification management
 - `/resources/*` - Resource documents
 
-Authority is derived from the URL prefix in `SecurityConfig` (e.g. `/student/**` requires the `STUDENT` role); see `CLAUDE.md` for the full prefix → role table.
+Authority is derived from the URL prefix in `SecurityConfig` (e.g. `/student/**` requires the `STUDENT` role).
 
 ## Development
 
@@ -349,17 +349,3 @@ If a port is already in use, either:
 - **Committee reports (UC29):** Report generation (proposal summary, supervisor load, pairing status) with CSV export and download; reports stored under `uploads/reports/`.
 - **Admin export configs (UC32):** CRUD for export configurations; run export (e.g. users/projects CSV) with download; configs and last export path persisted.
 - **Admin maintenance (UC33):** Jobs list, backups list, create backup (marker file under `uploads/backups/`), restore (recorded; full DB restore via mysql client), cleanup (old audit logs), clear cache.
-
-## License
-
-This project is developed as part of a Final Year Project at MMU FCI.
-
----
-
-**Note:** This system is designed specifically for MMU FCI's FYP supervision process. Some features may be tailored to MMU's specific requirements and workflows.
-
-## Related Files
-
-- [[CLAUDE.md]] — Complete architecture guide for developers
-- [[docs-project/README.md]] — Full documentation index and folder structure
-- [[docs-project/demo/walkthrough.md]] — 30-minute live demo script for supervisors
