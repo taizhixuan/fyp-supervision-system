@@ -231,8 +231,6 @@ Transactional email (registration verification codes, system notifications, pass
 - `APP_EMAIL_FROM` - sender address
 - `APP_BASE_URL` - base URL used in email links (e.g. the password-reset link)
 
-> Many cloud hosts block outbound SMTP ports (25/587/465). If direct SMTP is blocked, use a transactional relay that offers port `2525` (Brevo, SendGrid, Mailgun).
-
 ### CORS and cross-origin
 
 When the frontend and backend run on different origins (e.g. frontend on port 3000, backend on 8080), the backend is configured to allow the frontend origin. For production, ensure CORS allowed origins and cookie/same-site settings match your deployment (e.g. same site or trusted domain).
