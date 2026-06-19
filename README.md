@@ -340,9 +340,3 @@ If a port is already in use, either:
 - Ensure the upload directory exists and has write permissions
 - Check `FILE_UPLOAD_DIR` configuration
 - Verify file size limits in `application.yml` (default: 50MB)
-
-## Feature completion status
-
-- **Committee reports (UC29):** Report generation (proposal summary, supervisor load, pairing status) with CSV export and download; reports stored under `uploads/reports/`.
-- **Admin export configs (UC32):** CRUD for export configurations; run export (e.g. users/projects CSV) with download; configs and last export path persisted.
-- **Admin maintenance (UC33):** Jobs list, backups list, create backup (marker file under `uploads/backups/`), restore (recorded; full DB restore via mysql client), cleanup (old audit logs), clear cache.
