@@ -1,5 +1,14 @@
 # FYP Supervision System
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-AI%20services-000000?logo=flask&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
 A comprehensive web-based platform designed to streamline and digitize the Final Year Project (FYP) supervision process at MMU FCI. This system helps students find supervisors, manage proposals, track meetings, and maintain supervision logs—all in one place.
 
 > **Live demo:** [app.supervisi.me](https://app.supervisi.me) — the portfolio build, deployed on a DigitalOcean droplet over HTTPS (API at `api.supervisi.me/api`).
@@ -338,3 +347,7 @@ If a port is already in use, either:
 - Ensure the upload directory exists and has write permissions
 - Check `FILE_UPLOAD_DIR` configuration
 - Verify file size limits in `application.yml` (default: 50MB)
+
+## License
+
+Released under the [MIT License](LICENSE). Originally developed as a Final Year Project at MMU FCI.
