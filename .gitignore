@@ -367,3 +367,6 @@ index.html
 latex.tex
 mermaid-filter.err
 desktop.ini
+build_related_files.py
+check_files.py
+extract_files.py
