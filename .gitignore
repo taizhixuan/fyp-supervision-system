@@ -371,3 +371,7 @@ build_related_files.py
 check_files.py
 extract_files.py
 /scripts/usability/README.md
+/frontend/Implementation-Session-Summary.md
+/frontend/src/pages/admin/ADMIN_SCREENS_DESCRIPTIONS.md
+/frontend/src/pages/committee/COMMITTEE_SCREENS_DESCRIPTIONS.md
+/frontend/src/pages/supervisor/SUPERVISOR_SCREENS_DESCRIPTIONS.md
