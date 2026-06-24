@@ -344,6 +344,7 @@ __pycache__/
 # Local-only documentation (not pushed to GitHub)
 /docs-project/
 /docs/superpowers/
+/poster-assets/
 
 # Loose images dropped at repo root (chat attachments, scratch screenshots)
 /img.png
@@ -375,3 +376,4 @@ extract_files.py
 /frontend/src/pages/admin/ADMIN_SCREENS_DESCRIPTIONS.md
 /frontend/src/pages/committee/COMMITTEE_SCREENS_DESCRIPTIONS.md
 /frontend/src/pages/supervisor/SUPERVISOR_SCREENS_DESCRIPTIONS.md
+/poster-assets/
