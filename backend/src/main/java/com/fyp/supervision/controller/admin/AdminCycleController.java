@@ -104,6 +104,64 @@ public class AdminCycleController {
         return ResponseEntity.ok(adminService.getCycleDetail(id));
     }
 
+    /**
+     * The actual roster behind a cycle's headline counts: every enrolled student
+     * (with their paired supervisor + project status) and the cycle's deadlines.
+     * Backs the admin "click the students / paired / deadlines stat" detail view.
+     */
+    @GetMapping("/{id}/students")
+    public ResponseEntity<?> getCycleStudents(@PathVariable Long id) {
+        FypCycle cycle = cycleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
+
+        List<Map<String, Object>> students = new ArrayList<>();
+        projectRepository.findAllByCycleId(id, org.springframework.data.domain.Pageable.unpaged())
+                .getContent().forEach(p -> {
+                    var student = p.getStudent();
+                    if (student == null) return;
+                    Map<String, Object> s = new LinkedHashMap<>();
+                    s.put("userId", student.getUserId().toString());
+                    s.put("fullName", student.getFullName());
+                    s.put("email", student.getEmail());
+                    s.put("mmuId", student.getMmuId());
+                    s.put("supervisorName", p.getSupervisor() != null ? p.getSupervisor().getFullName() : null);
+                    s.put("paired", p.getSupervisor() != null);
+                    s.put("projectStatus", p.getStatus() != null ? p.getStatus().name() : null);
+                    s.put("stage", p.getStage());
+                    s.put("fyp1Passed", p.getFyp1Passed());
+                    students.add(s);
+                });
+        students.sort((a, b) -> {
+            String an = (String) a.get("fullName");
+            String bn = (String) b.get("fullName");
+            return (an == null ? "" : an).compareToIgnoreCase(bn == null ? "" : bn);
+        });
+
+        List<Map<String, Object>> deadlines = new ArrayList<>();
+        deadlineRepository.findByCycle_CycleIdOrderByDueDateAsc(id).forEach(d -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("deadlineId", d.getDeadlineId());
+            m.put("title", d.getTitle());
+            m.put("deadlineType", d.getDeadlineType());
+            m.put("audience", d.getAudience());
+            m.put("dueDate", d.getDueDate() != null ? d.getDueDate().toString() : null);
+            deadlines.add(m);
+        });
+
+        long paired = students.stream().filter(s -> Boolean.TRUE.equals(s.get("paired"))).count();
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("cycleId", cycle.getCycleId());
+        out.put("cycleCode", cycle.getCycleCode());
+        out.put("type", cycle.getCycleType());
+        out.put("status", cycle.getStatus().name());
+        out.put("totalStudents", students.size());
+        out.put("pairedStudents", paired);
+        out.put("students", students);
+        out.put("deadlines", deadlines);
+        return ResponseEntity.ok(out);
+    }
+
     @PostMapping
     @Transactional
     public ResponseEntity<?> createCycle(@RequestBody Map<String, Object> data) {

@@ -99,9 +99,9 @@ public class StudentMeetingLogController {
             throw new ResourceNotFoundException("Meeting log not found");
         }
         byte[] bytes = meetingLogDocumentService.renderLog(log);
-        String fileName = "MeetingLog_" + nz(log.getFypPhase(), "FYP1")
-                + "_M" + (log.getMeetingNumber() == null ? "X" : log.getMeetingNumber())
-                + "_" + nz(log.getStudent().getMmuId(), String.valueOf(userId)) + ".docx";
+        // Name the file after the student's meeting-log number, e.g. "Meeting Log 3.docx".
+        String fileName = "Meeting Log "
+                + (log.getMeetingNumber() == null ? "X" : log.getMeetingNumber()) + ".docx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + fileName + "\"")
@@ -134,9 +134,5 @@ public class StudentMeetingLogController {
                         "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.parseMediaType("application/zip"))
                 .body(zipBytes);
-    }
-
-    private String nz(String s, String fallback) {
-        return (s == null || s.isBlank()) ? fallback : s;
     }
 }

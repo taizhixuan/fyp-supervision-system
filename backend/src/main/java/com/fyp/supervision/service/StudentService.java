@@ -39,11 +39,14 @@ public class StudentService {
     private final MeetingLogRepository meetingLogRepository;
     private final MeetingLogSignatureRepository meetingLogSignatureRepository;
     private final ProjectDocumentRepository projectDocumentRepository;
+    private final DocumentFeedbackRepository documentFeedbackRepository;
     private final DeadlineRepository deadlineRepository;
     private final FypCycleRepository fypCycleRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
     private final MeetingLogComplianceService meetingLogComplianceService;
+    private final SystemParameterService systemParameters;
+    private final FileStorageService fileStorageService;
 
     // ========================= Profile =========================
 
@@ -141,8 +144,8 @@ public class StudentService {
         List<MeetingLog> draftLogs = meetingLogRepository.findByStudent_UserIdAndStatusOrderByCreatedAtDesc(userId, MeetingLogStatus.DRAFT);
         dashboard.put("pendingLogs", draftLogs.stream().limit(5).map(this::buildMeetingLogDto).toList());
 
-        // Recent documents
-        List<ProjectDocument> docs = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId);
+        // Recent documents (latest revision of each version group)
+        List<ProjectDocument> docs = projectDocumentRepository.findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(userId);
         dashboard.put("recentDocuments", docs.stream().limit(5).map(this::buildDocumentDto).toList());
 
         // Upcoming deadlines — scope to the student's current phase (FYP1/FYP2)
@@ -165,7 +168,7 @@ public class StudentService {
         // Quick stats
         long totalMeetings = meetingRepository.countByProject_Student_UserId(userId);
         long completedLogs = meetingLogRepository.countByStudent_UserIdAndStatus(userId, MeetingLogStatus.LOCKED);
-        long documentsUploaded = projectDocumentRepository.countByProject_Student_UserId(userId);
+        long documentsUploaded = projectDocumentRepository.countByProject_Student_UserIdAndIsLatestTrue(userId);
         dashboard.put("quickStats", Map.of(
             "totalMeetings", totalMeetings,
             "completedLogs", completedLogs,
@@ -372,6 +375,13 @@ public class StudentService {
 
         if (data.containsKey("title")) proposal.setTitle((String) data.get("title"));
 
+        // Cap the number of proposal revisions at the admin-configurable limit.
+        int maxVersions = systemParameters.getInt("proposal_max_versions", 10);
+        if (proposal.getCurrentVersion() >= maxVersions) {
+            throw new BadRequestException(
+                    "You have reached the maximum of " + maxVersions + " proposal versions.");
+        }
+
         int newVersion = proposal.getCurrentVersion() + 1;
         proposal.setCurrentVersion(newVersion);
         proposalRepository.save(proposal);
@@ -384,6 +394,80 @@ public class StudentService {
         proposalVersionRepository.save(version);
 
         return buildProposalDto(proposal);
+    }
+
+    /**
+     * Attach (or replace) the supporting document on the student's current proposal version.
+     * The file is stored under uploads/proposals/&lt;userId&gt;/ and recorded on the latest
+     * {@link ProposalVersion}. Only allowed while the proposal is still editable.
+     */
+    @Transactional
+    public Map<String, Object> uploadProposalFile(Long userId, org.springframework.web.multipart.MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("No file provided.");
+        }
+        Proposal proposal = proposalRepository.findByStudent_UserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposal not found. Create a proposal first."));
+        if (proposal.getStatus() != ProposalStatus.DRAFT
+                && proposal.getStatus() != ProposalStatus.REVISION_REQUIRED) {
+            throw new BadRequestException("The supporting attachment cannot be changed in the proposal's current status.");
+        }
+
+        ProposalVersion latest = proposalVersionRepository
+                .findByProposal_ProposalIdOrderByVersionNoDesc(proposal.getProposalId())
+                .stream().findFirst()
+                .orElseGet(() -> {
+                    ProposalVersion v = ProposalVersion.builder()
+                            .proposal(proposal)
+                            .versionNo(proposal.getCurrentVersion() != null ? proposal.getCurrentVersion() : 1)
+                            .contentText("{}")
+                            .build();
+                    return proposalVersionRepository.save(v);
+                });
+
+        // Remove the previously attached file, if any, so we don't orphan it on disk.
+        if (latest.getUploadFilePath() != null && !latest.getUploadFilePath().isBlank()) {
+            try {
+                fileStorageService.deleteFile(latest.getUploadFilePath());
+            } catch (Exception ignored) {
+                // Non-fatal — a missing old file shouldn't block a new upload.
+            }
+        }
+
+        String storedPath = fileStorageService.storeFile(file, "proposals", userId);
+        latest.setUploadFilePath(storedPath);
+        latest.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "attachment");
+        proposalVersionRepository.save(latest);
+        proposal.setUpdatedAt(java.time.LocalDateTime.now());
+        proposalRepository.save(proposal);
+
+        return buildProposalDto(proposal);
+    }
+
+    /**
+     * Resolve the {@link ProposalVersion} whose attachment the student wants to download.
+     * {@code versionId} null → the latest version. Throws if the student has no proposal,
+     * the version isn't theirs, or the version carries no attachment.
+     */
+    public ProposalVersion resolveOwnAttachmentVersion(Long userId, Long versionId) {
+        Proposal proposal = proposalRepository.findByStudent_UserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        return pickAttachmentVersion(proposal.getProposalId(), versionId);
+    }
+
+    /** Shared: pick a version by id (or latest) and ensure it has an attachment. */
+    public ProposalVersion pickAttachmentVersion(Long proposalId, Long versionId) {
+        List<ProposalVersion> versions = proposalVersionRepository
+                .findByProposal_ProposalIdOrderByVersionNoDesc(proposalId);
+        ProposalVersion v = (versionId != null)
+                ? versions.stream().filter(x -> x.getVersionId().equals(versionId)).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Version not found"))
+                : versions.stream().findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("No proposal version found"));
+        if (v.getUploadFilePath() == null || v.getUploadFilePath().isBlank()) {
+            throw new ResourceNotFoundException("No attachment on this proposal version");
+        }
+        return v;
     }
 
     /**
@@ -550,13 +634,13 @@ public class StudentService {
         boolean hasPhase = phase != null && !phase.isBlank();
         Page<ProjectDocument> page;
         if (hasType && hasPhase) {
-            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeAndPhaseOrderByUploadedAtDesc(userId, type, phase, pageable);
+            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeAndPhaseAndIsLatestTrueOrderByUploadedAtDesc(userId, type, phase, pageable);
         } else if (hasType) {
-            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(userId, type, pageable);
+            page = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeAndIsLatestTrueOrderByUploadedAtDesc(userId, type, pageable);
         } else if (hasPhase) {
-            page = projectDocumentRepository.findByProject_Student_UserIdAndPhaseOrderByUploadedAtDesc(userId, phase, pageable);
+            page = projectDocumentRepository.findByProject_Student_UserIdAndPhaseAndIsLatestTrueOrderByUploadedAtDesc(userId, phase, pageable);
         } else {
-            page = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(userId, pageable);
+            page = projectDocumentRepository.findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(userId, pageable);
         }
 
         List<Map<String, Object>> documents = page.getContent().stream()
@@ -825,8 +909,17 @@ public class StudentService {
         dto.put("version", v.getVersionNo());
         dto.put("title", proposal.getTitle());
         dto.put("status", proposal.getStatus().name());
-        dto.put("submittedAt", null);
-        dto.put("fileUrl", v.getUploadFilePath());
+        dto.put("submittedAt", v.getCreatedAt() != null ? v.getCreatedAt().toString() : null);
+        String vp = v.getUploadFilePath();
+        if (vp != null && !vp.isBlank()) {
+            String trimmed = vp.startsWith("/") ? vp.substring(1) : vp;
+            dto.put("fileUrl", trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed);
+        } else {
+            dto.put("fileUrl", null);
+        }
+        dto.put("fileName", v.getFileName());
+        // Full content of this version so the history detail view can render every section.
+        dto.put("content", parseJsonMap(v.getContentText()));
         dto.put("changes", null);
         dto.put("createdAt", v.getCreatedAt() != null ? v.getCreatedAt().toString() : "");
         return dto;
@@ -1029,7 +1122,121 @@ public class StudentService {
         dto.put("uploadedAt", doc.getUploadedAt() != null ? doc.getUploadedAt().toString() : "");
         dto.put("updatedAt", doc.getUploadedAt() != null ? doc.getUploadedAt().toString() : "");
         dto.put("uploadedBy", doc.getUploadedBy() != null ? doc.getUploadedBy().getFullName() : null);
+        dto.put("isLatest", Boolean.TRUE.equals(doc.getIsLatest()));
+        dto.put("versionGroup", doc.getVersionGroup());
+        List<DocumentFeedback> feedback = documentFeedbackRepository
+                .findByDocument_DocumentIdOrderByCreatedAtDesc(doc.getDocumentId());
+        dto.put("hasFeedback", !feedback.isEmpty());
+        dto.put("feedbackCount", feedback.size());
+        dto.put("feedback", feedback.stream().map(this::buildStudentDocumentFeedbackDto).toList());
         return dto;
+    }
+
+    private Map<String, Object> buildStudentDocumentFeedbackDto(DocumentFeedback fb) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("feedbackId", fb.getFeedbackId());
+        dto.put("content", fb.getContent());
+        dto.put("supervisorName", fb.getSupervisor() != null ? fb.getSupervisor().getFullName() : "");
+        dto.put("createdAt", fb.getCreatedAt() != null ? fb.getCreatedAt().toString() : "");
+        dto.put("annotatedFileName", fb.getAnnotatedFileName());
+        dto.put("annotatedFileSize", fb.getAnnotatedFileSize());
+        dto.put("annotatedFileUrl", fb.getAnnotatedFilePath() != null
+                ? "/student/documents/feedback/" + fb.getFeedbackId() + "/download" : null);
+        return dto;
+    }
+
+    /** Fetch a feedback row, verifying it belongs to a document owned by this student. */
+    public DocumentFeedback getFeedbackForStudent(Long studentUserId, Long feedbackId) {
+        DocumentFeedback fb = documentFeedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new ResourceNotFoundException("Feedback not found"));
+        if (fb.getDocument() == null || fb.getDocument().getProject() == null
+                || fb.getDocument().getProject().getStudent() == null
+                || !studentUserId.equals(fb.getDocument().getProject().getStudent().getUserId())) {
+            throw new BadRequestException("You can only access feedback on your own documents.");
+        }
+        return fb;
+    }
+
+    /**
+     * Persist an uploaded document. When {@code replaceDocumentId} is set, the new file becomes
+     * the next revision in that document's version group (version_no + 1, is_latest flips over).
+     */
+    @Transactional
+    public ProjectDocument saveUploadedDocument(Long userId, Project project, Long replaceDocumentId,
+            String title, String description, String docType, String phase,
+            String fileName, String storagePath, Long fileSize, String mimeType) {
+        String versionGroup;
+        int versionNo;
+        if (replaceDocumentId != null) {
+            ProjectDocument target = projectDocumentRepository.findById(replaceDocumentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+            if (target.getProject() == null || target.getProject().getStudent() == null
+                    || !userId.equals(target.getProject().getStudent().getUserId())) {
+                throw new BadRequestException("You can only upload a new version of your own document.");
+            }
+            versionGroup = target.getVersionGroup();
+            if (versionGroup == null || versionGroup.isBlank()) {
+                versionGroup = UUID.randomUUID().toString();
+                target.setVersionGroup(versionGroup);
+                projectDocumentRepository.save(target);
+            }
+            List<ProjectDocument> chain = projectDocumentRepository.findByVersionGroupOrderByVersionNoDesc(versionGroup);
+            versionNo = chain.stream().map(d -> d.getVersionNo() == null ? 1 : d.getVersionNo())
+                    .max(Integer::compareTo).orElse(1) + 1;
+            for (ProjectDocument d : chain) {
+                if (Boolean.TRUE.equals(d.getIsLatest())) {
+                    d.setIsLatest(false);
+                    projectDocumentRepository.save(d);
+                }
+            }
+        } else {
+            versionGroup = UUID.randomUUID().toString();
+            versionNo = 1;
+        }
+
+        ProjectDocument doc = ProjectDocument.builder()
+                .project(project)
+                .uploadedBy(project.getStudent())
+                .title(title)
+                .description(description)
+                .docType(docType)
+                .phase(phase)
+                .fileName(fileName)
+                .storagePath(storagePath)
+                .fileSize(fileSize)
+                .mimeType(mimeType)
+                .versionNo(versionNo)
+                .versionGroup(versionGroup)
+                .isLatest(true)
+                .build();
+        return projectDocumentRepository.save(doc);
+    }
+
+    /** All revisions of a document's version group, newest first, for the history page. */
+    public List<Map<String, Object>> getDocumentVersions(Long userId, Long documentId) {
+        ProjectDocument doc = projectDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        if (doc.getProject() == null || doc.getProject().getStudent() == null
+                || !userId.equals(doc.getProject().getStudent().getUserId())) {
+            throw new BadRequestException("You can only view versions of your own documents.");
+        }
+        List<ProjectDocument> chain = (doc.getVersionGroup() == null || doc.getVersionGroup().isBlank())
+                ? List.of(doc)
+                : projectDocumentRepository.findByVersionGroupOrderByVersionNoDesc(doc.getVersionGroup());
+        return chain.stream().map(this::buildDocumentDto).toList();
+    }
+
+    /** After deleting a revision, make sure the group still has a latest revision. */
+    @Transactional
+    public void promoteLatestInGroup(String versionGroup) {
+        if (versionGroup == null || versionGroup.isBlank()) return;
+        List<ProjectDocument> chain = projectDocumentRepository.findByVersionGroupOrderByVersionNoDesc(versionGroup);
+        if (chain.isEmpty()) return;
+        if (chain.stream().noneMatch(d -> Boolean.TRUE.equals(d.getIsLatest()))) {
+            ProjectDocument top = chain.get(0); // highest version_no (desc order)
+            top.setIsLatest(true);
+            projectDocumentRepository.save(top);
+        }
     }
 
     public Map<String, Object> buildDeadlineDto(Deadline d) {

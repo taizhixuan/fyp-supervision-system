@@ -53,6 +53,7 @@ import {
   type Specialisation,
 } from '@/lib/constants/proposalTemplate'
 import { cn } from '@/lib/utils/cn'
+import { downloadAuthedFile } from '@/lib/utils/download'
 import type { ProposalStatus } from '@/types'
 
 // Validation schema (mirrors MMU FCI FYP Proposal Form template)
@@ -1465,9 +1466,14 @@ export function ProposalWorkspace() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <a href={proposalFileUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="secondary" size="sm">Download</Button>
-                </a>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => downloadAuthedFile('/student/proposal/attachment', proposalFileName ?? undefined)}
+                >
+                  Download
+                </Button>
                 {canEdit && (
                   <label className="cursor-pointer">
                     <span className="inline-flex items-center justify-center gap-2 font-medium rounded-md transition-all duration-200 text-primary-900 bg-transparent hover:bg-primary-50 h-8 px-3 text-sm">

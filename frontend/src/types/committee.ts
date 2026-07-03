@@ -1,4 +1,6 @@
 // Committee Dashboard Types
+import type { ProposalContentData } from '@/components/common/ProposalContentSections'
+
 export interface DashboardDeadline {
   deadlineId: number
   title: string
@@ -131,9 +133,23 @@ export interface ProposalForCommitteeReview {
   aiAnalysis?: AIProposalAnalysis
   reviewHistory: ProposalReviewEntry[]
   documentUrl: string | null
+  fileName?: string | null
+  content?: ProposalContentData
+  previousVersions?: CommitteeProposalVersion[]
   abstract?: string
   objectives?: string[]
   methodology?: string
+}
+
+export interface CommitteeProposalVersion {
+  versionId: number
+  version: number
+  status: string
+  submittedAt?: string
+  createdAt?: string
+  content?: ProposalContentData
+  fileUrl?: string | null
+  fileName?: string | null
 }
 
 export interface AIProposalAnalysis {

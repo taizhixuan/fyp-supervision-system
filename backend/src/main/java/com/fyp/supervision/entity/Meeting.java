@@ -78,6 +78,10 @@ public class Meeting {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // Set when the meeting-reminder job has notified about this meeting (dedupe).
+    @Column(name = "reminder_sent_at")
+    private LocalDateTime reminderSentAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

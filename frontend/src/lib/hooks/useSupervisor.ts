@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { NOTIFICATION_QUERY_OPTIONS, invalidateAllNotifications } from './notificationCache'
 import { apiClient } from '@/lib/api/client'
 import type {
   SupervisorProfile,
@@ -485,8 +486,9 @@ export function useSubmitDocumentFeedback() {
       )
       return data
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: supervisorKeys.documents() })
+      queryClient.invalidateQueries({ queryKey: supervisorKeys.document(variables.documentId) })
     },
   })
 }
@@ -506,6 +508,23 @@ export function useDownloadSuperviseeDocument() {
       link.click()
       window.document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
+    },
+  })
+}
+
+export function useDownloadFeedbackFile() {
+  return useMutation({
+    mutationFn: async ({ url, fileName }: { url: string; fileName: string }) => {
+      const response = await apiClient.get(url, { responseType: 'blob' })
+      const blob = response.data as Blob
+      const objectUrl = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = objectUrl
+      link.download = fileName || 'feedback-annotated'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+      window.URL.revokeObjectURL(objectUrl)
     },
   })
 }
@@ -609,6 +628,7 @@ export function useSupervisorNotifications(limit: number = 10) {
       return data
     },
     staleTime: 30000,
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -620,6 +640,7 @@ export function useSupervisorUnreadCount() {
       return data
     },
     staleTime: 30000,
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -631,7 +652,7 @@ export function useMarkSupervisorNotificationRead() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: supervisorKeys.notifications() })
+      invalidateAllNotifications(queryClient)
     },
   })
 }

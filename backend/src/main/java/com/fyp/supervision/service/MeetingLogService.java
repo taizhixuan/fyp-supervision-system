@@ -207,12 +207,20 @@ public class MeetingLogService {
             throw new BadRequestException("Student can only sign after supervisor has signed.");
         }
 
+        String signatureImage = (String) data.get("signatureImageDataUrl");
+        // Compute the SHA-256 of the signature image server-side rather than trusting the
+        // client-supplied value, so the stored hash is a fingerprint we can vouch for and
+        // print into the exported logbook. Fall back to the client value only if the image
+        // can't be decoded (e.g. an externally stored reference instead of a data URL).
+        String serverHash = sha256Hex(signatureImage);
+        String signatureHash = serverHash != null ? serverHash : (String) data.get("signatureSha256");
+
         MeetingLogSignature signature = MeetingLogSignature.builder()
                 .meetingLog(log)
                 .signer(signer)
                 .signerRole(role)
-                .signatureImageUrl((String) data.get("signatureImageDataUrl"))
-                .signatureSha256((String) data.get("signatureSha256"))
+                .signatureImageUrl(signatureImage)
+                .signatureSha256(signatureHash)
                 .build();
         signatureRepository.save(signature);
 
@@ -227,10 +235,79 @@ public class MeetingLogService {
         } else if (role.equals("STUDENT")) {
             log.setStatus(MeetingLogStatus.LOCKED);
             log.setLockedAt(LocalDateTime.now());
+            // Whole-document integrity: now that both parties have signed, freeze a SHA-256
+            // over the entire log content plus both signature fingerprints. This extends
+            // tamper-evidence from the signature image alone to the full record, and is
+            // printed into the exported DOCX so a copy that leaves the system stays verifiable.
+            var allSignatures = signatureRepository.findByMeetingLog_LogId(log.getLogId());
+            log.setContentHash(computeContentHash(log, allSignatures));
         }
 
         return meetingLogRepository.save(log);
     }
+
+    /**
+     * One-time heal: fill {@code content_hash} for logs that locked before whole-document
+     * hashing existed. Idempotent — only touches LOCKED logs whose hash is still null, so
+     * it is safe to run on every startup and no-ops once the backlog is cleared.
+     */
+    @Transactional
+    public int backfillMissingContentHashes() {
+        var pending = meetingLogRepository.findByStatusAndContentHashIsNull(MeetingLogStatus.LOCKED);
+        for (MeetingLog log : pending) {
+            var sigs = signatureRepository.findByMeetingLog_LogId(log.getLogId());
+            log.setContentHash(computeContentHash(log, sigs));
+        }
+        if (!pending.isEmpty()) meetingLogRepository.saveAll(pending);
+        return pending.size();
+    }
+
+    /**
+     * Canonical SHA-256 over the whole locked log: every content field plus both signature
+     * fingerprints, joined in a fixed order. Rebuilding this string from the stored record
+     * and re-hashing lets an exported logbook be verified as unaltered — not just its
+     * signature images. Null fields normalise to empty so the digest is reproducible.
+     */
+    private String computeContentHash(MeetingLog log, java.util.List<MeetingLogSignature> signatures) {
+        StringBuilder sb = new StringBuilder(512);
+        sb.append("logId=").append(log.getLogId()).append('\n');
+        sb.append("student=").append(log.getStudent() != null ? log.getStudent().getUserId() : "").append('\n');
+        sb.append("supervisor=").append(log.getSupervisor() != null ? log.getSupervisor().getUserId() : "").append('\n');
+        sb.append("meetingDate=").append(log.getMeetingDate()).append('\n');
+        sb.append("meetingNumber=").append(log.getMeetingNumber()).append('\n');
+        sb.append("meetingMode=").append(nz(log.getMeetingMode())).append('\n');
+        sb.append("fypPhase=").append(nz(log.getFypPhase())).append('\n');
+        sb.append("tasks=").append(nz(log.getTasksJson())).append('\n');
+        sb.append("discussion=").append(nz(log.getDiscussionSummary())).append('\n');
+        sb.append("workDone=").append(nz(log.getWorkDoneDetails())).append('\n');
+        sb.append("workToDo=").append(nz(log.getWorkToBeDone())).append('\n');
+        sb.append("problems=").append(nz(log.getProblemsAndSolutions())).append('\n');
+        sb.append("actionItems=").append(nz(log.getActionItems())).append('\n');
+        sb.append("nextMeetingDate=").append(log.getNextMeetingDate()).append('\n');
+        sb.append("supervisorComments=").append(nz(log.getSupervisorComments())).append('\n');
+        signatures.stream()
+                .sorted(java.util.Comparator
+                        .comparing((MeetingLogSignature s) -> nz(s.getSignerRole()))
+                        .thenComparing(s -> s.getSigner() != null ? s.getSigner().getUserId() : 0L))
+                .forEach(s -> sb.append("sig=").append(nz(s.getSignerRole()))
+                        .append(':').append(nz(s.getSignatureSha256())).append('\n'));
+        return sha256HexOfString(sb.toString());
+    }
+
+    /** SHA-256 (lowercase hex) of a UTF-8 string. */
+    private String sha256HexOfString(String content) {
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(64);
+            for (byte b : digest) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            return null; // SHA-256 is guaranteed present on every standard JRE.
+        }
+    }
+
+    private String nz(String s) { return s == null ? "" : s; }
 
     @Transactional
     public MeetingLog addSupervisorComments(Long logId, Long userId, String comments) {
@@ -270,6 +347,35 @@ public class MeetingLogService {
             return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj);
         } catch (Exception e) {
             return "[]";
+        }
+    }
+
+    /**
+     * SHA-256 (lowercase hex) of the decoded signature image bytes. Accepts a data URL
+     * ("data:image/png;base64,...") and hashes the raw image, so the fingerprint matches
+     * exactly what is stored and embedded in the exported DOCX. Returns null when the
+     * input can't be decoded into image bytes.
+     */
+    private String sha256Hex(String signatureImageDataUrl) {
+        byte[] bytes = decodeImageBytes(signatureImageDataUrl);
+        if (bytes == null || bytes.length == 0) return null;
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder sb = new StringBuilder(64);
+            for (byte b : digest) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            return null; // SHA-256 is guaranteed present on every standard JRE.
+        }
+    }
+
+    private byte[] decodeImageBytes(String url) {
+        if (url == null || url.isBlank()) return null;
+        String base64 = url.startsWith("data:") ? url.substring(url.indexOf(',') + 1) : url;
+        try {
+            return java.util.Base64.getDecoder().decode(base64);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 }

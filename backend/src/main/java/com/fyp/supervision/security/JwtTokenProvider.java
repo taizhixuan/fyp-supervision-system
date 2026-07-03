@@ -1,6 +1,7 @@
 package com.fyp.supervision.security;
 
 import com.fyp.supervision.config.JwtConfig;
+import com.fyp.supervision.service.SystemParameterService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private final JwtConfig jwtConfig;
+    private final SystemParameterService systemParameters;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8));
@@ -24,7 +26,11 @@ public class JwtTokenProvider {
 
     public String generateToken(Long userId, String email, String role) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiryMs());
+        // Session length is admin-tunable via the session_timeout_minutes parameter;
+        // falls back to the configured JWT expiry (default 24h = 1440 min) if unset.
+        long defaultMinutes = jwtConfig.getExpiryMs() / 60_000L;
+        long expiryMs = systemParameters.getInt("session_timeout_minutes", (int) defaultMinutes) * 60_000L;
+        Date expiryDate = new Date(now.getTime() + expiryMs);
 
         return Jwts.builder()
                 .subject(userId.toString())

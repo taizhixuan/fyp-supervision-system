@@ -28,6 +28,10 @@ public class CorsConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        // Expose Content-Disposition so the SPA can read the server-set download filename
+        // cross-origin (app.supervisi.me → api.supervisi.me); otherwise the browser hides
+        // it and every download falls back to a generic client-side name.
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

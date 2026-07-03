@@ -44,6 +44,15 @@ public class ProjectDocument {
     @Builder.Default
     private Integer versionNo = 1;
 
+    /** Groups all revisions of one logical document. NULL for legacy standalone docs. */
+    @Column(name = "version_group", length = 36)
+    private String versionGroup;
+
+    /** True on the current revision of a version group; lists show only latest = true. */
+    @Column(name = "is_latest", nullable = false)
+    @Builder.Default
+    private Boolean isLatest = true;
+
     @Column(name = "file_name", nullable = false)
     private String fileName;
 

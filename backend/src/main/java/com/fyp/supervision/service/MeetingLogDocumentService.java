@@ -147,6 +147,7 @@ public class MeetingLogDocumentService {
             setSatisfactoryCheckboxes(doc, satisfactory);
 
             embedSignatures(doc, log);
+            appendIntegrityFooter(doc, log);
 
             doc.write(out);
             return out.toByteArray();
@@ -534,6 +535,34 @@ public class MeetingLogDocumentService {
         }
     }
 
+    /**
+     * Print the stored whole-document SHA-256 at the end of the logbook, so the exported
+     * copy carries its own integrity fingerprint. It can be re-checked against the value
+     * the server saved at lock time; any edit to the record changes the digest.
+     */
+    private void appendIntegrityFooter(XWPFDocument doc, MeetingLog log) {
+        String hash = log.getContentHash();
+        if (hash == null || hash.isBlank()) return;
+        XWPFParagraph p = doc.createParagraph();
+        XWPFRun r = p.createRun();
+        r.setFontFamily("Consolas");
+        r.setFontSize(7);
+        r.setText("Document integrity (SHA-256): " + hash);
+    }
+
+    /** SHA-256 (lowercase hex) of the given bytes, or null if unavailable. */
+    private String sha256Hex(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) return null;
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder sb = new StringBuilder(64);
+            for (byte b : digest) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            return null; // SHA-256 is guaranteed present on every standard JRE.
+        }
+    }
+
     private byte[] decodeSignatureBytes(String url) {
         if (url == null || url.isBlank()) return null;
         if (url.startsWith("data:image")) {
@@ -588,6 +617,18 @@ public class MeetingLogDocumentService {
                         + " — " + (sig.getSignedAt() != null
                                 ? sig.getSignedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))
                                 : ""));
+
+                // Print the SHA-256 fingerprint of the embedded signature image, so the
+                // exported logbook is a self-contained record: the hash under each signature
+                // is the digest of the exact image shown above it.
+                String sha = sha256Hex(imageBytes);
+                if (sha != null) {
+                    XWPFParagraph hp = target.addParagraph();
+                    XWPFRun hr = hp.createRun();
+                    hr.setFontFamily("Consolas");
+                    hr.setFontSize(7);
+                    hr.setText("SHA-256: " + sha);
+                }
                 return;
             }
         }

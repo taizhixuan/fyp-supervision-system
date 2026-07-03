@@ -34,7 +34,7 @@ const statusConfig: Record<UserStatus, { label: string; color: string; bgColor: 
   ACTIVE: { label: 'Active', color: 'text-emerald-700', bgColor: 'bg-emerald-100', borderColor: 'border-emerald-200' },
   PENDING: { label: 'Pending', color: 'text-orange-700', bgColor: 'bg-orange-100', borderColor: 'border-orange-200' },
   SUSPENDED: { label: 'Suspended', color: 'text-rose-700', bgColor: 'bg-rose-100', borderColor: 'border-rose-200' },
-  BLOCKED: { label: 'Blocked', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-stone-200' },
+  BLOCKED: { label: 'Deleted', color: 'text-stone-600', bgColor: 'bg-stone-100', borderColor: 'border-stone-200' },
 }
 
 export function UserManagement() {
@@ -221,7 +221,7 @@ export function UserManagement() {
             <option value="ACTIVE">Active</option>
             <option value="PENDING">Pending</option>
             <option value="SUSPENDED">Suspended</option>
-            <option value="BLOCKED">Blocked</option>
+            <option value="BLOCKED">Deleted</option>
           </select>
         </div>
       </Card>
@@ -336,7 +336,7 @@ export function UserManagement() {
                       {user.isLocked && (
                         <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded text-[10px] font-medium flex items-center gap-0.5">
                           <Lock className="h-2.5 w-2.5" />
-                          Locked
+                          Deleted
                         </span>
                       )}
                     </div>

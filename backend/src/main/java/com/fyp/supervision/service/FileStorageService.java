@@ -21,6 +21,7 @@ import java.util.UUID;
 public class FileStorageService {
 
     private final FileStorageConfig fileStorageConfig;
+    private final SystemParameterService systemParameters;
 
     // Avatars are served from the public /uploads tree, so an uploaded .svg/.html could
     // execute script in the app origin. Restrict to real raster images (SVG excluded).
@@ -48,6 +49,12 @@ public class FileStorageService {
 
         if (originalFilename.contains("..")) {
             throw new BadRequestException("Invalid file path.");
+        }
+
+        // Enforce the admin-configurable upload ceiling (max_file_upload_size_mb).
+        long maxBytes = (long) systemParameters.getInt("max_file_upload_size_mb", 50) * 1024L * 1024L;
+        if (file.getSize() > maxBytes) {
+            throw new BadRequestException("File must be " + (maxBytes / (1024L * 1024L)) + " MB or smaller.");
         }
 
         String storedFilename = UUID.randomUUID() + "-" + originalFilename;

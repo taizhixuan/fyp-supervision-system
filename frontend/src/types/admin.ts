@@ -70,6 +70,8 @@ export interface CreateUserRequest {
 
 export interface UpdateUserRequest {
   fullName?: string
+  email?: string
+  phone?: string
   role?: UserRole
   status?: UserStatus
   department?: string
@@ -160,6 +162,37 @@ export interface FYPCycle {
   deadlineCount: number
   createdAt: string
   updatedAt: string
+}
+
+export interface AdminCycleStudentRow {
+  userId: string
+  fullName: string
+  email: string
+  mmuId?: string
+  supervisorName?: string | null
+  paired: boolean
+  projectStatus?: string | null
+  stage?: string | null
+  fyp1Passed?: boolean | null
+}
+
+export interface AdminCycleDeadlineRow {
+  deadlineId: number
+  title: string
+  deadlineType?: string
+  audience?: string
+  dueDate?: string | null
+}
+
+export interface AdminCycleStudentsDetail {
+  cycleId: number
+  cycleCode: string
+  type?: string
+  status: string
+  totalStudents: number
+  pairedStudents: number
+  students: AdminCycleStudentRow[]
+  deadlines: AdminCycleDeadlineRow[]
 }
 
 export interface CreateCycleRequest {

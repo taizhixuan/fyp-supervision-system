@@ -66,10 +66,10 @@ function copyForReason(reason: LockedFeatureReason, status: string | undefined):
 }
 
 export function LockedFeaturePage({ reason, title, message }: LockedFeaturePageProps = {}) {
-  const { status, isRegistered, cycleActive } = useStudentRegistrationGate()
+  const { status, supervisorAssigned, cycleActive } = useStudentRegistrationGate()
   const resolvedReason: LockedFeatureReason =
     reason ?? (cycleActive === false ? 'CYCLE_ENDED'
-      : isRegistered ? 'ALREADY_REGISTERED'
+      : supervisorAssigned ? 'ALREADY_REGISTERED'
       : 'AWAITING_SUPERVISOR')
   const copy = copyForReason(resolvedReason, status)
   const Icon = copy.Icon

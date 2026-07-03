@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AuditService;
+import com.fyp.supervision.service.CycleLifecycleService;
 import com.fyp.supervision.service.MeetingLogComplianceService;
 import com.fyp.supervision.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,7 @@ public class AdminProjectController {
     private final NotificationService notificationService;
     private final MeetingLogComplianceService meetingLogComplianceService;
     private final AuditService auditService;
+    private final CycleLifecycleService cycleLifecycleService;
 
     @GetMapping("/fyp1-pass")
     public ResponseEntity<?> getFyp1Projects() {
@@ -103,10 +105,19 @@ public class AdminProjectController {
         Boolean previous = project.getFyp1Passed();
         project.setFyp1Passed(passed);
         projectRepository.save(project);
+        // On a pass, move the student into the active FYP2 cycle right away (if one
+        // exists) so they show up under FYP2 instead of waiting for their next login.
+        boolean movedToFyp2 = Boolean.TRUE.equals(passed)
+                && cycleLifecycleService.advanceProjectToActiveFyp2(project);
         if (passed != null && project.getStudent() != null) {
-            String msg = passed
-                    ? "You passed FYP1. You can proceed to FYP2 on your next login."
-                    : "Your FYP1 result is failed. Please contact the FYP committee.";
+            String msg;
+            if (passed) {
+                msg = movedToFyp2
+                        ? "You passed FYP1 and have been moved into the active FYP2 cycle."
+                        : "You passed FYP1. You'll move into FYP2 once the FYP2 cycle starts.";
+            } else {
+                msg = "Your FYP1 result is failed. Please contact the FYP committee.";
+            }
             notificationService.createNotification(
                     project.getStudent().getUserId(),
                     "FYP1_RESULT",

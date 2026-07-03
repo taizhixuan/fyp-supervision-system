@@ -44,13 +44,10 @@ public class CommitteeService {
         long totalSupervisors = userAccountRepository.countByRole(UserRole.SUPERVISOR);
         long activeProjects = projectRepository.countByStatus(ProjectStatus.ACTIVE);
         long completedProjects = projectRepository.countByStatus(ProjectStatus.COMPLETED);
-        long pendingProposals = proposalRepository.countByStatus(ProposalStatus.SUBMITTED);
+        long pendingProposals = proposalRepository.countByStatus(ProposalStatus.UNDER_REVIEW);
         long approvedProposals = proposalRepository.countByStatus(ProposalStatus.APPROVED);
         long rejectedProposals = proposalRepository.countByStatus(ProposalStatus.REJECTED);
-        long totalProposals = pendingProposals + approvedProposals + rejectedProposals
-                + proposalRepository.countByStatus(ProposalStatus.DRAFT)
-                + proposalRepository.countByStatus(ProposalStatus.UNDER_REVIEW)
-                + proposalRepository.countByStatus(ProposalStatus.REVISION_REQUIRED);
+        long totalProposals = proposalRepository.count();
         long overloadedSupervisors = supervisorProfileRepository.countOverloaded();
 
         Map<String, Object> stats = new LinkedHashMap<>();
@@ -122,9 +119,10 @@ public class CommitteeService {
         // Each candidate carries the raw timestamp so we can sort across sources.
         List<Object[]> candidates = new ArrayList<>();
 
-        // 1. Recent SUBMITTED proposals
+        // 1. Recent proposals awaiting committee review (supervisor-approved). The committee
+        //    does not see proposals still awaiting the supervisor's first review.
         Page<Proposal> recentProposals = proposalRepository.findByStatus(
-                ProposalStatus.SUBMITTED,
+                ProposalStatus.UNDER_REVIEW,
                 org.springframework.data.domain.PageRequest.of(0, 5,
                         org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")));
         for (Proposal p : recentProposals.getContent()) {
@@ -133,7 +131,7 @@ public class CommitteeService {
             a.put("type", "PROPOSAL_SUBMITTED");
             a.put("title", p.getTitle() != null ? p.getTitle() : "Proposal submitted");
             String studentName = p.getStudent() != null ? p.getStudent().getFullName() : "Unknown student";
-            a.put("description", "New proposal submitted by " + studentName);
+            a.put("description", "Proposal from " + studentName + " forwarded for committee review");
             a.put("timestamp", p.getCreatedAt().toString());
             a.put("actor", studentName);
             candidates.add(new Object[] { p.getCreatedAt(), a });
@@ -221,9 +219,12 @@ public class CommitteeService {
     public List<Map<String, Object>> getProposalDtos(String status, Pageable pageable) {
         Page<Proposal> page;
         if (status != null && !status.isBlank()) {
-            // Frontend uses PENDING_REVIEW / REVISION_REQUESTED; backend enum is SUBMITTED / REVISION_REQUIRED.
+            // Frontend uses PENDING_REVIEW / REVISION_REQUESTED. In the two-stage flow a
+            // proposal only reaches the committee once the supervisor approves it, so the
+            // committee's "pending review" maps to UNDER_REVIEW (supervisor-approved), not
+            // SUBMITTED (still awaiting the supervisor).
             String mapped = status;
-            if ("PENDING_REVIEW".equals(mapped)) mapped = "SUBMITTED";
+            if ("PENDING_REVIEW".equals(mapped)) mapped = "UNDER_REVIEW";
             else if ("REVISION_REQUESTED".equals(mapped)) mapped = "REVISION_REQUIRED";
             ProposalStatus parsed;
             try {
@@ -235,15 +236,60 @@ public class CommitteeService {
         } else {
             page = proposalRepository.findAll(pageable);
         }
-        // Drop DRAFTs — committee only sees proposals that students have actually submitted.
+        // Committee only sees proposals that have actually reached the committee stage.
         return page.getContent().stream()
-                .filter(p -> p.getStatus() != ProposalStatus.DRAFT)
+                .filter(this::isCommitteeVisible)
                 .map(this::buildProposalForCommitteeDto).collect(Collectors.toList());
+    }
+
+    /**
+     * A proposal is visible to the committee only once the supervisor has approved it and
+     * forwarded it (UNDER_REVIEW / APPROVED), or once the committee itself has acted on it
+     * (leaving a FYP_COMMITTEE review — its own decision history). It is hidden while still
+     * awaiting the supervisor (DRAFT / SUBMITTED) and when a supervisor rejected or bounced
+     * it back for revision without it ever reaching the committee.
+     */
+    private boolean isCommitteeVisible(Proposal p) {
+        ProposalStatus s = p.getStatus();
+        if (s == ProposalStatus.DRAFT || s == ProposalStatus.SUBMITTED) return false;
+        if (s == ProposalStatus.UNDER_REVIEW || s == ProposalStatus.APPROVED) return true;
+        // REJECTED / REVISION_REQUIRED: only if the committee already reviewed it.
+        return proposalReviewRepository
+                .findByProposal_ProposalIdOrderByReviewedAtDesc(p.getProposalId())
+                .stream().anyMatch(r -> "FYP_COMMITTEE".equals(r.getReviewerRole()));
+    }
+
+    /**
+     * Resolve a proposal version's attachment for committee download. Only proposals that
+     * have reached the committee are accessible. {@code versionId} null → latest version.
+     */
+    public ProposalVersion resolveAttachmentVersion(Long proposalId, Long versionId) {
+        Proposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        if (!isCommitteeVisible(proposal)) {
+            throw new ResourceNotFoundException("Proposal not found");
+        }
+        List<ProposalVersion> versions = proposalVersionRepository
+                .findByProposal_ProposalIdOrderByVersionNoDesc(proposalId);
+        ProposalVersion v = (versionId != null)
+                ? versions.stream().filter(x -> x.getVersionId().equals(versionId)).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Version not found"))
+                : versions.stream().findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("No proposal version found"));
+        if (v.getUploadFilePath() == null || v.getUploadFilePath().isBlank()) {
+            throw new ResourceNotFoundException("No attachment on this proposal version");
+        }
+        return v;
     }
 
     public Map<String, Object> getProposalDto(Long proposalId) {
         Proposal proposal = proposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        // 404 (not 403) when the proposal hasn't reached the committee yet, so a member
+        // can't view a proposal before the supervisor has approved it.
+        if (!isCommitteeVisible(proposal)) {
+            throw new ResourceNotFoundException("Proposal not found");
+        }
         return buildProposalForCommitteeDto(proposal);
     }
 
@@ -284,28 +330,30 @@ public class CommitteeService {
             return rDto;
         }).collect(Collectors.toList());
 
-        // Parse content from latest version
-        String abstractText = "";
-        List<String> objectives = List.of();
-        String methodology = "";
-        if (!versions.isEmpty()) {
-            try {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> content = objectMapper.readValue(
-                        versions.get(0).getContentText() != null ? versions.get(0).getContentText() : "{}", Map.class);
-                abstractText = (String) content.getOrDefault("background", "");
-                Object obj = content.get("objectives");
-                if (obj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<String> list = (List<String>) obj;
-                    objectives = list;
-                }
-                methodology = (String) content.getOrDefault("methodology", "");
-            } catch (Exception ignored) {}
-        }
+        // Full content of the latest version — the committee sees every section the
+        // supervisor sees, not just a thin abstract/objectives/methodology projection.
+        Map<String, Object> content = parseContentMap(versions.isEmpty() ? null : versions.get(0).getContentText());
+        String abstractText = strVal(content.get("background"), strVal(content.get("problemStatement"), ""));
+        Object objectivesObj = content.get("objectives");
+        List<String> objectives = objectivesObj instanceof List ? castStringList(objectivesObj) : List.of();
+        String methodology = strVal(content.get("methodology"), "");
+
+        // Per-version content so the committee can browse the version history.
+        List<Map<String, Object>> versionDtos = versions.stream().map(v -> {
+            Map<String, Object> vDto = new LinkedHashMap<>();
+            vDto.put("versionId", v.getVersionId());
+            vDto.put("version", v.getVersionNo());
+            vDto.put("status", proposal.getStatus().name());
+            vDto.put("submittedAt", v.getCreatedAt() != null ? v.getCreatedAt().toString() : "");
+            vDto.put("createdAt", v.getCreatedAt() != null ? v.getCreatedAt().toString() : "");
+            vDto.put("content", parseContentMap(v.getContentText()));
+            vDto.put("fileUrl", toUploadsUrl(v.getUploadFilePath()));
+            vDto.put("fileName", v.getFileName());
+            return vDto;
+        }).collect(Collectors.toList());
 
         String proposalStatus = proposal.getStatus().name();
-        if ("SUBMITTED".equals(proposalStatus)) proposalStatus = "PENDING_REVIEW";
+        if ("UNDER_REVIEW".equals(proposalStatus)) proposalStatus = "PENDING_REVIEW";
         if ("REVISION_REQUIRED".equals(proposalStatus)) proposalStatus = "REVISION_REQUESTED";
 
         Map<String, Object> dto = new LinkedHashMap<>();
@@ -327,19 +375,46 @@ public class CommitteeService {
         dto.put("aiAnalysis", aiAnalysis);
         dto.put("reviewHistory", reviewHistory);
         // documentUrl: latest version's uploaded file, served through /uploads/** static handler.
-        String documentUrl = null;
-        if (!versions.isEmpty()) {
-            String path = versions.get(0).getUploadFilePath();
-            if (path != null && !path.isBlank()) {
-                String trimmed = path.startsWith("/") ? path.substring(1) : path;
-                documentUrl = trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed;
-            }
-        }
+        String documentUrl = toUploadsUrl(versions.isEmpty() ? null : versions.get(0).getUploadFilePath());
         dto.put("documentUrl", documentUrl);
+        dto.put("fileName", versions.isEmpty() ? null : versions.get(0).getFileName());
+        // Full section content + back-compat scalar fields.
+        dto.put("content", content);
+        dto.put("previousVersions", versionDtos);
         dto.put("abstract", abstractText);
         dto.put("objectives", objectives);
         dto.put("methodology", methodology);
         return dto;
+    }
+
+    private Map<String, Object> parseContentMap(String contentText) {
+        if (contentText == null || contentText.isBlank()) return new LinkedHashMap<>();
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> m = objectMapper.readValue(contentText, Map.class);
+            return m;
+        } catch (Exception e) {
+            return new LinkedHashMap<>();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> castStringList(Object o) {
+        try {
+            return (List<String>) o;
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private String strVal(Object o, String fallback) {
+        return (o instanceof String s && !s.isBlank()) ? s : fallback;
+    }
+
+    private String toUploadsUrl(String path) {
+        if (path == null || path.isBlank()) return null;
+        String trimmed = path.startsWith("/") ? path.substring(1) : path;
+        return trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed;
     }
 
     // ========== Projects ==========

@@ -166,6 +166,28 @@ public class AccountDeletionService {
         return toDto(request);
     }
 
+    /**
+     * Admin-initiated erasure ("Delete user" button). Reuses the same
+     * anonymisation as the PDPA approval flow: the user's academic records
+     * (project, proposal, meeting logs, documents) survive, but their identity
+     * is scrubbed and the account is permanently locked out.
+     *
+     * A raw {@code deleteById} would fail on the non-null FKs from those
+     * records, which is why the button used to throw a 409 conflict.
+     */
+    @Transactional
+    public void adminErase(Long targetUserId, Long adminUserId) {
+        if (targetUserId == null) {
+            throw new BadRequestException("No user specified.");
+        }
+        if (targetUserId.equals(adminUserId)) {
+            throw new BadRequestException("You cannot delete your own account.");
+        }
+        UserAccount user = userAccountRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        anonymise(user);
+    }
+
     // ---------- Anonymisation ----------------------------------------------
 
     private void anonymise(UserAccount user) {

@@ -8,12 +8,14 @@ import com.fyp.supervision.exception.AiServiceUnavailableException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProposalCheckResultRepository;
 import com.fyp.supervision.service.AiServiceClient;
+import com.fyp.supervision.service.FileStorageService;
 import com.fyp.supervision.service.ProposalDocumentService;
 import com.fyp.supervision.service.RateLimitService;
 import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +40,7 @@ public class StudentProposalController {
     private final ProposalCheckResultRepository checkResultRepository;
     private final ProposalDocumentService proposalDocumentService;
     private final StudentAccessService studentAccessService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<?> getProposal(@AuthenticationPrincipal UserDetails user) {
@@ -69,6 +72,29 @@ public class StudentProposalController {
         Long userId = Long.parseLong(user.getUsername());
         studentAccessService.requireActiveCycle(userId);
         return ResponseEntity.ok(studentService.submitProposal(userId));
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@AuthenticationPrincipal UserDetails user,
+                                        @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        Long userId = Long.parseLong(user.getUsername());
+        studentAccessService.requireActiveCycle(userId);
+        return ResponseEntity.ok(studentService.uploadProposalFile(userId, file));
+    }
+
+    /** Download the student's own supporting attachment (latest version, or ?versionId=). */
+    @GetMapping("/attachment")
+    public ResponseEntity<Resource> downloadAttachment(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(value = "versionId", required = false) Long versionId) {
+        Long userId = Long.parseLong(user.getUsername());
+        ProposalVersion v = studentService.resolveOwnAttachmentVersion(userId, versionId);
+        Resource resource = fileStorageService.loadFile(v.getUploadFilePath());
+        String fileName = v.getFileName() != null ? v.getFileName() : "attachment";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(resource);
     }
 
     @GetMapping("/versions")

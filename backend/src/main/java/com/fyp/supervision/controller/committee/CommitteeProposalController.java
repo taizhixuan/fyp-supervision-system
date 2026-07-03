@@ -2,17 +2,23 @@ package com.fyp.supervision.controller.committee;
 
 import com.fyp.supervision.entity.Proposal;
 import com.fyp.supervision.entity.ProposalReview;
+import com.fyp.supervision.entity.ProposalVersion;
 import com.fyp.supervision.enums.ProposalStatus;
+import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.ProposalRepository;
 import com.fyp.supervision.repository.ProposalReviewRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.CommitteeService;
+import com.fyp.supervision.service.FileStorageService;
 import com.fyp.supervision.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,6 +38,7 @@ public class CommitteeProposalController {
     private final NotificationService notificationService;
     private final CommitteeService committeeService;
     private final AuditService auditService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<?> getProposals(@RequestParam(required = false) String status, Pageable pageable) {
@@ -44,6 +51,20 @@ public class CommitteeProposalController {
         return ResponseEntity.ok(committeeService.getProposalDto(id));
     }
 
+    /** Download a proposal's supporting attachment (latest version, or ?versionId=). */
+    @GetMapping("/{id}/attachment")
+    public ResponseEntity<Resource> downloadAttachment(
+            @PathVariable Long id,
+            @RequestParam(value = "versionId", required = false) Long versionId) {
+        ProposalVersion v = committeeService.resolveAttachmentVersion(id, versionId);
+        Resource resource = fileStorageService.loadFile(v.getUploadFilePath());
+        String fileName = v.getFileName() != null ? v.getFileName() : "attachment";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(resource);
+    }
+
     @PostMapping("/{id}/review")
     @Transactional
     public ResponseEntity<?> reviewProposal(@AuthenticationPrincipal UserDetails user,
@@ -52,6 +73,14 @@ public class CommitteeProposalController {
                                             @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         Proposal proposal = proposalRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
+
+        // The committee is the SECOND reviewer. A proposal only reaches the committee
+        // queue once the supervisor has approved it (status UNDER_REVIEW). Block any
+        // attempt to review a proposal that the supervisor has not yet approved.
+        if (proposal.getStatus() != ProposalStatus.UNDER_REVIEW) {
+            throw new BadRequestException(
+                    "This proposal is not awaiting committee review. The supervisor must approve it first.");
+        }
 
         ProposalReview review = ProposalReview.builder()
                 .proposal(proposal)

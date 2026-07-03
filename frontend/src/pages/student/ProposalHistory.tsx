@@ -11,6 +11,7 @@ import { Card, Button, Badge, Spinner } from '@/components/ui'
 import { useProposalVersions } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { downloadAuthedFile } from '@/lib/utils/download'
 import type { ProposalStatus } from '@/types'
 
 const statusColors: Record<ProposalStatus, string> = {
@@ -128,16 +129,21 @@ export function ProposalHistory() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    {version.fileUrl && (
-                      <a href={version.fileUrl} target="_blank" rel="noopener noreferrer">
-                        <Button variant="secondary" size="sm" leftIcon={<Download className="h-4 w-4" />}>
-                          Download
-                        </Button>
-                      </a>
+                    {version.fileName && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        leftIcon={<Download className="h-4 w-4" />}
+                        onClick={() => downloadAuthedFile(`/student/proposal/attachment?versionId=${version.versionId}`, version.fileName ?? undefined)}
+                      >
+                        Download
+                      </Button>
                     )}
-                    <Button variant="ghost" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
-                      View Details
-                    </Button>
+                    <Link to={ROUTES.STUDENT.PROPOSAL_VERSION.replace(':versionId', String(version.versionId))}>
+                      <Button variant="ghost" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
+                        View Details
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </Card>

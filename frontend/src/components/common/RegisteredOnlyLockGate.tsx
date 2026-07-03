@@ -8,12 +8,12 @@ const LockedFeaturePage = lazy(() =>
 
 /**
  * Gate the supervisor-discovery flow (Find Supervisor, AI Recommendations, Compare,
- * Create Request, My Requests) for already-registered students AND for any student
- * whose enrolled cycle has ended. Once the proposal is APPROVED there's no point in
- * browsing for supervisors; once the cycle has ended the same applies.
+ * Create Request, My Requests) for students already paired with a supervisor AND for
+ * any student whose enrolled cycle has ended. Once a supervisor is assigned there's no
+ * point in browsing for supervisors; once the cycle has ended the same applies.
  */
 export function RegisteredOnlyLockGate({ children }: { children: ReactNode }) {
-  const { isLoading, isRegistered, cycleActive } = useStudentRegistrationGate()
+  const { isLoading, supervisorAssigned, cycleActive } = useStudentRegistrationGate()
 
   if (isLoading) {
     return (
@@ -31,7 +31,7 @@ export function RegisteredOnlyLockGate({ children }: { children: ReactNode }) {
     )
   }
 
-  if (isRegistered) {
+  if (supervisorAssigned) {
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Spinner size="lg" /></div>}>
         <LockedFeaturePage reason="ALREADY_REGISTERED" />

@@ -39,6 +39,7 @@ export const ROUTES = {
     // Proposal
     PROPOSAL: '/student/proposal',
     PROPOSAL_HISTORY: '/student/proposal/history',
+    PROPOSAL_VERSION: '/student/proposal/history/:versionId',
     PROPOSAL_ANALYSIS: '/student/proposal/analysis',
     PROPOSAL_STATUS: '/student/proposal/status',
     // Registration

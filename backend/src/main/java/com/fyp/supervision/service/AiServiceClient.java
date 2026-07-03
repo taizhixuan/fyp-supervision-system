@@ -17,8 +17,15 @@ import java.util.Map;
 @Service
 public class AiServiceClient {
 
+    // Integration Settings names that gate each AI service (fail-open if the row is absent).
+    private static final String REC_INTEGRATION = "Recommendation Service";
+    private static final String ANALYZER_INTEGRATION = "Proposal Analyzer";
+    private static final String CHATBOT_INTEGRATION = "FYP Chatbot";
+
     private final RestTemplate restTemplate;
     private final MeterRegistry meterRegistry;
+    private final IntegrationConfigService integrationConfig;
+    private final SystemParameterService systemParameters;
 
     @Value("${app.ai.recommendation-url}")
     private String recommendationUrl;
@@ -29,7 +36,8 @@ public class AiServiceClient {
     @Value("${app.ai.chatbot-url}")
     private String chatbotUrl;
 
-    public AiServiceClient(MeterRegistry meterRegistry) {
+    public AiServiceClient(MeterRegistry meterRegistry, IntegrationConfigService integrationConfig,
+                           SystemParameterService systemParameters) {
         // Bound the wait on a slow/hung AI service so a request thread (and any lock it
         // holds) can't block indefinitely. Read timeout is generous for LLM generation.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -37,6 +45,25 @@ public class AiServiceClient {
         factory.setReadTimeout(120_000);
         this.restTemplate = new RestTemplate(factory);
         this.meterRegistry = meterRegistry;
+        this.integrationConfig = integrationConfig;
+        this.systemParameters = systemParameters;
+    }
+
+    // A service is off if either its Integration Settings row is inactive or its
+    // System Parameter toggle is false. Both are fail-open (default on).
+    private boolean recommendationEnabled() {
+        return systemParameters.getBoolean("ai_recommendation_enabled", true)
+                && integrationConfig.isEnabledByName(REC_INTEGRATION);
+    }
+
+    private boolean analyzerEnabled() {
+        return systemParameters.getBoolean("ai_proposal_analysis_enabled", true)
+                && integrationConfig.isEnabledByName(ANALYZER_INTEGRATION);
+    }
+
+    private boolean chatbotEnabled() {
+        return systemParameters.getBoolean("ai_chatbot_enabled", true)
+                && integrationConfig.isEnabledByName(CHATBOT_INTEGRATION);
     }
 
     /**
@@ -47,6 +74,9 @@ public class AiServiceClient {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getRecommendations(Map<String, Object> payload) {
+        if (!recommendationEnabled()) {
+            throw new AiServiceUnavailableException("Recommendation service is disabled by the administrator.");
+        }
         try {
             ResponseEntity<Map> response = postJson(recommendationUrl + "/ai/recommendations", payload);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -69,6 +99,9 @@ public class AiServiceClient {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> analyzeProposal(Map<String, Object> payload) {
+        if (!analyzerEnabled()) {
+            throw new AiServiceUnavailableException("Proposal analyzer is disabled by the administrator.");
+        }
         try {
             ResponseEntity<Map> response = postJson(analyzerUrl + "/ai/analyze-proposal", payload);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -91,6 +124,9 @@ public class AiServiceClient {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> chat(Map<String, Object> payload) {
+        if (!chatbotEnabled()) {
+            throw new AiServiceUnavailableException("Chatbot is disabled by the administrator.");
+        }
         Timer.Sample sample = Timer.start(meterRegistry);
         String outcome = "success";
         try {
@@ -122,6 +158,9 @@ public class AiServiceClient {
      */
     @SuppressWarnings("unchecked")
     public String summarizeSession(Map<String, Object> payload) {
+        if (!chatbotEnabled()) {
+            return "";
+        }
         try {
             ResponseEntity<Map> response = postJson(chatbotUrl + "/ai/summarize", payload);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {

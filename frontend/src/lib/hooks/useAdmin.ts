@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { NOTIFICATION_QUERY_OPTIONS, invalidateAllNotifications } from './notificationCache'
 import { apiClient } from '@/lib/api/client'
 import type {
   SystemHealthStats,
@@ -12,6 +13,7 @@ import type {
   AdminSystemParameter,
   UpdateParameterRequest,
   FYPCycle,
+  AdminCycleStudentsDetail,
   CycleStatus,
   CreateCycleRequest,
   UpdateCycleRequest,
@@ -771,6 +773,7 @@ export const adminKeys = {
   pendingRegistrations: () => [...adminKeys.all, 'pendingRegistrations'] as const,
   fyp1Pass: () => [...adminKeys.all, 'fyp1Pass'] as const,
   cycleTemplate: (phase: string) => [...adminKeys.all, 'cycleTemplate', phase] as const,
+  cycleStudents: (id: string) => [...adminKeys.all, 'cycleStudents', id] as const,
   rosterStudents: () => [...adminKeys.all, 'roster', 'students'] as const,
   rosterSupervisors: () => [...adminKeys.all, 'roster', 'supervisors'] as const,
 }
@@ -856,6 +859,17 @@ export function useCycleTemplate(phase: string = 'FYP1') {
       )
       return data
     },
+  })
+}
+
+export function useCycleStudents(cycleId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: adminKeys.cycleStudents(cycleId ?? ''),
+    queryFn: async () => {
+      const { data } = await apiClient.get<AdminCycleStudentsDetail>(`/admin/cycles/${cycleId}/students`)
+      return data
+    },
+    enabled: enabled && !!cycleId,
   })
 }
 
@@ -1859,6 +1873,7 @@ export function useAdminNotifications() {
       const { data } = await apiClient.get('/notifications')
       return data
     },
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -1873,6 +1888,7 @@ export function useAdminUnreadCount() {
       const { data } = await apiClient.get('/notifications/unread-count')
       return data
     },
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -1888,7 +1904,7 @@ export function useMarkAdminNotificationRead() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.notifications() })
+      invalidateAllNotifications(queryClient)
     },
   })
 }

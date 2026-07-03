@@ -35,6 +35,7 @@ const CreateSupervisionRequest = lazy(() => import('@/pages/student/CreateSuperv
 const MyRequests = lazy(() => import('@/pages/student/MyRequests').then(m => ({ default: m.MyRequests })))
 const ProposalWorkspace = lazy(() => import('@/pages/student/ProposalWorkspace').then(m => ({ default: m.ProposalWorkspace })))
 const ProposalHistory = lazy(() => import('@/pages/student/ProposalHistory').then(m => ({ default: m.ProposalHistory })))
+const ProposalVersionDetail = lazy(() => import('@/pages/student/ProposalVersionDetail').then(m => ({ default: m.ProposalVersionDetail })))
 const ProposalAnalysis = lazy(() => import('@/pages/student/ProposalAnalysis').then(m => ({ default: m.ProposalAnalysis })))
 const ProposalStatus = lazy(() => import('@/pages/student/ProposalStatus').then(m => ({ default: m.ProposalStatus })))
 const RegistrationStatus = lazy(() => import('@/pages/student/RegistrationStatus').then(m => ({ default: m.RegistrationStatus })))
@@ -111,6 +112,7 @@ const ApprovedRoster = lazy(() => import('@/pages/admin/ApprovedRoster').then(m 
 const Fyp1PassTracking = lazy(() => import('@/pages/admin/Fyp1PassTracking').then(m => ({ default: m.Fyp1PassTracking })))
 const CreateUser = lazy(() => import('@/pages/admin/CreateUser').then(m => ({ default: m.CreateUser })))
 const UserDetail = lazy(() => import('@/pages/admin/UserDetail').then(m => ({ default: m.UserDetail })))
+const UserEdit = lazy(() => import('@/pages/admin/UserEdit').then(m => ({ default: m.UserEdit })))
 const SystemParameters = lazy(() => import('@/pages/admin/SystemParameters').then(m => ({ default: m.SystemParameters })))
 const CycleManagement = lazy(() => import('@/pages/admin/CycleManagement').then(m => ({ default: m.CycleManagement })))
 const DeadlineManagement = lazy(() => import('@/pages/admin/DeadlineManagement').then(m => ({ default: m.DeadlineManagement })))
@@ -299,6 +301,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
             <StudentFeatureGate><ProposalHistory /></StudentFeatureGate>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.PROPOSAL_VERSION,
+        element: (
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <StudentFeatureGate><ProposalVersionDetail /></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -978,7 +988,7 @@ export const router = createBrowserRouter([
         path: ROUTES.ADMIN.USER_EDIT,
         element: (
           <ProtectedRoute allowedRoles={['SYSTEM_ADMIN']}>
-            <UserDetail />
+            <UserEdit />
           </ProtectedRoute>
         ),
       },

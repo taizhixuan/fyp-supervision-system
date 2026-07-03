@@ -280,7 +280,7 @@ export function MeetingList() {
 function MeetingCard({ meeting }: { meeting: Meeting }) {
   const config = statusConfig[meeting.status] ?? FALLBACK_STATUS
   const StatusIcon = config.icon
-  const PlatformIcon = platformIcons[meeting.platform]
+  const PlatformIcon = platformIcons[meeting.platform] ?? Video
   const isUpcoming = new Date(meeting.scheduledAt) >= new Date()
   const meetingDate = new Date(meeting.scheduledAt)
   const isPendingLike = meeting.status === 'PENDING' || meeting.status === 'PROPOSED'

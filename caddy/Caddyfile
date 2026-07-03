@@ -9,9 +9,13 @@
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml exec caddy \
 #     caddy trust
 #
-# Production: replace app.localhost / api.localhost with your real domains
-# (e.g. app.example.com / api.example.com) and remove `tls internal` — Caddy
-# will auto-issue Let's Encrypt certs over ACME-HTTP-01 on :80.
+# Production: set the env vars below (droplet .env → compose caddy service)
+# instead of editing this file — local edits get wiped by git pull:
+#   APP_DOMAIN=app.example.com   API_DOMAIN=api.example.com
+#   API_ORIGIN=https://api.example.com
+#   CADDY_TLS_MODE=<your-email>   (an email arg = Let's Encrypt ACME;
+#                                  the default `internal` = local CA)
+#   ACME_EMAIL=<your-email>
 
 {
 	# Disable the admin endpoint that ships open by default — we don't need
@@ -19,12 +23,12 @@
 	admin off
 	# Email used for Let's Encrypt account when you switch to public certs.
 	# Harmless with `tls internal`.
-	email admin@example.com
+	email {$ACME_EMAIL:admin@example.com}
 }
 
 # ---------- Frontend (Vite-built SPA served by nginx) -----------------------
-app.localhost {
-	tls internal
+{$APP_DOMAIN:app.localhost} {
+	tls {$CADDY_TLS_MODE:internal}
 
 	encode zstd gzip
 
@@ -38,9 +42,8 @@ app.localhost {
 		# CSP. Tight on scripts (no 'unsafe-inline' — the theme bootstrap lives
 		# at /theme-bootstrap.js to satisfy 'self'). Permissive on styles because
 		# React inline style={} attrs and some Tailwind utilities use them.
-		# When you switch to a public domain, replace `https://api.localhost`
-		# below with your real API host (e.g. https://api.example.com).
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://api.localhost; connect-src 'self' https://api.localhost; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+		# The API origin comes from $API_ORIGIN (set alongside APP_DOMAIN).
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: {$API_ORIGIN:https://api.localhost}; connect-src 'self' {$API_ORIGIN:https://api.localhost}; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
 		-Server
 	}
 
@@ -53,8 +56,8 @@ app.localhost {
 }
 
 # ---------- Backend API (Spring Boot) ---------------------------------------
-api.localhost {
-	tls internal
+{$API_DOMAIN:api.localhost} {
+	tls {$CADDY_TLS_MODE:internal}
 
 	encode zstd gzip
 

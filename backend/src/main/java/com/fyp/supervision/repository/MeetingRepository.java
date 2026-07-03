@@ -67,4 +67,19 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
             @Param("statuses") List<MeetingStatus> statuses,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    /** Confirmed meetings starting within the reminder window that have not been reminded yet.
+     *  Project/student/supervisor are fetch-joined so the scheduled thread (no open session)
+     *  can read them without a LazyInitializationException. */
+    @Query("select m from Meeting m " +
+           "join fetch m.project p " +
+           "join fetch p.student " +
+           "left join fetch p.supervisor " +
+           "where m.status = :status " +
+           "and m.confirmedStartAt is not null " +
+           "and m.confirmedStartAt between :from and :to " +
+           "and m.reminderSentAt is null")
+    List<Meeting> findDueForReminder(@Param("status") MeetingStatus status,
+                                     @Param("from") LocalDateTime from,
+                                     @Param("to") LocalDateTime to);
 }

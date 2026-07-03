@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,7 +16,7 @@ import {
   Cloud,
 } from 'lucide-react'
 import { Card, Button, Input } from '@/components/ui'
-import { useUploadDocument } from '@/lib/hooks/useStudent'
+import { useUploadDocument, useDocumentDetail } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { getApiErrorMessage } from '@/lib/api/client'
 import { cn } from '@/lib/utils/cn'
@@ -58,6 +58,10 @@ function formatFileSize(bytes: number): string {
 
 export function DocumentUpload() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const replaceId = searchParams.get('replace') || ''
+  const isVersioning = !!replaceId
+  const { data: original } = useDocumentDetail(replaceId)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -87,6 +91,16 @@ export function DocumentUpload() {
 
   const selectedType = watch('type')
   const selectedPhase = watch('phase')
+
+  // When uploading a new version, prefill the form from the original document.
+  useEffect(() => {
+    if (original) {
+      setValue('title', original.title)
+      setValue('type', original.type)
+      setValue('phase', original.phase)
+      if (original.description) setValue('description', original.description)
+    }
+  }, [original, setValue])
 
   const validateFile = (file: File): boolean => {
     setFileError(null)
@@ -151,6 +165,7 @@ export function DocumentUpload() {
         description: data.description,
         type: data.type,
         phase: data.phase,
+        replaceDocumentId: isVersioning ? Number(replaceId) : undefined,
       })
 
       if (progressTimer) clearInterval(progressTimer)
@@ -170,9 +185,13 @@ export function DocumentUpload() {
           <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-success-600" />
           </div>
-          <h2 className="text-xl font-bold text-neutral-900 mb-2">Document Uploaded!</h2>
+          <h2 className="text-xl font-bold text-neutral-900 mb-2">
+            {isVersioning ? 'New Version Uploaded!' : 'Document Uploaded!'}
+          </h2>
           <p className="text-neutral-600 mb-6">
-            Your document has been uploaded successfully.
+            {isVersioning
+              ? 'A new version has been saved. Previous versions are kept in the version history.'
+              : 'Your document has been uploaded successfully.'}
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" onClick={() => navigate(ROUTES.STUDENT.DOCUMENTS)}>
@@ -206,8 +225,14 @@ export function DocumentUpload() {
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">Upload Document</h1>
-        <p className="text-neutral-600 mt-1">Add a new document to your FYP repository</p>
+        <h1 className="text-2xl font-bold text-neutral-900">
+          {isVersioning ? 'Upload New Version' : 'Upload Document'}
+        </h1>
+        <p className="text-neutral-600 mt-1">
+          {isVersioning
+            ? `Replace the file for "${original?.title ?? 'this document'}" — the version number increases and previous versions are kept.`
+            : 'Add a new document to your FYP repository'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 lg:space-y-4">
@@ -394,7 +419,7 @@ export function DocumentUpload() {
             isLoading={uploadDocument.isPending}
             disabled={!selectedFile || !!fileError}
           >
-            Upload Document
+            {isVersioning ? 'Upload New Version' : 'Upload Document'}
           </Button>
         </div>
       </form>

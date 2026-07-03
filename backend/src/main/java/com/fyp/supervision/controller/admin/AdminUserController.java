@@ -10,6 +10,7 @@ import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.StudentProfileRepository;
 import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AccountDeletionService;
 import com.fyp.supervision.service.AdminService;
 import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.CycleLifecycleService;
@@ -44,6 +45,7 @@ public class AdminUserController {
     private final NotificationService notificationService;
     private final CycleLifecycleService cycleLifecycleService;
     private final AuditService auditService;
+    private final AccountDeletionService accountDeletionService;
 
     @GetMapping
     public ResponseEntity<?> getUsers(
@@ -97,13 +99,16 @@ public class AdminUserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id,
                                            @AuthenticationPrincipal UserDetails admin,
                                            HttpServletRequest httpRequest) {
-        // Snapshot identity BEFORE delete — after the row is gone we can't look it up.
+        UserAccount adminUser = adminFromPrincipal(admin);
+        // Snapshot identity BEFORE erasure — afterwards the row is scrubbed.
         UserAccount target = userRepository.findById(id).orElse(null);
         String snapshot = target != null
                 ? target.getRole() + " " + target.getEmail() + " (" + target.getMmuId() + ")"
                 : "unknown user " + id;
-        userRepository.deleteById(id);
-        auditService.record(adminFromPrincipal(admin), "USER_DELETED", "USER_ACCOUNT",
+        // Anonymise rather than hard-delete: academic records hold non-null FKs
+        // to user_account, so a real delete throws a 409 conflict.
+        accountDeletionService.adminErase(id, adminUser != null ? adminUser.getUserId() : null);
+        auditService.record(adminUser, "USER_DELETED", "USER_ACCOUNT",
                 String.valueOf(id), snapshot, httpRequest);
         return ResponseEntity.noContent().build();
     }

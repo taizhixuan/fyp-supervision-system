@@ -66,7 +66,6 @@ public class AuthService {
     private final ApprovedStudentRosterRepository approvedStudentRosterRepository;
     private final ApprovedSupervisorRosterRepository approvedSupervisorRosterRepository;
     private final ProjectRepository projectRepository;
-    private final FypCycleRepository fypCycleRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PendingRegistrationRepository pendingRegistrationRepository;
     private final PasswordEncoder passwordEncoder;
@@ -486,19 +485,11 @@ public class AuthService {
                 fyp1Passed = project.getFyp1Passed();
                 String stage = project.getStage();
                 boolean alreadyFyp2 = stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"));
-                // Auto-advance: if passed and an active FYP2 cycle exists, flip the project to FYP2.
+                // Auto-advance: if passed, move the project into the active FYP2 cycle
+                // (re-points cycle + sets stage=FYP2) so they appear under FYP2.
                 if (!alreadyFyp2 && Boolean.TRUE.equals(fyp1Passed)) {
-                    boolean fyp2CycleActive = fypCycleRepository.findAll().stream()
-                            .anyMatch(c -> c.getStatus() == CycleStatus.ACTIVE
-                                    && c.getCycleType() != null
-                                    && c.getCycleType().equalsIgnoreCase("FYP2"));
-                    if (fyp2CycleActive) {
-                        project.setStage("FYP2");
-                        projectRepository.save(project);
-                        currentPhase = "FYP2";
-                    } else {
-                        currentPhase = "FYP1";
-                    }
+                    boolean advanced = cycleLifecycleService.advanceProjectToActiveFyp2(project);
+                    currentPhase = advanced ? "FYP2" : "FYP1";
                 } else {
                     currentPhase = alreadyFyp2 ? "FYP2" : "FYP1";
                 }

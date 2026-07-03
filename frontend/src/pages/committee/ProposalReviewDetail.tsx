@@ -16,13 +16,17 @@ import {
   Send,
   ExternalLink,
   History,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ProposalContentSections } from '@/components/common/ProposalContentSections'
 import { useCommitteeProposal, useSubmitCommitteeProposalReview } from '@/lib/hooks/useCommittee'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { downloadAuthedFile } from '@/lib/utils/download'
 import type { CommitteeProposalStatus, ProposalForCommitteeReview } from '@/types'
 
 const statusConfig: Record<CommitteeProposalStatus, { label: string; color: string; bgColor: string; icon: typeof Clock }> = {
@@ -39,6 +43,8 @@ export function ProposalReviewDetail() {
   const [selectedDecision, setSelectedDecision] = useState<'APPROVED' | 'REJECTED' | 'REVISION_REQUESTED' | null>(null)
   const [feedback, setFeedback] = useState('')
   const [internalNotes, setInternalNotes] = useState('')
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [openVersionId, setOpenVersionId] = useState<string | number | null>(null)
 
   const { data, isLoading } = useCommitteeProposal(Number(id))
   const proposal = data as ProposalForCommitteeReview | undefined
@@ -137,12 +143,13 @@ export function ProposalReviewDetail() {
                 </p>
               </div>
               {proposal.documentUrl ? (
-                <a href={proposal.documentUrl} target="_blank" rel="noreferrer noopener">
-                  <Button variant="secondary">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download File
-                  </Button>
-                </a>
+                <Button
+                  variant="secondary"
+                  onClick={() => downloadAuthedFile(`/committee/proposals/${proposal.proposalId}/attachment`, proposal.fileName ?? undefined)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download File
+                </Button>
               ) : (
                 <Button variant="secondary" disabled title="No file uploaded">
                   <Download className="h-4 w-4 mr-2" />
@@ -174,35 +181,43 @@ export function ProposalReviewDetail() {
             </div>
           </Card>
 
-          {/* Abstract & Content */}
-          {proposal.abstract && (
-            <Card>
-              <h3 className="font-semibold text-neutral-900 mb-3">Abstract</h3>
-              <p className="text-neutral-600 leading-relaxed">{proposal.abstract}</p>
-            </Card>
-          )}
-
-          {proposal.objectives && proposal.objectives.length > 0 && (
-            <Card>
-              <h3 className="font-semibold text-neutral-900 mb-3">Objectives</h3>
-              <ul className="space-y-2">
-                {proposal.objectives.map((obj, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
-                      {index + 1}
-                    </span>
-                    <span className="text-neutral-600">{obj}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          {proposal.methodology && (
-            <Card>
-              <h3 className="font-semibold text-neutral-900 mb-3">Methodology</h3>
-              <p className="text-neutral-600">{proposal.methodology}</p>
-            </Card>
+          {/* Full proposal content — same sections the supervisor sees */}
+          {proposal.content ? (
+            <ProposalContentSections
+              content={proposal.content}
+              downloadPath={proposal.documentUrl ? `/committee/proposals/${proposal.proposalId}/attachment` : undefined}
+              fileName={proposal.fileName}
+            />
+          ) : (
+            <>
+              {proposal.abstract && (
+                <Card>
+                  <h3 className="font-semibold text-neutral-900 mb-3">Abstract</h3>
+                  <p className="text-neutral-600 leading-relaxed">{proposal.abstract}</p>
+                </Card>
+              )}
+              {proposal.objectives && proposal.objectives.length > 0 && (
+                <Card>
+                  <h3 className="font-semibold text-neutral-900 mb-3">Objectives</h3>
+                  <ul className="space-y-2">
+                    {proposal.objectives.map((obj, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <span className="text-neutral-600">{obj}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+              {proposal.methodology && (
+                <Card>
+                  <h3 className="font-semibold text-neutral-900 mb-3">Methodology</h3>
+                  <p className="text-neutral-600">{proposal.methodology}</p>
+                </Card>
+              )}
+            </>
           )}
 
           {/* AI Analysis */}
@@ -365,6 +380,58 @@ export function ProposalReviewDetail() {
               </div>
             </Card>
           )}
+
+          {/* Version History */}
+          {proposal.previousVersions && proposal.previousVersions.length > 0 && (
+            <Card className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowVersionHistory(!showVersionHistory)}
+                className="w-full flex items-center justify-between hover:bg-neutral-50"
+              >
+                <h3 className="font-semibold text-neutral-900 flex items-center gap-2">
+                  <History className="h-5 w-5 text-neutral-400" />
+                  Version History ({proposal.previousVersions.length})
+                </h3>
+                {showVersionHistory ? (
+                  <ChevronUp className="h-5 w-5 text-neutral-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-neutral-400" />
+                )}
+              </button>
+              {showVersionHistory && (
+                <div className="mt-3 space-y-2">
+                  {proposal.previousVersions.map((version) => (
+                    <div key={version.versionId}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenVersionId(openVersionId === version.versionId ? null : version.versionId)
+                        }
+                        className="w-full flex items-center justify-between p-2 bg-neutral-50 rounded-lg text-sm hover:bg-neutral-100"
+                      >
+                        <span>Version {version.version}</span>
+                        {openVersionId === version.versionId ? (
+                          <ChevronUp className="h-4 w-4 text-neutral-400" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-neutral-400" />
+                        )}
+                      </button>
+                      {openVersionId === version.versionId && version.content && (
+                        <div className="mt-2">
+                          <ProposalContentSections
+                            content={version.content}
+                            downloadPath={version.fileName ? `/committee/proposals/${proposal.proposalId}/attachment?versionId=${version.versionId}` : undefined}
+                            fileName={version.fileName}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Review Form */}
@@ -398,12 +465,14 @@ export function ProposalReviewDetail() {
             </div>
 
             {proposal.documentUrl ? (
-              <a href={proposal.documentUrl} target="_blank" rel="noreferrer noopener" className="block w-full mt-4">
-                <Button variant="secondary" className="w-full">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Full Document
-                </Button>
-              </a>
+              <Button
+                variant="secondary"
+                className="w-full mt-4"
+                onClick={() => downloadAuthedFile(`/committee/proposals/${proposal.proposalId}/attachment`, proposal.fileName ?? undefined)}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Full Document
+              </Button>
             ) : (
               <Button variant="secondary" className="w-full mt-4" disabled title="No file uploaded">
                 <ExternalLink className="h-4 w-4 mr-2" />

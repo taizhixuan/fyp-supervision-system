@@ -12,9 +12,11 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
+import { XCircle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ProposalContentSections } from '@/components/common/ProposalContentSections'
 import { useProposalForReview, useSubmitSvProposalFeedback } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
@@ -34,6 +36,7 @@ export function ProposalReviewDetail() {
   const { id } = useParams<{ id: string }>()
   const [feedbackContent, setFeedbackContent] = useState('')
   const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [openVersionId, setOpenVersionId] = useState<string | number | null>(null)
   const [showFeedbackHistory, setShowFeedbackHistory] = useState(false)
   const [, setActionType] = useState<SvProposalFeedback['feedbackType'] | null>(null)
 
@@ -76,7 +79,9 @@ export function ProposalReviewDetail() {
   }
 
   const status = statusConfig[proposal.status]
-  const canReview = proposal.status === 'SUBMITTED' || proposal.status === 'UNDER_REVIEW'
+  // Supervisor is the first reviewer: they act only while the proposal awaits them
+  // (SUBMITTED). Once approved it moves to the committee (UNDER_REVIEW).
+  const canReview = proposal.status === 'SUBMITTED'
 
   return (
     <div className="space-y-3 lg:space-y-4">
@@ -245,18 +250,39 @@ export function ProposalReviewDetail() {
                 <div className="px-4 pb-4">
                   <div className="space-y-2">
                     {proposal.previousVersions.map((version) => (
-                      <div
-                        key={version.versionId}
-                        className="flex items-center justify-between p-2 bg-neutral-50 rounded-lg text-sm"
-                      >
-                        <span>Version {version.version}</span>
-                        <span className={cn(
-                          'px-2 py-0.5 rounded-full text-xs',
-                          statusConfig[version.status].bgColor,
-                          statusConfig[version.status].color
-                        )}>
-                          {statusConfig[version.status].label}
-                        </span>
+                      <div key={version.versionId}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenVersionId(openVersionId === version.versionId ? null : version.versionId)
+                          }
+                          className="w-full flex items-center justify-between p-2 bg-neutral-50 rounded-lg text-sm hover:bg-neutral-100"
+                        >
+                          <span>Version {version.version}</span>
+                          <span className="flex items-center gap-2">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-full text-xs',
+                              statusConfig[version.status].bgColor,
+                              statusConfig[version.status].color
+                            )}>
+                              {statusConfig[version.status].label}
+                            </span>
+                            {openVersionId === version.versionId ? (
+                              <ChevronUp className="h-4 w-4 text-neutral-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-neutral-400" />
+                            )}
+                          </span>
+                        </button>
+                        {openVersionId === version.versionId && version.content && (
+                          <div className="mt-2">
+                            <ProposalContentSections
+                              content={version.content}
+                              downloadPath={version.fileName ? `/supervisor/proposals/${proposal.proposalId}/attachment?versionId=${version.versionId}` : undefined}
+                              fileName={version.fileName}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -317,56 +343,11 @@ export function ProposalReviewDetail() {
 
         {/* Right Column - Proposal Content */}
         <div className="lg:col-span-2 space-y-3 lg:space-y-4">
-          {/* Background */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Background</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.background}</p>
-          </Card>
-
-          {/* Problem Statement */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Problem Statement</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.problemStatement}</p>
-          </Card>
-
-          {/* Objectives */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Objectives</h3>
-            <ul className="space-y-2">
-              {proposal.content.objectives.map((obj, index) => (
-                <li key={index} className="flex items-start gap-2 text-neutral-600">
-                  <span className="flex-shrink-0 w-6 h-6 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </span>
-                  {obj}
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Scope */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Scope</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.scope}</p>
-          </Card>
-
-          {/* Methodology */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Methodology</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.methodology}</p>
-          </Card>
-
-          {/* Expected Outcomes */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Expected Outcomes</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.expectedOutcomes}</p>
-          </Card>
-
-          {/* Timeline */}
-          <Card>
-            <h3 className="font-semibold text-neutral-900 mb-3">Timeline</h3>
-            <p className="text-neutral-600 whitespace-pre-wrap">{proposal.content.timeline}</p>
-          </Card>
+          <ProposalContentSections
+            content={proposal.content}
+            downloadPath={proposal.fileName ? `/supervisor/proposals/${proposal.proposalId}/attachment` : undefined}
+            fileName={proposal.fileName}
+          />
 
           {/* Feedback Form */}
           {canReview && (
@@ -399,6 +380,15 @@ export function ProposalReviewDetail() {
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Request Revision
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleSubmitFeedback('REJECTION')}
+                  disabled={!feedbackContent.trim() || submitFeedback.isPending}
+                  className="text-error-600 border-error-300 hover:bg-error-50"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
                 </Button>
                 <Button
                   onClick={() => handleSubmitFeedback('APPROVAL')}

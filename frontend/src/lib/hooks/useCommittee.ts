@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { NOTIFICATION_QUERY_OPTIONS, invalidateAllNotifications } from './notificationCache'
 import { apiClient } from '@/lib/api/client'
 import type {
   FYPAnnouncement,
@@ -471,6 +472,7 @@ export function useCommitteeNotifications(limit = 50) {
       const { data } = await apiClient.get('/notifications', { params: { limit } })
       return data
     },
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -481,6 +483,7 @@ export function useCommitteeUnreadCount() {
       const { data } = await apiClient.get('/notifications/unread-count')
       return data
     },
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -492,8 +495,7 @@ export function useMarkCommitteeNotificationRead() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: committeeKeys.notifications() })
-      queryClient.invalidateQueries({ queryKey: committeeKeys.unreadCount() })
+      invalidateAllNotifications(queryClient)
     },
   })
 }
@@ -506,8 +508,7 @@ export function useMarkAllCommitteeNotificationsRead() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: committeeKeys.notifications() })
-      queryClient.invalidateQueries({ queryKey: committeeKeys.unreadCount() })
+      invalidateAllNotifications(queryClient)
     },
   })
 }

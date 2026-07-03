@@ -25,7 +25,9 @@ public class CommitteeAnnouncementController {
 
     @GetMapping
     public ResponseEntity<?> getAnnouncements(Pageable pageable) {
-        List<Map<String, Object>> dtos = announcementService.listAllPublished(pageable);
+        // Include scheduled (not-yet-published) announcements so the committee can see and
+        // manage what they have queued for a future publish time.
+        List<Map<String, Object>> dtos = announcementService.listForStaff(pageable);
         return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
@@ -42,6 +44,11 @@ public class CommitteeAnnouncementController {
         Long userId = Long.parseLong(user.getUsername());
         Map<String, Object> dto = announcementService.createFromMultipart(userId, dataJson, files);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAnnouncement(@PathVariable Long id) {
+        return ResponseEntity.ok(announcementService.get(id));
     }
 
     @PutMapping("/{id}")

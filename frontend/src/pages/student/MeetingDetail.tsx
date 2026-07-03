@@ -235,6 +235,10 @@ export function MeetingDetail() {
   const isUpcoming = new Date(displayMeeting.scheduledAt) > new Date()
   const canCancel = isUpcoming && ['PENDING', 'PROPOSED', 'RESCHEDULED', 'CONFIRMED'].includes(displayMeeting.status)
   const canCreateLog = displayMeeting.status === 'COMPLETED'
+  // A confirmed online meeting's link stays available whether the slot is a few
+  // minutes away or just passed — don't gate it on isUpcoming, which hid the link
+  // the moment the scheduled time arrived. Mirrors the supervisor view.
+  const canJoinOnline = !!displayMeeting.meetingLink && displayMeeting.status === 'CONFIRMED'
   const meetingDate = new Date(displayMeeting.scheduledAt)
 
   // Platform detection
@@ -392,8 +396,8 @@ export function MeetingDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-3 lg:space-y-4">
-          {/* Join Meeting CTA (for confirmed upcoming meetings) */}
-          {displayMeeting.meetingLink && displayMeeting.status === 'CONFIRMED' && isUpcoming && (
+          {/* Join Meeting CTA (any confirmed online meeting with a link) */}
+          {canJoinOnline && (
             <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -556,7 +560,7 @@ export function MeetingDetail() {
           <Card>
             <h3 className="text-sm font-medium text-neutral-500 mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              {displayMeeting.meetingLink && displayMeeting.status === 'CONFIRMED' && isUpcoming && (
+              {canJoinOnline && (
                 <a href={displayMeeting.meetingLink} target="_blank" rel="noopener noreferrer" className="block">
                   <Button
                     variant="primary"

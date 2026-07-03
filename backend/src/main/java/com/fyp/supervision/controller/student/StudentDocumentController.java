@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -83,6 +84,31 @@ public class StudentDocumentController {
                 .body(resource);
     }
 
+    @GetMapping("/feedback/{feedbackId}/download")
+    public ResponseEntity<Resource> downloadFeedbackFile(
+            @AuthenticationPrincipal UserDetails user, @PathVariable Long feedbackId) {
+        Long userId = Long.parseLong(user.getUsername());
+        com.fyp.supervision.entity.DocumentFeedback fb = studentService.getFeedbackForStudent(userId, feedbackId);
+        if (fb.getAnnotatedFilePath() == null) {
+            throw new BadRequestException("No annotated file attached to this feedback.");
+        }
+        Resource resource = fileStorageService.loadFile(fb.getAnnotatedFilePath());
+        String fileName = fb.getAnnotatedFileName() != null ? fb.getAnnotatedFileName() : "feedback-annotated";
+        String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + fileName.replace("\"", "") + "\"; filename*=UTF-8''" + encoded)
+                .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+                .body(resource);
+    }
+
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<?> getVersions(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        var versions = studentService.getDocumentVersions(userId, id);
+        return ResponseEntity.ok(Map.of("versions", versions, "total", versions.size()));
+    }
+
     @PostMapping
     public ResponseEntity<?> uploadDocument(
             @AuthenticationPrincipal UserDetails user,
@@ -90,7 +116,8 @@ public class StudentDocumentController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) String phase) {
+            @RequestParam(required = false) String phase,
+            @RequestParam(required = false) Long replaceDocumentId) {
         Long userId = Long.parseLong(user.getUsername());
         studentAccessService.requireActiveCycle(userId);
         if (file == null || file.isEmpty()) {
@@ -108,20 +135,11 @@ public class StudentDocumentController {
         String storagePath = fileStorageService.storeFile(file, "documents", userId);
 
         String safeTitle = (title == null || title.isBlank()) ? file.getOriginalFilename() : title.trim();
-        ProjectDocument document = ProjectDocument.builder()
-                .project(project)
-                .uploadedBy(project.getStudent())
-                .title(safeTitle)
-                .description(description != null ? description.trim() : null)
-                .docType(validatedType)
-                .phase(validatedPhase)
-                .fileName(file.getOriginalFilename())
-                .storagePath(storagePath)
-                .fileSize(file.getSize())
-                .mimeType(file.getContentType())
-                .build();
-
-        ProjectDocument saved = documentRepository.save(document);
+        ProjectDocument saved = studentService.saveUploadedDocument(
+                userId, project, replaceDocumentId, safeTitle,
+                description != null ? description.trim() : null,
+                validatedType, validatedPhase,
+                file.getOriginalFilename(), storagePath, file.getSize(), file.getContentType());
         return ResponseEntity.ok(studentService.buildDocumentDto(saved));
     }
 
@@ -134,8 +152,11 @@ public class StudentDocumentController {
         if (doc.getUploadedBy() == null || !doc.getUploadedBy().getUserId().equals(userId)) {
             throw new BadRequestException("You can only delete your own documents.");
         }
+        String versionGroup = doc.getVersionGroup();
         fileStorageService.deleteFile(doc.getStoragePath());
         documentRepository.delete(doc);
+        // If the deleted revision was the current one, promote the newest remaining revision.
+        studentService.promoteLatestInGroup(versionGroup);
         return ResponseEntity.noContent().build();
     }
 

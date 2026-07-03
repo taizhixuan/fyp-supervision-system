@@ -1,6 +1,7 @@
 // Supervisor types for the FYP Supervision System
 
 import type { LogStatus } from './student'
+import type { ProposalContentData } from '@/components/common/ProposalContentSections'
 
 // Base supervisor profile
 export interface SupervisorProfile {
@@ -105,15 +106,9 @@ export interface ProposalForReview {
   status: SvProposalStatus
   submittedAt: string
   lastUpdatedAt: string
-  content: {
-    background: string
-    problemStatement: string
-    objectives: string[]
-    scope: string
-    methodology: string
-    expectedOutcomes: string
-    timeline: string
-  }
+  content: ProposalContentData
+  fileUrl?: string | null
+  fileName?: string | null
   aiAnalysis?: {
     overallScore: number
     clarityScore: number
@@ -133,6 +128,9 @@ export interface SvProposalVersion {
   version: number
   submittedAt: string
   status: SvProposalStatus
+  content?: ProposalContentData
+  fileUrl?: string | null
+  fileName?: string | null
 }
 
 export interface SvProposalFeedback {
@@ -225,15 +223,19 @@ export interface SuperviseeDocument {
   lastViewedAt?: string
   hasFeedback: boolean
   feedbackCount: number
+  feedback?: DocumentFeedback[]
 }
 
 export interface DocumentFeedback {
   feedbackId: number
-  documentId: number
-  supervisorId: string
+  documentId?: number
+  supervisorId?: string
   supervisorName: string
   content: string
   annotatedFilePath?: string
+  annotatedFileName?: string
+  annotatedFileSize?: number
+  annotatedFileUrl?: string
   createdAt: string
 }
 

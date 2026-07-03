@@ -17,6 +17,7 @@ import {
   useSuperviseeDocument,
   useSubmitDocumentFeedback,
   useDownloadSuperviseeDocument,
+  useDownloadFeedbackFile,
 } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { getApiErrorMessage } from '@/lib/api/client'
@@ -48,9 +49,10 @@ export function DocumentDetail() {
   const { data: document, isLoading, isError, error } = useSuperviseeDocument(documentId)
   const submitFeedback = useSubmitDocumentFeedback()
   const download = useDownloadSuperviseeDocument()
+  const downloadFeedback = useDownloadFeedbackFile()
 
   const handleSubmitFeedback = async () => {
-    if (!document || !feedbackContent.trim()) return
+    if (!document || (!feedbackContent.trim() && !annotatedFile)) return
     setActionError(null)
     try {
       await submitFeedback.mutateAsync({
@@ -200,6 +202,40 @@ export function DocumentDetail() {
             </Card>
           )}
 
+          {document.feedback && document.feedback.length > 0 && (
+            <Card>
+              <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary-500" />
+                Feedback History
+                <span className="text-sm font-normal text-neutral-500">({document.feedback.length})</span>
+              </h3>
+              <div className="space-y-3">
+                {document.feedback.map((fb) => (
+                  <div key={fb.feedbackId} className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-sm font-semibold text-neutral-900">{fb.supervisorName || 'You'}</span>
+                      <span className="text-xs text-neutral-500">
+                        {new Date(fb.createdAt).toLocaleString('en-MY', {
+                          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-700 whitespace-pre-wrap">{fb.content}</p>
+                    {fb.annotatedFileUrl && (
+                      <button
+                        onClick={() => downloadFeedback.mutate({ url: fb.annotatedFileUrl!, fileName: fb.annotatedFileName || 'annotated-file' })}
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:underline"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        {fb.annotatedFileName || 'Annotated file'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <Card>
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-neutral-400" />
@@ -262,7 +298,7 @@ export function DocumentDetail() {
 
             <Button
               onClick={handleSubmitFeedback}
-              disabled={!feedbackContent.trim() || submitFeedback.isPending}
+              disabled={(!feedbackContent.trim() && !annotatedFile) || submitFeedback.isPending}
             >
               {submitFeedback.isPending ? (
                 <Spinner size="sm" className="mr-2" />

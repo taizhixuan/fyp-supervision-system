@@ -132,20 +132,20 @@ export function MeetingLogList() {
                 onClick={() => setExportOpen((v) => !v)}
                 isLoading={bulkExport.isPending}
                 leftIcon={<Download className="h-3.5 w-3.5" />}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap bg-white/15 text-white border border-white/30 hover:bg-white/25"
               >
                 Export All
               </Button>
               {exportOpen && (
                 <div className="absolute right-0 z-10 mt-1 w-40 rounded-md border border-stone-200 bg-white shadow-lg">
                   <button
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50"
+                    className="w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-50"
                     onClick={() => handleBulkExport('FYP1')}
                   >
                     All FYP1 Logs
                   </button>
                   <button
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50"
+                    className="w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-50"
                     onClick={() => handleBulkExport('FYP2')}
                   >
                     All FYP2 Logs

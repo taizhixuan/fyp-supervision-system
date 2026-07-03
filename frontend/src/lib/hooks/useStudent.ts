@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
+import { NOTIFICATION_QUERY_OPTIONS, invalidateAllNotifications } from './notificationCache'
 
 // Enable mock data in development mode (no backend needed)
 const USE_MOCK_DATA = false
@@ -28,7 +29,6 @@ import type {
   CreateLogData,
   UpdateLogData,
   FYPDocument,
-  DocumentVersion,
   UploadDocumentData,
   Deadline,
   NotificationPreferences,
@@ -862,10 +862,22 @@ interface ExportMeetingsParams {
 export function useExportMeetings() {
   return useMutation({
     mutationFn: async (params: ExportMeetingsParams) => {
-      const { data } = await apiClient.post<Blob>('/student/meetings/export', params, {
+      const response = await apiClient.post('/student/meetings/export', params, {
         responseType: 'blob',
       })
-      return data
+      // Trigger a real browser download (the backend returns a CSV of the meeting list).
+      const blob = new Blob([response.data as BlobPart], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const disp = (response.headers as Record<string, string>)['content-disposition'] || ''
+      const match = disp.match(/filename="?([^";]+)"?/i)
+      a.download = match?.[1] || 'meetings.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      return response.data
     },
   })
 }
@@ -1012,7 +1024,8 @@ export function useDocumentVersions(documentId: string) {
     queryKey: studentKeys.documentVersions(documentId),
     queryFn: async () => {
       const { data } = await apiClient.get<{
-        versions: DocumentVersion[]
+        versions: FYPDocument[]
+        total: number
       }>(`/student/documents/${documentId}/versions`)
       return data
     },
@@ -1032,14 +1045,21 @@ export function useUploadDocument() {
       if (uploadData.description) {
         formData.append('description', uploadData.description)
       }
+      if (uploadData.replaceDocumentId != null) {
+        formData.append('replaceDocumentId', String(uploadData.replaceDocumentId))
+      }
       const { data } = await apiClient.post<FYPDocument>('/student/documents', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       return data
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: studentKeys.documents() })
       queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
+      if (variables.replaceDocumentId != null) {
+        queryClient.invalidateQueries({ queryKey: studentKeys.documentDetail(String(variables.replaceDocumentId)) })
+        queryClient.invalidateQueries({ queryKey: studentKeys.documentVersions(String(variables.replaceDocumentId)) })
+      }
     },
   })
 }
@@ -1071,6 +1091,23 @@ export function useDownloadDocument() {
       link.click()
       window.document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
+    },
+  })
+}
+
+export function useDownloadFeedbackFile() {
+  return useMutation({
+    mutationFn: async ({ url, fileName }: { url: string; fileName: string }) => {
+      const response = await apiClient.get(url, { responseType: 'blob' })
+      const blob = response.data as Blob
+      const objectUrl = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = objectUrl
+      link.download = fileName || 'feedback-annotated'
+      window.document.body.appendChild(link)
+      link.click()
+      window.document.body.removeChild(link)
+      window.URL.revokeObjectURL(objectUrl)
     },
   })
 }
@@ -1283,6 +1320,7 @@ export function useNotifications() {
         total: data.total ?? 0,
       }
     },
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 }
 
@@ -1293,7 +1331,7 @@ export function useMarkNotificationRead() {
       await apiClient.put(`/notifications/${notificationId}/read`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      invalidateAllNotifications(queryClient)
     },
   })
 }
@@ -1305,7 +1343,7 @@ export function useMarkAllRead() {
       await apiClient.put('/notifications/mark-all-read')
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      invalidateAllNotifications(queryClient)
     },
   })
 }

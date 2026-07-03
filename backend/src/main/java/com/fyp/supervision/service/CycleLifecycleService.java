@@ -112,6 +112,28 @@ public class CycleLifecycleService {
     }
 
     /**
+     * Move a project into the currently-active FYP2 cycle: re-point its cycle FK and
+     * set stage=FYP2, so a student who passed FYP1 actually shows up under the FYP2
+     * cycle instead of only carrying a relabelled FYP1 project. Returns false (no-op)
+     * when there is no active FYP2 cycle to move into, or the project is already FYP2.
+     */
+    @Transactional
+    public boolean advanceProjectToActiveFyp2(Project project) {
+        if (project == null) return false;
+        String stage = project.getStage();
+        boolean alreadyFyp2 = stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"));
+        Optional<FypCycle> fyp2 = findActiveCycle("FYP2");
+        if (fyp2.isEmpty()) return false;
+        boolean cycleChanged = project.getCycle() == null
+                || !fyp2.get().getCycleId().equals(project.getCycle().getCycleId());
+        if (alreadyFyp2 && !cycleChanged) return false;
+        project.setCycle(fyp2.get());
+        project.setStage("FYP2");
+        projectRepository.save(project);
+        return true;
+    }
+
+    /**
      * Atomic status flip via direct UPDATE — no entity load, no dirty checking, no flush.
      * Eliminates a class of commit-time failures that can occur when an entity loaded in
      * the same session has unrelated lazy-loading or constraint problems.

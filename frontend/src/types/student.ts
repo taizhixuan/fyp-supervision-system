@@ -1,4 +1,6 @@
 // Student Profile Types
+import type { ProposalContentData } from '@/components/common/ProposalContentSections'
+
 export interface StudentProfile {
   userId: string
   studentId: string
@@ -205,7 +207,9 @@ export interface ProposalVersion {
   title: string
   status: ProposalStatus
   submittedAt?: string
-  fileUrl?: string
+  fileUrl?: string | null
+  fileName?: string | null
+  content?: ProposalContentData
   changes?: string
   createdAt: string
 }
@@ -432,6 +436,21 @@ export interface FYPDocument {
   uploadedAt: string
   updatedAt: string
   uploadedBy?: string
+  isLatest?: boolean
+  versionGroup?: string
+  hasFeedback?: boolean
+  feedbackCount?: number
+  feedback?: DocumentFeedbackItem[]
+}
+
+export interface DocumentFeedbackItem {
+  feedbackId: number
+  content: string
+  supervisorName: string
+  createdAt: string
+  annotatedFileName?: string
+  annotatedFileSize?: number
+  annotatedFileUrl?: string
 }
 
 export interface DocumentVersion {
@@ -451,6 +470,7 @@ export interface UploadDocumentData {
   type: DocumentType
   phase: DocumentPhase
   file: File
+  replaceDocumentId?: number
 }
 
 // Resource Types (extended for student view)

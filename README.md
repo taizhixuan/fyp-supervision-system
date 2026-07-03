@@ -9,15 +9,13 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-A comprehensive web-based platform designed to streamline and digitize the Final Year Project (FYP) supervision process at MMU FCI. This system helps students find supervisors, manage proposals, track meetings, and maintain supervision logs—all in one place.
-
-> **Live demo:** [app.supervisi.me](https://app.supervisi.me) — the portfolio build, deployed on a DigitalOcean droplet over HTTPS (API at `api.supervisi.me/api`).
+**Live demo:** [app.supervisi.me](https://app.supervisi.me).
 
 ## What It Does
 
-Managing an FYP project can be overwhelming. Students need to find the right supervisor, submit proposals, schedule meetings, keep track of supervision logs, and manage documents—often using multiple tools and manual processes. This system brings everything together in a single, easy-to-use platform.
+A single platform for running Final Year Projects. Students find a supervisor, submit proposals, book meetings, keep meeting logs, and manage documents in one place instead of spreading it across email, spreadsheets, and forms.
 
-The system includes AI-powered features like supervisor recommendations based on project topics, automated proposal analysis, and an intelligent chatbot to answer FYP-related questions. Everything is designed to make the supervision process smoother for students, supervisors, and administrators.
+It also has three AI features: supervisor recommendations from your project topic, automated proposal analysis, and a chatbot for common FYP questions.
 
 ## Screenshots
 
@@ -29,152 +27,55 @@ Captured from the live deployment at [app.supervisi.me](https://app.supervisi.me
 |---|---|
 | ![Login page](docs/screenshots/login.png) | ![Registration page](docs/screenshots/register.png) |
 
-## Key Features
-
-### For Students
-- **AI-Powered Supervisor Matching** - Get personalized supervisor recommendations based on your project topic and preferences
-- **Proposal Management** - Submit, track, and manage your FYP proposals with version control
-- **Meeting Scheduling** - Schedule meetings with supervisors and track your meeting history
-- **Digital Supervision Logs** - Create and maintain meeting logs in MMU format with e-signature support
-- **Document Management** - Upload and organize all your FYP-related documents
-- **Progress Tracking** - Dashboard showing your project status, upcoming deadlines, and pending tasks
-- **FYP Chatbot** - Get instant answers to common FYP questions
-
-### For Supervisors
-- **Request Management** - Review and respond to supervision requests from students
-- **Proposal Review** - Review student proposals and provide feedback
-- **Meeting Management** - Schedule meetings and review supervision logs
-- **Supervisee Dashboard** - Track progress of all your supervisees in one place
-- **Document Review** - Review and approve student-submitted documents
-
-### For FYP Committee
-- **Proposal Review Queue** - Review and approve proposals at the faculty level
-- **Announcements** - Publish faculty-wide announcements and updates
-- **Project Overview** - View all FYP projects and supervisor-student pairings
-- **Report Generation** - Generate and export comprehensive FYP reports
-
-### For System Administrators
-- **User Management** - Manage user accounts, roles, and permissions
-- **System Configuration** - Configure system parameters and settings
-- **Integration Settings** - Manage external integrations and export configurations
-- **Audit Logs** - Track all system activities for security and compliance
-
-## Tech Stack
-
-### Backend
-- **Java 17** with **Spring Boot 3.2.5**
-- **MySQL 8** for database
-- **JWT** for authentication
-- **Flyway** for database migrations
-- **Spring Security** for security
-- **Lombok** for cleaner code
-
-### Frontend
-- **React 18** with **TypeScript**
-- **Vite** for fast development and building
-- **Tailwind CSS** for styling
-- **TanStack Query** for data fetching
-- **React Hook Form** + **Zod** for form validation
-- **React Router** for navigation
-
-### AI / ML
-- **Flask** microservices (served by **Gunicorn**) for three independent engines:
-  - Supervisor recommendation — **Sentence-BERT** (BGE) embeddings + a deterministic weighted scorer
-  - Proposal analysis — **DistilBERT** + rule-based NLP, with an optional remote LLM
-  - FYP chatbot — **FAISS** vector search + a remote LLM (Groq / OpenAI)
-- **PyTorch**, **Hugging Face Transformers**, **sentence-transformers**
-- **scikit-learn**, **NumPy**, **pandas** for the scoring and analysis pipelines
-
-### DevOps & Infrastructure
-- **Docker** and **Docker Compose** (base + prod + observability overlays) orchestrating the full 9-service stack
-- **Caddy** reverse proxy with automatic **Let's Encrypt** HTTPS in production
-- **Nginx** serving the production frontend build
-- **Prometheus** and **Grafana** for metrics and dashboards
-- **MySQL 8** with persistent volumes; schema managed by **Flyway**
-- Deployed on a **DigitalOcean** droplet
-
-## Project Structure
-
-```
-fyp-supervision-system/
-├── backend/                 # Spring Boot backend API
-│   ├── src/main/java/      # Java source code
-│   ├── src/main/resources/ # Configuration files
-│   └── Dockerfile          # Backend container config
-├── frontend/               # React frontend application
-│   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── components/    # Reusable components
-│   │   ├── lib/           # Utilities and API clients
-│   │   └── types/         # TypeScript type definitions
-│   └── Dockerfile         # Frontend container config
-├── ai-recommendation/      # Flask service for supervisor recommendations
-├── ai-proposal-analyzer/   # Flask service for proposal analysis
-├── ai-chatbot/            # Flask service for chatbot
-├── docker-compose.yml               # Base stack (db, backend, 3× AI, frontend)
-├── docker-compose.override.yml      # Auto-merged: frontend Vite dev mode (HMR)
-├── docker-compose.prod.yml          # Production overlay (Caddy, secrets)
-├── docker-compose.observability.yml # Prometheus + Grafana overlay
-└── .env.example                     # Environment variables template
-```
-
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
-
-- **Java 17** or higher
-- **Node.js 18+** and **npm**
-- **Docker** and **Docker Compose**
-- **MySQL 8** (if running database locally)
-- **Groq or OpenAI API key** — only for the chatbot and the proposal analyzer's optional LLM pass; the supervisor-recommendation engine runs locally and needs no key
+- Java 17+
+- Node.js 18+ and npm
+- Docker and Docker Compose
+- MySQL 8 (only if you run the database outside Docker)
+- A Groq or OpenAI API key for the chatbot and the proposal analyzer's optional LLM pass. The supervisor-recommendation engine runs locally and needs no key.
 
 ## Getting Started
 
-### 1. Clone the Repository
+### 1. Clone
 
 ```bash
 git clone <repository-url>
 cd fyp-supervision-system
 ```
 
-### 2. Set Up Environment Variables
-
-Copy the example environment file and fill in your values:
+### 2. Environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set:
-- `JWT_SECRET` - A secure secret key (at least 32 characters). **Do not use the default in production.**
-- `GROQ_API_KEY` or `OPENAI_API_KEY` - LLM key for the chatbot and the proposal analyzer's optional LLM pass (Groq is the default provider). The recommendation engine runs locally and needs no key.
-- `VITE_API_BASE_URL` - Backend API base URL for the frontend (e.g. `http://localhost:8080/api` when frontend runs on host; when both run in Docker, use `http://backend:8080/api` or the public URL of the backend)
-- `DB_URL`, `DB_USER`, `DB_PASS` - Database connection (required for backend; use strong credentials in production)
-- **Email (optional)** - set `APP_EMAIL_ENABLED=true` plus `MAIL_HOST`/`MAIL_PORT`/`MAIL_USERNAME`/`MAIL_PASSWORD` and `APP_EMAIL_FROM` to send real email (registration verification codes, notifications, password reset). Left `false` (default), those codes/links are written to the backend log instead. See `.env.example`.
+Set in `.env`:
 
-### 3. Run with Docker Compose (Recommended)
+- `JWT_SECRET`: at least 32 characters. Don't ship the default.
+- `GROQ_API_KEY` or `OPENAI_API_KEY`: LLM key for the chatbot and the proposal analyzer's optional LLM pass (Groq is the default provider).
+- `VITE_API_BASE_URL`: backend API base URL for the frontend, e.g. `http://localhost:8080/api`.
+- `DB_URL`, `DB_USER`, `DB_PASS`: database connection.
+- Email (optional): set `APP_EMAIL_ENABLED=true` plus `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and `APP_EMAIL_FROM` to send real email. Left at `false`, verification codes and reset links are written to the backend log instead. See `.env.example`.
 
-The easiest way to get everything running:
+### 3. Run with Docker Compose
 
 ```bash
 docker-compose up --build
 ```
 
-This will start the full stack. `docker-compose.override.yml` is **auto-merged**, so the default run uses the frontend Vite dev server with hot-reload:
-- **MySQL** on host port **3307** (→ container 3306; the offset avoids clashing with a local MySQL on 3306)
-- **Backend API** on port 8080 (context path `/api`)
-- **Frontend (dev)** on port **5173** — Vite dev server with HMR, source mounted for live edits. Remove or rename `docker-compose.override.yml` to run the nginx production build on port **3000** instead.
-- **AI recommendation** on port 5001
-- **AI proposal analyzer** on port 5002
-- **AI chatbot** on port 5003
+`docker-compose.override.yml` is auto-merged, so the default run uses the Vite dev server with hot reload:
 
-Because the override mounts the frontend source, you don't need to run Vite separately. To run the frontend on the host instead, `cd frontend && npm run dev` and set `VITE_API_BASE_URL=http://localhost:8080/api`.
+- MySQL on host port 3307 (container 3306; the offset avoids clashing with a local MySQL on 3306)
+- Backend API on 8080 (context path `/api`)
+- Frontend dev on 5173 (Vite, HMR). Rename or remove `docker-compose.override.yml` for the nginx production build on 3000.
+- AI recommendation on 5001, proposal analyzer on 5002, chatbot on 5003
 
-### 4. Run Locally (Development)
+To run the frontend on the host instead: `cd frontend && npm run dev` with `VITE_API_BASE_URL=http://localhost:8080/api`.
 
-If you prefer running services individually:
+### 4. Run services individually
 
-#### Backend
+Backend:
 
 ```bash
 cd backend
@@ -182,9 +83,9 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-The backend will run on `http://localhost:8080/api`
+Runs on `http://localhost:8080/api`.
 
-#### Frontend
+Frontend:
 
 ```bash
 cd frontend
@@ -192,11 +93,9 @@ npm install
 npm run dev
 ```
 
-The frontend will run on `http://localhost:3000` (or the port shown in terminal)
+Runs on `http://localhost:3000`.
 
-#### AI Services
-
-Each AI service can be run individually:
+AI services:
 
 ```bash
 cd ai-recommendation  # or ai-proposal-analyzer, ai-chatbot
@@ -208,104 +107,66 @@ python app.py
 
 ### Database
 
-The system uses MySQL 8. When running with Docker Compose, the database is automatically set up. For local development, create a database:
+MySQL 8. Docker Compose sets it up automatically. For local development, create the database first:
 
 ```sql
 CREATE DATABASE fyp_supervision;
 ```
 
-Update `backend/src/main/resources/application.yml` or set environment variables:
-- `DB_URL` - Database connection URL
-- `DB_USER` - Database username
-- `DB_PASS` - Database password
+Then set `DB_URL`, `DB_USER`, `DB_PASS` (env vars, or `backend/src/main/resources/application.yml`).
 
-### File Uploads
+### File uploads
 
-By default, uploaded files are stored in `./uploads` (backend) or `/app/uploads` (Docker). You can configure this via:
-- `FILE_UPLOAD_DIR` environment variable
-- `app.file.upload-dir` in `application.yml`
+Uploads go to `./uploads` (backend) or `/app/uploads` (Docker). Configure with the `FILE_UPLOAD_DIR` env var or `app.file.upload-dir` in `application.yml`.
 
-### JWT Configuration
+### JWT
 
-JWT tokens are used for authentication. Configure via:
-- `JWT_SECRET` - Secret key for signing tokens
-- `JWT_EXPIRY_MS` - Token expiration time in milliseconds (default: 24 hours)
+- `JWT_SECRET`: signing key
+- `JWT_EXPIRY_MS`: token lifetime in ms (default 24h)
 
-### Email & Notifications
+### Email
 
-Transactional email (registration verification codes, system notifications, password reset) is sent over SMTP and is **off by default**:
-- `APP_EMAIL_ENABLED` - `true` to send email; `false` (default) writes codes/links to the backend log instead
-- `MAIL_HOST` / `MAIL_PORT` - SMTP server (e.g. `smtp.gmail.com:587`, or a transactional relay such as Brevo on port `2525`)
-- `MAIL_USERNAME` / `MAIL_PASSWORD` - SMTP credentials
-- `APP_EMAIL_FROM` - sender address
-- `APP_BASE_URL` - base URL used in email links (e.g. the password-reset link)
+SMTP email (verification codes, notifications, password reset) is off by default.
 
-### CORS and cross-origin
+- `APP_EMAIL_ENABLED`: `true` to send, `false` to log codes and links instead
+- `MAIL_HOST`, `MAIL_PORT`: SMTP server (e.g. `smtp.gmail.com:587`, or a relay like Brevo on 2525)
+- `MAIL_USERNAME`, `MAIL_PASSWORD`: credentials
+- `APP_EMAIL_FROM`: sender address
+- `APP_BASE_URL`: base URL used in email links
 
-When the frontend and backend run on different origins (e.g. frontend on port 3000, backend on 8080), the backend is configured to allow the frontend origin. For production, ensure CORS allowed origins and cookie/same-site settings match your deployment (e.g. same site or trusted domain).
+### CORS
 
-## User Roles
+When the frontend and backend run on different origins, the backend allows the frontend origin. In production, match the CORS origins and cookie/same-site settings to your deployment.
 
-The system supports four user roles:
+## API
 
-1. **STUDENT** - Undergraduate FYP students
-2. **SUPERVISOR** - Academic staff supervising projects
-3. **FYP_COMMITTEE** - Faculty coordinators
-4. **SYSTEM_ADMIN** - IT staff managing the system
+Base URL `http://localhost:8080/api`. Main prefixes:
 
-## API Documentation
+- `/auth/*`: login, register + email verification, password reset
+- `/student/*`, `/supervisor/*`, `/committee/*`, `/admin/*`: role endpoints
+- `/supervisors/*`: student-facing supervisor directory
+- `/announcements/*`: announcements (audience-filtered per student)
+- `/notifications/*`: notifications
+- `/resources/*`: resource documents
 
-The backend API is available at `http://localhost:8080/api`. Key endpoints include:
-
-- `/auth/*` - Authentication (login, register + email verification, password reset)
-- `/student/*` - Student endpoints
-- `/supervisor/*` - Supervisor endpoints
-- `/supervisors/*` - Student-facing supervisor directory (browsable by students)
-- `/committee/*` - FYP Committee endpoints
-- `/admin/*` - System admin endpoints
-- `/announcements/*` - Announcements (audience-filtered per student)
-- `/notifications/*` - Notification management
-- `/resources/*` - Resource documents
-
-Authority is derived from the URL prefix in `SecurityConfig` (e.g. `/student/**` requires the `STUDENT` role).
+Access is derived from the URL prefix in `SecurityConfig` (e.g. `/student/**` needs the `STUDENT` role).
 
 ## Development
 
-### Backend Development
+Backend: `cd backend && mvn spring-boot:run`. Migrations use Flyway, under `backend/src/main/resources/db/migration/`.
+
+Frontend: `cd frontend && npm run dev` (Vite HMR).
+
+Tests and lint:
 
 ```bash
-cd backend
-mvn spring-boot:run
-```
-
-The backend uses Flyway for database migrations. Migrations are located in `backend/src/main/resources/db/migration/`.
-
-### Frontend Development
-
-```bash
-cd frontend
-npm run dev
-```
-
-The frontend uses Vite for hot module replacement, so changes will be reflected immediately.
-
-### Running Tests
-
-Backend tests:
-```bash
-cd backend
-mvn test
-```
-
-Frontend tests (if configured):
-```bash
-cd frontend
-npm test
+cd backend && mvn test
+cd frontend && npm run lint
 ```
 
 ## Building for Production
 
-### Backend
+Backend:
 
 ```bash
 cd backend
@@ -313,41 +174,25 @@ mvn clean package
 java -jar target/supervision-1.0.0.jar
 ```
 
-### Frontend
+Frontend:
 
 ```bash
 cd frontend
 npm run build
 ```
 
-The production build will be in `frontend/dist/`.
+Output goes to `frontend/dist/`.
 
 ## Troubleshooting
 
-### Database Connection Issues
+**Database connection:** check MySQL is running, the credentials match `.env`/`application.yml`, and the database exists.
 
-- Make sure MySQL is running and accessible
-- Check database credentials in `.env` or `application.yml`
-- Verify the database exists: `CREATE DATABASE fyp_supervision;`
+**Port in use:** stop whatever holds the port, or change it in `docker-compose.yml`.
 
-### Port Already in Use
+**AI services:** check `GROQ_API_KEY` (or `OPENAI_API_KEY`) is set (only the chatbot and proposal analyzer need it), the services are up, and their logs with `docker-compose logs ai-recommendation`.
 
-If a port is already in use, either:
-- Stop the service using that port
-- Change the port in `docker-compose.yml` or configuration files
-
-### AI Services Not Working
-
-- Verify `GROQ_API_KEY` (or `OPENAI_API_KEY`) is set in `.env` — only the chatbot and the proposal analyzer's LLM pass need it; the recommendation engine runs locally
-- Check that AI services are running and accessible
-- Review logs: `docker-compose logs ai-recommendation`
-
-### File Upload Issues
-
-- Ensure the upload directory exists and has write permissions
-- Check `FILE_UPLOAD_DIR` configuration
-- Verify file size limits in `application.yml` (default: 50MB)
+**File uploads:** make sure the upload directory exists and is writable, and check the 50MB size limit in `application.yml`.
 
 ## License
 
-Released under the [MIT License](LICENSE). Originally developed as a Final Year Project at MMU FCI.
+[MIT](LICENSE). Originally built as a Final Year Project at MMU FCI.

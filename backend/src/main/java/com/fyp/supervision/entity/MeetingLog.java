@@ -91,6 +91,10 @@ public class MeetingLog {
     @Column(name = "locked_at")
     private LocalDateTime lockedAt;
 
+    /** Whole-document SHA-256 fingerprint, frozen when the log locks (both parties signed). */
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

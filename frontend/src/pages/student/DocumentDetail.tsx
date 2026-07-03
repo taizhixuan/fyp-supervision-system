@@ -13,6 +13,8 @@ import {
   Presentation,
   File,
   User,
+  History,
+  MessageSquare,
   AlertCircle,
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner } from '@/components/ui'
@@ -21,6 +23,7 @@ import {
   useDocumentDetail,
   useDeleteDocument,
   useDownloadDocument,
+  useDownloadFeedbackFile,
 } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { getApiErrorMessage } from '@/lib/api/client'
@@ -72,6 +75,7 @@ export function DocumentDetail() {
   const { data: document, isLoading, isError, error } = useDocumentDetail(id || '')
   const deleteDocument = useDeleteDocument()
   const downloadDocument = useDownloadDocument()
+  const downloadFeedback = useDownloadFeedbackFile()
 
   const handleDelete = async () => {
     setActionError(null)
@@ -200,6 +204,46 @@ export function DocumentDetail() {
               </div>
             </div>
           </Card>
+
+          <Card>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary-500" />
+              Supervisor Feedback
+              {document.feedback && document.feedback.length > 0 && (
+                <span className="text-sm font-normal text-neutral-500">({document.feedback.length})</span>
+              )}
+            </h2>
+            {document.feedback && document.feedback.length > 0 ? (
+              <div className="space-y-3">
+                {document.feedback.map((fb) => (
+                  <div key={fb.feedbackId} className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-sm font-semibold text-neutral-900">{fb.supervisorName}</span>
+                      <span className="text-xs text-neutral-500">
+                        {new Date(fb.createdAt).toLocaleString('en-MY', {
+                          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-700 whitespace-pre-wrap">{fb.content}</p>
+                    {fb.annotatedFileUrl && (
+                      <button
+                        onClick={() => downloadFeedback.mutate({ url: fb.annotatedFileUrl!, fileName: fb.annotatedFileName || 'annotated-file' })}
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:underline"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        {fb.annotatedFileName || 'Annotated file'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-500">
+                No feedback yet. Your supervisor's comments on this document will appear here.
+              </p>
+            )}
+          </Card>
         </div>
 
         <div className="space-y-3 lg:space-y-4">
@@ -221,6 +265,14 @@ export function DocumentDetail() {
               >
                 <Button variant="secondary" className="w-full" leftIcon={<Edit className="h-4 w-4" />}>
                   Upload New Version
+                </Button>
+              </Link>
+              <Link
+                to={ROUTES.STUDENT.DOCUMENT_HISTORY.replace(':id', document.documentId)}
+                className="block"
+              >
+                <Button variant="secondary" className="w-full" leftIcon={<History className="h-4 w-4" />}>
+                  Version History
                 </Button>
               </Link>
               <Button

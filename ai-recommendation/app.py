@@ -26,6 +26,7 @@ Endpoints:
 
 import os
 import logging
+import threading
 from datetime import datetime, timezone
 
 import numpy as np
@@ -96,6 +97,14 @@ USE_BGE_PREFIXES = "bge" in EMBED_MODEL_NAME.lower()
 logger.info("Loading sentence-transformer %s ...", EMBED_MODEL_NAME)
 embed_model = SentenceTransformer(EMBED_MODEL_NAME)
 logger.info("Embedding model ready (bge_prefixes=%s)", USE_BGE_PREFIXES)
+
+# Serialize encode() calls and fail fast when the model is busy. Without this,
+# a slow encode (e.g. model pages swapped out after long idle) lets piled-up
+# requests consume every gunicorn thread and wedge the whole service — even
+# /ai/health stops answering. One scorer at a time; everyone else gets a quick
+# 503 that the backend already maps to "service unavailable".
+_SCORE_GATE = threading.Semaphore(1)
+_SCORE_GATE_TIMEOUT_S = float(os.environ.get("SCORE_GATE_TIMEOUT_S", "10"))
 
 
 # ============================================================================
@@ -381,7 +390,14 @@ def recommendations():
         # Hard filter: drop full / unavailable supervisors
         eligible = [s for s in supervisors if _is_acceptable(s)]
 
-        ranked = _score(student, eligible)[:TOP_K]
+        # Fail fast instead of queueing on a busy/stuck model (see _SCORE_GATE).
+        if not _SCORE_GATE.acquire(timeout=_SCORE_GATE_TIMEOUT_S):
+            logger.warning("Scoring gate busy for %.0fs — rejecting request", _SCORE_GATE_TIMEOUT_S)
+            return jsonify({"error": "Recommendation model is busy, try again shortly"}), 503
+        try:
+            ranked = _score(student, eligible)[:TOP_K]
+        finally:
+            _SCORE_GATE.release()
 
         recs = []
         for rank, r in enumerate(ranked, start=1):

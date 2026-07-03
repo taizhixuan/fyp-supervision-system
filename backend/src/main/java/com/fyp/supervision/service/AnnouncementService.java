@@ -12,6 +12,7 @@ import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.enums.AnnouncementStatus;
 import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.enums.UserRole;
+import com.fyp.supervision.enums.UserStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AnnouncementReadRepository;
@@ -56,6 +57,7 @@ public class AnnouncementService {
     private final UserAccountRepository userAccountRepository;
     private final FypCycleRepository fypCycleRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
     // Tunable bounds for title/content. Backstop against the test-data case where
@@ -112,6 +114,16 @@ public class AnnouncementService {
     }
 
     /**
+     * Committee/staff view: published announcements plus scheduled (DRAFT) ones that have
+     * not yet gone live, so authors can see and edit what they scheduled.
+     */
+    public List<Map<String, Object>> listForStaff(Pageable pageable) {
+        return announcementRepository.findByStatusInOrderByCreatedAtDesc(
+                        List.of(AnnouncementStatus.PUBLISHED, AnnouncementStatus.DRAFT), pageable)
+                .getContent().stream().map(this::buildDto).toList();
+    }
+
+    /**
      * Inbox+outbox view for a supervisor: returns announcements they created (SENT) plus
      * announcements created by committee or admin (RECEIVED) — what a supervisor would
      * naturally expect to see in their announcements page. Each DTO carries a
@@ -122,9 +134,17 @@ public class AnnouncementService {
      * supervisor's supervisees and are not relevant here.
      */
     public List<Map<String, Object>> listForSupervisor(Long supervisorUserId, Pageable pageable) {
-        return announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable)
+        return announcementRepository.findByStatusInOrderByCreatedAtDesc(
+                        List.of(AnnouncementStatus.PUBLISHED, AnnouncementStatus.DRAFT), pageable)
                 .getContent().stream()
-                .filter(a -> isVisibleToSupervisor(a, supervisorUserId))
+                .filter(a -> {
+                    // Scheduled (DRAFT, not yet live) announcements are only visible to their author.
+                    if (a.getStatus() == AnnouncementStatus.DRAFT) {
+                        return a.getCreatedBy() != null
+                                && Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId);
+                    }
+                    return isVisibleToSupervisor(a, supervisorUserId);
+                })
                 .map(a -> {
                     Map<String, Object> dto = buildDto(a);
                     boolean isOwn = a.getCreatedBy() != null
@@ -296,6 +316,16 @@ public class AnnouncementService {
                     .orElse(null);
         }
 
+        // Honour the chosen publish time. A time more than a minute in the future means
+        // "schedule it" — the announcement is held as DRAFT (hidden from students, no
+        // notifications) until the publisher job flips it to PUBLISHED at that time. The
+        // one-minute tolerance stops a plain "publish now" click from being treated as
+        // scheduled because of sub-minute clock differences.
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime requestedPublishAt = parseDateTime(payload.get("publishAt"));
+        boolean scheduled = requestedPublishAt != null && requestedPublishAt.isAfter(now.plusMinutes(1));
+        LocalDateTime effectivePublishAt = requestedPublishAt != null ? requestedPublishAt : now;
+
         Announcement announcement = Announcement.builder()
                 .createdBy(creator)
                 .cycle(scopedCycle)
@@ -303,8 +333,9 @@ public class AnnouncementService {
                 .title(title)
                 .content(content)
                 .priority(optString(payload, "priority", "NORMAL"))
-                .status(AnnouncementStatus.PUBLISHED)
-                .publishAt(LocalDateTime.now())
+                .status(scheduled ? AnnouncementStatus.DRAFT : AnnouncementStatus.PUBLISHED)
+                .publishAt(effectivePublishAt)
+                .expiresAt(parseDateTime(payload.get("expiresAt")))
                 .build();
         announcement = announcementRepository.save(announcement);
 
@@ -360,7 +391,78 @@ public class AnnouncementService {
         }
 
         Announcement saved = announcementRepository.save(announcement);
+
+        // Publish-time delivery: only notify the audience when the announcement actually
+        // goes live now. Scheduled ones are notified later by the publisher job.
+        if (saved.getStatus() == AnnouncementStatus.PUBLISHED) {
+            notifyAudienceStudents(saved);
+        }
         return buildDto(saved);
+    }
+
+    /**
+     * Flip every scheduled (DRAFT) announcement whose publish time has arrived to PUBLISHED
+     * and notify its audience. Called every minute by {@code AnnouncementPublishJob}.
+     */
+    @Transactional
+    public int publishDueAnnouncements() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Announcement> due = announcementRepository
+                .findByStatusAndPublishAtLessThanEqual(AnnouncementStatus.DRAFT, now);
+        int published = 0;
+        for (Announcement a : due) {
+            try {
+                a.setStatus(AnnouncementStatus.PUBLISHED);
+                announcementRepository.save(a);
+                notifyAudienceStudents(a);
+                published++;
+            } catch (Exception e) {
+                log.warn("Failed to publish scheduled announcement {}: {}", a.getAnnouncementId(), e.getMessage());
+            }
+        }
+        return published;
+    }
+
+    /**
+     * Notify every active student who matches the announcement's audience. Routed through
+     * {@link NotificationService} with type ANNOUNCEMENT, which maps to the
+     * SYSTEM_ANNOUNCEMENTS preference category — students who disabled system-announcement
+     * notifications are skipped automatically per channel.
+     */
+    private void notifyAudienceStudents(Announcement a) {
+        List<UserAccount> students = userAccountRepository.findByRoleAndStatus(UserRole.STUDENT, UserStatus.ACTIVE);
+        String message = a.getContent() != null && a.getContent().length() > 140
+                ? a.getContent().substring(0, 140) + "…"
+                : (a.getContent() != null ? a.getContent() : "");
+        for (UserAccount student : students) {
+            try {
+                StudentContext ctx = loadStudentContext(student.getUserId());
+                if (!matchesAudience(a, ctx)) continue;
+                notificationService.createNotification(
+                        student.getUserId(), "ANNOUNCEMENT",
+                        a.getTitle(), message, "/student/announcements");
+            } catch (Exception e) {
+                log.debug("Skipped announcement notification for student {}: {}", student.getUserId(), e.getMessage());
+            }
+        }
+    }
+
+    /** Lenient parse of an ISO-8601 instant / offset / plain local date-time into server-local time. */
+    private LocalDateTime parseDateTime(Object raw) {
+        if (raw == null) return null;
+        String s = raw.toString().trim();
+        if (s.isEmpty()) return null;
+        try {
+            return LocalDateTime.ofInstant(java.time.Instant.parse(s), java.time.ZoneId.systemDefault());
+        } catch (Exception ignore) { /* not an instant */ }
+        try {
+            return java.time.OffsetDateTime.parse(s)
+                    .atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
+        } catch (Exception ignore) { /* not an offset date-time */ }
+        try {
+            return LocalDateTime.parse(s);
+        } catch (Exception ignore) { /* not a plain local date-time */ }
+        return null;
     }
 
     /**
@@ -410,6 +512,8 @@ public class AnnouncementService {
         dto.put("updatedAt", a.getUpdatedAt() != null ? a.getUpdatedAt().toString() : "");
         dto.put("viewCount", a.getViewCount());
         dto.put("isActive", a.getStatus() == AnnouncementStatus.PUBLISHED);
+        dto.put("scheduled", a.getStatus() == AnnouncementStatus.DRAFT
+                && a.getPublishAt() != null && a.getPublishAt().isAfter(LocalDateTime.now()));
         dto.put("isRead", readIds != null && readIds.contains(a.getAnnouncementId()));
         dto.put("attachments", a.getAttachments().stream().map(this::attachmentDto).toList());
         dto.put("links", a.getLinks().stream().map(this::linkDto).toList());

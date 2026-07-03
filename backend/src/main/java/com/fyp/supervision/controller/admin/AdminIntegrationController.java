@@ -1,9 +1,11 @@
 package com.fyp.supervision.controller.admin;
 
+import com.fyp.supervision.config.FileStorageConfig;
 import com.fyp.supervision.entity.IntegrationSetting;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.IntegrationSettingRepository;
 import com.fyp.supervision.service.AdminService;
+import com.fyp.supervision.service.AiServiceClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -22,6 +26,8 @@ import java.util.Map;
 public class AdminIntegrationController {
     private final IntegrationSettingRepository integrationRepository;
     private final AdminService adminService;
+    private final AiServiceClient aiServiceClient;
+    private final FileStorageConfig fileStorageConfig;
 
     @GetMapping
     public ResponseEntity<?> getIntegrations() {
@@ -55,6 +61,37 @@ public class AdminIntegrationController {
         setting.setLastTestedAt(LocalDateTime.now());
 
         Map<String, Object> result = new LinkedHashMap<>();
+
+        // AI microservices and local storage aren't public HTTP endpoints, so test them
+        // against their real internal health instead of a HEAD request to a URL.
+        String type = setting.getIntegrationType() == null ? "" : setting.getIntegrationType().trim();
+        if ("AI".equalsIgnoreCase(type)) {
+            String name = setting.getName() == null ? "" : setting.getName().trim();
+            Boolean ok = null;
+            if (name.equalsIgnoreCase("Recommendation Service")) ok = aiServiceClient.isRecommendationServiceHealthy();
+            else if (name.equalsIgnoreCase("Proposal Analyzer")) ok = aiServiceClient.isAnalyzerServiceHealthy();
+            else if (name.equalsIgnoreCase("FYP Chatbot")) ok = aiServiceClient.isChatbotServiceHealthy();
+            if (ok != null) {
+                setting.setLastTestResult(ok ? "SUCCESS" : "FAILED");
+                integrationRepository.save(setting);
+                result.put("success", ok);
+                result.put("message", ok ? name + " responded on /ai/health." : name + " health check failed.");
+                return ResponseEntity.ok(result);
+            }
+            // Unknown AI row falls through to the generic HTTP test below.
+        }
+        if ("STORAGE".equalsIgnoreCase(type)) {
+            Path p = fileStorageConfig.getUploadPath();
+            boolean ok = p != null && Files.isDirectory(p) && Files.isWritable(p);
+            setting.setLastTestResult(ok ? "SUCCESS" : "FAILED");
+            integrationRepository.save(setting);
+            result.put("success", ok);
+            result.put("message", ok
+                    ? "Upload directory is writable: " + p
+                    : "Upload directory missing or not writable: " + p);
+            return ResponseEntity.ok(result);
+        }
+
         String url = setting.getEndpointUrl();
         if (url == null || url.isBlank()) {
             setting.setLastTestResult("FAILED");

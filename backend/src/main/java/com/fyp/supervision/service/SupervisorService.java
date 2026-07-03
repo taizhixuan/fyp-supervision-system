@@ -38,6 +38,7 @@ public class SupervisorService {
     private final NotificationService notificationService;
     private final FileStorageService fileStorageService;
     private final ProjectProgressService projectProgressService;
+    private final SystemParameterService systemParameters;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -140,7 +141,9 @@ public class SupervisorService {
 
         long proposalsToReview = 0;
         for (Proposal p : proposalRepository.findBySupervisor_UserId(userId)) {
-            if (p.getStatus() == ProposalStatus.SUBMITTED || p.getStatus() == ProposalStatus.UNDER_REVIEW) {
+            // Only SUBMITTED proposals await the supervisor. UNDER_REVIEW means the
+            // supervisor already approved and it now sits with the committee.
+            if (p.getStatus() == ProposalStatus.SUBMITTED) {
                 proposalsToReview++;
             }
         }
@@ -157,7 +160,7 @@ public class SupervisorService {
                 .collect(Collectors.toList());
 
         long documentsToReview = activeProjects.stream()
-                .mapToLong(p -> projectDocumentRepository.countByProject_Student_UserId(p.getStudent().getUserId()))
+                .mapToLong(p -> projectDocumentRepository.countByProject_Student_UserIdAndIsLatestTrue(p.getStudent().getUserId()))
                 .sum();
 
         // Active announcements = ones authored by this supervisor and still PUBLISHED.
@@ -343,6 +346,21 @@ public class SupervisorService {
             }
             boolean alreadyMine = project.getSupervisor() != null
                     && project.getSupervisor().getUserId().equals(userId);
+            // Enforce supervision capacity when taking on a NEW student: the supervisor's
+            // own quota, capped by the system-wide max_students_per_supervisor parameter.
+            if (!alreadyMine) {
+                SupervisorProfile svProfile = supervisorProfileRepository.findById(userId).orElse(null);
+                if (svProfile != null) {
+                    int quota = svProfile.getSupervisionQuota() != null
+                            ? svProfile.getSupervisionQuota() : Integer.MAX_VALUE;
+                    int cap = Math.min(quota, systemParameters.getInt("max_students_per_supervisor", quota));
+                    int load = svProfile.getCurrentLoad() != null ? svProfile.getCurrentLoad() : 0;
+                    if (load >= cap) {
+                        throw new BadRequestException(
+                                "You have reached your maximum supervision capacity (" + cap + " students).");
+                    }
+                }
+            }
             project.setSupervisor(request.getSupervisorUser());
             project.setProjectTitle(title);
             if (project.getStage() == null) project.setStage("FYP1");
@@ -434,7 +452,7 @@ public class SupervisorService {
                 ? meetingLogRepository.countBySupervisor_UserIdAndStudent_UserId(
                         supervisorUserId, student.getUserId())
                 : 0;
-        long documentsCount = projectDocumentRepository.countByProject_Student_UserId(student.getUserId());
+        long documentsCount = projectDocumentRepository.countByProject_Student_UserIdAndIsLatestTrue(student.getUserId());
 
         // Last completed meeting for this project
         String lastMeetingDate = meetingRepository
@@ -513,11 +531,19 @@ public class SupervisorService {
         List<ProposalVersion> versions = proposalVersionRepository.findByProposal_ProposalIdOrderByVersionNoDesc(proposal.getProposalId());
         List<ProposalReview> reviews = proposalReviewRepository.findByProposal_ProposalIdOrderByReviewedAtDesc(proposal.getProposalId());
 
-        // Get latest version content
+        // Get latest version content + supporting attachment
         Map<String, Object> contentMap = new LinkedHashMap<>();
+        String fileUrl = null;
+        String fileName = null;
         if (!versions.isEmpty()) {
             ProposalVersion latest = versions.get(0);
             contentMap = parseProposalContent(latest.getContentText());
+            fileName = latest.getFileName();
+            String vp = latest.getUploadFilePath();
+            if (vp != null && !vp.isBlank()) {
+                String trimmed = vp.startsWith("/") ? vp.substring(1) : vp;
+                fileUrl = trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed;
+            }
         }
 
         // Get AI analysis
@@ -543,6 +569,16 @@ public class SupervisorService {
             vDto.put("version", v.getVersionNo());
             vDto.put("submittedAt", v.getCreatedAt() != null ? v.getCreatedAt().toString() : "");
             vDto.put("status", proposal.getStatus().name());
+            // Per-version content so the supervisor can open the details of any prior version.
+            vDto.put("content", parseProposalContent(v.getContentText()));
+            String vp = v.getUploadFilePath();
+            if (vp != null && !vp.isBlank()) {
+                String trimmed = vp.startsWith("/") ? vp.substring(1) : vp;
+                vDto.put("fileUrl", trimmed.startsWith("uploads/") ? "/" + trimmed : "/uploads/" + trimmed);
+            } else {
+                vDto.put("fileUrl", null);
+            }
+            vDto.put("fileName", v.getFileName());
             return vDto;
         }).collect(Collectors.toList());
 
@@ -568,6 +604,8 @@ public class SupervisorService {
         dto.put("submittedAt", proposal.getCreatedAt() != null ? proposal.getCreatedAt().toString() : "");
         dto.put("lastUpdatedAt", proposal.getUpdatedAt() != null ? proposal.getUpdatedAt().toString() : "");
         dto.put("content", contentMap);
+        dto.put("fileUrl", fileUrl);
+        dto.put("fileName", fileName);
         dto.put("aiAnalysis", aiAnalysis);
         dto.put("previousVersions", versionDtos);
         dto.put("feedbackHistory", feedbackDtos);
@@ -588,32 +626,98 @@ public class SupervisorService {
             throw new ForbiddenException("You can only review your own students' proposals.");
         }
 
+        // The supervisor is the FIRST reviewer in the two-stage flow. They may only act
+        // while the proposal is awaiting supervisor review (SUBMITTED). Once approved it
+        // moves to the committee queue (UNDER_REVIEW) and is out of the supervisor's hands.
+        if (proposal.getStatus() != ProposalStatus.SUBMITTED) {
+            throw new BadRequestException("This proposal is not awaiting your review.");
+        }
+
+        String feedbackType = (String) data.getOrDefault("feedbackType", "REVISION_REQUIRED");
         ProposalReview review = ProposalReview.builder()
                 .proposal(proposal)
                 .reviewer(userAccountRepository.findById(userId).orElseThrow())
                 .reviewerRole("SUPERVISOR")
-                .decision((String) data.getOrDefault("feedbackType", "REVISION_REQUIRED"))
+                .decision(feedbackType)
                 .remarks((String) data.get("content"))
                 .build();
         proposalReviewRepository.save(review);
 
-        if ("APPROVED".equals(data.get("feedbackType")) || "APPROVAL".equals(data.get("feedbackType"))) {
-            proposal.setStatus(ProposalStatus.APPROVED);
-        } else if ("REJECTION".equals(data.get("feedbackType"))) {
+        if ("APPROVED".equals(feedbackType) || "APPROVAL".equals(feedbackType)) {
+            // Supervisor approval does NOT finalise the proposal — it forwards it to the
+            // FYP committee. The student is only REGISTERED after committee approval.
+            proposal.setStatus(ProposalStatus.UNDER_REVIEW);
+            proposalRepository.save(proposal);
+            notificationService.createNotification(
+                    proposal.getStudent().getUserId(), "PROPOSAL",
+                    "Proposal Approved by Supervisor",
+                    "Your supervisor approved your proposal. It has been forwarded to the FYP committee for final review.",
+                    "/student/proposal"
+            );
+            notifyCommitteeOfProposal(proposal);
+        } else if ("REJECTION".equals(feedbackType)) {
             proposal.setStatus(ProposalStatus.REJECTED);
+            proposalRepository.save(proposal);
+            notificationService.createNotification(
+                    proposal.getStudent().getUserId(), "PROPOSAL",
+                    "Proposal Rejected",
+                    "Your supervisor has rejected your proposal. See the feedback for details.",
+                    "/student/proposal"
+            );
         } else {
             proposal.setStatus(ProposalStatus.REVISION_REQUIRED);
+            proposalRepository.save(proposal);
+            notificationService.createNotification(
+                    proposal.getStudent().getUserId(), "PROPOSAL",
+                    "Proposal Revision Requested",
+                    "Your supervisor has requested revisions to your proposal.",
+                    "/student/proposal"
+            );
         }
-        proposalRepository.save(proposal);
-
-        notificationService.createNotification(
-                proposal.getStudent().getUserId(), "PROPOSAL",
-                "Proposal Feedback Received",
-                "Your supervisor has provided feedback on your proposal.",
-                "/student/proposal"
-        );
 
         return Map.of("success", true);
+    }
+
+    /** Notify every active committee member that a supervisor-approved proposal awaits committee review. */
+    private void notifyCommitteeOfProposal(Proposal proposal) {
+        String studentName = proposal.getStudent() != null && proposal.getStudent().getFullName() != null
+                ? proposal.getStudent().getFullName() : "A student";
+        List<UserAccount> committee = userAccountRepository.findByRoleAndStatus(UserRole.FYP_COMMITTEE, UserStatus.ACTIVE);
+        for (UserAccount member : committee) {
+            notificationService.createNotification(
+                    member.getUserId(), "PROPOSAL",
+                    "New Proposal for Committee Review",
+                    studentName + "'s proposal has been approved by the supervisor and is awaiting committee review.",
+                    "/committee/proposals"
+            );
+        }
+    }
+
+    /**
+     * Resolve a proposal version's attachment for download by the owning supervisor.
+     * {@code versionId} null → latest version.
+     */
+    public ProposalVersion resolveAttachmentVersion(Long proposalId, Long userId, Long versionId) {
+        Proposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
+        Long owner = proposal.getSupervisor() != null ? proposal.getSupervisor().getUserId() : null;
+        if (owner == null && proposal.getProject() != null && proposal.getProject().getSupervisor() != null) {
+            owner = proposal.getProject().getSupervisor().getUserId();
+        }
+        if (owner == null || !owner.equals(userId)) {
+            throw new ForbiddenException("You can only access your own students' proposals.");
+        }
+        List<ProposalVersion> versions = proposalVersionRepository
+                .findByProposal_ProposalIdOrderByVersionNoDesc(proposalId);
+        ProposalVersion v = (versionId != null)
+                ? versions.stream().filter(x -> x.getVersionId().equals(versionId)).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Version not found"))
+                : versions.stream().findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("No proposal version found"));
+        if (v.getUploadFilePath() == null || v.getUploadFilePath().isBlank()) {
+            throw new ResourceNotFoundException("No attachment on this proposal version");
+        }
+        return v;
     }
 
     // ========== Meetings ==========
@@ -791,12 +895,12 @@ public class SupervisorService {
         List<ProjectDocument> docs;
         if (studentId != null) {
             if (type != null && !type.isBlank()) {
-                docs = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(studentId, type);
+                docs = projectDocumentRepository.findByProject_Student_UserIdAndDocTypeAndIsLatestTrueOrderByUploadedAtDesc(studentId, type);
             } else {
-                docs = projectDocumentRepository.findByProject_Student_UserIdOrderByUploadedAtDesc(studentId);
+                docs = projectDocumentRepository.findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(studentId);
             }
         } else {
-            docs = projectDocumentRepository.findByProject_Supervisor_UserIdOrderByUploadedAtDesc(userId);
+            docs = projectDocumentRepository.findByProject_Supervisor_UserIdAndIsLatestTrueOrderByUploadedAtDesc(userId);
         }
         return docs.stream().map(this::buildDocumentDto).collect(Collectors.toList());
     }
@@ -860,8 +964,9 @@ public class SupervisorService {
             Long documentId,
             String content,
             org.springframework.web.multipart.MultipartFile annotatedFile) {
-        if (content == null || content.isBlank()) {
-            throw new BadRequestException("Feedback content is required.");
+        boolean hasFile = annotatedFile != null && !annotatedFile.isEmpty();
+        if ((content == null || content.isBlank()) && !hasFile) {
+            throw new BadRequestException("Add a comment or attach an annotated file.");
         }
         ProjectDocument doc = projectDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
@@ -876,9 +981,9 @@ public class SupervisorService {
         DocumentFeedback.DocumentFeedbackBuilder builder = DocumentFeedback.builder()
                 .document(doc)
                 .supervisor(supervisor)
-                .content(content.trim());
+                .content(content == null ? "" : content.trim());
 
-        if (annotatedFile != null && !annotatedFile.isEmpty()) {
+        if (hasFile) {
             String path = fileStorageService.storeFile(annotatedFile, "document-feedback", supervisorUserId);
             builder.annotatedFilePath(path)
                     .annotatedFileName(annotatedFile.getOriginalFilename())

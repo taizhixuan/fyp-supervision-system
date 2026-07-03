@@ -22,6 +22,7 @@ import {
   useFYPCycles,
   useCreateCycle,
   useCycleTemplate,
+  useCycleStudents,
   useCreateCycleFromTemplate,
   useActivateCycle,
   useCompleteCycle,
@@ -83,11 +84,16 @@ export function CycleManagement() {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState<CycleFormState>(emptyForm())
+  const [detailCycle, setDetailCycle] = useState<FYPCycle | null>(null)
 
   const { data, isLoading } = useFYPCycles({
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
   })
   const { data: templateData } = useCycleTemplate(tplPhase)
+  const { data: detailData, isLoading: detailLoading } = useCycleStudents(
+    detailCycle ? String(detailCycle.cycleId) : null,
+    !!detailCycle,
+  )
   const createMutation = useCreateCycle()
   const fromTemplateMutation = useCreateCycleFromTemplate()
   const activateMutation = useActivateCycle()
@@ -368,9 +374,9 @@ export function CycleManagement() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Stat icon={<Users className="h-3 w-3 text-neutral-400" />} value={cycle.totalStudents} label="students" />
-                        <Stat icon={<CheckCircle className="h-3 w-3 text-neutral-400" />} value={cycle.pairedStudents} label="paired" />
-                        <Stat icon={<CalendarIcon className="h-3 w-3 text-neutral-400" />} value={cycle.deadlineCount} label="deadlines" />
+                        <Stat icon={<Users className="h-3 w-3 text-neutral-400" />} value={cycle.totalStudents} label="students" onClick={() => setDetailCycle(cycle)} />
+                        <Stat icon={<CheckCircle className="h-3 w-3 text-neutral-400" />} value={cycle.pairedStudents} label="paired" onClick={() => setDetailCycle(cycle)} />
+                        <Stat icon={<CalendarIcon className="h-3 w-3 text-neutral-400" />} value={cycle.deadlineCount} label="deadlines" onClick={() => setDetailCycle(cycle)} />
                       </div>
                     </div>
                   </div>
@@ -435,6 +441,87 @@ export function CycleManagement() {
           </Card>
         )}
       </div>
+
+      {/* Cycle roster + deadlines detail */}
+      <Modal isOpen={!!detailCycle} onClose={() => setDetailCycle(null)} size="lg">
+        <ModalHeader>
+          <ModalTitle>{detailCycle?.cycleCode} — Students &amp; Deadlines</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          {detailLoading ? (
+            <div className="flex justify-center py-8"><Spinner /></div>
+          ) : (
+            <div className="space-y-4">
+              {/* Students */}
+              <div>
+                <h4 className="text-sm font-semibold text-neutral-900 mb-1.5 flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-neutral-400" />
+                  Students ({detailData?.students.length ?? 0})
+                  <span className="text-neutral-400 font-normal">· {detailData?.pairedStudents ?? 0} paired</span>
+                </h4>
+                {!detailData || detailData.students.length === 0 ? (
+                  <p className="text-xs text-neutral-500">No students enrolled in this cycle yet.</p>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto border border-neutral-200 rounded-md">
+                    <table className="w-full text-xs">
+                      <thead className="bg-neutral-50 text-neutral-500 sticky top-0">
+                        <tr>
+                          <th className="text-left px-2 py-1 font-medium">Name</th>
+                          <th className="text-left px-2 py-1 font-medium">MMU ID</th>
+                          <th className="text-left px-2 py-1 font-medium">Supervisor</th>
+                          <th className="text-left px-2 py-1 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailData.students.map((s) => (
+                          <tr key={s.userId} className="border-t border-neutral-100">
+                            <td className="px-2 py-1">
+                              <div className="font-medium text-neutral-900">{s.fullName}</div>
+                              <div className="text-[10px] text-neutral-400">{s.email}</div>
+                            </td>
+                            <td className="px-2 py-1 text-neutral-600">{s.mmuId || '—'}</td>
+                            <td className="px-2 py-1">
+                              {s.paired
+                                ? <span className="text-neutral-700">{s.supervisorName}</span>
+                                : <span className="text-amber-600">Unpaired</span>}
+                            </td>
+                            <td className="px-2 py-1 text-neutral-600">{s.projectStatus || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Deadlines */}
+              <div>
+                <h4 className="text-sm font-semibold text-neutral-900 mb-1.5 flex items-center gap-1.5">
+                  <CalendarIcon className="h-4 w-4 text-neutral-400" />
+                  Deadlines ({detailData?.deadlines.length ?? 0})
+                </h4>
+                {!detailData || detailData.deadlines.length === 0 ? (
+                  <p className="text-xs text-neutral-500">No deadlines configured for this cycle.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {detailData.deadlines.map((d) => (
+                      <li key={d.deadlineId} className="flex items-center justify-between gap-2 text-xs border border-neutral-200 rounded px-2 py-1">
+                        <span className="text-neutral-800 truncate">{d.title}</span>
+                        <span className="text-neutral-500 flex-shrink-0">
+                          {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : '—'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setDetailCycle(null)}>Close</Button>
+        </ModalFooter>
+      </Modal>
 
       {/* Create Cycle Modal (blank, no template) */}
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} size="lg">
@@ -561,14 +648,26 @@ function ActiveCycleBanner({ cycle, type }: { cycle: FYPCycle | undefined; type:
   )
 }
 
-function Stat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  return (
-    <div className="flex items-center gap-1 text-[11px]">
+function Stat({ icon, value, label, onClick }: { icon: React.ReactNode; value: number; label: string; onClick?: () => void }) {
+  const inner = (
+    <>
       {icon}
       <span className="font-medium text-neutral-900">{value}</span>
       <span className="text-neutral-500">{label}</span>
-    </div>
+    </>
   )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex items-center gap-1 text-[11px] -mx-1 px-1 rounded hover:bg-neutral-100 hover:text-primary-700 transition-colors cursor-pointer"
+      >
+        {inner}
+      </button>
+    )
+  }
+  return <div className="flex items-center gap-1 text-[11px]">{inner}</div>
 }
 
 function CycleFormFields({

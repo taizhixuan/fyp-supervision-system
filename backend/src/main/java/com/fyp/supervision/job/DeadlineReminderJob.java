@@ -13,6 +13,7 @@ import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.NotificationService;
+import com.fyp.supervision.service.SystemParameterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,7 @@ public class DeadlineReminderJob {
     private final UserAccountRepository userAccountRepository;
     private final ProjectRepository projectRepository;
     private final NotificationService notificationService;
+    private final SystemParameterService systemParameters;
     private final ObjectMapper objectMapper;
 
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Kuala_Lumpur")
@@ -64,7 +66,13 @@ public class DeadlineReminderJob {
 
     private int processDeadline(Deadline deadline, LocalDate today) {
         List<Integer> reminderDays = parseReminderDays(deadline.getReminderDays());
-        if (reminderDays.isEmpty()) return 0;
+        if (reminderDays.isEmpty()) {
+            // Fall back to the platform-wide default lead time when a deadline has no
+            // per-deadline reminder schedule (0 or unset = no global fallback).
+            int fallback = systemParameters.getInt("deadline_reminder_days", 0);
+            if (fallback <= 0) return 0;
+            reminderDays = List.of(fallback);
+        }
 
         LocalDate effectiveDue = deadline.getExtendedDate() != null
                 ? deadline.getExtendedDate()

@@ -9,7 +9,6 @@ import {
   Clock,
   Calendar,
   Lock,
-  Unlock,
   Activity,
   Monitor,
   Edit,
@@ -43,7 +42,7 @@ const statusConfig: Record<UserStatus, { label: string; color: string; bgColor: 
   ACTIVE: { label: 'Active', color: 'text-success-600', bgColor: 'bg-success-50' },
   PENDING: { label: 'Pending Approval', color: 'text-warning-600', bgColor: 'bg-warning-50' },
   SUSPENDED: { label: 'Suspended', color: 'text-error-600', bgColor: 'bg-error-50' },
-  BLOCKED: { label: 'Blocked', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
+  BLOCKED: { label: 'Deleted', color: 'text-neutral-600', bgColor: 'bg-neutral-100' },
 }
 
 export function UserDetail() {
@@ -87,7 +86,7 @@ export function UserDetail() {
   const statusLabels: Record<string, string> = {
     ACTIVE: 'activated',
     SUSPENDED: 'suspended',
-    BLOCKED: 'blocked',
+    BLOCKED: 'deleted',
     PENDING: 'set to pending',
   }
 
@@ -101,21 +100,6 @@ export function UserDetail() {
       successToast('Status Updated', `${user.fullName}'s account has been ${statusLabels[newStatus]}.`)
     } catch (error) {
       errorToast('Update Failed', 'Could not update the account status.')
-    }
-  }
-
-  const handleLockToggle = async () => {
-    try {
-      await updateMutation.mutateAsync({
-        userId: user.userId,
-        data: { isLocked: !user.isLocked },
-      })
-      successToast(
-        user.isLocked ? 'Account Unlocked' : 'Account Locked',
-        `${user.fullName}'s account has been ${user.isLocked ? 'unlocked' : 'locked'}.`
-      )
-    } catch (error) {
-      errorToast('Update Failed', 'Could not toggle account lock status.')
     }
   }
 
@@ -179,7 +163,7 @@ export function UserDetail() {
                 {user.isLocked && (
                   <span className="px-1.5 py-0 bg-rose-50 text-rose-700 rounded text-[10px] font-medium flex items-center gap-0.5">
                     <Lock className="h-2.5 w-2.5" />
-                    Locked
+                    Deleted
                   </span>
                 )}
               </div>
@@ -348,14 +332,6 @@ export function UserDetail() {
         <h3 className="text-sm font-semibold text-neutral-900 mb-2">Account Actions</h3>
 
         <div className="flex flex-wrap gap-1.5">
-          <Button variant="secondary" size="sm" onClick={handleLockToggle} disabled={updateMutation.isPending}>
-            {user.isLocked ? (
-              <><Unlock className="h-3.5 w-3.5 mr-1" />Unlock</>
-            ) : (
-              <><Lock className="h-3.5 w-3.5 mr-1" />Lock</>
-            )}
-          </Button>
-
           {user.status === 'PENDING' && (
             <Button variant="secondary" size="sm" onClick={handleResendInvite} disabled={resendInviteMutation.isPending}>
               <Send className="h-3.5 w-3.5 mr-1" />
@@ -447,8 +423,9 @@ export function UserDetail() {
               </div>
             </div>
             <p className="text-sm text-neutral-600 mb-4">
-              Are you sure you want to permanently delete <strong>{user.fullName}</strong>'s
-              account and all associated data?
+              Are you sure you want to delete <strong>{user.fullName}</strong>'s account?
+              Their personal details will be erased and they'll be permanently locked out.
+              FYP records (projects, meeting logs, proposals) are kept but anonymised.
             </p>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => setShowConfirmDelete(false)}>

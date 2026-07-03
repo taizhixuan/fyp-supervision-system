@@ -68,9 +68,9 @@ const STUDENT_GATED_HREFS: ReadonlySet<string> = new Set<string>([
   ROUTES.STUDENT.DOCUMENTS,
 ])
 
-// Once the student is REGISTERED, the supervisor-discovery flow is no longer relevant —
-// these items render with a lock icon and the routes themselves render LockedFeaturePage
-// via RegisteredOnlyLockGate.
+// Once the student is paired with a supervisor, the supervisor-discovery flow is no longer
+// relevant — these items render with a lock icon and the routes themselves render
+// LockedFeaturePage via RegisteredOnlyLockGate.
 const STUDENT_POST_REGISTRATION_LOCKED_HREFS: ReadonlySet<string> = new Set<string>([
   ROUTES.STUDENT.SUPERVISORS,
   ROUTES.STUDENT.RECOMMENDATIONS,
@@ -240,7 +240,8 @@ function useSidebarBadges(role: UserRole): Record<BadgeKey, number> {
       return data?.count ?? 0
     },
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   })
 
   const adminPending = useQuery({
@@ -342,10 +343,10 @@ export function SideNav({
   const studentGate = useStudentRegistrationGate()
   const { user } = useAuth()
   const showPreSupervisorLocks = userRole === 'STUDENT' && !studentGate.supervisorAssigned
-  // Discovery routes lock either when the student is already registered OR when their
+  // Discovery routes lock once the student is paired with a supervisor OR when their
   // enrolled cycle has ended (read-only mode — no point browsing supervisors).
   const showPostRegistrationLocks =
-    userRole === 'STUDENT' && (studentGate.isRegistered || studentGate.cycleActive === false)
+    userRole === 'STUDENT' && (studentGate.supervisorAssigned || studentGate.cycleActive === false)
 
   const renderItem = (item: NavItem) => {
     const lockedPreSupervisor = showPreSupervisorLocks && STUDENT_GATED_HREFS.has(item.href)

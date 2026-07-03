@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final IntegrationConfigService integrationConfig;
+    private final SystemParameterService systemParameters;
 
     @Value("${app.email.enabled:false}")
     private boolean enabled;
@@ -25,10 +27,33 @@ public class EmailService {
     @Value("${app.email.app-base-url:http://localhost:3000}")
     private String appBaseUrl;
 
+    /**
+     * Effective email switch: the environment flag stays the base source of truth,
+     * and an admin can additionally turn email off from the Integration Settings
+     * screen (the EMAIL row). Fail-open on the integration lookup preserves the
+     * env behaviour if the row is missing.
+     */
+    private boolean emailEnabled() {
+        return enabled && integrationConfig.isTypeEnabled("EMAIL");
+    }
+
+    // Branding pulled from the admin System Parameters (fail-open to the defaults).
+    private String brandName() {
+        return escape(systemParameters.getString("system_name", "FYP Supervision System"));
+    }
+
+    private String universityName() {
+        return escape(systemParameters.getString("university_name", "Multimedia University"));
+    }
+
+    private String facultyName() {
+        return escape(systemParameters.getString("faculty_name", "Faculty of Computing & Informatics"));
+    }
+
     @Async("emailExecutor")
     public void sendNotificationEmail(String recipientEmail, String recipientName,
                                       String type, String title, String message, String targetRoute) {
-        if (!enabled) {
+        if (!emailEnabled()) {
             log.debug("Email skipped (disabled): type={} to={}", type, recipientEmail);
             return;
         }
@@ -51,7 +76,7 @@ public class EmailService {
 
     @Async("emailExecutor")
     public void sendPasswordResetEmail(String recipientEmail, String recipientName, String rawToken) {
-        if (!enabled) {
+        if (!emailEnabled()) {
             log.debug("Password reset email skipped (disabled): to={}", recipientEmail);
             return;
         }
@@ -81,7 +106,7 @@ public class EmailService {
      */
     @Async("emailExecutor")
     public void sendRegistrationOtpEmail(String recipientEmail, String recipientName, String code) {
-        if (!enabled) {
+        if (!emailEnabled()) {
             log.info("Registration OTP for {} (email disabled): {}", recipientEmail, code);
             return;
         }
@@ -107,7 +132,7 @@ public class EmailService {
         String safeCode = escape(code);
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
                 + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
-                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">FYP Supervision System</td></tr>"
+                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">" + brandName() + "</td></tr>"
                 + "<tr><td style=\"padding:24px;color:#111827;\">"
                 + "<p style=\"margin:0 0 12px 0;\">Hi " + safeName + ",</p>"
                 + "<h2 style=\"margin:0 0 12px 0;font-size:18px;\">Verify your email</h2>"
@@ -117,7 +142,7 @@ public class EmailService {
                 + "<p style=\"margin:0;font-size:13px;color:#6b7280;\">If you didn't try to register, you can ignore this email — no account will be created.</p>"
                 + "</td></tr>"
                 + "<tr><td style=\"padding:16px 24px;background:#f9fafb;color:#6b7280;font-size:12px;\">"
-                + "FYP Supervision System &middot; Multimedia University"
+                + brandName() + " &middot; " + universityName() + " &middot; " + facultyName()
                 + "</td></tr></table></body></html>";
     }
 
@@ -126,7 +151,7 @@ public class EmailService {
         String safeUrl = escape(resetUrl);
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
                 + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
-                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">FYP Supervision System</td></tr>"
+                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">" + brandName() + "</td></tr>"
                 + "<tr><td style=\"padding:24px;color:#111827;\">"
                 + "<p style=\"margin:0 0 12px 0;\">Hi " + safeName + ",</p>"
                 + "<h2 style=\"margin:0 0 12px 0;font-size:18px;\">Reset your password</h2>"
@@ -138,7 +163,7 @@ public class EmailService {
                 + "<p style=\"margin:0;font-size:13px;color:#6b7280;\">If you didn't request this, you can ignore this email — your password won't change.</p>"
                 + "</td></tr>"
                 + "<tr><td style=\"padding:16px 24px;background:#f9fafb;color:#6b7280;font-size:12px;\">"
-                + "FYP Supervision System &middot; Multimedia University"
+                + brandName() + " &middot; " + universityName() + " &middot; " + facultyName()
                 + "</td></tr></table></body></html>";
     }
 
@@ -150,7 +175,7 @@ public class EmailService {
         String prefsUrl = appBaseUrl + "/student/notifications/settings";
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
                 + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
-                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">FYP Supervision System</td></tr>"
+                + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">" + brandName() + "</td></tr>"
                 + "<tr><td style=\"padding:24px;color:#111827;\">"
                 + "<p style=\"margin:0 0 12px 0;\">Hi " + safeName + ",</p>"
                 + "<h2 style=\"margin:0 0 12px 0;font-size:18px;\">" + safeTitle + "</h2>"

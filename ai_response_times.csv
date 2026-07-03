@@ -1,0 +1,61 @@
+service,sample,seconds,ok
+Supervisor recommendation,1,1.0631,1
+Supervisor recommendation,2,1.0778,1
+Supervisor recommendation,3,1.0637,1
+Supervisor recommendation,4,1.019,1
+Supervisor recommendation,5,1.0566,1
+Supervisor recommendation,6,1.0494,1
+Supervisor recommendation,7,1.0773,1
+Supervisor recommendation,8,1.045,1
+Supervisor recommendation,9,1.0751,1
+Supervisor recommendation,10,1.0585,1
+Supervisor recommendation,11,1.0366,1
+Supervisor recommendation,12,1.0551,1
+Supervisor recommendation,13,1.0518,1
+Supervisor recommendation,14,1.0354,1
+Supervisor recommendation,15,1.0597,1
+Supervisor recommendation,16,1.0648,1
+Supervisor recommendation,17,1.058,1
+Supervisor recommendation,18,1.0701,1
+Supervisor recommendation,19,1.0874,1
+Supervisor recommendation,20,1.0745,1
+Proposal analyser,1,1.6738,1
+Proposal analyser,2,1.9086,1
+Proposal analyser,3,1.7013,1
+Proposal analyser,4,12.2481,1
+Proposal analyser,5,1.7064,1
+Proposal analyser,6,2.7346,1
+Proposal analyser,7,5.8711,1
+Proposal analyser,8,4.9108,1
+Proposal analyser,9,5.6877,1
+Proposal analyser,10,5.8719,1
+Proposal analyser,11,4.8759,1
+Proposal analyser,12,4.9844,1
+Proposal analyser,13,5.7191,1
+Proposal analyser,14,4.818,1
+Proposal analyser,15,5.8937,1
+Proposal analyser,16,0.3245,1
+Proposal analyser,17,0.2904,1
+Proposal analyser,18,0.291,1
+Proposal analyser,19,0.3069,1
+Proposal analyser,20,0.2865,1
+Chatbot,1,0.1276,1
+Chatbot,2,0.1277,1
+Chatbot,3,0.1271,1
+Chatbot,4,0.1153,1
+Chatbot,5,0.1164,1
+Chatbot,6,0.1189,1
+Chatbot,7,0.1164,1
+Chatbot,8,0.1178,1
+Chatbot,9,0.129,1
+Chatbot,10,0.1151,1
+Chatbot,11,0.1348,1
+Chatbot,12,0.1195,1
+Chatbot,13,0.1119,1
+Chatbot,14,0.119,1
+Chatbot,15,0.1235,1
+Chatbot,16,0.1267,1
+Chatbot,17,0.1185,1
+Chatbot,18,0.1163,1
+Chatbot,19,0.1236,1
+Chatbot,20,0.1211,1

@@ -19,4 +19,17 @@ public interface ProjectDocumentRepository extends JpaRepository<ProjectDocument
     List<ProjectDocument> findByProject_Student_UserIdAndDocTypeOrderByUploadedAtDesc(Long studentUserId, String docType);
     long countByProject_Student_UserId(Long studentUserId);
     List<ProjectDocument> findByProject_Supervisor_UserIdOrderByUploadedAtDesc(Long supervisorUserId);
+
+    // Latest-only variants: a document list should show one card per version group.
+    Page<ProjectDocument> findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, Pageable pageable);
+    Page<ProjectDocument> findByProject_Student_UserIdAndPhaseAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, String phase, Pageable pageable);
+    Page<ProjectDocument> findByProject_Student_UserIdAndDocTypeAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, String docType, Pageable pageable);
+    Page<ProjectDocument> findByProject_Student_UserIdAndDocTypeAndPhaseAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, String docType, String phase, Pageable pageable);
+    List<ProjectDocument> findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId);
+    List<ProjectDocument> findByProject_Student_UserIdAndDocTypeAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, String docType);
+    List<ProjectDocument> findByProject_Supervisor_UserIdAndIsLatestTrueOrderByUploadedAtDesc(Long supervisorUserId);
+    long countByProject_Student_UserIdAndIsLatestTrue(Long studentUserId);
+
+    // Full version chain for one logical document, newest revision first.
+    List<ProjectDocument> findByVersionGroupOrderByVersionNoDesc(String versionGroup);
 }

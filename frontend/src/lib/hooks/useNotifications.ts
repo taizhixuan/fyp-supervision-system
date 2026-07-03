@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationsApi } from '@/lib/api/notifications'
+import { NOTIFICATION_QUERY_OPTIONS, invalidateAllNotifications } from './notificationCache'
 import type { Notification } from '@/types'
 
 export function useNotifications(limit: number = 10) {
@@ -17,6 +18,7 @@ export function useNotifications(limit: number = 10) {
       return notificationsApi.getNotifications({ limit })
     },
     staleTime: 30000, // 30 seconds
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 
   // Fetch unread count
@@ -26,14 +28,14 @@ export function useNotifications(limit: number = 10) {
       return notificationsApi.getUnreadCount()
     },
     staleTime: 30000,
-    refetchInterval: 60000,
+    ...NOTIFICATION_QUERY_OPTIONS,
   })
 
   // Mark single as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId: number) => notificationsApi.markAsRead(notificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      invalidateAllNotifications(queryClient)
     },
   })
 
@@ -41,7 +43,7 @@ export function useNotifications(limit: number = 10) {
   const markAllAsReadMutation = useMutation({
     mutationFn: notificationsApi.markAllAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      invalidateAllNotifications(queryClient)
     },
   })
 
