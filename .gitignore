@@ -377,3 +377,7 @@ extract_files.py
 /frontend/src/pages/committee/COMMITTEE_SCREENS_DESCRIPTIONS.md
 /frontend/src/pages/supervisor/SUPERVISOR_SCREENS_DESCRIPTIONS.md
 /poster-assets/
+scripts/
+/.tmp.driveupload/
+/.trash/
+/.space/
