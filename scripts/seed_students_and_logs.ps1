@@ -12,15 +12,28 @@
 #   Student G — unpaired, no requests
 #   Student H — unpaired, no requests
 #
-# Idempotent-ish: roster import upserts; register skips if mmuId/email already
+# Accounts are created with POST /admin/users, not /auth/register. V48 put an emailed
+# OTP in front of registration — /auth/register now only writes a pending_registration
+# row and the account does not exist until /auth/register/verify runs with the code,
+# which a script cannot read. The admin create-user endpoint creates the StudentProfile
+# and attaches the placeholder Project, so the result is the same shape.
+#
+# Idempotent-ish: roster import upserts; user creation skips if mmuId/email already
 # exists (script just continues with the next step). Meeting log creation is NOT
 # guarded — re-running will create duplicates. Drop the DB rows or run once.
+#
+# Usage:
+#   .\seed_students_and_logs.ps1                                        # local backend
+#   .\seed_students_and_logs.ps1 -BaseUrl https://api.supervisi.me/api  # remote server
+
+param(
+    [string] $BaseUrl = 'http://localhost:8080/api',
+    [string] $AdminEmail = 'admin@mmu.edu.my',
+    [string] $AdminPassword = 'Admin@123',
+    [string] $DefaultPwd = 'Test@123'
+)
 
 $ErrorActionPreference = 'Stop'
-$BaseUrl = 'http://localhost:8080/api'
-$AdminEmail = 'admin@mmu.edu.my'
-$AdminPassword = 'Admin@123'
-$DefaultPwd = 'Test@123'
 
 # 8 students with realistic intake + specialisation mix.
 $Students = @(
@@ -73,9 +86,9 @@ function Login {
 }
 
 function Try-RegisterStudent {
-    param($s)
+    param($s, [string] $AdminToken)
     try {
-        Invoke-Api -Method POST -Path '/auth/register' -Body @{
+        Invoke-Api -Method POST -Path '/admin/users' -Token $AdminToken -Body @{
             role          = 'STUDENT'
             fullName      = $s.fullName
             mmuId         = $s.mmuId
@@ -195,9 +208,9 @@ try {
 }
 
 # ----- 2. Self-registration -------------------------------------------------------------
-Write-Host "`n[2/5] Self-registering 8 students ..." -ForegroundColor Cyan
+Write-Host "`n[2/5] Creating 8 student accounts (POST /admin/users) ..." -ForegroundColor Cyan
 foreach ($s in $Students) {
-    $outcome = Try-RegisterStudent -s $s
+    $outcome = Try-RegisterStudent -s $s -AdminToken $adminToken
     Write-Host "    [$($s.tag)] $($s.fullName) -> $outcome" -ForegroundColor Green
 }
 

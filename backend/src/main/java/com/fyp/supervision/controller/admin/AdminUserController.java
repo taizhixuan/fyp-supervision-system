@@ -13,6 +13,7 @@ import com.fyp.supervision.repository.UserAccountRepository;
 import com.fyp.supervision.service.AccountDeletionService;
 import com.fyp.supervision.service.AdminService;
 import com.fyp.supervision.service.AuditService;
+import com.fyp.supervision.service.AuthService;
 import com.fyp.supervision.service.CycleLifecycleService;
 import com.fyp.supervision.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,7 @@ public class AdminUserController {
     private final CycleLifecycleService cycleLifecycleService;
     private final AuditService auditService;
     private final AccountDeletionService accountDeletionService;
+    private final AuthService authService;
 
     @GetMapping
     public ResponseEntity<?> getUsers(
@@ -80,7 +82,24 @@ public class AdminUserController {
                 .status(UserStatus.ACTIVE)
                 .build();
         UserAccount saved = userRepository.save(user);
+        // Without this the account has no StudentProfile / SupervisorProfile and the user hits
+        // "profile not found" on first login — registration creates it, this path did not.
+        authService.provisionRoleProfile(
+                saved,
+                (String) data.get("specialisation"),
+                intFromData(data.get("intakeYear")));
         return ResponseEntity.ok(Map.of("userId", saved.getUserId().toString()));
+    }
+
+    /** JSON numbers arrive as Integer, but a hand-rolled client may send a string. */
+    private static Integer intFromData(Object raw) {
+        if (raw == null) return null;
+        if (raw instanceof Number n) return n.intValue();
+        try {
+            return Integer.valueOf(raw.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @PutMapping("/{id}")

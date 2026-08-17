@@ -372,6 +372,43 @@ public class AuthService {
         }
     }
 
+    /**
+     * Builds the role-specific profile for an account created outside the self-registration
+     * flow — currently only the admin create-user endpoint. Registration does this inside
+     * {@link #createAccountFromPending}; when V48 moved account creation behind the OTP verify
+     * step, the admin path was left creating a bare {@code user_account} and nothing else, so an
+     * admin-created supervisor hit "Supervisor profile not found" on their own profile page.
+     *
+     * <p>Idempotent — an existing profile is left untouched, so it is safe to call on a user that
+     * already registered normally.
+     */
+    @Transactional
+    public void provisionRoleProfile(UserAccount user, String specialisation, Integer intakeYear) {
+        if (user.getRole() == UserRole.STUDENT) {
+            if (studentProfileRepository.existsById(user.getUserId())) return;
+            studentProfileRepository.save(StudentProfile.builder()
+                    .user(user)
+                    .specialisation(specialisation)
+                    .intakeYear(intakeYear)
+                    .programme(programmeForSpecialisation(specialisation))
+                    .faculty(facultyForSpecialisation(specialisation))
+                    .expectedGraduation(expectedGraduationFor(intakeYear))
+                    .build());
+            // Same placeholder-Project attach registration performs, otherwise the student is
+            // invisible to the active FYP1 cycle.
+            schedulePlaceholderAttach(user.getUserId());
+        } else if (user.getRole() == UserRole.SUPERVISOR) {
+            if (supervisorProfileRepository.existsById(user.getUserId())) return;
+            supervisorProfileRepository.save(SupervisorProfile.builder()
+                    .user(user)
+                    .supervisionQuota(8)
+                    .currentLoad(0)
+                    .availabilityStatus("AVAILABLE")
+                    .build());
+        }
+        // SYSTEM_ADMIN and FYP_COMMITTEE have no role profile.
+    }
+
     private void schedulePlaceholderAttach(Long studentUserId) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
