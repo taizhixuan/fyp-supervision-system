@@ -76,7 +76,38 @@ function Invoke-Api {
         $params['Body'] = ($Body | ConvertTo-Json -Depth 10)
         $params['ContentType'] = 'application/json'
     }
-    return Invoke-RestMethod @params
+    try {
+        return Invoke-RestMethod @params
+    } catch {
+        # Fold the backend's {"message": "..."} envelope into the thrown message so a
+        # failure anywhere says WHY, not just "(400) Bad Request".
+        $detail = ''
+        try {
+            $stream = $_.Exception.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($stream)
+            $detail = $reader.ReadToEnd()
+        } catch { }
+        throw "$Method $Path -> $($_.Exception.Message) $detail"
+    }
+}
+
+# Reads the JSON error body out of a failed Invoke-RestMethod. Necessary because
+# $_.Exception.Message on Windows PowerShell 5.1 is only the generic
+# "The remote server returned an error: (400) Bad Request." — the backend's actual
+# {"message": "..."} envelope is in the response stream. Matching on the exception
+# message instead of the body is why the pairing step used to abort on an
+# "already have a pending request" 400 that it was meant to skip.
+function Get-ErrorBody {
+    param($ErrorRecord)
+    try {
+        $stream = $ErrorRecord.Exception.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($stream)
+        $text = $reader.ReadToEnd()
+        if ($text) { return $text }
+    } catch { }
+    # Invoke-Api rethrows with the body folded into the message, so callers that
+    # catch a already-enriched error still get something matchable here.
+    return [string]$ErrorRecord.Exception.Message
 }
 
 function Login {
@@ -100,12 +131,7 @@ function Try-RegisterStudent {
         } | Out-Null
         return 'registered'
     } catch {
-        $body = ''
-        try {
-            $stream = $_.Exception.Response.GetResponseStream()
-            $reader = New-Object System.IO.StreamReader($stream)
-            $body = $reader.ReadToEnd()
-        } catch {}
+        $body = Get-ErrorBody $_
         if ($body -match 'already' -or $body -match 'duplicate') { return 'existed' }
         throw "register failed for $($s.email): $($_.Exception.Message) $body"
     }
@@ -240,15 +266,25 @@ foreach ($tag in $PairWith.Keys) {
         Send-Request -StudentToken $studentTokens[$tag] -SupervisorUserId $supId `
             -Title $title -Topic "Initial topic exploration aligned with $supEmail's research interests." | Out-Null
     } catch {
-        if (-not ($_.Exception.Message -match 'already')) { throw }
+        $body = Get-ErrorBody $_
+        if (-not ($body -match 'already')) { throw "request failed for [$tag]: $($_.Exception.Message) $body" }
     }
     $reqId = Find-PendingRequestId -StudentToken $studentTokens[$tag] -SupervisorUserId $supId
     if ($null -eq $reqId) {
         Write-Host "    [$tag] no PENDING request found (maybe already accepted on a prior run); skipping accept." -ForegroundColor DarkGray
         continue
     }
-    Accept-Request -SupervisorToken $supervisorTokens[$supEmail] -RequestId $reqId | Out-Null
-    Write-Host "    [$tag] $($stu.fullName) <-> $supEmail (request #$reqId ACCEPTED)" -ForegroundColor Green
+    try {
+        Accept-Request -SupervisorToken $supervisorTokens[$supEmail] -RequestId $reqId | Out-Null
+        Write-Host "    [$tag] $($stu.fullName) <-> $supEmail (request #$reqId ACCEPTED)" -ForegroundColor Green
+    } catch {
+        $body = Get-ErrorBody $_
+        # Re-run against a database where this student is already paired: the accept is
+        # rejected with "This student already has an assigned supervisor." Nothing to do.
+        if ($body -match 'already') {
+            Write-Host "    [$tag] $($stu.fullName) already has a supervisor; skipping accept." -ForegroundColor DarkGray
+        } else { throw }
+    }
 }
 
 # ----- 4. Pending-only requests ---------------------------------------------------------
@@ -262,9 +298,10 @@ foreach ($tag in $PendingRequestTo.Keys) {
             -Title 'Tentative FYP topic — open to direction' -Topic 'Looking for guidance on a topic in your area.' | Out-Null
         Write-Host "    [$tag] $($stu.fullName) -> $supEmail (PENDING)" -ForegroundColor Green
     } catch {
-        if ($_.Exception.Message -match 'already') {
+        $body = Get-ErrorBody $_
+        if ($body -match 'already') {
             Write-Host "    [$tag] PENDING request already exists; skipping." -ForegroundColor DarkGray
-        } else { throw }
+        } else { throw "pending request failed for [$tag]: $($_.Exception.Message) $body" }
     }
 }
 
