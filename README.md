@@ -9,7 +9,7 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-**Live demo:** [app.supervisi.me](https://app.supervisi.me).
+Previously deployed at `app.supervisi.me` on a DigitalOcean droplet behind Caddy with Let's Encrypt HTTPS. That instance has been taken down, so there is no public demo right now — the stack runs locally with `docker-compose up --build` (see Getting Started).
 
 ## What It Does
 
@@ -19,7 +19,7 @@ It also has three AI features: supervisor recommendations from your project topi
 
 ## Screenshots
 
-Captured from the live deployment at [app.supervisi.me](https://app.supervisi.me).
+Captured from the deployed stack.
 
 ![Landing page](docs/screenshots/landing.png)
 
