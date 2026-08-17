@@ -1,22 +1,36 @@
-# Seed 10 supervisor accounts via the real registration + admin pre-approval flow.
-# No direct DB inserts — every step uses the live REST API:
+# Seed 10 supervisor accounts through the live REST API. No direct DB inserts:
 #   1. Login as the seed admin (admin@mmu.edu.my / Admin@123).
 #   2. Upload an in-memory supervisor roster CSV through /admin/roster/supervisors/import
-#      so each new account auto-activates on register.
-#   3. POST /auth/register for each supervisor (status becomes ACTIVE because of step 2).
+#      so the roster reflects the seeded staff.
+#   3. POST /admin/users for each supervisor — creates the account ACTIVE straight away.
 #   4. Login as each supervisor and PUT /supervisor/profile to fill department,
 #      research areas, expertise, bio, quota — the same fields a supervisor would set
 #      themselves on their first login.
 #
-# Idempotent-ish: roster import upserts; register skips if mmuId already exists; profile
-# updates idempotent. Re-running won't duplicate accounts. Backend must be live on
-# http://localhost:8080.
+# Step 3 used to POST /auth/register. That stopped working when V48 introduced
+# email-OTP-before-account-creation: /auth/register now only writes a row to
+# pending_registration and the account does not exist until /auth/register/verify
+# is called with the code, which is delivered by email (or the backend log when
+# APP_EMAIL_ENABLED=false). A seeding script cannot read either, so it uses the
+# admin create-user endpoint instead. The human registration + OTP path is still
+# exercised by the app itself; this script is only about getting demo data in.
+#
+# Idempotent-ish: roster import upserts; user create skips if the email/mmuId already
+# exists; profile updates idempotent. Re-running won't duplicate accounts.
+#
+# Usage:
+#   .\seed_supervisors.ps1                                          # local backend
+#   .\seed_supervisors.ps1 -BaseUrl https://api.supervisi.me/api    # remote server
+#   .\seed_supervisors.ps1 -BaseUrl <url> -AdminPassword '<rotated>'
+
+param(
+    [string] $BaseUrl = 'http://localhost:8080/api',
+    [string] $AdminEmail = 'admin@mmu.edu.my',
+    [string] $AdminPassword = 'Admin@123',
+    [string] $SupervisorPassword = 'Test@123'
+)
 
 $ErrorActionPreference = 'Stop'
-$BaseUrl = 'http://localhost:8080/api'
-$AdminEmail = 'admin@mmu.edu.my'
-$AdminPassword = 'Admin@123'
-$SupervisorPassword = 'Test@123'
 
 # 10 supervisors with realistic FCI fields. mmuIds are 10 digits in the staff range.
 $Supervisors = @(
