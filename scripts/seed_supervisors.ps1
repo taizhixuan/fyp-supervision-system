@@ -102,11 +102,11 @@ try {
     Remove-Item $tmp -ErrorAction SilentlyContinue
 }
 
-Write-Host "`n[3/4] Self-registering each supervisor (auto-approved via roster) ..." -ForegroundColor Cyan
+Write-Host "`n[3/4] Creating each supervisor account (POST /admin/users, ACTIVE on create) ..." -ForegroundColor Cyan
 $registered = 0; $existed = 0; $failed = 0
 foreach ($s in $Supervisors) {
     try {
-        $resp = Invoke-Api -Method POST -Path '/auth/register' -Body @{
+        $resp = Invoke-Api -Method POST -Path '/admin/users' -Token $adminToken -Body @{
             role     = 'SUPERVISOR'
             fullName = $s.fullName
             mmuId    = $s.mmuId
@@ -114,7 +114,7 @@ foreach ($s in $Supervisors) {
             phone    = $s.phone
             password = $SupervisorPassword
         }
-        Write-Host "    + $($s.fullName) <$($s.email)> -> $($resp.message)" -ForegroundColor Green
+        Write-Host "    + $($s.fullName) <$($s.email)> -> userId=$($resp.userId)" -ForegroundColor Green
         $registered++
     } catch {
         $msg = $_.Exception.Message
