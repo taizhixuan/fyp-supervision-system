@@ -11,7 +11,11 @@ services:
       dockerfile: Dockerfile.dev
     command: npm run dev -- --host 0.0.0.0 --port 3000
     ports: !override
-      - "5173:3000"
+      # Host 5174 (not Vite's default 5173) so this stack can run alongside
+      # another Vite app that owns 5173. The container still serves on 3000;
+      # only the published host port changed. Keep it in sync with
+      # app.cors.allowed-origins in backend/src/main/resources/application.yml.
+      - "5174:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -61,7 +61,7 @@ app:
   # "https://app.example.com,https://api.example.com" so the proxied frontend
   # can reach the API across origins.
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:5174}
   # PDPA retention windows. The daily DataRetentionJob deletes notifications and
   # ended chat sessions older than these thresholds. Defaults to 180 days (6 months)
   # to match the Privacy Notice.
