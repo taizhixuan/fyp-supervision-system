@@ -267,7 +267,7 @@ export interface UpdateDeadlineRequest {
 // Integration Settings Types (UC32)
 // ============================================
 
-export type IntegrationType = 'EMAIL' | 'STORAGE' | 'AI' | 'CALENDAR' | 'SSO'
+export type IntegrationType = 'EMAIL' | 'STORAGE' | 'AI' | 'LLM' | 'CALENDAR' | 'SSO'
 export type IntegrationStatus = 'ACTIVE' | 'INACTIVE' | 'ERROR' | 'CONFIGURING'
 
 export interface Integration {
@@ -281,11 +281,49 @@ export interface Integration {
   lastTestedAt?: string
   lastTestResult?: 'SUCCESS' | 'FAILED'
   settings: Record<string, string>
+  /** Live facts from the running backend config (SMTP host, upload path, service URL). */
+  runtime?: Record<string, string | number | boolean | null>
 }
 
 export interface UpdateIntegrationRequest {
   status?: IntegrationStatus
   settings?: Record<string, string>
+}
+
+/** `env` = whatever the AI containers were started with; `none` = no LLM. */
+export type LlmProviderName = 'env' | 'ollama' | 'groq' | 'openai' | 'custom' | 'none'
+
+/** What one AI service is actually running (from its /ai/llm-config). */
+export interface LlmServiceState {
+  reachable: boolean
+  inSync?: boolean
+  error?: string
+  provider?: Exclude<LlmProviderName, 'env'>
+  model?: string | null
+  baseUrl?: string | null
+  configured?: boolean
+  local?: boolean
+  source?: 'env' | 'admin'
+  apiKeySet?: boolean
+  timeoutSeconds?: number
+}
+
+export interface LlmConfigStatus {
+  desired: { provider: LlmProviderName; model: string; baseUrl: string; enabled: boolean }
+  services: Record<string, LlmServiceState>
+  inSync: boolean
+}
+
+export interface UpdateLlmConfigRequest {
+  provider: LlmProviderName
+  model?: string
+  baseUrl?: string
+}
+
+export interface LlmTestResult {
+  success: boolean
+  message: string
+  services: Record<string, { success: boolean; message: string; responseTime?: number; reply?: string }>
 }
 
 export interface TestIntegrationResult {

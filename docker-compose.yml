@@ -33,6 +33,7 @@ services:
       AI_RECOMMENDATION_URL: http://ai-recommendation:5001
       AI_ANALYZER_URL: http://ai-proposal-analyzer:5002
       AI_CHATBOT_URL: http://ai-chatbot:5003
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -78,16 +79,20 @@ services:
       - "5002:5002"
     environment:
       FLASK_PORT: "5002"
-      # Remote LLM provider for richer feedback prose. First match wins:
-      #   LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL) -> generic OpenAI-compatible
-      #   GROQ_API_KEY                            -> Groq defaults
-      #   OPENAI_API_KEY                          -> OpenAI defaults
-      # Unset all three to run NLP-only (no LLM enhancement).
+      # LLM provider (see llm_provider.py). LLM_PROVIDER picks one of
+      # ollama | groq | openai | custom | none. Left blank, the first key found
+      # wins (LLM_API_KEY, GROQ_API_KEY, OPENAI_API_KEY), else none.
+      # The admin can switch provider at runtime in Integration Settings.
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-}
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
     volumes:
       - analyzer_models:/app/models
     networks:
@@ -100,17 +105,42 @@ services:
     environment:
       FLASK_PORT: "5003"
       USE_LOCAL_GEN: "false"
-      # Remote LLM provider — first match wins:
-      #   LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL) -> generic
-      #   GROQ_API_KEY                            -> Groq defaults
-      #   OPENAI_API_KEY                          -> OpenAI defaults
+      # LLM provider (see llm_provider.py). LLM_PROVIDER picks one of
+      # ollama | groq | openai | custom | none. Left blank, the first key found
+      # wins (LLM_API_KEY, GROQ_API_KEY, OPENAI_API_KEY), else none.
+      # The admin can switch provider at runtime in Integration Settings.
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-}
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
     volumes:
       - chatbot_vector_store:/app/vector_store
+    networks:
+      - fyp-network
+
+  # Local LLM server. Opt-in: `docker compose --profile local-llm up -d`.
+  # Point OLLAMA_VOLUME at an existing Ollama volume to reuse models you've
+  # already pulled; otherwise pull with `docker compose exec ollama ollama pull llama3.2:3b`.
+  ollama:
+    image: ollama/ollama:${OLLAMA_IMAGE_TAG:-0.33.2}
+    profiles: ["local-llm"]
+    ports:
+      - "127.0.0.1:11434:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
     networks:
       - fyp-network
 
@@ -133,6 +163,8 @@ volumes:
   recommendation_models:
   analyzer_models:
   chatbot_vector_store:
+  ollama_data:
+    name: ${OLLAMA_VOLUME:-fyp_ollama_data}
 
 networks:
   fyp-network:

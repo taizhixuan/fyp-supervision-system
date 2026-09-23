@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 import numpy as np
+
+from llm_provider import clean_reply
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
@@ -366,13 +368,14 @@ class RAGEngine:
             return ""
 
     def generate_remote(self, query: str, context: str, llm_client,
-                        session_history: List[Dict] = None) -> str:
+                        session_history: List[Dict] = None,
+                        model: Optional[str] = None) -> str:
         """
-        Generate a response using a remote OpenAI-compatible LLM
-        (Groq, OpenAI, OpenRouter, etc.) with RAG context.
+        Generate a response using an OpenAI-compatible LLM with RAG context:
+        a local Ollama model or a cloud API (Groq, OpenAI, OpenRouter, etc.).
         """
         try:
-            model = self.chat_model_name or "gpt-3.5-turbo"
+            model = model or self.chat_model_name or "gpt-4o-mini"
 
             system_prompt = (
                 "You are an intelligent FYP (Final Year Project) assistant for MMU FCI students. "
@@ -403,7 +406,7 @@ class RAGEngine:
                 temperature=0.7,
             )
 
-            return response.choices[0].message.content.strip()
+            return clean_reply(response.choices[0].message.content)
         except Exception as e:
             logger.warning(f"Remote LLM generation failed: {e}")
             return ""
@@ -415,6 +418,7 @@ class RAGEngine:
         llm_client=None,
         top_k: int = 5,
         extra_context: Optional[str] = None,
+        chat_model: Optional[str] = None,
     ) -> Dict:
         """
         Full RAG pipeline: retrieve, threshold, generate.
@@ -480,15 +484,16 @@ class RAGEngine:
         reply = ""
         generator = None
 
-        # Tier 1: remote OpenAI-compatible LLM (Groq / OpenAI / OpenRouter)
+        # Tier 1: OpenAI-compatible LLM (local Ollama or Groq / OpenAI / custom)
         if llm_client:
             reply = self.generate_remote(
                 query, context_joined, llm_client, session_history,
+                model=chat_model,
             )
             if reply:
                 generator = "remote"
                 logger.info(
-                    f"Response generated using remote LLM ({self.chat_model_name})"
+                    f"Response generated using LLM ({chat_model or self.chat_model_name})"
                 )
 
         # Tier 2: local Flan-T5 (only if explicitly enabled and remote failed)

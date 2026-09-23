@@ -36,6 +36,10 @@ public class AiServiceClient {
     @Value("${app.ai.chatbot-url}")
     private String chatbotUrl;
 
+    // Shared secret for the AI services' LLM admin endpoints. Empty = not enforced.
+    @Value("${app.ai.internal-token:}")
+    private String internalToken;
+
     public AiServiceClient(MeterRegistry meterRegistry, IntegrationConfigService integrationConfig,
                            SystemParameterService systemParameters) {
         // Bound the wait on a slow/hung AI service so a request thread (and any lock it
@@ -210,11 +214,55 @@ public class AiServiceClient {
         return checkHealth(chatbotUrl);
     }
 
-    @SuppressWarnings("rawtypes")
-    private ResponseEntity<Map> postJson(String url, Map<String, Object> payload) {
+    // ========== LLM provider admin (chatbot + analyzer share one config) ==========
+
+    /** Base URLs of the services that use an LLM, keyed by the name the admin UI shows. */
+    public Map<String, String> llmServiceUrls() {
+        Map<String, String> urls = new java.util.LinkedHashMap<>();
+        urls.put("chatbot", chatbotUrl);
+        urls.put("analyzer", analyzerUrl);
+        return urls;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getLlmConfig(String baseUrl) {
+        return exchange(baseUrl + "/ai/llm-config", HttpMethod.GET, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> putLlmConfig(String baseUrl, Map<String, Object> body) {
+        return exchange(baseUrl + "/ai/llm-config", HttpMethod.PUT, body);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> testLlm(String baseUrl) {
+        return exchange(baseUrl + "/ai/llm-test", HttpMethod.POST, Map.of());
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> listLlmModels(String baseUrl) {
+        return exchange(baseUrl + "/ai/llm-models", HttpMethod.GET, null);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private Map<String, Object> exchange(String url, HttpMethod method, Map<String, Object> body) {
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, jsonHeaders());
+        ResponseEntity<Map> response = restTemplate.exchange(url, method, request, Map.class);
+        return response.getBody() == null ? Map.of() : response.getBody();
+    }
+
+    private HttpHeaders jsonHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+        if (internalToken != null && !internalToken.isBlank()) {
+            headers.set("X-Internal-Token", internalToken);
+        }
+        return headers;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private ResponseEntity<Map> postJson(String url, Map<String, Object> payload) {
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, jsonHeaders());
         return restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
     }
 

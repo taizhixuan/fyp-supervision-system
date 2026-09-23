@@ -7,9 +7,9 @@ Pipeline:
 2. Fine-tuned DistilBERT regression for overall text quality — chunk-and-average
    over 480-token windows so long proposals are scored on the full text rather
    than just the first ~400 words.
-3. Optional remote LLM (Groq / OpenAI / OpenAI-compatible) for richer
-   strengths/weaknesses prose, wired through the same env-resolution scheme as
-   the chatbot.
+3. Optional LLM for richer strengths/weaknesses prose: a local Ollama model
+   or a cloud API (Groq / OpenAI / custom), via the same llm_provider module
+   as the chatbot. Scores never depend on it.
 
 The plagiarism field has been removed deliberately: the previous version
 hard-coded a constant and labelled it as a real check. The system will not
@@ -32,6 +32,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from nlp_utils import analyze_proposal_nlp, collapse_redundancy, redundancy_ratio
+from llm_provider import LLMProvider, clean_reply, register_llm_routes
 
 app = Flask(__name__)
 CORS(app)
@@ -40,77 +41,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# Remote LLM (OpenAI-compatible: Groq / OpenAI / OpenRouter / etc.)
+# LLM provider (Ollama local / Groq / OpenAI / custom, all OpenAI-compatible)
 # ============================================================================
-# Provider precedence — first match wins:
-#   1. LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL)   - generic
-#   2. GROQ_API_KEY                              - Groq defaults
-#   3. OPENAI_API_KEY                            - OpenAI defaults
-
-GROQ_DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_DEFAULT_MODEL = "llama-3.3-70b-versatile"
-OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1"
-OPENAI_DEFAULT_MODEL = "gpt-3.5-turbo"
-
-
-def _env(name: str, default: Optional[str] = None) -> Optional[str]:
-    """Read an env var, treating unset/empty as the default. Compose passes
-    `${VAR:-}` which sets the var to '' when the user doesn't have it in
-    their shell — `os.environ.get(...)` would otherwise return that empty
-    string instead of falling through to a default."""
-    raw = os.environ.get(name)
-    if raw is None or raw.strip() == "":
-        return default
-    return raw
-
-
-def _resolve_llm_config():
-    """Return (api_key, base_url, model, provider) — all None if unconfigured."""
-    api_key = _env("LLM_API_KEY")
-    if api_key:
-        return (
-            api_key,
-            _env("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
-            _env("LLM_MODEL", GROQ_DEFAULT_MODEL),
-            "custom",
-        )
-    api_key = _env("GROQ_API_KEY")
-    if api_key:
-        return (
-            api_key,
-            _env("LLM_BASE_URL", GROQ_DEFAULT_BASE_URL),
-            _env("LLM_MODEL", GROQ_DEFAULT_MODEL),
-            "groq",
-        )
-    api_key = _env("OPENAI_API_KEY")
-    if api_key:
-        return (
-            api_key,
-            _env("LLM_BASE_URL", OPENAI_DEFAULT_BASE_URL),
-            _env("LLM_MODEL", OPENAI_DEFAULT_MODEL),
-            "openai",
-        )
-    return None, None, None, None
-
-
-llm_api_key, llm_base_url, llm_model, llm_provider = _resolve_llm_config()
-llm_client = None
-if llm_api_key:
-    try:
-        from openai import OpenAI
-        llm_client = OpenAI(api_key=llm_api_key, base_url=llm_base_url)
-        logger.info(
-            "Remote LLM initialized: provider=%s model=%s base_url=%s",
-            llm_provider, llm_model, llm_base_url,
-        )
-    except ImportError:
-        logger.warning("openai package not installed; remote LLM disabled")
-        llm_client = None
-else:
-    logger.info(
-        "No remote LLM configured (set GROQ_API_KEY, OPENAI_API_KEY, or "
-        "LLM_API_KEY) — using NLP-only feedback."
-    )
+# Startup choice comes from env (LLM_PROVIDER, OLLAMA_*, GROQ_API_KEY, ...);
+# the admin can switch it at runtime via PUT /ai/llm-config. See llm_provider.py.
+llm = LLMProvider()
+register_llm_routes(app, llm)
 
 # ============================================================================
 # Fine-tuned DistilBERT model
@@ -326,10 +262,17 @@ def _extract_json_object(raw):
         return None
 
 
+def _clean_list(value):
+    if not isinstance(value, list):
+        return []
+    return [str(v).strip() for v in value if isinstance(v, (str, int, float)) and str(v).strip()]
+
+
 def get_llm_enhanced_feedback(text, nlp_analysis):
     """Return LLM-augmented feedback or None on any failure (caller must
-    tolerate). Provider is whatever `_resolve_llm_config` selected."""
-    if not llm_client:
+    tolerate). Provider is whatever llm_provider currently has selected."""
+    state = llm.snapshot()
+    if not state.configured:
         return None
     try:
         scores_summary = (
@@ -339,8 +282,8 @@ def get_llm_enhanced_feedback(text, nlp_analysis):
             f"Innovation: {nlp_analysis['innovation_score']}/100"
         )
         proposal_excerpt = text if len(text) <= 6000 else text[:6000] + " [...]"
-        response = llm_client.chat.completions.create(
-            model=llm_model,
+        response = state.client.chat.completions.create(
+            model=state.model,
             messages=[
                 {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
                 {"role": "user", "content": f"Proposal:\n{proposal_excerpt}\n\n{scores_summary}"},
@@ -348,7 +291,7 @@ def get_llm_enhanced_feedback(text, nlp_analysis):
             max_tokens=1500,
             temperature=0.3,
         )
-        raw = (response.choices[0].message.content or "").strip()
+        raw = clean_reply(response.choices[0].message.content)
         return _extract_json_object(raw)
     except Exception as e:
         logger.warning("Remote LLM feedback failed: %s", e)
@@ -486,9 +429,11 @@ def analyze_proposal(text):
 
     enhanced = get_llm_enhanced_feedback(text, nlp_results)
     if enhanced:
-        strengths = enhanced.get("detailed_strengths", strengths)
-        weaknesses = enhanced.get("detailed_weaknesses", weaknesses)
-        suggestions = enhanced.get("detailed_suggestions", suggestions)
+        # Small local models sometimes return empty or malformed lists; keep
+        # the NLP feedback for any field the LLM didn't fill properly.
+        strengths = _clean_list(enhanced.get("detailed_strengths")) or strengths
+        weaknesses = _clean_list(enhanced.get("detailed_weaknesses")) or weaknesses
+        suggestions = _clean_list(enhanced.get("detailed_suggestions")) or suggestions
 
     section_analysis = []
     for sa in nlp_results["section_analysis"]:
@@ -498,7 +443,7 @@ def analyze_proposal(text):
             "feedback": sa["feedback"],
         })
 
-    if enhanced and enhanced.get("summary"):
+    if enhanced and isinstance(enhanced.get("summary"), str) and enhanced["summary"].strip():
         summary = enhanced["summary"]
     else:
         word_count = nlp_results["word_count"]
@@ -537,6 +482,8 @@ def analyze_proposal(text):
             "sectionCompleteness": nlp_results["section_completeness"],
             "redundancy": round(redundancy, 3),
             "llmEnhanced": enhanced is not None,
+            "llmProvider": llm.provider if enhanced is not None else None,
+            "llmModel": llm.model if enhanced is not None else None,
         },
     }
 
@@ -555,11 +502,7 @@ def health():
         "model_dir": model_dir.name if model_dir else None,
         "calibrated": calibration is not None,
         "analysis_mode": "model+nlp" if quality_model else "nlp_only",
-        "remote_llm": {
-            "configured": llm_client is not None,
-            "provider": llm_provider,
-            "model": llm_model,
-        },
+        "remote_llm": llm.describe(),
     })
 
 
