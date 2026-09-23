@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Calendar,
+  CalendarPlus,
   Search,
   Plus,
   Clock,
@@ -20,6 +21,8 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useSupervisorMeetings } from '@/lib/hooks/useSupervisor'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { useErrorToast } from '@/components/ui/Toast'
+import { downloadAuthedFile } from '@/lib/utils/download'
 import type { MeetingStatus, MeetingType } from '@/types'
 
 // Includes PROPOSED (the supervisor-created initial state) and PENDING (legacy/UI alias)
@@ -54,6 +57,19 @@ export function MeetingManagement() {
   const [statusFilter, setStatusFilter] = useState('all')
 
   const { data, isLoading } = useSupervisorMeetings(statusFilter === 'all' ? undefined : statusFilter)
+  const [exportingIcs, setExportingIcs] = useState(false)
+  const showError = useErrorToast()
+
+  const handleExportSchedule = async () => {
+    setExportingIcs(true)
+    try {
+      await downloadAuthedFile('/supervisor/meetings/calendar.ics', 'my-meetings.ics')
+    } catch {
+      showError('Export failed', 'Could not generate the calendar file. Please try again.')
+    } finally {
+      setExportingIcs(false)
+    }
+  }
 
   const filteredMeetings = data?.meetings.filter((meeting) => {
     if (!searchQuery) return true
@@ -100,12 +116,25 @@ export function MeetingManagement() {
               <p className="text-stone-300 text-xs">Schedule and manage meetings with your supervisees</p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-stone-100 ring-1 ring-stone-600 hover:bg-stone-700 hover:text-white whitespace-nowrap"
+            onClick={handleExportSchedule}
+            isLoading={exportingIcs}
+            title="Download your upcoming meetings as an .ics file for Google, Outlook or Apple Calendar"
+          >
+            <CalendarPlus className="h-3.5 w-3.5 mr-1" />
+            Export to Calendar
+          </Button>
           <Link to={ROUTES.SUPERVISOR.MEETING_NEW}>
             <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-stone-900 font-semibold shadow whitespace-nowrap">
               <Plus className="h-3.5 w-3.5 mr-1" />
               Schedule
             </Button>
           </Link>
+          </div>
         </div>
 
         {/* Inline stats */}

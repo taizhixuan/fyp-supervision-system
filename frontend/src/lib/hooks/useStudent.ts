@@ -865,14 +865,15 @@ export function useExportMeetings() {
       const response = await apiClient.post('/student/meetings/export', params, {
         responseType: 'blob',
       })
-      // Trigger a real browser download (the backend returns a CSV of the meeting list).
-      const blob = new Blob([response.data as BlobPart], { type: 'text/csv' })
+      // Trigger a real browser download (CSV of the meeting list, or an .ics calendar for ICAL).
+      const isIcal = params.format === 'ICAL'
+      const blob = new Blob([response.data as BlobPart], { type: isIcal ? 'text/calendar' : 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       const disp = (response.headers as Record<string, string>)['content-disposition'] || ''
       const match = disp.match(/filename="?([^";]+)"?/i)
-      a.download = match?.[1] || 'meetings.csv'
+      a.download = match?.[1] || (isIcal ? 'meetings.ics' : 'meetings.csv')
       document.body.appendChild(a)
       a.click()
       a.remove()
