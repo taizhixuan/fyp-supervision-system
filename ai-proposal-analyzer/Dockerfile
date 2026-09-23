@@ -8,7 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# CPU-only torch wheels: these containers never use a GPU, and the default
+# Linux wheel drags in ~2.5 GB of CUDA libraries. Long timeout + retries so a
+# slow PyPI mirror doesn't fail the build.
+RUN pip install --no-cache-dir --default-timeout=120 --retries 10 \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.txt
 
 COPY . .
 
