@@ -29,6 +29,8 @@ import { localDatetimeToLocalDateTime } from '@/lib/utils/datetimeLocal'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { detectPlatformFromUrl, getPlatformInfo } from '@/lib/utils/meetingPlatform'
+import { AddToCalendarMenu } from '@/components/common/AddToCalendarMenu'
+import { studentMeetingToCalendarEvent } from '@/lib/utils/calendarLinks'
 import type { Meeting, MeetingStatus } from '@/types'
 
 // Sample data
@@ -570,6 +572,15 @@ export function MeetingDetail() {
                     Join Meeting
                   </Button>
                 </a>
+              )}
+
+              {displayMeeting.status !== 'CANCELLED' && displayMeeting.status !== 'COMPLETED' && (
+                <AddToCalendarMenu
+                  fullWidth
+                  event={studentMeetingToCalendarEvent(displayMeeting)}
+                  icsPath={`/student/meetings/${displayMeeting.meetingId}/calendar.ics`}
+                  icsFileName={`meeting-${displayMeeting.meetingId}.ics`}
+                />
               )}
 
               {canCreateLog && (

@@ -31,6 +31,8 @@ import {
   getPlatformInfo,
   buildMeetingShareMailto,
 } from '@/lib/utils/meetingPlatform'
+import { AddToCalendarMenu } from '@/components/common/AddToCalendarMenu'
+import { supervisorMeetingToCalendarEvent } from '@/lib/utils/calendarLinks'
 import type { SvMeetingStatus, MeetingType } from '@/types'
 
 // PROPOSED is the backend's initial state; SvMeetingStatus doesn't include it but the
@@ -209,6 +211,14 @@ export function MeetingDetail() {
             </p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+        {meeting.status !== 'CANCELLED' && meeting.status !== 'COMPLETED' && (
+          <AddToCalendarMenu
+            event={supervisorMeetingToCalendarEvent(meeting)}
+            icsPath={`/supervisor/meetings/${meeting.meetingId}/calendar.ics`}
+            icsFileName={`meeting-${meeting.meetingId}.ics`}
+          />
+        )}
         {canRespond && (
           <div className="flex items-center gap-2">
             <Button
@@ -245,6 +255,7 @@ export function MeetingDetail() {
             {meeting.meetingUrl ? 'Update meeting link' : 'Add meeting link'}
           </Button>
         )}
+        </div>
       </div>
 
       {linkMissing && meeting.status === 'CONFIRMED' && (

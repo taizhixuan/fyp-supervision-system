@@ -4,10 +4,13 @@ import com.fyp.supervision.entity.Meeting;
 import com.fyp.supervision.enums.MeetingStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.repository.MeetingRepository;
+import com.fyp.supervision.service.MeetingCalendarService;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,12 +28,47 @@ public class SupervisorMeetingController {
     private final SupervisorAccessService access;
     private final MeetingRepository meetingRepository;
     private final NotificationService notificationService;
+    private final MeetingCalendarService meetingCalendarService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
         Long userId = Long.parseLong(user.getUsername());
         List<Map<String, Object>> meetings = supervisorService.getMeetingDtos(userId, status);
         return ResponseEntity.ok(Map.of("meetings", meetings, "total", meetings.size()));
+    }
+
+    /** All upcoming proposed/confirmed meetings as one .ics calendar file. */
+    @GetMapping("/calendar.ics")
+    public ResponseEntity<byte[]> getScheduleIcs(@AuthenticationPrincipal UserDetails user) {
+        Long userId = Long.parseLong(user.getUsername());
+        LocalDateTime now = LocalDateTime.now();
+        List<Meeting> upcoming = meetingRepository.findBySupervisorUserId(userId).stream()
+                .filter(m -> m.getStatus() == MeetingStatus.PROPOSED
+                        || m.getStatus() == MeetingStatus.CONFIRMED
+                        || m.getStatus() == MeetingStatus.RESCHEDULED)
+                .filter(m -> {
+                    LocalDateTime start = m.getConfirmedStartAt() != null ? m.getConfirmedStartAt() : m.getProposedStartAt();
+                    return start != null && !start.isBefore(now.minusDays(1));
+                })
+                .toList();
+        return icsResponse(meetingCalendarService.buildIcsBytes(upcoming, "FYP Supervision Meetings"),
+                "my-meetings-" + now.toLocalDate() + ".ics");
+    }
+
+    /** Single meeting as an .ics file (Apple Calendar / any calendar app). */
+    @GetMapping("/{id}/calendar.ics")
+    public ResponseEntity<byte[]> getMeetingIcs(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
+        return icsResponse(meetingCalendarService.buildIcsBytes(List.of(meeting), "FYP Meeting"),
+                "meeting-" + id + ".ics");
+    }
+
+    private static ResponseEntity<byte[]> icsResponse(byte[] body, String fileName) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("text/calendar; charset=UTF-8"))
+                .body(body);
     }
 
     @GetMapping("/{id}")

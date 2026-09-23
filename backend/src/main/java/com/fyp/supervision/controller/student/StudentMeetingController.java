@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.service.MeetingCalendarService;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
@@ -33,6 +34,7 @@ public class StudentMeetingController {
     private final StudentService studentService;
     private final StudentAccessService studentAccessService;
     private final NotificationService notificationService;
+    private final MeetingCalendarService meetingCalendarService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(
@@ -47,6 +49,17 @@ public class StudentMeetingController {
     public ResponseEntity<?> getMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
         Long userId = Long.parseLong(user.getUsername());
         return ResponseEntity.ok(studentService.getMeetingDto(userId, id));
+    }
+
+    /** Single meeting as an .ics file (Apple Calendar / any calendar app). */
+    @GetMapping("/{id}/calendar.ics")
+    public ResponseEntity<byte[]> getMeetingIcs(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        studentService.getMeetingDto(userId, id); // ownership check
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        return icsResponse(meetingCalendarService.buildIcsBytes(List.of(meeting), "FYP Meeting"),
+                "meeting-" + id + ".ics");
     }
 
     @PostMapping
@@ -183,9 +196,8 @@ public class StudentMeetingController {
     }
 
     /**
-     * Export the student's meetings. Always returns CSV; the frontend's format flag
-     * is accepted for future PDF/ICAL support but not used yet (CSV opens in Excel
-     * and any spreadsheet, so it's the safe default).
+     * Export the student's meetings. format=ICAL returns an .ics calendar file;
+     * anything else returns CSV (opens in Excel and any spreadsheet).
      */
     @PostMapping("/export")
     public ResponseEntity<byte[]> exportMeetings(
@@ -201,6 +213,12 @@ public class StudentMeetingController {
             try { s = MeetingStatus.valueOf(statusFilter); }
             catch (IllegalArgumentException e) { throw new BadRequestException("Invalid status filter."); }
             meetings = meetings.stream().filter(m -> m.getStatus() == s).toList();
+        }
+
+        String format = params != null && params.get("format") != null ? params.get("format").toString() : "CSV";
+        if ("ICAL".equalsIgnoreCase(format)) {
+            return icsResponse(meetingCalendarService.buildIcsBytes(meetings, "FYP Meetings"),
+                    "meetings-" + LocalDate.now() + ".ics");
         }
 
         boolean includeAgenda = params == null || !Boolean.FALSE.equals(params.get("includeAgenda"));
@@ -231,6 +249,13 @@ public class StudentMeetingController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(body);
+    }
+
+    private static ResponseEntity<byte[]> icsResponse(byte[] body, String fileName) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("text/calendar; charset=UTF-8"))
                 .body(body);
     }
 
