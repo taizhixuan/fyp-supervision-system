@@ -39,6 +39,7 @@ public class SupervisorService {
     private final FileStorageService fileStorageService;
     private final ProjectProgressService projectProgressService;
     private final SystemParameterService systemParameters;
+    private final MeetingActionItemRepository meetingActionItemRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -837,7 +838,9 @@ public class SupervisorService {
         dto.put("agenda", meeting.getAgenda());
         dto.put("notes", meeting.getNotes());
         dto.put("cancelReason", meeting.getCancelReason());
-        dto.put("actionItems", List.of());
+        dto.put("actionItems", meeting.getMeetingId() == null ? List.of()
+                : meetingActionItemRepository.findByMeeting_MeetingIdOrderByCreatedAtAsc(meeting.getMeetingId())
+                        .stream().map(MeetingActionItem::getDescription).toList());
         dto.put("createdAt", meeting.getCreatedAt() != null ? meeting.getCreatedAt().toString() : "");
         dto.put("updatedAt", meeting.getUpdatedAt() != null ? meeting.getUpdatedAt().toString() : "");
         return dto;

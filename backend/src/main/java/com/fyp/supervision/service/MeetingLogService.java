@@ -109,6 +109,10 @@ public class MeetingLogService {
             if (!linkedMeeting.getProject().getProjectId().equals(project.getProjectId())) {
                 throw new BadRequestException("Meeting does not belong to your project.");
             }
+            // Completed meetings get an auto-drafted log; don't let a second one be created.
+            if (meetingLogRepository.existsByMeeting_MeetingId(linkedMeeting.getMeetingId())) {
+                throw new BadRequestException("A meeting log already exists for this meeting. Open it from the meeting page.");
+            }
         }
 
         MeetingLog log = MeetingLog.builder()

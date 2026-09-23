@@ -82,4 +82,16 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findDueForReminder(@Param("status") MeetingStatus status,
                                      @Param("from") LocalDateTime from,
                                      @Param("to") LocalDateTime to);
+
+    /** Calendar feed: every meeting of a student or supervisor starting on/after :from. */
+    @Query("select m from Meeting m join fetch m.project p left join fetch p.student s left join fetch p.supervisor v " +
+           "where (s.userId = :userId or v.userId = :userId) " +
+           "and coalesce(m.confirmedStartAt, m.proposedStartAt) >= :from")
+    List<Meeting> findForCalendarFeed(@Param("userId") Long userId, @Param("from") LocalDateTime from);
+
+    @Query("select count(m) from Meeting m where m.project.projectId = :projectId " +
+           "and m.status in :statuses and coalesce(m.confirmedStartAt, m.proposedStartAt) >= :from")
+    long countUpcomingByProject(@Param("projectId") Long projectId,
+                                @Param("statuses") List<MeetingStatus> statuses,
+                                @Param("from") LocalDateTime from);
 }

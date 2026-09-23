@@ -18,6 +18,7 @@ import {
   Check,
   Share2,
   Link2,
+  UserX,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -33,6 +34,10 @@ import {
 } from '@/lib/utils/meetingPlatform'
 import { AddToCalendarMenu } from '@/components/common/AddToCalendarMenu'
 import { supervisorMeetingToCalendarEvent } from '@/lib/utils/calendarLinks'
+import { ActionItemsPanel } from '@/components/meetings/ActionItemsPanel'
+import { useMarkNoShow } from '@/lib/hooks/useMeetingExtras'
+import { useSuccessToast, useErrorToast } from '@/components/ui/Toast'
+import { getApiErrorMessage } from '@/lib/api/client'
 import type { SvMeetingStatus, MeetingType } from '@/types'
 
 // PROPOSED is the backend's initial state; SvMeetingStatus doesn't include it but the
@@ -68,6 +73,11 @@ export function MeetingDetail() {
   const { data: meeting, isLoading } = useSupervisorMeeting(Number(id))
   const respondMutation = useRespondToMeeting()
   const completeMutation = useCompleteMeeting()
+  const noShowMutation = useMarkNoShow()
+  const [showNoShowModal, setShowNoShowModal] = useState(false)
+  const [noShowReason, setNoShowReason] = useState('')
+  const showSuccess = useSuccessToast()
+  const showError = useErrorToast()
 
   const handleConfirm = async (selectedDateTime?: string) => {
     if (!meeting) return
@@ -128,14 +138,32 @@ export function MeetingDetail() {
   const handleComplete = async () => {
     if (!meeting) return
     try {
-      await completeMutation.mutateAsync({
+      const result = await completeMutation.mutateAsync({
         meetingId: meeting.meetingId,
         notes: meetingNotes,
         actionItems: actionItems.split('\n').filter((item) => item.trim()),
       })
       setShowCompleteModal(false)
+      showSuccess(
+        'Meeting completed',
+        result?.draftLogId
+          ? `${meeting.studentName} has a pre-filled meeting log draft to review and submit.`
+          : undefined
+      )
     } catch (error) {
-      console.error('Failed to complete meeting:', error)
+      showError('Could not complete meeting', getApiErrorMessage(error))
+    }
+  }
+
+  const handleNoShow = async () => {
+    if (!meeting) return
+    try {
+      await noShowMutation.mutateAsync({ meetingId: meeting.meetingId, reason: noShowReason.trim() })
+      setShowNoShowModal(false)
+      setNoShowReason('')
+      showSuccess('Marked as no-show', `${meeting.studentName} has been notified.`)
+    } catch (error) {
+      showError('Could not mark no-show', getApiErrorMessage(error))
     }
   }
 
@@ -240,6 +268,12 @@ export function MeetingDetail() {
               Confirm
             </Button>
           </div>
+        )}
+        {canComplete && (
+          <Button variant="secondary" onClick={() => setShowNoShowModal(true)}>
+            <UserX className="h-4 w-4 mr-2" />
+            No-show
+          </Button>
         )}
         {canComplete && (
           <Button onClick={() => setShowCompleteModal(true)}>
@@ -503,20 +537,12 @@ export function MeetingDetail() {
             </Card>
           )}
 
-          {/* Action Items (if completed) */}
-          {meeting.actionItems && meeting.actionItems.length > 0 && (
-            <Card>
-              <h3 className="font-semibold text-neutral-900 mb-3">Action Items</h3>
-              <ul className="space-y-2">
-                {meeting.actionItems.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-neutral-600">
-                    <CheckCircle className="h-4 w-4 text-success-500 mt-0.5 flex-shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          {/* Action items: this meeting's + still open from earlier ones */}
+          <ActionItemsPanel
+            role="supervisor"
+            meetingId={meeting.meetingId}
+            canAdd={meeting.status === 'CONFIRMED' || meeting.status === 'COMPLETED'}
+          />
         </div>
       </div>
 
@@ -579,6 +605,9 @@ export function MeetingDetail() {
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Action Items (one per line)
                 </label>
+                <p className="text-xs text-neutral-500 mb-1">
+                  They stay open for the student until ticked off, and pre-fill the meeting log draft.
+                </p>
                 <textarea
                   value={actionItems}
                   onChange={(e) => setActionItems(e.target.value)}
@@ -598,6 +627,35 @@ export function MeetingDetail() {
               >
                 {completeMutation.isPending ? <Spinner size="sm" className="mr-2" /> : null}
                 Complete Meeting
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showNoShowModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">Mark as No-show</h3>
+            <p className="text-sm text-neutral-600 mb-4">
+              {meeting.studentName} did not attend this meeting. They will be notified and asked to request a new one.
+              A no-show does not count as a conducted meeting.
+            </p>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Note (optional)</label>
+            <textarea
+              value={noShowReason}
+              onChange={(e) => setNoShowReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="e.g. Waited 15 minutes, no reply to email"
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="secondary" onClick={() => setShowNoShowModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleNoShow} isLoading={noShowMutation.isPending}>
+                Mark No-show
               </Button>
             </div>
           </Card>

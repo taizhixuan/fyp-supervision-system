@@ -5,5 +5,6 @@ public enum MeetingStatus {
     CONFIRMED,
     COMPLETED,
     CANCELLED,
-    RESCHEDULED
+    RESCHEDULED,
+    NO_SHOW
 }

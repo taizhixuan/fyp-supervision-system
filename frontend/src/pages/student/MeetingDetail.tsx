@@ -30,6 +30,8 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { detectPlatformFromUrl, getPlatformInfo } from '@/lib/utils/meetingPlatform'
 import { AddToCalendarMenu } from '@/components/common/AddToCalendarMenu'
+import { ActionItemsPanel } from '@/components/meetings/ActionItemsPanel'
+import { useStudentRegistrationGate } from '@/lib/hooks/useStudentRegistrationGate'
 import { studentMeetingToCalendarEvent } from '@/lib/utils/calendarLinks'
 import type { Meeting, MeetingStatus } from '@/types'
 
@@ -160,6 +162,7 @@ export function MeetingDetail() {
   const [countdown, setCountdown] = useState<ReturnType<typeof getTimeRemaining>>(null)
 
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
+  const { cycleActive } = useStudentRegistrationGate()
   const cancelMeeting = useCancelMeeting()
   const respondMutation = useStudentRespondToMeeting()
   const [reschedDateTime, setReschedDateTime] = useState('')
@@ -237,6 +240,11 @@ export function MeetingDetail() {
   const isUpcoming = new Date(displayMeeting.scheduledAt) > new Date()
   const canCancel = isUpcoming && ['PENDING', 'PROPOSED', 'RESCHEDULED', 'CONFIRMED'].includes(displayMeeting.status)
   const canCreateLog = displayMeeting.status === 'COMPLETED'
+  // Completing a meeting auto-drafts its log, so link straight to it when it exists.
+  const logHref = displayMeeting.meetingLogId
+    ? ROUTES.STUDENT.MEETING_LOG_DETAIL.replace(':id', String(displayMeeting.meetingLogId))
+    : `${ROUTES.STUDENT.MEETING_LOG_NEW}?meetingId=${displayMeeting.meetingId}`
+  const logLabel = displayMeeting.meetingLogId ? 'Open Meeting Log' : 'Create Supervision Log'
   // A confirmed online meeting's link stays available whether the slot is a few
   // minutes away or just passed — don't gate it on isUpcoming, which hid the link
   // the moment the scheduled time arrived. Mirrors the supervisor view.
@@ -485,15 +493,18 @@ export function MeetingDetail() {
                 <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 text-center border border-primary-100">
                   <Sparkles className="h-10 w-10 text-primary-400 mx-auto mb-3" />
                   <p className="text-neutral-600 mb-3">No notes added yet for this meeting</p>
-                  <Link to={`${ROUTES.STUDENT.LOG_NEW}?meetingId=${displayMeeting.meetingId}`}>
+                  <Link to={logHref}>
                     <Button variant="secondary" size="sm" leftIcon={<FileText className="h-4 w-4" />}>
-                      Create Supervision Log
+                      {logLabel}
                     </Button>
                   </Link>
                 </div>
               )}
             </Card>
           )}
+
+          {/* Action items agreed in meetings — tick them off as you go */}
+          <ActionItemsPanel role="student" meetingId={displayMeeting.meetingId} readOnly={cycleActive === false} />
 
           {/* Status Info Card */}
           <Card className={cn(
@@ -584,9 +595,9 @@ export function MeetingDetail() {
               )}
 
               {canCreateLog && (
-                <Link to={`${ROUTES.STUDENT.LOG_NEW}?meetingId=${displayMeeting.meetingId}`} className="block">
+                <Link to={logHref} className="block">
                   <Button variant="secondary" className="w-full" leftIcon={<FileText className="h-4 w-4" />}>
-                    Create Supervision Log
+                    {logLabel}
                   </Button>
                 </Link>
               )}

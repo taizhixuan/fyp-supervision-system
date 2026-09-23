@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.service.ActionItemService;
 import com.fyp.supervision.service.MeetingCalendarService;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.StudentAccessService;
@@ -35,6 +36,7 @@ public class StudentMeetingController {
     private final StudentAccessService studentAccessService;
     private final NotificationService notificationService;
     private final MeetingCalendarService meetingCalendarService;
+    private final ActionItemService actionItemService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(
@@ -60,6 +62,16 @@ public class StudentMeetingController {
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
         return icsResponse(meetingCalendarService.buildIcsBytes(List.of(meeting), "FYP Meeting"),
                 "meeting-" + id + ".ics");
+    }
+
+    /** Action items raised in this meeting + items still open from earlier meetings. */
+    @GetMapping("/{id}/action-items")
+    public ResponseEntity<?> getMeetingActionItems(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        studentService.getMeetingDto(userId, id); // ownership check
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+        return ResponseEntity.ok(actionItemService.forMeeting(meeting));
     }
 
     @PostMapping
@@ -206,13 +218,26 @@ public class StudentMeetingController {
         Long userId = Long.parseLong(user.getUsername());
         List<Meeting> meetings = meetingRepository.findAllByStudentUserId(userId);
 
-        // Optional status filter
-        String statusFilter = params != null ? (String) params.get("status") : null;
-        if (statusFilter != null && !statusFilter.isBlank()) {
+        // Optional status filter ("PENDING" is the UI's name for PROPOSED)
+        String statusFilter = params != null && params.get("status") != null ? params.get("status").toString() : null;
+        if (statusFilter != null && !statusFilter.isBlank() && !"all".equalsIgnoreCase(statusFilter)) {
+            String normalised = "PENDING".equalsIgnoreCase(statusFilter) ? "PROPOSED" : statusFilter.toUpperCase();
             MeetingStatus s;
-            try { s = MeetingStatus.valueOf(statusFilter); }
+            try { s = MeetingStatus.valueOf(normalised); }
             catch (IllegalArgumentException e) { throw new BadRequestException("Invalid status filter."); }
             meetings = meetings.stream().filter(m -> m.getStatus() == s).toList();
+        }
+
+        // Optional date range on the meeting's start (confirmed, else proposed)
+        LocalDate[] range = exportRange(params);
+        if (range != null) {
+            LocalDate from = range[0], to = range[1];
+            meetings = meetings.stream().filter(m -> {
+                LocalDateTime start = m.getConfirmedStartAt() != null ? m.getConfirmedStartAt() : m.getProposedStartAt();
+                if (start == null) return false;
+                LocalDate d = start.toLocalDate();
+                return (from == null || !d.isBefore(from)) && (to == null || !d.isAfter(to));
+            }).toList();
         }
 
         String format = params != null && params.get("format") != null ? params.get("format").toString() : "CSV";
@@ -250,6 +275,38 @@ public class StudentMeetingController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(body);
+    }
+
+    /**
+     * dateRange: all | this_month | last_3_months | last_6_months | custom (startDate/endDate,
+     * either may be blank). Returns null for "no date filter".
+     */
+    public static LocalDate[] exportRange(Map<String, Object> params) {
+        if (params == null || params.get("dateRange") == null) return null;
+        LocalDate today = LocalDate.now();
+        return switch (params.get("dateRange").toString()) {
+            case "this_month" -> new LocalDate[]{today.withDayOfMonth(1), today.withDayOfMonth(today.lengthOfMonth())};
+            case "last_3_months" -> new LocalDate[]{today.minusMonths(3), today};
+            case "last_6_months" -> new LocalDate[]{today.minusMonths(6), today};
+            case "custom" -> {
+                LocalDate from = parseDate(params.get("startDate"), "startDate");
+                LocalDate to = parseDate(params.get("endDate"), "endDate");
+                if (from != null && to != null && to.isBefore(from)) {
+                    throw new BadRequestException("endDate must be on or after startDate.");
+                }
+                yield (from == null && to == null) ? null : new LocalDate[]{from, to};
+            }
+            default -> null;
+        };
+    }
+
+    private static LocalDate parseDate(Object raw, String field) {
+        if (raw == null || raw.toString().isBlank()) return null;
+        try {
+            return LocalDate.parse(raw.toString().substring(0, Math.min(10, raw.toString().length())));
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new BadRequestException(field + " must be YYYY-MM-DD.");
+        }
     }
 
     private static ResponseEntity<byte[]> icsResponse(byte[] body, String fileName) {

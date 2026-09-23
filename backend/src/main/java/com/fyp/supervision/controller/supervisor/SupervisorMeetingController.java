@@ -4,7 +4,9 @@ import com.fyp.supervision.entity.Meeting;
 import com.fyp.supervision.enums.MeetingStatus;
 import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.repository.MeetingRepository;
+import com.fyp.supervision.service.ActionItemService;
 import com.fyp.supervision.service.MeetingCalendarService;
+import com.fyp.supervision.service.MeetingLogDraftService;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
@@ -29,6 +31,8 @@ public class SupervisorMeetingController {
     private final MeetingRepository meetingRepository;
     private final NotificationService notificationService;
     private final MeetingCalendarService meetingCalendarService;
+    private final ActionItemService actionItemService;
+    private final MeetingLogDraftService meetingLogDraftService;
 
     @GetMapping
     public ResponseEntity<?> getMeetings(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) String status) {
@@ -153,14 +157,80 @@ public class SupervisorMeetingController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
+    /**
+     * Marks the meeting as held. Action items from the modal become trackable items, and
+     * the student gets a pre-filled DRAFT meeting log (AI-polished in the background when
+     * an LLM is configured).
+     */
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> completeMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         Meeting meeting = access.requireOwnMeeting(userId, id);
+        if (meeting.getStatus() != MeetingStatus.CONFIRMED) {
+            throw new BadRequestException("Only confirmed meetings can be marked as completed.");
+        }
         meeting.setStatus(MeetingStatus.COMPLETED);
         if (data.get("notes") != null) meeting.setNotes((String) data.get("notes"));
         meetingRepository.save(meeting);
+
+        List<String> items = ActionItemService.parseDescriptions(data.get("actionItems"));
+        actionItemService.createForMeeting(meeting, items, userId);
+
+        Long draftLogId = meetingLogDraftService.createDraftFromMeeting(meeting, items)
+                .map(com.fyp.supervision.entity.MeetingLog::getLogId).orElse(null);
+        if (draftLogId != null && meeting.getNotes() != null && !meeting.getNotes().isBlank()) {
+            meetingLogDraftService.enhanceWithAiSummary(draftLogId, meeting.getMeetingId(), items);
+        }
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("success", true);
+        body.put("actionItemsCreated", items.size());
+        body.put("draftLogId", draftLogId);
+        return ResponseEntity.ok(body);
+    }
+
+    /** The student did not turn up to a confirmed meeting that has already started. */
+    @PostMapping("/{id}/no-show")
+    public ResponseEntity<?> markNoShow(@AuthenticationPrincipal UserDetails user, @PathVariable Long id,
+                                        @RequestBody(required = false) Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
+        if (meeting.getStatus() != MeetingStatus.CONFIRMED) {
+            throw new BadRequestException("Only confirmed meetings can be marked as a no-show.");
+        }
+        LocalDateTime start = meeting.getConfirmedStartAt() != null ? meeting.getConfirmedStartAt() : meeting.getProposedStartAt();
+        if (start != null && start.isAfter(LocalDateTime.now())) {
+            throw new BadRequestException("You can only mark a no-show after the meeting start time.");
+        }
+        String reason = data != null && data.get("reason") != null ? data.get("reason").toString().trim() : "";
+        if (reason.length() > 500) throw new BadRequestException("Reason must be 500 characters or fewer.");
+        meeting.setStatus(MeetingStatus.NO_SHOW);
+        if (!reason.isEmpty()) meeting.setNotes(reason);
+        meetingRepository.save(meeting);
+
+        if (meeting.getProject() != null && meeting.getProject().getStudent() != null) {
+            notificationService.createNotification(meeting.getProject().getStudent().getUserId(), "MEETING",
+                    "Meeting marked as missed",
+                    "Your supervisor marked \"" + meeting.getTitle() + "\" as a no-show."
+                            + (reason.isEmpty() ? "" : " Note: " + reason)
+                            + " Please request a new meeting.",
+                    "/student/meetings/" + id);
+        }
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @GetMapping("/{id}/action-items")
+    public ResponseEntity<?> getActionItems(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
+        return ResponseEntity.ok(actionItemService.forMeeting(meeting));
+    }
+
+    @PostMapping("/{id}/action-items")
+    public ResponseEntity<?> addActionItem(@AuthenticationPrincipal UserDetails user, @PathVariable Long id,
+                                           @RequestBody Map<String, Object> data) {
+        Long userId = Long.parseLong(user.getUsername());
+        Meeting meeting = access.requireOwnMeeting(userId, id);
+        return ResponseEntity.ok(actionItemService.toDto(actionItemService.addToMeeting(meeting, data, userId)));
     }
 
     /**

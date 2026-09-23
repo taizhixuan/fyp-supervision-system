@@ -175,6 +175,29 @@ public class AiServiceClient {
         }
     }
 
+    /**
+     * Rewrite a supervisor's meeting notes into the discussion paragraph of a meeting-log
+     * draft. Best-effort: returns empty string when the chatbot/LLM is off or fails, and
+     * the caller keeps the raw notes.
+     */
+    @SuppressWarnings("unchecked")
+    public String summarizeMeeting(Map<String, Object> payload) {
+        if (!chatbotEnabled()) {
+            return "";
+        }
+        try {
+            ResponseEntity<Map> response = postJson(chatbotUrl + "/ai/summarize-meeting", payload);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Object summary = response.getBody().get("summary");
+                return summary == null ? "" : summary.toString();
+            }
+            return "";
+        } catch (RestClientException e) {
+            log.warn("Meeting summary unavailable: {}", e.getMessage());
+            return "";
+        }
+    }
+
     public boolean isRecommendationServiceHealthy() {
         return checkHealth(recommendationUrl);
     }

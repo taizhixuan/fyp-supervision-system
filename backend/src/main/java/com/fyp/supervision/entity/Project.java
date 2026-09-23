@@ -62,6 +62,10 @@ public class Project {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /** Last time MeetingGapAlertJob warned about this project (dedupe). */
+    @Column(name = "meeting_gap_alerted_at")
+    private LocalDateTime meetingGapAlertedAt;
+
     @PrePersist
     protected void onCreate() {
         updatedAt = LocalDateTime.now();

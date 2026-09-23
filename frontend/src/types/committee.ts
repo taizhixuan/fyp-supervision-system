@@ -240,6 +240,9 @@ export interface ProjectOverview {
   lastActivity: string
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
   riskFactors: string[]
+  /** Paired projects in an ACTIVE cycle only; null otherwise. */
+  daysSinceLastMeeting?: number | null
+  meetingGapThresholdDays?: number
 }
 
 export interface UnpairedStudent {
@@ -294,6 +297,8 @@ export interface ProjectEngagement {
   requiredLogs: number
   completedMeetings: number
   lastConductedMeetingAt: string | null
+  daysSinceLastMeeting?: number | null
+  meetingGapThresholdDays?: number
   proposalStatus: string
   proposalVersion: number
 }

@@ -343,6 +343,8 @@ export interface Meeting {
   rescheduleReason?: string
   cancelReason?: string
   initiatedBy?: 'STUDENT' | 'SUPERVISOR'
+  /** Meeting log linked to this meeting (auto-drafted when the supervisor completes it). */
+  meetingLogId?: number | null
   proposedStartAt?: string | null
   confirmedStartAt?: string | null
   createdAt: string

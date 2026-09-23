@@ -30,4 +30,8 @@ public interface MeetingLogRepository extends JpaRepository<MeetingLog, Long> {
     long countBySupervisor_UserIdAndStudent_UserId(Long supervisorUserId, Long studentUserId);
     long countBySupervisor_UserIdAndStudent_UserIdAndStatus(Long supervisorUserId, Long studentUserId, MeetingLogStatus status);
     List<MeetingLog> findByStatusAndContentHashIsNull(MeetingLogStatus status);
+
+    java.util.Optional<com.fyp.supervision.entity.MeetingLog> findFirstByMeeting_MeetingIdOrderByLogIdAsc(Long meetingId);
+
+    boolean existsByMeeting_MeetingId(Long meetingId);
 }
