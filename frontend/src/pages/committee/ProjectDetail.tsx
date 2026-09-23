@@ -328,6 +328,22 @@ export function ProjectDetail() {
                   : '—'}
               </span>
             </div>
+            {project.engagement.daysSinceLastMeeting != null && (
+              <div className="flex items-center justify-between">
+                <span className="text-stone-600">Days Since Last Meeting</span>
+                <span
+                  className={cn(
+                    'font-medium',
+                    project.engagement.daysSinceLastMeeting >= (project.engagement.meetingGapThresholdDays ?? 21) &&
+                      'text-amber-700'
+                  )}
+                  title={`Supervisor and student are alerted after ${project.engagement.meetingGapThresholdDays ?? 21} days with nothing scheduled`}
+                >
+                  {project.engagement.daysSinceLastMeeting}
+                  {project.engagement.daysSinceLastMeeting >= (project.engagement.meetingGapThresholdDays ?? 21) && ' · overdue'}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-stone-600">Proposal</span>
               <span className="font-medium">{project.engagement.proposalStatus} (v{project.engagement.proposalVersion})</span>

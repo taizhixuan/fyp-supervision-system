@@ -30,6 +30,15 @@ public class MeetingCalendarService {
     }
 
     public String buildIcs(List<Meeting> meetings, String calendarName) {
+        return build(meetings, calendarName, false);
+    }
+
+    /** Subscription feed variant: tells calendar apps to re-poll roughly hourly. */
+    public byte[] buildFeedBytes(List<Meeting> meetings, String calendarName) {
+        return build(meetings, calendarName, true).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String build(List<Meeting> meetings, String calendarName, boolean feed) {
         StringBuilder sb = new StringBuilder();
         line(sb, "BEGIN:VCALENDAR");
         line(sb, "VERSION:2.0");
@@ -38,6 +47,10 @@ public class MeetingCalendarService {
         line(sb, "METHOD:PUBLISH");
         line(sb, "X-WR-CALNAME:" + escape(calendarName));
         line(sb, "X-WR-TIMEZONE:" + APP_ZONE.getId());
+        if (feed) {
+            line(sb, "REFRESH-INTERVAL;VALUE=DURATION:PT1H");
+            line(sb, "X-PUBLISHED-TTL:PT1H");
+        }
         String dtStamp = UTC_STAMP.format(Instant.now());
         for (Meeting m : meetings) {
             LocalDateTime start = startOf(m);
@@ -92,7 +105,7 @@ public class MeetingCalendarService {
     private static String statusOf(Meeting m) {
         if (m.getStatus() == null) return "TENTATIVE";
         return switch (m.getStatus()) {
-            case CONFIRMED, COMPLETED -> "CONFIRMED";
+            case CONFIRMED, COMPLETED, NO_SHOW -> "CONFIRMED";
             case CANCELLED -> "CANCELLED";
             default -> "TENTATIVE";
         };

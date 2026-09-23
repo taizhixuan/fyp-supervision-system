@@ -32,6 +32,7 @@ public class CommitteeService {
     private final ProjectProgressService projectProgressService;
     private final MeetingLogComplianceService meetingLogComplianceService;
     private final MeetingRepository meetingRepository;
+    private final SystemParameterService systemParameterService;
     private final com.fyp.supervision.repository.DeadlineRepository deadlineRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -575,6 +576,11 @@ public class CommitteeService {
         dto.put("lastActivity", project.getUpdatedAt() != null ? project.getUpdatedAt().toString() : "");
         dto.put("riskLevel", risk.level());
         dto.put("riskFactors", risk.factors());
+        // Only meaningful for paired projects in a running cycle.
+        boolean running = cycle != null && cycle.getStatus() == com.fyp.supervision.enums.CycleStatus.ACTIVE;
+        dto.put("daysSinceLastMeeting", supervisor != null && running
+                ? com.fyp.supervision.job.MeetingGapAlertJob.daysSinceLastMeeting(project, meetingRepository) : null);
+        dto.put("meetingGapThresholdDays", systemParameterService.getInt("meeting_gap_alert_days", 21));
 
         if (cycle != null) {
             dto.put("cycleId", cycle.getCycleId());
@@ -609,6 +615,8 @@ public class CommitteeService {
         long conducted = meetingRepository.countByProject_ProjectIdAndStatus(
                 project.getProjectId(), com.fyp.supervision.enums.MeetingStatus.COMPLETED);
         engagement.put("completedMeetings", conducted);
+        engagement.put("daysSinceLastMeeting", dto.get("daysSinceLastMeeting"));
+        engagement.put("meetingGapThresholdDays", dto.get("meetingGapThresholdDays"));
         engagement.put("lastConductedMeetingAt", meetingRepository
                 .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(),
                         com.fyp.supervision.enums.MeetingStatus.COMPLETED)

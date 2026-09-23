@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Shield, Key, Palette, Sun, Moon, Monitor, ShieldCheck, Download, ExternalLink, AlertTriangle, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { User, Shield, Key, Palette, CalendarClock, Sun, Moon, Monitor, ShieldCheck, Download, ExternalLink, AlertTriangle, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { Card, Button, Input, AlertBanner, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Badge } from '@/components/ui'
 import { useAuth } from '@/lib/auth/useAuth'
 import { authApi } from '@/lib/api/auth'
@@ -25,17 +25,22 @@ import {
 } from '@/lib/hooks/useStudent'
 import { PRIVACY_NOTICE_VERSION } from '@/types/auth'
 import { cn } from '@/lib/utils/cn'
+import { CalendarSubscriptionCard } from '@/components/meetings/CalendarSubscriptionCard'
 
-type Tab = 'profile' | 'security' | 'privacy' | 'appearance'
+type Tab = 'profile' | 'security' | 'privacy' | 'appearance' | 'calendar'
 
 export function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const { user } = useAuth()
+  // Calendar sync only applies to the two roles that attend meetings.
+  const hasMeetings = user?.role === 'STUDENT' || user?.role === 'SUPERVISOR'
 
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'security' as const, label: 'Security', icon: Shield },
     { id: 'privacy' as const, label: 'Privacy', icon: ShieldCheck },
     { id: 'appearance' as const, label: 'Appearance', icon: Palette },
+    ...(hasMeetings ? [{ id: 'calendar' as const, label: 'Calendar', icon: CalendarClock }] : []),
   ]
 
   return (
@@ -43,13 +48,13 @@ export function AccountSettingsPage() {
       <h1 className="text-2xl font-bold text-neutral-900 mb-6">Account Settings</h1>
 
       {/* Tab navigation */}
-      <div className="flex gap-1 border-b border-neutral-200 mb-6">
+      <div className="flex gap-1 border-b border-neutral-200 mb-6 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap',
               activeTab === tab.id
                 ? 'border-primary-500 text-primary-600'
                 : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
@@ -66,6 +71,7 @@ export function AccountSettingsPage() {
       {activeTab === 'security' && <SecurityTab />}
       {activeTab === 'privacy' && <PrivacyTab />}
       {activeTab === 'appearance' && <AppearanceTab />}
+      {activeTab === 'calendar' && hasMeetings && <CalendarSubscriptionCard />}
     </div>
   )
 }

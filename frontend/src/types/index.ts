@@ -58,3 +58,5 @@ export * from './meetingLog'
 // PLANNING/ACTIVE/COMPLETED/ARCHIVED). admin's is re-exported via `export *`;
 // committee's is exposed under a prefixed name for any call site that wants it.
 export type { CycleStatus as CommitteeCycleStatus } from './committee'
+
+export * from './meetingExtras'

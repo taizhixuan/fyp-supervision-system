@@ -361,14 +361,15 @@ export function useCompleteMeeting() {
       notes: string
       actionItems?: string[]
     }) => {
-      const { data } = await apiClient.post(`/supervisor/meetings/${meetingId}/complete`, {
-        notes,
-        actionItems,
-      })
+      const { data } = await apiClient.post<{ success: boolean; actionItemsCreated: number; draftLogId: number | null }>(
+        `/supervisor/meetings/${meetingId}/complete`,
+        { notes, actionItems }
+      )
       return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supervisorKeys.meetings() })
+      queryClient.invalidateQueries({ queryKey: ['meeting-extras'] })
     },
   })
 }

@@ -24,6 +24,7 @@ import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useStudentDashboard } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
+import { OpenActionItemsCard } from '@/components/meetings/OpenActionItemsCard'
 import { trimesterProgress } from '@/lib/utils/trimester'
 import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus, RegistrationStep, StudentDashboardData } from '@/types'
 
@@ -930,6 +931,9 @@ export function StudentDashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Open action items from meetings (hidden when none) */}
+      <OpenActionItemsCard readOnly={cycleEnded} />
 
       {/* Upcoming Meetings + Recent Documents — side-by-side on lg+ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">

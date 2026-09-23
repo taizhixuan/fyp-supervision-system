@@ -133,7 +133,8 @@ public class StudentService {
         // Upcoming meetings
         List<Meeting> meetings = meetingRepository.findAllByStudentUserId(userId);
         List<Map<String, Object>> upcomingMeetings = meetings.stream()
-                .filter(m -> m.getStatus() != MeetingStatus.CANCELLED && m.getStatus() != MeetingStatus.COMPLETED)
+                .filter(m -> m.getStatus() != MeetingStatus.CANCELLED && m.getStatus() != MeetingStatus.COMPLETED
+                        && m.getStatus() != MeetingStatus.NO_SHOW)
                 .sorted(Comparator.comparing(m -> m.getProposedStartAt() != null ? m.getProposedStartAt() : LocalDateTime.MAX))
                 .limit(5)
                 .map(m -> buildMeetingDto(m))
@@ -974,6 +975,9 @@ public class StudentService {
             initiatedBy = "SUPERVISOR";
         }
         dto.put("initiatedBy", initiatedBy);
+        // Draft/submitted log already linked to this meeting (auto-drafted on completion).
+        dto.put("meetingLogId", meetingLogRepository.findFirstByMeeting_MeetingIdOrderByLogIdAsc(m.getMeetingId())
+                .map(MeetingLog::getLogId).orElse(null));
         dto.put("createdAt", m.getCreatedAt() != null ? m.getCreatedAt().toString() : "");
         dto.put("updatedAt", m.getUpdatedAt() != null ? m.getUpdatedAt().toString() : "");
         return dto;

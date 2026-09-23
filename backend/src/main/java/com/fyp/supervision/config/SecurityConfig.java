@@ -60,7 +60,9 @@ public class SecurityConfig {
                     "/auth/verify-reset-token",
                     "/announcements/latest",
                     "/system/parameters/public",
-                    "/uploads/profiles/**"
+                    "/uploads/profiles/**",
+                    // Calendar apps can't send a JWT; the secret token in the path is the credential.
+                    "/calendar/feed/**"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasAuthority("SYSTEM_ADMIN")
                 .requestMatchers("/committee/**").hasAuthority("FYP_COMMITTEE")

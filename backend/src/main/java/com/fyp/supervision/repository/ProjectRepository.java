@@ -5,6 +5,7 @@ import com.fyp.supervision.enums.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long>,
      */
     @Query("SELECT p FROM Project p WHERE p.supervisor.userId = :supervisorId AND p.cycle.status = com.fyp.supervision.enums.CycleStatus.ACTIVE")
     List<Project> findActiveCycleBySupervisor(@Param("supervisorId") Long supervisorId);
+
+    /** Paired projects in an ACTIVE cycle, with student + supervisor loaded for the gap-alert job. */
+    @Query("SELECT p FROM Project p JOIN FETCH p.student JOIN FETCH p.supervisor JOIN FETCH p.cycle c " +
+           "WHERE c.status = com.fyp.supervision.enums.CycleStatus.ACTIVE")
+    List<Project> findPairedInActiveCycle();
+
+    /** Bulk update so the alert stamp does not bump updated_at (shown as "last activity"). */
+    @org.springframework.transaction.annotation.Transactional
+    @Modifying
+    @Query("UPDATE Project p SET p.meetingGapAlertedAt = :at WHERE p.projectId = :projectId")
+    int markMeetingGapAlerted(@Param("projectId") Long projectId, @Param("at") java.time.LocalDateTime at);
 }

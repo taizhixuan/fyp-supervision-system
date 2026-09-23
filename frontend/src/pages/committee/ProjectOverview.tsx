@@ -320,6 +320,15 @@ export function ProjectOverview() {
                         {cycleBadge && project.cycleStatus !== 'ACTIVE' && (
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', cycleBadge.bgColor, cycleBadge.color)}>{cycleBadge.label}</span>
                         )}
+                        {project.daysSinceLastMeeting != null &&
+                          project.daysSinceLastMeeting >= (project.meetingGapThresholdDays ?? 21) && (
+                            <span
+                              className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"
+                              title="Days since the last conducted supervision meeting"
+                            >
+                              No meeting {project.daysSinceLastMeeting}d
+                            </span>
+                          )}
                         {project.riskLevel !== 'LOW' && (
                           <span
                             className={cn('px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1', risk.bgColor, risk.color)}
