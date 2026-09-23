@@ -114,7 +114,7 @@ function formatRuntimeValue(value: unknown): string {
 function ServiceStateCard({ name, state }: { name: string; state: LlmServiceState }) {
   const cloud = state.provider && !['ollama', 'none'].includes(state.provider)
   return (
-    <div className="p-2 border border-stone-200 rounded-md bg-stone-50/60">
+    <div className="p-2 border border-stone-200 rounded-md bg-stone-50">
       <div className="flex items-center justify-between gap-2 mb-1">
         <span className="text-xs font-semibold text-stone-800">{SERVICE_LABELS[name] ?? name}</span>
         {!state.reachable ? (
@@ -238,7 +238,7 @@ function LlmProviderPanel({ row }: { row?: Integration }) {
     <Card padding="sm">
       <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200">
+          <div className="p-1.5 rounded-md bg-amber-100 text-amber-700 border border-amber-200">
             <Cpu className="h-3.5 w-3.5" />
           </div>
           <div>
@@ -293,7 +293,7 @@ function LlmProviderPanel({ row }: { row?: Integration }) {
                   key={p.value}
                   className={cn(
                     'flex items-start gap-2 p-2 rounded-md border cursor-pointer transition-colors',
-                    provider === p.value ? 'border-amber-500 bg-amber-50/60' : 'border-stone-200 hover:border-stone-300',
+                    provider === p.value ? 'border-amber-500 bg-amber-50' : 'border-stone-200 hover:border-stone-300',
                     !enabled && 'opacity-60 cursor-not-allowed',
                   )}
                 >
@@ -396,7 +396,7 @@ function LlmProviderPanel({ row }: { row?: Integration }) {
               role="status"
               className={cn(
                 'px-2 py-1.5 rounded border text-[11px] space-y-0.5',
-                lastTest.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-700',
+                lastTest.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700',
               )}
             >
               {Object.keys(lastTest.services).length > 0 ? (
@@ -526,7 +526,7 @@ function IntegrationRow({ integration }: { integration: Integration }) {
           role="status"
           className={cn(
             'px-2 py-1 rounded border text-[11px] mb-1 break-all',
-            result.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-700',
+            result.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700',
           )}
         >
           {result.message}
