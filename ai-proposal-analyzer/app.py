@@ -282,6 +282,9 @@ def get_llm_enhanced_feedback(text, nlp_analysis):
             f"Innovation: {nlp_analysis['innovation_score']}/100"
         )
         proposal_excerpt = text if len(text) <= 6000 else text[:6000] + " [...]"
+        # Ollama and OpenAI honour JSON mode, which stops small local models
+        # from emitting almost-JSON. Other providers keep the lenient parser.
+        extra = {"response_format": {"type": "json_object"}} if state.provider in ("ollama", "openai") else {}
         response = state.client.chat.completions.create(
             model=state.model,
             messages=[
@@ -290,6 +293,7 @@ def get_llm_enhanced_feedback(text, nlp_analysis):
             ],
             max_tokens=1500,
             temperature=0.3,
+            **extra,
         )
         raw = clean_reply(response.choices[0].message.content)
         return _extract_json_object(raw)
