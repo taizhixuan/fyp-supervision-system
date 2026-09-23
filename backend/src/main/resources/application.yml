@@ -82,6 +82,7 @@ app:
     recommendation-url: ${AI_RECOMMENDATION_URL:http://localhost:5001}
     analyzer-url: ${AI_ANALYZER_URL:http://localhost:5002}
     chatbot-url: ${AI_CHATBOT_URL:http://localhost:5003}
+    internal-token: ${AI_INTERNAL_TOKEN:}
   email:
     enabled: ${APP_EMAIL_ENABLED:false}
     from: ${APP_EMAIL_FROM:fyp-noreply@mmu.edu.my}

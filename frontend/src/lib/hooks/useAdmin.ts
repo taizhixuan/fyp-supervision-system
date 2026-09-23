@@ -23,6 +23,9 @@ import type {
   Integration,
   UpdateIntegrationRequest,
   TestIntegrationResult,
+  LlmConfigStatus,
+  UpdateLlmConfigRequest,
+  LlmTestResult,
   ExportConfiguration,
   CreateExportConfigRequest,
   MaintenanceJob,
@@ -764,6 +767,8 @@ export const adminKeys = {
   deadline: (id: number) => [...adminKeys.deadlines(), id] as const,
   integrations: () => [...adminKeys.all, 'integrations'] as const,
   integration: (id: number) => [...adminKeys.integrations(), id] as const,
+  llm: () => [...adminKeys.integrations(), 'llm'] as const,
+  llmModels: () => [...adminKeys.integrations(), 'llm', 'models'] as const,
   exportConfigs: () => [...adminKeys.all, 'exportConfigs'] as const,
   jobs: () => [...adminKeys.all, 'jobs'] as const,
   backups: () => [...adminKeys.all, 'backups'] as const,
@@ -1614,6 +1619,7 @@ export function useUpdateIntegration() {
 }
 
 export function useTestIntegration() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (integrationId: number): Promise<TestIntegrationResult> => {
       if (USE_MOCK_DATA) {
@@ -1626,6 +1632,57 @@ export function useTestIntegration() {
       }
       const { data } = await apiClient.post(`/admin/integrations/${integrationId}/test`)
       return data
+    },
+    // The test stamps lastTestedAt / lastTestResult on the row.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.integrations() })
+    },
+  })
+}
+
+export function useLlmConfig() {
+  return useQuery({
+    queryKey: adminKeys.llm(),
+    queryFn: async (): Promise<LlmConfigStatus> => {
+      const { data } = await apiClient.get('/admin/integrations/llm')
+      return data
+    },
+  })
+}
+
+export function useLlmModels() {
+  return useQuery({
+    queryKey: adminKeys.llmModels(),
+    queryFn: async (): Promise<{ provider: string; models: string[] }> => {
+      const { data } = await apiClient.get('/admin/integrations/llm/models')
+      return data
+    },
+  })
+}
+
+export function useUpdateLlmConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: UpdateLlmConfigRequest): Promise<LlmConfigStatus> => {
+      const { data } = await apiClient.put('/admin/integrations/llm', body)
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(adminKeys.llm(), data)
+      queryClient.invalidateQueries({ queryKey: adminKeys.integrations() })
+    },
+  })
+}
+
+export function useTestLlm() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (): Promise<LlmTestResult> => {
+      const { data } = await apiClient.post('/admin/integrations/llm/test')
+      return data
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.integrations() })
     },
   })
 }
