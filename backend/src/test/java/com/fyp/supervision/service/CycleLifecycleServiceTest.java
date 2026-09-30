@@ -7,6 +7,7 @@ import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ class CycleLifecycleServiceTest {
     @Mock UserAccountRepository userAccountRepository;
     @Mock DeadlineRepository deadlineRepository;
     @Mock NotificationService notificationService;
+    @Mock SupervisorProfileRepository supervisorProfileRepository;
 
     @InjectMocks CycleLifecycleService service;
 
@@ -63,6 +65,8 @@ class CycleLifecycleServiceTest {
 
         verify(notificationService, times(2))
                 .createNotification(any(Long.class), eq("CYCLE_STATUS"), anyString(), anyString(), anyString());
+        // Completing a cycle frees its students' slots in supervisor capacity.
+        verify(supervisorProfileRepository).recountAllCurrentLoads();
     }
 
     @Test

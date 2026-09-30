@@ -7,6 +7,7 @@ import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.service.ActionItemService;
 import com.fyp.supervision.service.MeetingCalendarService;
 import com.fyp.supervision.service.MeetingLogDraftService;
+import com.fyp.supervision.service.MeetingTransitions;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.SupervisorAccessService;
 import com.fyp.supervision.service.SupervisorService;
@@ -16,6 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -107,9 +111,11 @@ public class SupervisorMeetingController {
 
         switch (action) {
             case "CONFIRM" -> {
+                MeetingTransitions.requireStatus(meeting, "confirm", MeetingTransitions.AWAITING_RESPONSE);
                 meeting.setStatus(MeetingStatus.CONFIRMED);
+                meeting.setReminderSentAt(null);
                 if (data.get("confirmedDateTime") != null) {
-                    meeting.setConfirmedStartAt(LocalDateTime.parse(data.get("confirmedDateTime").toString()));
+                    meeting.setConfirmedStartAt(MeetingTransitions.parseDateTime(data.get("confirmedDateTime"), "confirmedDateTime"));
                 } else if (meeting.getProposedStartAt() != null) {
                     meeting.setConfirmedStartAt(meeting.getProposedStartAt());
                 }
@@ -125,6 +131,7 @@ public class SupervisorMeetingController {
                 }
             }
             case "CANCEL" -> {
+                MeetingTransitions.requireStatus(meeting, "cancel", MeetingTransitions.OPEN);
                 meeting.setStatus(MeetingStatus.CANCELLED);
                 if (data.get("reason") != null) meeting.setCancelReason(data.get("reason").toString());
                 if (studentUserId != null) {
@@ -138,10 +145,14 @@ public class SupervisorMeetingController {
                 if (data.get("proposedDateTime") == null) {
                     throw new BadRequestException("proposedDateTime is required for RESCHEDULE");
                 }
-                meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedDateTime").toString()));
+                MeetingTransitions.requireStatus(meeting, "reschedule", MeetingTransitions.OPEN);
+                meeting.setProposedStartAt(MeetingTransitions.parseDateTime(data.get("proposedDateTime"), "proposedDateTime"));
                 meeting.setConfirmedStartAt(null);
                 meeting.setConfirmedEndAt(null);
+                meeting.setReminderSentAt(null);
                 meeting.setStatus(MeetingStatus.RESCHEDULED);
+                // requestedBy tracks whose proposal is pending, so the student is the one to accept.
+                meeting.setRequestedBy(meeting.getProject().getSupervisor());
                 if (data.get("reason") != null) meeting.setNotes(data.get("reason").toString());
                 if (studentUserId != null) {
                     notificationService.createNotification(studentUserId, "MEETING",
@@ -152,7 +163,7 @@ public class SupervisorMeetingController {
             }
             default -> throw new BadRequestException("Invalid action: must be CONFIRM, CANCEL or RESCHEDULE");
         }
-        if (data.get("notes") != null) meeting.setNotes((String) data.get("notes"));
+        if (data.get("notes") != null) meeting.setNotes(data.get("notes").toString());
         meetingRepository.save(meeting);
         return ResponseEntity.ok(Map.of("success", true));
     }
@@ -163,11 +174,16 @@ public class SupervisorMeetingController {
      * an LLM is configured).
      */
     @PostMapping("/{id}/complete")
+    @Transactional
     public ResponseEntity<?> completeMeeting(@AuthenticationPrincipal UserDetails user, @PathVariable Long id, @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         Meeting meeting = access.requireOwnMeeting(userId, id);
         if (meeting.getStatus() != MeetingStatus.CONFIRMED) {
             throw new BadRequestException("Only confirmed meetings can be marked as completed.");
+        }
+        LocalDateTime start = meeting.getConfirmedStartAt() != null ? meeting.getConfirmedStartAt() : meeting.getProposedStartAt();
+        if (start != null && start.isAfter(LocalDateTime.now())) {
+            throw new BadRequestException("You can only mark a meeting as completed after it has started.");
         }
         meeting.setStatus(MeetingStatus.COMPLETED);
         if (data.get("notes") != null) meeting.setNotes((String) data.get("notes"));
@@ -179,7 +195,15 @@ public class SupervisorMeetingController {
         Long draftLogId = meetingLogDraftService.createDraftFromMeeting(meeting, items)
                 .map(com.fyp.supervision.entity.MeetingLog::getLogId).orElse(null);
         if (draftLogId != null && meeting.getNotes() != null && !meeting.getNotes().isBlank()) {
-            meetingLogDraftService.enhanceWithAiSummary(draftLogId, meeting.getMeetingId(), items);
+            // The AI pass is @Async and reads the draft by id, so start it only after this
+            // transaction commits or it won't find the row.
+            Long meetingId = meeting.getMeetingId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    meetingLogDraftService.enhanceWithAiSummary(draftLogId, meetingId, items);
+                }
+            });
         }
         Map<String, Object> body = new java.util.LinkedHashMap<>();
         body.put("success", true);

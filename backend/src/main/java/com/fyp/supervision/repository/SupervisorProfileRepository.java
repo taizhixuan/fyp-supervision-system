@@ -4,11 +4,15 @@ import com.fyp.supervision.entity.SupervisorProfile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 public interface SupervisorProfileRepository
@@ -30,8 +34,27 @@ public interface SupervisorProfileRepository
     @Query("select count(sp) from SupervisorProfile sp where sp.currentLoad > sp.supervisionQuota")
     long countOverloaded();
 
-    /** Atomic increment so concurrent accepts can't lose an update (see respondToRequest). */
+    /**
+     * Row-locks the profile so concurrent accepts for the same supervisor run one at a
+     * time; the capacity check and the pairing then can't interleave (see respondToRequest).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT sp FROM SupervisorProfile sp WHERE sp.userId = :userId")
+    Optional<SupervisorProfile> findByIdForUpdate(@Param("userId") Long userId);
+
+    // current_load is a cached count of supervised projects whose cycle hasn't ended.
+    // Recount rather than increment/decrement so it can't drift when cycles complete.
+    String LIVE_LOAD_SUBQUERY =
+            "(SELECT COUNT(*) FROM project p LEFT JOIN fyp_cycle c ON c.cycle_id = p.cycle_id "
+            + "WHERE p.supervisor_user_id = sp.user_id "
+            + "AND (c.cycle_id IS NULL OR c.status NOT IN ('COMPLETED','ARCHIVED')))";
+
     @Modifying
-    @Query("UPDATE SupervisorProfile sp SET sp.currentLoad = sp.currentLoad + 1 WHERE sp.userId = :userId")
-    int incrementCurrentLoad(@Param("userId") Long userId);
+    @Query(value = "UPDATE supervisor_profile sp SET sp.current_load = " + LIVE_LOAD_SUBQUERY
+            + " WHERE sp.user_id = :userId", nativeQuery = true)
+    int recountCurrentLoad(@Param("userId") Long userId);
+
+    @Modifying
+    @Query(value = "UPDATE supervisor_profile sp SET sp.current_load = " + LIVE_LOAD_SUBQUERY, nativeQuery = true)
+    int recountAllCurrentLoads();
 }

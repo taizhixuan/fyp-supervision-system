@@ -4,7 +4,9 @@ import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.enums.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,17 @@ import java.util.Optional;
 public interface ProjectRepository extends JpaRepository<Project, Long>,
         org.springframework.data.jpa.repository.JpaSpecificationExecutor<Project> {
     Optional<Project> findByStudent_UserId(Long studentUserId);
+
+    /** Row-locked variant so two supervisors can't accept the same student at once. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Project p WHERE p.student.userId = :studentUserId")
+    Optional<Project> findByStudentUserIdForUpdate(@Param("studentUserId") Long studentUserId);
+
+    /** Supervised projects that still count toward capacity (cycle not completed/archived). */
+    @Query("SELECT COUNT(p) FROM Project p LEFT JOIN p.cycle c WHERE p.supervisor.userId = :supervisorUserId "
+            + "AND (c IS NULL OR c.status NOT IN (com.fyp.supervision.enums.CycleStatus.COMPLETED, "
+            + "com.fyp.supervision.enums.CycleStatus.ARCHIVED))")
+    long countLiveBySupervisor(@Param("supervisorUserId") Long supervisorUserId);
     List<Project> findBySupervisor_UserId(Long supervisorUserId);
     Page<Project> findByCycle_CycleId(Long cycleId, Pageable pageable);
     long countByCycle_CycleId(Long cycleId);

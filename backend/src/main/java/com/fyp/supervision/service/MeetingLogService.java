@@ -217,7 +217,12 @@ public class MeetingLogService {
         // print into the exported logbook. Fall back to the client value only if the image
         // can't be decoded (e.g. an externally stored reference instead of a data URL).
         String serverHash = sha256Hex(signatureImage);
-        String signatureHash = serverHash != null ? serverHash : (String) data.get("signatureSha256");
+        // A signature is the whole point of this step: refuse to advance the log (and
+        // eventually lock it) without a decodable signature image.
+        if (serverHash == null) {
+            throw new BadRequestException("A signature image is required to sign this log.");
+        }
+        String signatureHash = serverHash;
 
         MeetingLogSignature signature = MeetingLogSignature.builder()
                 .meetingLog(log)
@@ -316,8 +321,13 @@ public class MeetingLogService {
     @Transactional
     public MeetingLog addSupervisorComments(Long logId, Long userId, String comments) {
         MeetingLog log = getLog(logId);
-        if (!log.getSupervisor().getUserId().equals(userId)) {
+        if (log.getSupervisor() == null || !log.getSupervisor().getUserId().equals(userId)) {
             throw new BadRequestException("Only the assigned supervisor can add comments.");
+        }
+        // supervisorComments is part of content_hash: changing it after signing would make
+        // the exported logbook fail its integrity check.
+        if (log.getStatus() == MeetingLogStatus.SUPERVISOR_SIGNED || log.getStatus() == MeetingLogStatus.LOCKED) {
+            throw new BadRequestException("Comments can't be changed after the log has been signed.");
         }
         log.setSupervisorComments(comments);
         return meetingLogRepository.save(log);

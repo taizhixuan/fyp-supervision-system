@@ -10,6 +10,7 @@ import com.fyp.supervision.enums.UserStatus;
 import com.fyp.supervision.repository.DeadlineRepository;
 import com.fyp.supervision.repository.FypCycleRepository;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.SupervisorProfileRepository;
 import com.fyp.supervision.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class CycleLifecycleService {
     private final DeadlineRepository deadlineRepository;
     private final NotificationService notificationService;
     private final CyclePlaceholderWriter placeholderWriter;
+    private final SupervisorProfileRepository supervisorProfileRepository;
 
     public Optional<FypCycle> findActiveCycle(String cycleType) {
         if (cycleType == null) return Optional.empty();
@@ -144,6 +146,9 @@ public class CycleLifecycleService {
         if (updated == 0) {
             throw new IllegalStateException("Cycle " + cycleId + " not found for status update.");
         }
+        // Students in a completed/archived cycle stop counting toward supervisor capacity
+        // (and count again if a cycle is re-activated), so refresh every cached load.
+        supervisorProfileRepository.recountAllCurrentLoads();
         if (newStatus == CycleStatus.COMPLETED || newStatus == CycleStatus.ARCHIVED) {
             notifyEnrolledStudents(cycleId, newStatus);
         }

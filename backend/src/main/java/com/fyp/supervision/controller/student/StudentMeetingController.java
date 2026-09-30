@@ -9,6 +9,7 @@ import com.fyp.supervision.repository.MeetingRepository;
 import com.fyp.supervision.repository.ProjectRepository;
 import com.fyp.supervision.service.ActionItemService;
 import com.fyp.supervision.service.MeetingCalendarService;
+import com.fyp.supervision.service.MeetingTransitions;
 import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.StudentAccessService;
 import com.fyp.supervision.service.StudentService;
@@ -137,10 +138,16 @@ public class StudentMeetingController {
 
         switch (action) {
             case "ACCEPT" -> {
+                MeetingTransitions.requireStatus(meeting, "accept", MeetingTransitions.AWAITING_RESPONSE);
+                // Only the other party accepts a proposal: a student can't confirm their own.
+                if (meeting.getRequestedBy() != null && userId.equals(meeting.getRequestedBy().getUserId())) {
+                    throw new BadRequestException("Waiting for your supervisor to respond to this proposal.");
+                }
                 LocalDateTime start = meeting.getProposedStartAt();
                 if (start == null) throw new BadRequestException("Meeting has no proposed time to accept.");
                 meeting.setStatus(MeetingStatus.CONFIRMED);
                 meeting.setConfirmedStartAt(start);
+                meeting.setReminderSentAt(null);
                 if (meeting.getDurationMinutes() != null) {
                     meeting.setConfirmedEndAt(start.plusMinutes(meeting.getDurationMinutes()));
                 }
@@ -153,6 +160,7 @@ public class StudentMeetingController {
             case "DECLINE" -> {
                 String reason = data.get("reason") == null ? "" : data.get("reason").toString().trim();
                 if (reason.isEmpty()) throw new BadRequestException("reason is required when declining");
+                MeetingTransitions.requireStatus(meeting, "decline", MeetingTransitions.OPEN);
                 meeting.setStatus(MeetingStatus.CANCELLED);
                 meeting.setCancelReason(reason);
                 if (supervisorUserId != null) {
@@ -165,10 +173,14 @@ public class StudentMeetingController {
                 if (data.get("proposedDateTime") == null) {
                     throw new BadRequestException("proposedDateTime is required for RESCHEDULE");
                 }
-                meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedDateTime").toString()));
+                MeetingTransitions.requireStatus(meeting, "reschedule", MeetingTransitions.OPEN);
+                meeting.setProposedStartAt(MeetingTransitions.parseDateTime(data.get("proposedDateTime"), "proposedDateTime"));
                 meeting.setConfirmedStartAt(null);
                 meeting.setConfirmedEndAt(null);
+                meeting.setReminderSentAt(null);
                 meeting.setStatus(MeetingStatus.RESCHEDULED);
+                // requestedBy tracks whose proposal is pending, so the supervisor is the one to accept.
+                meeting.setRequestedBy(meeting.getProject().getStudent());
                 if (data.get("reason") != null) meeting.setNotes(data.get("reason").toString());
                 if (supervisorUserId != null) {
                     notificationService.createNotification(supervisorUserId, "MEETING",
@@ -201,9 +213,15 @@ public class StudentMeetingController {
             throw new BadRequestException("Cancellation reason must be 500 characters or fewer.");
         }
 
+        MeetingTransitions.requireStatus(meeting, "cancel", MeetingTransitions.OPEN);
         meeting.setStatus(MeetingStatus.CANCELLED);
         meeting.setCancelReason(reason);
         meetingRepository.save(meeting);
+        if (meeting.getProject().getSupervisor() != null) {
+            notificationService.createNotification(meeting.getProject().getSupervisor().getUserId(), "MEETING",
+                    "Student cancelled meeting",
+                    "Student cancelled: " + meeting.getTitle(), "/supervisor/meetings/" + id);
+        }
         return ResponseEntity.noContent().build();
     }
 

@@ -328,8 +328,14 @@ public class SupervisorService {
                             .orElse(null));
             String title = request.getProposedTitle() != null ? request.getProposedTitle() : "Untitled Project";
 
+            // Lock this supervisor's profile first so their concurrent accepts serialise and
+            // the capacity check below can't be passed twice at load = cap - 1.
+            SupervisorProfile svProfile = supervisorProfileRepository.findByIdForUpdate(userId).orElse(null);
+
             // Reuse the placeholder Project that was created when the student joined the cycle.
-            Project project = projectRepository.findByStudent_UserId(request.getStudent().getUserId())
+            // Row-locked so a second supervisor accepting the same student waits and then
+            // sees the pairing instead of overwriting it.
+            Project project = projectRepository.findByStudentUserIdForUpdate(request.getStudent().getUserId())
                     .orElseGet(() -> Project.builder()
                             .cycle(activeCycle)
                             .student(request.getStudent())
@@ -350,12 +356,13 @@ public class SupervisorService {
             // Enforce supervision capacity when taking on a NEW student: the supervisor's
             // own quota, capped by the system-wide max_students_per_supervisor parameter.
             if (!alreadyMine) {
-                SupervisorProfile svProfile = supervisorProfileRepository.findById(userId).orElse(null);
                 if (svProfile != null) {
                     int quota = svProfile.getSupervisionQuota() != null
                             ? svProfile.getSupervisionQuota() : Integer.MAX_VALUE;
                     int cap = Math.min(quota, systemParameters.getInt("max_students_per_supervisor", quota));
-                    int load = svProfile.getCurrentLoad() != null ? svProfile.getCurrentLoad() : 0;
+                    // Live count, not the cached current_load: students in completed or
+                    // archived cycles no longer take up a slot.
+                    long load = projectRepository.countLiveBySupervisor(userId);
                     if (load >= cap) {
                         throw new BadRequestException(
                                 "You have reached your maximum supervision capacity (" + cap + " students).");
@@ -369,11 +376,9 @@ public class SupervisorService {
             if (project.getRegisteredAt() == null) project.setRegisteredAt(LocalDateTime.now());
             projectRepository.save(project);
 
-            // Atomic increment avoids a lost update if the supervisor accepts two
-            // requests concurrently. Only count a newly-paired student.
-            if (!alreadyMine) {
-                supervisorProfileRepository.incrementCurrentLoad(userId);
-            }
+            // Refresh the cached load from the live count (flush first so the new pairing counts).
+            projectRepository.flush();
+            supervisorProfileRepository.recountCurrentLoad(userId);
 
             notificationService.createNotification(
                     request.getStudent().getUserId(), "REQUEST",
@@ -635,6 +640,10 @@ public class SupervisorService {
         }
 
         String feedbackType = (String) data.getOrDefault("feedbackType", "REVISION_REQUIRED");
+        if (!Set.of("APPROVED", "APPROVAL", "REJECTION", "COMMENT", "REVISION_REQUEST", "REVISION_REQUIRED")
+                .contains(feedbackType)) {
+            throw new BadRequestException("Unknown feedback type: " + feedbackType);
+        }
         ProposalReview review = ProposalReview.builder()
                 .proposal(proposal)
                 .reviewer(userAccountRepository.findById(userId).orElseThrow())
@@ -663,6 +672,14 @@ public class SupervisorService {
                     proposal.getStudent().getUserId(), "PROPOSAL",
                     "Proposal Rejected",
                     "Your supervisor has rejected your proposal. See the feedback for details.",
+                    "/student/proposal"
+            );
+        } else if ("COMMENT".equals(feedbackType)) {
+            // A plain comment is recorded as a review but leaves the proposal's status alone.
+            notificationService.createNotification(
+                    proposal.getStudent().getUserId(), "PROPOSAL",
+                    "New Comment on Your Proposal",
+                    "Your supervisor left a comment on your proposal.",
                     "/student/proposal"
             );
         } else {

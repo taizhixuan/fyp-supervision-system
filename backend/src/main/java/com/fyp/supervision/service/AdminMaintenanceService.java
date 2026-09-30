@@ -57,7 +57,8 @@ public class AdminMaintenanceService {
             "project_document", "storage_path",
             "proposal_version", "upload_file_path",
             "resource_document", "storage_path",
-            "export_config", "last_export_path"
+            "export_config", "last_export_path",
+            "document_feedback", "annotated_file_path"
     );
 
     // Subdirs under uploads/ that the orphan sweeper should never touch (they're not

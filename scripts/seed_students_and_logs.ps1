@@ -199,12 +199,12 @@ function New-FullyLockedLog {
     Invoke-Api -Method POST -Path "/student/meeting-logs/$logId/submit" -Token $StudentToken | Out-Null
     # 3. Supervisor signs (SUBMITTED -> SUPERVISOR_SIGNED)
     Invoke-Api -Method POST -Path "/supervisor/meeting-logs/$logId/sign" -Token $SupervisorToken -Body @{
-        signatureImageDataUrl = ''
+        signatureImageDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
         signatureSha256       = ''
     } | Out-Null
     # 4. Student counter-signs (SUPERVISOR_SIGNED -> LOCKED)
     Invoke-Api -Method POST -Path "/student/meeting-logs/$logId/sign" -Token $StudentToken -Body @{
-        signatureImageDataUrl = ''
+        signatureImageDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
         signatureSha256       = ''
     } | Out-Null
     return $logId
