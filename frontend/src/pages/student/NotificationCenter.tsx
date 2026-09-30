@@ -30,54 +30,6 @@ const STUDENT_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'SYSTEM', label: 'System' },
 ]
 
-// Sample data — kept for design preview when the API returns nothing.
-const SAMPLE_NOTIFICATIONS: Notification[] = [
-  {
-    notificationId: 1,
-    title: 'Meeting Confirmed',
-    message: 'Your meeting with Dr. Sarah Lee on 25 Jan at 10:00 AM has been confirmed.',
-    type: 'MEETING',
-    isRead: false,
-    actionUrl: '/student/meetings/1',
-    createdAt: '2025-01-20T10:30:00Z',
-  },
-  {
-    notificationId: 2,
-    title: 'Proposal Feedback Received',
-    message: 'Your supervisor has provided feedback on your proposal. Please review and make revisions.',
-    type: 'PROPOSAL',
-    isRead: false,
-    actionUrl: '/student/proposal/status',
-    createdAt: '2025-01-19T14:00:00Z',
-  },
-  {
-    notificationId: 3,
-    title: 'Deadline Reminder',
-    message: 'Proposal submission deadline is in 7 days. Make sure to submit your final version.',
-    type: 'DEADLINE',
-    isRead: false,
-    actionUrl: '/student/deadlines',
-    createdAt: '2025-01-18T09:00:00Z',
-  },
-  {
-    notificationId: 4,
-    title: 'Supervision Request Accepted',
-    message: 'Dr. Sarah Lee has accepted your supervision request!',
-    type: 'REQUEST',
-    isRead: true,
-    actionUrl: '/student/requests',
-    createdAt: '2025-01-17T16:30:00Z',
-  },
-  {
-    notificationId: 5,
-    title: 'Account approved',
-    message: 'Your student account has been approved by the admin.',
-    type: 'ACCOUNT_APPROVED',
-    isRead: true,
-    createdAt: '2025-01-16T11:00:00Z',
-  },
-]
-
 export function NotificationCenter() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -86,7 +38,7 @@ export function NotificationCenter() {
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllRead()
 
-  const notifications = data?.notifications || SAMPLE_NOTIFICATIONS
+  const notifications = data?.notifications ?? []
 
   const filteredNotifications = notifications.filter((n) => {
     const matchesReadFilter = filter === 'all' || !n.isRead

@@ -111,7 +111,7 @@ export function UserManagement() {
   }
 
   const stats = {
-    total: data?.users.length ?? 0,
+    total: data?.total ?? data?.users.length ?? 0,
     active: data?.users.filter((u: AdminUserListItem) => u.status === 'ACTIVE').length ?? 0,
     pending: data?.users.filter((u: AdminUserListItem) => u.status === 'PENDING').length ?? 0,
     suspended: data?.users.filter((u: AdminUserListItem) => u.status === 'SUSPENDED').length ?? 0,

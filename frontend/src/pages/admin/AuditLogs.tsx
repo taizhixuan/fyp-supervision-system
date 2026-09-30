@@ -24,7 +24,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { useAuditLogs } from '@/lib/hooks/useAdmin'
+import { useAuditLogFilterOptions, useAuditLogs } from '@/lib/hooks/useAdmin'
 import { cn } from '@/lib/utils/cn'
 import type { AuditAction, AuditEntityType, AuditLog } from '@/types'
 
@@ -78,6 +78,7 @@ export function AuditLogs() {
   const [searchQuery, setSearchQuery] = useState('')
   const [actionFilter, setActionFilter] = useState<AuditAction | 'ALL'>('ALL')
   const [entityFilter, setEntityFilter] = useState<AuditEntityType | 'ALL'>('ALL')
+  const { data: filterOptions } = useAuditLogFilterOptions()
   const [dateRange, setDateRange] = useState({ start: '', end: '' })
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -208,8 +209,8 @@ export function AuditLogs() {
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Actions</option>
-            {Object.entries(actionConfig).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
+            {(filterOptions?.actions ?? []).map((key) => (
+              <option key={key} value={key}>{resolveAction(key).label}</option>
             ))}
           </select>
           <select
@@ -218,8 +219,10 @@ export function AuditLogs() {
             className="px-3 py-2 border border-neutral-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500"
           >
             <option value="ALL">All Entities</option>
-            {Object.entries(entityTypeLabels).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            {(filterOptions?.entityTypes ?? []).map((key) => (
+              <option key={key} value={key}>
+                {entityTypeLabels[key as AuditEntityType] ?? key.replace(/_/g, ' ').toLowerCase()}
+              </option>
             ))}
           </select>
           <div className="flex items-center gap-2">

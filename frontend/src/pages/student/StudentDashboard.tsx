@@ -26,7 +26,7 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { OpenActionItemsCard } from '@/components/meetings/OpenActionItemsCard'
 import { trimesterProgress } from '@/lib/utils/trimester'
-import type { RegistrationStatus, ProposalStatus, MeetingStatus, LogStatus, RegistrationStep, StudentDashboardData } from '@/types'
+import type { RegistrationStatus, ProposalStatus, MeetingStatus, RegistrationStep } from '@/types'
 
 // Build the 4-step strip from the backend-derived registration status.
 // Spec UC4 → UC6 → UC7 → UC9 maps cleanly: Find Supervisor → Submit Proposal → Committee Review → Registered.
@@ -65,116 +65,6 @@ const getRegistrationSteps = (status: RegistrationStatus): RegistrationStep[] =>
   }))
 }
 
-// Sample data for design preview
-const SAMPLE_DASHBOARD: StudentDashboardData = {
-  profile: {
-    userId: '1',
-    studentId: '1201234567',
-    fullName: 'Ahmad bin Abdullah',
-    email: 'ahmad@student.mmu.edu.my',
-    programCode: 'BIT',
-    programName: 'Bachelor of Information Technology',
-    faculty: 'Faculty of Computing and Informatics',
-    intakeYear: 2021,
-    expectedGraduation: '2025-06',
-    skills: ['Python', 'React', 'Machine Learning'],
-    researchInterests: ['AI', 'Web Development'],
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  registrationStatus: {
-    registrationId: '1',
-    studentId: '1',
-    academicYear: '2024/2025',
-    semester: 1,
-    cycle: 'FYP1',
-    status: 'PROPOSAL_PENDING' as RegistrationStatus,
-    nextSteps: getRegistrationSteps('PROPOSAL_PENDING'),
-    timeline: [],
-  },
-  upcomingMeetings: [
-    {
-      meetingId: '1',
-      studentId: '1',
-      supervisorId: '1',
-      supervisor: { supervisorId: '1', userId: '2', fullName: 'Dr. Sarah Lee', email: 'sarah@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: ['AI', 'ML'], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-      title: 'Weekly Progress Review',
-      agenda: 'Discuss proposal draft and timeline',
-      scheduledAt: '2025-01-25T10:00:00Z',
-      duration: 60,
-      platform: 'MICROSOFT_TEAMS' as const,
-      status: 'CONFIRMED' as MeetingStatus,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-    },
-    {
-      meetingId: '2',
-      studentId: '1',
-      supervisorId: '1',
-      supervisor: { supervisorId: '1', userId: '2', fullName: 'Dr. Sarah Lee', email: 'sarah@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: ['AI', 'ML'], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-      title: 'Proposal Review Meeting',
-      scheduledAt: '2025-02-01T14:00:00Z',
-      duration: 45,
-      platform: 'IN_PERSON' as const,
-      location: 'Room 3.12, FCI Building',
-      status: 'PENDING' as MeetingStatus,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-    },
-  ],
-  pendingLogs: [
-    {
-      logId: '1',
-      meetingId: '0',
-      meeting: {
-        meetingId: '0',
-        studentId: '1',
-        supervisorId: '1',
-        supervisor: { supervisorId: '1', userId: '2', fullName: 'Dr. Sarah Lee', email: 'sarah@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: ['AI', 'ML'], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-        title: 'Initial Meeting',
-        scheduledAt: '2025-01-15T10:00:00Z',
-        duration: 60,
-        platform: 'MICROSOFT_TEAMS' as const,
-        status: 'COMPLETED' as MeetingStatus,
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-      },
-      studentId: '1',
-      supervisorId: '1',
-      discussionSummary: '',
-      actionItems: [],
-      status: 'DRAFT' as LogStatus,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-    },
-  ],
-  recentDocuments: [
-    { documentId: '1', studentId: '1', title: 'FYP1 Proposal Draft v1', type: 'PROPOSAL' as const, phase: 'FYP1' as const, fileName: 'proposal_v1.pdf', fileSize: 2048000, fileUrl: '#', downloadUrl: '#', mimeType: 'application/pdf', version: 1, uploadedAt: '2025-01-10T08:00:00Z', updatedAt: '2025-01-10T08:00:00Z' },
-    { documentId: '2', studentId: '1', title: 'Literature Review Notes', type: 'OTHER' as const, phase: 'FYP1' as const, fileName: 'lit_review.docx', fileSize: 512000, fileUrl: '#', downloadUrl: '#', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', version: 1, uploadedAt: '2025-01-08T14:30:00Z', updatedAt: '2025-01-08T14:30:00Z' },
-  ],
-  upcomingDeadlines: [
-    { deadlineId: '1', title: 'FYP1 Proposal Submission', dueDate: '2025-02-15T23:59:00Z', type: 'PROPOSAL' as const, phase: 'FYP1' as const, isUpcoming: true, daysRemaining: 26 },
-    { deadlineId: '2', title: 'Progress Report 1', dueDate: '2025-03-01T23:59:00Z', type: 'REPORT' as const, phase: 'FYP1' as const, isUpcoming: true, daysRemaining: 40 },
-    { deadlineId: '3', title: 'FYP1 Final Presentation', dueDate: '2025-04-15T23:59:00Z', type: 'PRESENTATION' as const, phase: 'FYP1' as const, isUpcoming: true, daysRemaining: 85 },
-  ],
-  proposalStatus: {
-    proposalId: '1',
-    studentId: '1',
-    title: 'AI-Powered Student Supervision System',
-    problemStatement: 'Manual FYP supervision processes are inefficient...',
-    objectives: ['Develop an automated system', 'Implement AI recommendations'],
-    scope: 'The system will cover...',
-    methodology: 'Agile development methodology...',
-    expectedOutcomes: ['Working prototype', 'Documentation'],
-    status: 'DRAFT' as ProposalStatus,
-    version: 1,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-15',
-  },
-  notifications: { unreadCount: 3 },
-  quickStats: { totalMeetings: 4, completedLogs: 2, documentsUploaded: 5 },
-}
-
 const statusColors: Record<RegistrationStatus, string> = {
   NOT_STARTED: 'bg-neutral-100 text-neutral-700',
   SUPERVISOR_PENDING: 'bg-warning-100 text-warning-800',
@@ -207,8 +97,7 @@ const MEETING_STATUS_FALLBACK = 'bg-neutral-100 text-neutral-700'
 export function StudentDashboard() {
   const { data, isLoading, error } = useStudentDashboard()
 
-  // Use sample data if no API data available
-  const dashboard = data || SAMPLE_DASHBOARD
+  const dashboard = data
 
   // Registration Progress card is collapsible — saves ~350px of scroll when hidden.
   // Defaults to expanded so first-time users see it; choice persists per device.
@@ -239,7 +128,7 @@ export function StudentDashboard() {
     )
   }
 
-  if (error && !dashboard) {
+  if (error || !dashboard) {
     return (
       <AlertBanner
         variant="error"

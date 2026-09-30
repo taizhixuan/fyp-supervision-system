@@ -66,7 +66,7 @@ export function useCommitteeAnnouncements() {
   return useQuery({
     queryKey: committeeKeys.announcements(),
     queryFn: async () => {
-      const { data } = await apiClient.get('/committee/announcements')
+      const { data } = await apiClient.get('/committee/announcements', { params: { size: 200 } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
       return data
     },
   })
@@ -188,7 +188,7 @@ export function useGeneralDocuments(filters?: { category?: string; visibility?: 
   return useQuery({
     queryKey: [...committeeKeys.documents(), filters],
     queryFn: async () => {
-      const { data } = await apiClient.get('/committee/documents', { params: filters })
+      const { data } = await apiClient.get('/committee/documents', { params: { size: 200, ...filters } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
       return data
     },
   })

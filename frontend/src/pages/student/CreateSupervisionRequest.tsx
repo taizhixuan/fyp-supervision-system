@@ -33,32 +33,16 @@ const requestSchema = z.object({
 
 type RequestFormData = z.infer<typeof requestSchema>
 
-// Sample supervisor for design preview
-const SAMPLE_SUPERVISOR = {
-  supervisorId: '1',
-  userId: '101',
-  fullName: 'Dr. Sarah Lee Wei Lin',
-  email: 'sarah.lee@mmu.edu.my',
-  title: 'Associate Professor',
-  department: 'Software Engineering',
-  faculty: 'Faculty of Computing and Informatics',
-  researchAreas: ['Artificial Intelligence', 'Machine Learning', 'NLP'],
-  currentLoad: 5,
-  maxCapacity: 8,
-  isAcceptingStudents: true,
-}
-
 export function CreateSupervisionRequest() {
   const [searchParams] = useSearchParams()
-  const supervisorId = searchParams.get('supervisorId') || '1'
+  // No default: falling back to '1' showed a sample name but sent the request to user 1.
+  const supervisorId = searchParams.get('supervisorId') ?? ''
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
   const { data: supervisor, isLoading: loadingSupervisor } = useSupervisorDetail(supervisorId)
   const { data: existingRequests } = useSupervisionRequests()
   const createRequest = useCreateSupervisionRequest()
 
-  // Use sample data if no API data available
-  const displaySupervisor = supervisor || SAMPLE_SUPERVISOR
 
   // Check if user already has a pending request to this supervisor
   const hasPendingRequest = existingRequests?.requests?.some(
@@ -101,6 +85,23 @@ export function CreateSupervisionRequest() {
       </div>
     )
   }
+
+  if (!supervisor) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-3">
+        <Link to={ROUTES.STUDENT.SUPERVISORS} className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Supervisors
+        </Link>
+        <AlertBanner
+          variant="error"
+          title="Supervisor not found"
+          description="Choose a supervisor from the directory to send a request."
+        />
+      </div>
+    )
+  }
+  const displaySupervisor = supervisor
 
   if (submitSuccess) {
     return (

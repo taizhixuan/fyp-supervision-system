@@ -24,7 +24,7 @@ import {
   Bell,
   Sparkles,
 } from 'lucide-react'
-import { Card, Button, Spinner, Modal } from '@/components/ui'
+import { Card, Button, Spinner, Modal, AlertBanner } from '@/components/ui'
 import { useMeetingDetail, useCancelMeeting, useStudentRespondToMeeting } from '@/lib/hooks/useStudent'
 import { localDatetimeToLocalDateTime } from '@/lib/utils/datetimeLocal'
 import { ROUTES } from '@/lib/constants/routes'
@@ -34,38 +34,7 @@ import { AddToCalendarMenu } from '@/components/common/AddToCalendarMenu'
 import { ActionItemsPanel } from '@/components/meetings/ActionItemsPanel'
 import { useStudentRegistrationGate } from '@/lib/hooks/useStudentRegistrationGate'
 import { studentMeetingToCalendarEvent } from '@/lib/utils/calendarLinks'
-import type { Meeting, MeetingStatus } from '@/types'
-
-// Sample data
-const SAMPLE_MEETING: Meeting = {
-  meetingId: '1',
-  studentId: '1',
-  supervisorId: '1',
-  supervisor: {
-    supervisorId: '1',
-    userId: '101',
-    fullName: 'Dr. Sarah Lee Wei Lin',
-    email: 'sarah.lee@mmu.edu.my',
-    title: 'Associate Professor',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    researchAreas: ['AI', 'ML'],
-    currentLoad: 5,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-  },
-  title: 'Weekly Progress Review',
-  agenda: 'Discuss proposal progress and methodology refinements. Review timeline and next milestones.',
-  scheduledAt: '2025-01-25T10:00:00Z',
-  duration: 60,
-  platform: 'MICROSOFT_TEAMS' as const,
-  meetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_123456789',
-  status: 'CONFIRMED' as MeetingStatus,
-  notes: undefined,
-  cancelReason: undefined as string | undefined,
-  createdAt: '2025-01-15T10:00:00Z',
-  updatedAt: '2025-01-18T14:30:00Z',
-}
+import type { MeetingStatus } from '@/types'
 
 const statusConfig: Record<MeetingStatus, {
   label: string
@@ -208,18 +177,16 @@ export function MeetingDetail() {
     }
   }
 
-  // Use sample data
-  const displayMeeting = meeting || SAMPLE_MEETING
-  const status = statusConfig[displayMeeting.status] ?? MEETING_STATUS_FALLBACK
-
   // Countdown timer
+  const scheduledAt = meeting?.scheduledAt
   useEffect(() => {
-    const targetDate = new Date(displayMeeting.scheduledAt)
+    if (!scheduledAt) return
+    const targetDate = new Date(scheduledAt)
     const updateCountdown = () => setCountdown(getTimeRemaining(targetDate))
     updateCountdown()
     const interval = setInterval(updateCountdown, 60000) // Update every minute
     return () => clearInterval(interval)
-  }, [displayMeeting.scheduledAt])
+  }, [scheduledAt])
 
   const handleCancel = async () => {
     try {
@@ -231,13 +198,35 @@ export function MeetingDetail() {
   }
 
   const handleCopyLink = async () => {
-    if (displayMeeting.meetingLink) {
-      await navigator.clipboard.writeText(displayMeeting.meetingLink)
+    if (meeting?.meetingLink) {
+      await navigator.clipboard.writeText(meeting.meetingLink)
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 2000)
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size="lg" label="Loading meeting..." />
+      </div>
+    )
+  }
+
+  if (!meeting) {
+    return (
+      <div className="space-y-3">
+        <Link to={ROUTES.STUDENT.MEETINGS} className="inline-flex items-center gap-2 text-neutral-600 hover:text-primary-600">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Meetings
+        </Link>
+        <AlertBanner variant="error" title="Meeting not found" description="It may have been removed, or the link is wrong." />
+      </div>
+    )
+  }
+
+  const displayMeeting = meeting
+  const status = statusConfig[displayMeeting.status] ?? MEETING_STATUS_FALLBACK
   const isUpcoming = new Date(displayMeeting.scheduledAt) > new Date()
   const canCancel = isUpcoming && ['PENDING', 'PROPOSED', 'RESCHEDULED', 'CONFIRMED'].includes(displayMeeting.status)
   const canCreateLog = displayMeeting.status === 'COMPLETED'
@@ -256,13 +245,6 @@ export function MeetingDetail() {
   const detectedPlatform = displayMeeting.meetingLink ? detectPlatformFromUrl(displayMeeting.meetingLink) : null
   const platformInfo = detectedPlatform ? getPlatformInfo(detectedPlatform) : null
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" label="Loading meeting..." />
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-3 lg:space-y-4">

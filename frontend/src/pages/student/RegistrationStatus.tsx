@@ -8,49 +8,11 @@ import {
   ArrowRight,
   Calendar,
 } from 'lucide-react'
-import { Card, Button, Badge, Spinner } from '@/components/ui'
+import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useProjectRegistration } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { RegistrationStatus as RegistrationStatusType } from '@/types'
-
-// Sample data
-const SAMPLE_REGISTRATION = {
-  registrationId: '1',
-  studentId: '1',
-  academicYear: '2024/2025',
-  semester: 1,
-  cycle: 'FYP1',
-  status: 'PROPOSAL_PENDING' as RegistrationStatusType,
-  supervisorId: '1',
-  supervisor: {
-    supervisorId: '1',
-    userId: '101',
-    fullName: 'Dr. Sarah Lee Wei Lin',
-    email: 'sarah.lee@mmu.edu.my',
-    title: 'Associate Professor',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    researchAreas: ['AI', 'ML'],
-    currentLoad: 5,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-  },
-  proposalId: '1',
-  nextSteps: [
-    { step: 1, title: 'Account Verification', description: 'Verify your student account', status: 'COMPLETED' as const, completedAt: '2024-09-01T10:00:00Z' },
-    { step: 2, title: 'Find Supervisor', description: 'Select and get approval from a supervisor', status: 'COMPLETED' as const, completedAt: '2024-09-15T14:30:00Z' },
-    { step: 3, title: 'Submit Proposal', description: 'Complete and submit your FYP proposal', status: 'CURRENT' as const, dueDate: '2025-02-15T23:59:00Z' },
-    { step: 4, title: 'Proposal Review', description: 'Wait for supervisor and committee review', status: 'PENDING' as const },
-    { step: 5, title: 'Project Registration', description: 'Finalize FYP registration', status: 'PENDING' as const },
-  ],
-  timeline: [
-    { eventId: '4', type: 'SUBMISSION' as const, title: 'Proposal Draft Saved', description: 'First draft of proposal saved', timestamp: '2025-01-10T09:00:00Z' },
-    { eventId: '3', type: 'STATUS_CHANGE' as const, title: 'Supervisor Assigned', description: 'Dr. Sarah Lee accepted supervision request', timestamp: '2024-09-15T14:30:00Z' },
-    { eventId: '2', type: 'SUBMISSION' as const, title: 'Supervision Request Sent', description: 'Sent request to Dr. Sarah Lee', timestamp: '2024-09-10T11:00:00Z' },
-    { eventId: '1', type: 'STATUS_CHANGE' as const, title: 'Account Verified', description: 'Student account verified by admin', timestamp: '2024-09-01T10:00:00Z' },
-  ],
-}
 
 const statusConfig: Record<RegistrationStatusType, { label: string; color: string; bgColor: string }> = {
   NOT_STARTED: { label: 'Not Started', color: 'text-neutral-700', bgColor: 'bg-neutral-100' },
@@ -66,10 +28,6 @@ const stepIcons = [CheckCircle, Users, FileText, ClipboardCheck, Award]
 export function RegistrationStatus() {
   const { data, isLoading } = useProjectRegistration()
 
-  // Use sample data
-  const registration = data || SAMPLE_REGISTRATION
-  const status = statusConfig[registration.status]
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -78,9 +36,22 @@ export function RegistrationStatus() {
     )
   }
 
+  if (!data) {
+    return (
+      <AlertBanner
+        variant="error"
+        title="Couldn't load your registration status"
+        description="Please refresh the page. If this keeps happening, contact the FYP committee."
+      />
+    )
+  }
+
+  const registration = data
+  const status = statusConfig[registration.status]
+
   const completedSteps = registration.nextSteps.filter((s) => s.status === 'COMPLETED').length
   const totalSteps = registration.nextSteps.length
-  const progressPercentage = (completedSteps / totalSteps) * 100
+  const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
 
   return (
     <div className="space-y-3 lg:space-y-4">

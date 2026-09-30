@@ -1166,6 +1166,10 @@ export function useAdminUsers(filters?: { role?: string; status?: string; search
           status: filters?.status,
           search: filters?.search,
           cycleId: filters?.cycleId,
+          // Pageable defaults to 20 rows and the page has no pager; a cohort is a few
+          // hundred accounts, so load them all.
+          page: 0,
+          size: 1000,
         },
       })
       return data
@@ -1889,6 +1893,18 @@ export function useClearCache() {
 // Audit Log Hooks
 // ============================================
 
+/** Distinct action and entity values present in the audit log, for filter dropdowns. */
+export function useAuditLogFilterOptions() {
+  return useQuery({
+    queryKey: ['admin', 'audit-log-filters'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ actions: string[]; entityTypes: string[] }>('/admin/audit-logs/filters')
+      return data
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery({
     queryKey: [...adminKeys.auditLogs(), filters],
@@ -1909,7 +1925,19 @@ export function useAuditLogs(filters?: AuditLogFilters) {
         }
         return { logs, total: logs.length }
       }
-      const { data } = await apiClient.get('/admin/audit-logs', { params: { action: filters?.action, entityType: filters?.entityType, performedBy: filters?.performedBy, dateFrom: filters?.dateFrom, dateTo: filters?.dateTo } })
+      const { data } = await apiClient.get('/admin/audit-logs', {
+        params: {
+          action: filters?.action,
+          entityType: filters?.entityType,
+          performedBy: filters?.performedBy,
+          // The endpoint takes ISO date-times; a date input gives YYYY-MM-DD.
+          dateFrom: filters?.dateFrom ? `${filters.dateFrom}T00:00:00` : undefined,
+          dateTo: filters?.dateTo ? `${filters.dateTo}T23:59:59` : undefined,
+          // Spring pages are 0-indexed and sized by `size`.
+          page: filters?.page ? filters.page - 1 : 0,
+          size: filters?.limit ?? 20,
+        },
+      })
       return data
     },
   })

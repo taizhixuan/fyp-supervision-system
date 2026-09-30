@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useErrorToast } from '@/components/ui/Toast'
+import { getApiErrorMessage } from '@/lib/api/client'
 import { useNavigate, Link, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,11 +40,13 @@ export function DocumentUpload() {
   const { data: existingDocument, isLoading: loadingDocument } = useGeneralDocument(Number(id))
   const uploadMutation = useUploadGeneralDocument()
   const updateMutation = useUpdateGeneralDocument()
+  const showError = useErrorToast()
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<DocumentFormData>({
     resolver: zodResolver(documentSchema),
@@ -58,6 +62,19 @@ export function DocumentUpload() {
       cycleScope: 'EVERGREEN',
     },
   })
+
+  // defaultValues are read once, before the document has loaded; fill the form when it arrives.
+  useEffect(() => {
+    if (isEditing && existingDocument) {
+      reset({
+        title: existingDocument.title,
+        description: existingDocument.description || '',
+        category: existingDocument.category,
+        visibility: existingDocument.visibility,
+        cycleScope: (existingDocument as { cycleType?: 'FYP1' | 'FYP2' | null }).cycleType ?? 'EVERGREEN',
+      })
+    }
+  }, [isEditing, existingDocument, reset])
 
   const selectedCategory = watch('category')
   const selectedVisibility = watch('visibility')
@@ -83,7 +100,7 @@ export function DocumentUpload() {
       }
       navigate(ROUTES.COMMITTEE.DOCUMENTS)
     } catch (error) {
-      console.error('Failed to save document:', error)
+      showError('Could not save document', getApiErrorMessage(error))
     }
   }
 

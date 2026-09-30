@@ -885,7 +885,7 @@ export function useDocumentList(params?: DocumentListParams) {
       const { data } = await apiClient.get<{
         documents: FYPDocument[]
         total: number
-      }>('/student/documents', { params })
+      }>('/student/documents', { params: { size: 200, ...params } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
       return data
     },
   })
@@ -1268,7 +1268,7 @@ export function useStudentAnnouncements() {
       const { data } = await apiClient.get<{
         announcements: StudentAnnouncement[]
         total: number
-      }>('/announcements')
+      }>('/announcements', { params: { limit: 100 } }) // this endpoint pages with page/limit (max 100)
       return data
     },
   })
@@ -1353,7 +1353,7 @@ export function useResources(category?: string) {
       const { data } = await apiClient.get<{
         resources: Resource[]
         total: number
-      }>('/resources', { params: { category } })
+      }>('/resources', { params: { category, size: 200 } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
       return data
     },
   })

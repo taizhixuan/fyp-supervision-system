@@ -16,76 +16,6 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { SupervisorDetail } from '@/types'
 
-// Sample supervisors for design preview
-const SAMPLE_SUPERVISORS: Record<string, SupervisorDetail> = {
-  '1': {
-    supervisorId: '1',
-    userId: '101',
-    fullName: 'Dr. Sarah Lee Wei Lin',
-    email: 'sarah.lee@mmu.edu.my',
-    title: 'Associate Professor',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    researchAreas: ['Artificial Intelligence', 'Machine Learning', 'NLP', 'Deep Learning'],
-    currentLoad: 5,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-    bio: 'Expert in AI and Machine Learning with 15+ years of experience.',
-    qualifications: ['Ph.D. Computer Science', 'M.Sc. AI'],
-    expertise: ['Python', 'TensorFlow', 'PyTorch', 'NLP'],
-    officeLocation: 'Room 5.12, FCI Building',
-    officeHours: 'Tue & Thu, 2-4 PM',
-    preferredMeetingPlatforms: ['Zoom', 'In-Person'],
-    averageResponseTime: '24-48 hours',
-    rating: 4.8,
-    totalSupervised: 52,
-  },
-  '2': {
-    supervisorId: '2',
-    userId: '102',
-    fullName: 'Prof. Dr. Ahmad Razak',
-    email: 'ahmad.razak@mmu.edu.my',
-    title: 'Professor',
-    department: 'Computer Science',
-    faculty: 'Faculty of Computing and Informatics',
-    researchAreas: ['Cybersecurity', 'Network Security', 'Blockchain', 'Cryptography'],
-    currentLoad: 7,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-    bio: 'Leading researcher in cybersecurity with industry experience.',
-    qualifications: ['Ph.D. Computer Science', 'M.Sc. Network Security'],
-    expertise: ['Network Security', 'Penetration Testing', 'Blockchain'],
-    officeLocation: 'Room 4.08, FCI Building',
-    officeHours: 'Mon & Wed, 10 AM - 12 PM',
-    preferredMeetingPlatforms: ['In-Person', 'Microsoft Teams'],
-    averageResponseTime: '48-72 hours',
-    rating: 4.6,
-    totalSupervised: 78,
-  },
-  '4': {
-    supervisorId: '4',
-    userId: '104',
-    fullName: 'Dr. Muhammad Hafiz',
-    email: 'muhammad.hafiz@mmu.edu.my',
-    title: 'Senior Lecturer',
-    department: 'Software Engineering',
-    faculty: 'Faculty of Computing and Informatics',
-    researchAreas: ['Web Development', 'Cloud Computing', 'DevOps', 'Microservices'],
-    currentLoad: 4,
-    maxCapacity: 8,
-    isAcceptingStudents: true,
-    bio: 'Specializes in modern web technologies and cloud architecture.',
-    qualifications: ['Ph.D. Software Engineering', 'M.Sc. Computer Science'],
-    expertise: ['React', 'Node.js', 'AWS', 'Docker', 'Kubernetes'],
-    officeLocation: 'Room 3.15, FCI Building',
-    officeHours: 'Wed & Fri, 3-5 PM',
-    preferredMeetingPlatforms: ['Google Meet', 'Zoom', 'In-Person'],
-    averageResponseTime: '12-24 hours',
-    rating: 4.9,
-    totalSupervised: 35,
-  },
-}
-
 interface ComparisonRowProps {
   label: string
   values: (string | number | boolean | undefined)[]
@@ -181,11 +111,11 @@ export function CompareSupervisors() {
     })),
   })
 
-  // Use sample data if no API data available
-  const supervisors: SupervisorDetail[] = ids.map((id, index) => {
-    const query = supervisorQueries[index]
-    return query?.data || SAMPLE_SUPERVISORS[id] || SAMPLE_SUPERVISORS['1']
-  })
+  // Only the supervisors that loaded; an unknown id is dropped rather than replaced
+  // by a made-up profile.
+  const supervisors: SupervisorDetail[] = supervisorQueries
+    .map((q) => q.data)
+    .filter((d): d is SupervisorDetail => !!d)
 
   const isLoading = supervisorQueries.some((q) => q.isLoading)
 

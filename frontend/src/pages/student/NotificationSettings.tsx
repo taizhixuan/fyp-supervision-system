@@ -13,7 +13,7 @@ import {
   Save,
   CheckCircle,
 } from 'lucide-react'
-import { Card, Button, Spinner } from '@/components/ui'
+import { Card, Button, Spinner, AlertBanner } from '@/components/ui'
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/lib/hooks/useStudent'
 import { ROUTES } from '@/lib/constants/routes'
 import type { NotificationPreferences } from '@/types'
@@ -26,40 +26,6 @@ import {
   getCurrentEndpoint,
 } from '@/lib/push'
 import { getApiErrorMessage } from '@/lib/api/client'
-
-// Sample data
-const SAMPLE_PREFERENCES: NotificationPreferences = {
-  email: {
-    enabled: true,
-    meetingReminders: true,
-    deadlineReminders: true,
-    proposalUpdates: true,
-    supervisorMessages: true,
-    systemAnnouncements: true,
-    weeklyDigest: false,
-  },
-  push: {
-    enabled: true,
-    meetingReminders: true,
-    deadlineReminders: true,
-    proposalUpdates: true,
-    supervisorMessages: true,
-    systemAnnouncements: false,
-  },
-  inApp: {
-    enabled: true,
-    meetingReminders: true,
-    deadlineReminders: true,
-    proposalUpdates: true,
-    supervisorMessages: true,
-    systemAnnouncements: true,
-  },
-  quiet: {
-    enabled: false,
-    startTime: '22:00',
-    endTime: '08:00',
-  },
-}
 
 const notificationCategories = [
   {
@@ -98,7 +64,7 @@ export function NotificationSettings() {
   const { data, isLoading } = useNotificationPreferences()
   const updatePreferences = useUpdateNotificationPreferences()
 
-  // Start with null so we don't accidentally write SAMPLE_PREFERENCES over real
+  // Start with null so we never write placeholder values over the real
   // server state if the user clicks Save before the GET response lands.
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -107,12 +73,12 @@ export function NotificationSettings() {
   const [pushBusy, setPushBusy] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
 
-  // Hydrate local form state once server data arrives; never fall back to SAMPLE.
+  // Hydrate local form state once server data arrives; never fall back to placeholders.
   useEffect(() => {
     if (data && !preferences) setPreferences(data)
   }, [data, preferences])
 
-  const displayPrefs = preferences ?? data ?? SAMPLE_PREFERENCES
+  const displayPrefs = preferences ?? data
 
   const pushAvailable = pushSupported && !!vapidPublicKey
 
@@ -138,7 +104,8 @@ export function NotificationSettings() {
     value: boolean
   ) => {
     setPreferences((prev) => {
-      const base = prev ?? data ?? SAMPLE_PREFERENCES
+      const base = prev ?? data
+      if (!base) return prev
       return {
         ...base,
         [channel]: {
@@ -187,7 +154,8 @@ export function NotificationSettings() {
 
   const handleQuietToggle = (setting: string, value: any) => {
     setPreferences((prev) => {
-      const base = prev ?? data ?? SAMPLE_PREFERENCES
+      const base = prev ?? data
+      if (!base) return prev
       return {
         ...base,
         quiet: {
@@ -214,6 +182,16 @@ export function NotificationSettings() {
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner size="lg" label="Loading settings..." />
       </div>
+    )
+  }
+
+  if (!displayPrefs) {
+    return (
+      <AlertBanner
+        variant="error"
+        title="Couldn't load your notification settings"
+        description="Please refresh the page before changing anything, so your current settings aren't overwritten."
+      />
     )
   }
 

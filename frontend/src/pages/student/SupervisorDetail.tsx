@@ -14,51 +14,14 @@ import {
 } from 'lucide-react'
 import { Card, Button, Badge, Spinner, AlertBanner } from '@/components/ui'
 import { useSupervisorDetail } from '@/lib/hooks/useStudent'
-import type { SupervisorDetail as SupervisorDetailType } from '@/types/student'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import { assetUrl } from '@/lib/utils/assetUrl'
-
-// Sample data for design preview
-const SAMPLE_SUPERVISOR: SupervisorDetailType = {
-  supervisorId: '1',
-  userId: '101',
-  fullName: 'Dr. Sarah Lee Wei Lin',
-  email: 'sarah.lee@mmu.edu.my',
-  title: 'Associate Professor',
-  department: 'Software Engineering',
-  faculty: 'Faculty of Computing and Informatics',
-  profileImageUrl: undefined,
-  researchAreas: ['Artificial Intelligence', 'Machine Learning', 'Natural Language Processing', 'Deep Learning'],
-  currentLoad: 5,
-  maxCapacity: 8,
-  isAcceptingStudents: true,
-  bio: 'Dr. Sarah Lee is an Associate Professor at the Faculty of Computing and Informatics with over 15 years of experience in AI and Machine Learning research. She has supervised more than 50 FYP students and published extensively in top-tier journals and conferences.',
-  qualifications: [
-    'Ph.D. in Computer Science, University of Melbourne',
-    'M.Sc. in Artificial Intelligence, University of Edinburgh',
-    'B.Sc. (Hons) in Computer Science, Universiti Malaya',
-  ],
-  publications: [
-    'Deep Learning Approaches for Natural Language Understanding (IEEE TNNLS, 2024)',
-    'Transformer-based Models for Malaysian Text Classification (ACL, 2023)',
-    'A Survey on AI Applications in Education (Computers & Education, 2023)',
-  ],
-  expertise: ['Python', 'TensorFlow', 'PyTorch', 'NLP', 'Computer Vision', 'Research Methodology'],
-  officeLocation: 'Room 5.12, FCI Building, Cyberjaya Campus',
-  officeHours: 'Tuesday & Thursday, 2:00 PM - 4:00 PM',
-  preferredMeetingPlatforms: ['Zoom', 'In-Person', 'Google Meet'],
-  averageResponseTime: '24-48 hours',
-  rating: 4.8,
-  totalSupervised: 52,
-}
 
 export function SupervisorDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: supervisor, isLoading, error } = useSupervisorDetail(id || '')
 
-  // Use sample data if no API data available
-  const displaySupervisor = supervisor || SAMPLE_SUPERVISOR
 
   if (isLoading) {
     return (
@@ -68,7 +31,7 @@ export function SupervisorDetail() {
     )
   }
 
-  if (error && !displaySupervisor) {
+  if (error || !supervisor) {
     return (
       <AlertBanner
         variant="error"
@@ -78,8 +41,10 @@ export function SupervisorDetail() {
     )
   }
 
+  const displaySupervisor = supervisor
   const availableSlots = displaySupervisor.maxCapacity - displaySupervisor.currentLoad
-  const loadPercentage = (displaySupervisor.currentLoad / displaySupervisor.maxCapacity) * 100
+  const loadPercentage = displaySupervisor.maxCapacity > 0
+    ? (displaySupervisor.currentLoad / displaySupervisor.maxCapacity) * 100 : 100
 
   return (
     <div className="space-y-3 lg:space-y-4">

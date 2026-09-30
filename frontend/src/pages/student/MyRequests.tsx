@@ -18,84 +18,6 @@ import { cn } from '@/lib/utils/cn'
 import { formatDate } from '@/lib/utils/formatDate'
 import type { SupervisionRequest, SupervisionRequestStatus } from '@/types'
 
-// Sample data for design preview when the API hasn't loaded yet.
-const SAMPLE_REQUESTS: SupervisionRequest[] = [
-  {
-    requestId: '1',
-    studentId: '1',
-    supervisorId: '1',
-    supervisor: {
-      supervisorId: '1',
-      userId: '101',
-      fullName: 'Dr. Sarah Lee Wei Lin',
-      email: 'sarah.lee@mmu.edu.my',
-      title: 'Associate Professor',
-      department: 'Software Engineering',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Artificial Intelligence', 'Machine Learning', 'NLP'],
-      currentLoad: 5,
-      maxCapacity: 8,
-      isAcceptingStudents: true,
-    },
-    proposedTitle: 'AI-Powered Student Supervision System',
-    topicDescription: 'Developing a web-based system that uses AI to enhance the FYP supervision process...',
-    message: 'I am very interested in working with you on this AI project.',
-    status: 'PENDING',
-    submittedAt: '2025-01-15T10:30:00Z',
-    expiresAt: '2025-02-15T10:30:00Z',
-  },
-  {
-    requestId: '2',
-    studentId: '1',
-    supervisorId: '4',
-    supervisor: {
-      supervisorId: '4',
-      userId: '104',
-      fullName: 'Dr. Muhammad Hafiz',
-      email: 'muhammad.hafiz@mmu.edu.my',
-      title: 'Senior Lecturer',
-      department: 'Software Engineering',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Web Development', 'Cloud Computing', 'DevOps'],
-      currentLoad: 4,
-      maxCapacity: 8,
-      isAcceptingStudents: true,
-    },
-    proposedTitle: 'Cloud-Based Learning Management System',
-    topicDescription: 'Building a scalable LMS using microservices architecture...',
-    status: 'ACCEPTED',
-    submittedAt: '2025-01-10T14:00:00Z',
-    respondedAt: '2025-01-12T09:15:00Z',
-    responseMessage: 'I would be happy to supervise your project. Please schedule a meeting to discuss further.',
-    expiresAt: '2025-02-10T14:00:00Z',
-  },
-  {
-    requestId: '3',
-    studentId: '1',
-    supervisorId: '2',
-    supervisor: {
-      supervisorId: '2',
-      userId: '102',
-      fullName: 'Prof. Dr. Ahmad Razak',
-      email: 'ahmad.razak@mmu.edu.my',
-      title: 'Professor',
-      department: 'Computer Science',
-      faculty: 'Faculty of Computing and Informatics',
-      researchAreas: ['Cybersecurity', 'Network Security', 'Blockchain'],
-      currentLoad: 7,
-      maxCapacity: 8,
-      isAcceptingStudents: true,
-    },
-    proposedTitle: 'Blockchain-Based Voting System',
-    topicDescription: 'Implementing a secure and transparent voting system using blockchain technology...',
-    status: 'REJECTED',
-    submittedAt: '2025-01-05T11:00:00Z',
-    respondedAt: '2025-01-08T16:30:00Z',
-    responseMessage: 'Thank you for your interest, but I have reached my supervision capacity for this semester.',
-    expiresAt: '2025-02-05T11:00:00Z',
-  },
-]
-
 const statusConfig: Record<SupervisionRequestStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; icon: typeof Clock }> = {
   PENDING: { label: 'Pending', variant: 'warning', icon: Clock },
   ACCEPTED: { label: 'Accepted', variant: 'success', icon: CheckCircle },
@@ -123,7 +45,7 @@ export function MyRequests() {
   const { data, isLoading, error, errorUpdatedAt } = useSupervisionRequests()
   const withdrawRequest = useWithdrawSupervisionRequest()
 
-  const requests = data?.requests || SAMPLE_REQUESTS
+  const requests = useMemo(() => data?.requests ?? [], [data])
 
   const handleWithdraw = async () => {
     if (requestToWithdraw) {

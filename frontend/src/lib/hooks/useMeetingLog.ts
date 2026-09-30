@@ -58,7 +58,7 @@ export function useMeetingLogList(params?: MeetingLogListParams) {
       const { data } = await apiClient.get<{
         logs: MeetingLog[]
         total: number
-      }>('/student/meeting-logs', { params })
+      }>('/student/meeting-logs', { params: { size: 200, ...params } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
       return data
     },
   })

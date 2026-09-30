@@ -90,7 +90,7 @@ export function MeetingDetail() {
         confirmedDateTime: dateTime,
       })
     } catch (error) {
-      console.error('Failed to confirm meeting:', error)
+      showError('Could not confirm meeting', getApiErrorMessage(error))
     }
   }
 
@@ -105,7 +105,7 @@ export function MeetingDetail() {
       })
       setShowRescheduleModal(false)
     } catch (error) {
-      console.error('Failed to reschedule meeting:', error)
+      showError('Could not reschedule meeting', getApiErrorMessage(error))
     }
   }
 
@@ -119,7 +119,7 @@ export function MeetingDetail() {
       setShowLinkModal(false)
       setNewLink('')
     } catch (error) {
-      console.error('Failed to save link:', error)
+      showError('Could not save link', getApiErrorMessage(error))
     }
   }
 
@@ -132,7 +132,7 @@ export function MeetingDetail() {
         action: 'CANCEL',
       })
     } catch (error) {
-      console.error('Failed to cancel meeting:', error)
+      showError('Could not cancel meeting', getApiErrorMessage(error))
     }
   }
 

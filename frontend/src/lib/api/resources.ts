@@ -9,7 +9,7 @@ export const resourcesApi = {
     category?: string
     visibility?: string
   }): Promise<ResourceListResponse> => {
-    const response = await api.get('/resources', { params })
+    const response = await api.get('/resources', { params: { size: 200, ...params } }) // Spring's Pageable defaults to 20 rows and this page doesn't paginate.
     return response.data
   },
 
