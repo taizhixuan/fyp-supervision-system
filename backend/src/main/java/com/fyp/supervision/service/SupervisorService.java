@@ -853,7 +853,7 @@ public class SupervisorService {
                 .proposedEndAt(proposedStart.plusMinutes(duration))
                 .durationMinutes(duration)
                 .location((String) data.get("location"))
-                .meetingUrl((String) data.get("meetingUrl"))
+                .meetingUrl(SafeUrl.require((String) data.get("meetingUrl"), "meetingUrl"))
                 .platform((String) data.get("onlinePlatform"))
                 .agenda((String) data.get("agenda"))
                 .status(MeetingStatus.PROPOSED)
@@ -911,49 +911,6 @@ public class SupervisorService {
     }
 
     // ========== Meeting Logs ==========
-
-    /** Returns list of log DTOs matching frontend SupervisionLogForReview */
-    public List<Map<String, Object>> getLogDtos(Long userId, String status) {
-        List<MeetingLog> logs;
-        if (status != null && !status.isBlank()) {
-            logs = meetingLogRepository.findBySupervisor_UserIdAndStatusOrderByCreatedAtDesc(
-                    userId, MeetingLogStatus.valueOf(status));
-        } else {
-            logs = meetingLogRepository.findBySupervisor_UserIdOrderByCreatedAtDesc(userId);
-        }
-        return logs.stream().map(this::buildLogForReviewDto).collect(Collectors.toList());
-    }
-
-    public Map<String, Object> buildLogForReviewDto(MeetingLog log) {
-        UserAccount student = log.getStudent();
-
-        Map<String, Object> dto = new LinkedHashMap<>();
-        dto.put("logId", log.getLogId());
-        dto.put("studentId", student != null ? student.getMmuId() : "");
-        dto.put("studentName", student != null ? student.getFullName() : "");
-        dto.put("weekNumber", log.getMeetingNumber() != null ? log.getMeetingNumber() : 0);
-        dto.put("weekStartDate", log.getMeetingDate() != null ? log.getMeetingDate().toString() : "");
-        dto.put("weekEndDate", log.getNextMeetingDate() != null ? log.getNextMeetingDate().toString() : "");
-        dto.put("status", log.getStatus().name());
-        dto.put("activities", log.getWorkDoneDetails() != null ? log.getWorkDoneDetails() : "");
-        dto.put("progressSummary", log.getDiscussionSummary() != null ? log.getDiscussionSummary() : "");
-        dto.put("challenges", log.getProblemsAndSolutions());
-        dto.put("nextWeekPlan", log.getWorkToBeDone() != null ? log.getWorkToBeDone() : "");
-        dto.put("submittedAt", log.getSubmittedAt() != null ? log.getSubmittedAt().toString() : "");
-        dto.put("supervisorComment", log.getSupervisorComments());
-        dto.put("supervisorSignedAt", null);
-
-        // Check signatures
-        List<MeetingLogSignature> signatures = meetingLogSignatureRepository.findByMeetingLog_LogId(log.getLogId());
-        for (MeetingLogSignature sig : signatures) {
-            if ("SUPERVISOR".equals(sig.getSignerRole())) {
-                dto.put("supervisorSignedAt", sig.getSignedAt() != null ? sig.getSignedAt().toString() : null);
-            }
-        }
-
-        dto.put("lockedAt", log.getLockedAt() != null ? log.getLockedAt().toString() : null);
-        return dto;
-    }
 
     // ========== Documents ==========
 

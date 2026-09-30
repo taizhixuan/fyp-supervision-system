@@ -189,6 +189,9 @@ public class StudentProposalController {
                     // Build a STABLE prose blob from the structured form fields. The
                     // analyzer's NLP scorer needs prose, not JSON.
                     String content = buildAnalyzerProse(proposal);
+                    // Same cap as the analyzer's MAX_PROPOSAL_CHARS; a multi-MB proposal
+                    // would otherwise pin its single CPU worker past our 120 s timeout.
+                    if (content.length() > 80_000) content = content.substring(0, 80_000);
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("proposalContent", content);
 

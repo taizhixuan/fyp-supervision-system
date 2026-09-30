@@ -75,6 +75,7 @@ public class AuthService {
     private final EmailService emailService;
     private final CycleLifecycleService cycleLifecycleService;
     private final AuditService auditService;
+    private final com.fyp.supervision.security.LoginAttemptTracker loginAttemptTracker;
 
     /**
      * Step 1 of registration. Validates the request and stashes it (with the password
@@ -439,7 +440,9 @@ public class AuthService {
     }
 
     /** Login throttle: this many consecutive failed attempts triggers a lockout. */
-    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    // Account-wide backstop only. The main throttle is LoginAttemptTracker, per
+    // (identifier, IP), which can't be used to lock someone else out.
+    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 20;
     /** Length of each lockout window. After it passes, the account becomes usable again. */
     private static final int LOCKOUT_WINDOW_MINUTES = 15;
 
@@ -448,11 +451,24 @@ public class AuthService {
     // would discard the increment and the throttle would never engage. Same goes for the
     // BadRequestException paths (lockout, status checks) — list both so any pre-throw
     // saves stick.
+    static String tooManyAttemptsMessage(java.time.Duration left) {
+        long minutes = Math.max(1, left.toMinutes() + 1);
+        return "Too many failed sign-in attempts. Try again in " + minutes + " minute" + (minutes == 1 ? "" : "s") + ".";
+    }
+
     @Transactional(noRollbackFor = { BadCredentialsException.class, BadRequestException.class })
     public LoginResponse login(LoginRequest request) {
         String identifier = request.getIdentifier().toLowerCase().trim();
 
         HttpServletRequest httpRequest = currentRequest();
+        String clientIp = httpRequest != null ? AuditService.clientIp(httpRequest) : null;
+
+        // Per (identifier, IP) throttle, checked before the account lookup so known and
+        // unknown identifiers get exactly the same response.
+        java.util.Optional<java.time.Duration> ipLock = loginAttemptTracker.lockRemaining(identifier, clientIp);
+        if (ipLock.isPresent()) {
+            throw new BadRequestException(tooManyAttemptsMessage(ipLock.get()));
+        }
 
         // Generic "invalid credentials" for unknown identifier — never reveal whether
         // the email/mmuId exists in the system. No counter to bump. We do still audit
@@ -461,19 +477,18 @@ public class AuthService {
         if (user == null) {
             auditService.recordAnonymous("LOGIN_FAILURE_UNKNOWN_USER", "USER_ACCOUNT", null,
                     "identifier=" + identifier, httpRequest);
+            loginAttemptTracker.recordFailure(identifier, clientIp);
             throw new BadCredentialsException("Invalid credentials.");
         }
 
         // Throttle: reject early when the account is in an active lockout window.
         LocalDateTime now = LocalDateTime.now();
         if (user.getLockoutUntil() != null && user.getLockoutUntil().isAfter(now)) {
-            long minutesLeft = java.time.Duration.between(now, user.getLockoutUntil()).toMinutes() + 1;
             auditService.record(user, "LOGIN_REJECTED_LOCKED", "USER_ACCOUNT",
                     String.valueOf(user.getUserId()),
                     "lockoutUntil=" + user.getLockoutUntil(), httpRequest);
-            throw new BadRequestException(
-                    "Account temporarily locked after too many failed attempts. Try again in "
-                            + minutesLeft + " minute" + (minutesLeft == 1 ? "" : "s") + ".");
+            // Same wording as the per-IP throttle so it doesn't reveal the account exists.
+            throw new BadRequestException(tooManyAttemptsMessage(java.time.Duration.between(now, user.getLockoutUntil())));
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -488,6 +503,7 @@ public class AuthService {
                 user.setLoginAttempts(attempts);
             }
             userAccountRepository.save(user);
+            loginAttemptTracker.recordFailure(identifier, clientIp);
             if (justLocked) {
                 auditService.record(user, "LOGIN_LOCKOUT_TRIGGERED", "USER_ACCOUNT",
                         String.valueOf(user.getUserId()),
@@ -509,6 +525,7 @@ public class AuthService {
         }
 
         // Successful login — reset throttle counters and stamp last_login_at.
+        loginAttemptTracker.reset(identifier, clientIp);
         user.setLoginAttempts(0);
         user.setLockoutUntil(null);
         user.setLastLoginAt(now);

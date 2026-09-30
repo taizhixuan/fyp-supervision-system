@@ -65,7 +65,35 @@ public class RateLimitService {
     }
 
     private Bucket newBucket(String scope) {
-        int perHour = switch (scope) {
+        int perHour = capacityFor(scope);
+        // Token-bucket with refill over a rolling 1-hour window.
+        // greedy refill = tokens trickle back continuously rather than in chunks.
+        Bandwidth bandwidth = Bandwidth.builder()
+                .capacity(perHour)
+                .refillGreedy(perHour, Duration.ofHours(1))
+                .build();
+        return Bucket.builder().addLimit(bandwidth).build();
+    }
+
+    /**
+     * Buckets are keyed per email / IP / user, so without cleanup the map grows with every
+     * address that ever hit an auth endpoint. A bucket that has refilled to capacity holds
+     * no state worth keeping (a fresh one is identical), so drop those.
+     */
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelay = 900_000)
+    public void evictIdleBuckets() {
+        buckets.entrySet().removeIf(e -> {
+            String scope = e.getKey().substring(0, e.getKey().indexOf(':'));
+            return e.getValue().getAvailableTokens() >= capacityFor(scope);
+        });
+    }
+
+    int bucketCount() {
+        return buckets.size();
+    }
+
+    private int capacityFor(String scope) {
+        return switch (scope) {
             case "chat" -> chatPerHour;
             case "analyze" -> analyzePerHour;
             // Unauthenticated auth endpoints. Per-email limits stop mail-bombing one inbox
@@ -75,13 +103,6 @@ public class RateLimitService {
             case "otp-verify-ip" -> 60;
             default -> 60; // safe generic default for any new scope added without config
         };
-        // Token-bucket with refill over a rolling 1-hour window.
-        // greedy refill = tokens trickle back continuously rather than in chunks.
-        Bandwidth bandwidth = Bandwidth.builder()
-                .capacity(perHour)
-                .refillGreedy(perHour, Duration.ofHours(1))
-                .build();
-        return Bucket.builder().addLimit(bandwidth).build();
     }
 
     /** Wipe one user's buckets — call from admin reset flows if added later. Currently unused. */

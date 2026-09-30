@@ -56,6 +56,8 @@ class AuthServiceLoginThrottleTest {
     @Mock AuditService auditService;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtTokenProvider jwtTokenProvider;
+    @org.mockito.Spy com.fyp.supervision.security.LoginAttemptTracker loginAttemptTracker =
+            new com.fyp.supervision.security.LoginAttemptTracker();
 
     @InjectMocks AuthService service;
 
@@ -116,8 +118,23 @@ class AuthServiceLoginThrottleTest {
     }
 
     @Test
-    void wrongPassword_atFifthFailure_locksAccount() {
-        user.setLoginAttempts(4); // about to hit the threshold
+    void fifthFailure_locksThisIdentifierFromThisClient() {
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> service.login(req("wrong"))).isInstanceOf(BadCredentialsException.class);
+        }
+        // Locked for this (identifier, client) pair even with the right password...
+        when(passwordEncoder.matches("correct", "hashed")).thenReturn(true);
+        assertThatThrownBy(() -> service.login(req("correct")))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Too many failed sign-in attempts");
+        // ...but the account itself isn't locked, so the owner elsewhere can still sign in.
+        assertThat(user.getLockoutUntil()).isNull();
+    }
+
+    @Test
+    void wrongPassword_atAccountBackstop_locksAccount() {
+        user.setLoginAttempts(19); // about to hit the account-wide backstop (20)
         when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
 
         assertThatThrownBy(() -> service.login(req("wrong")))
@@ -135,7 +152,7 @@ class AuthServiceLoginThrottleTest {
 
         assertThatThrownBy(() -> service.login(req("correct")))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("temporarily locked");
+                .hasMessageContaining("Too many failed sign-in attempts");
     }
 
     @Test
@@ -162,5 +179,20 @@ class AuthServiceLoginThrottleTest {
                 .hasMessage("Invalid credentials.");
         // No counter to increment because user wasn't found — verifies we don't leak
         // existence by treating known/unknown identifiers differently.
+    }
+
+    @Test
+    void unknownIdentifier_getsTheSameLockAsARealAccount() {
+        // Otherwise the lock message would reveal which identifiers are real accounts.
+        when(userAccountRepository.findByEmailOrMmuId("ghost@mmu.edu.my")).thenReturn(Optional.empty());
+        LoginRequest r = new LoginRequest();
+        r.setIdentifier("ghost@mmu.edu.my");
+        r.setPassword("anything");
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> service.login(r)).isInstanceOf(BadCredentialsException.class);
+        }
+        assertThatThrownBy(() -> service.login(r))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Too many failed sign-in attempts");
     }
 }

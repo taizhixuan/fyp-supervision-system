@@ -32,6 +32,10 @@ public interface ProjectDocumentRepository extends JpaRepository<ProjectDocument
     List<ProjectDocument> findByProject_Supervisor_UserIdAndIsLatestTrueOrderByUploadedAtDesc(Long supervisorUserId);
     long countByProject_Student_UserIdAndIsLatestTrue(Long studentUserId);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM ProjectDocument d WHERE d.documentId = :id")
+    java.util.Optional<ProjectDocument> findByIdForUpdate(@Param("id") Long id);
+
     /** Current documents on this supervisor's projects that have no feedback yet. */
     @Query("SELECT COUNT(d) FROM ProjectDocument d WHERE d.project.supervisor.userId = :supervisorUserId "
             + "AND d.isLatest = true AND NOT EXISTS (SELECT f FROM DocumentFeedback f WHERE f.document = d)")

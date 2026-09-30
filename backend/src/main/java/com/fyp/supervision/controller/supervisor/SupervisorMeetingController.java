@@ -270,7 +270,7 @@ public class SupervisorMeetingController {
         if (url == null || url.isEmpty()) {
             throw new BadRequestException("meetingUrl is required");
         }
-        meeting.setMeetingUrl(url);
+        meeting.setMeetingUrl(com.fyp.supervision.service.SafeUrl.require(url, "meetingUrl"));
         if (data.get("platform") != null) meeting.setPlatform(data.get("platform").toString());
         if (data.get("location") != null) meeting.setLocation(data.get("location").toString());
         meetingRepository.save(meeting);

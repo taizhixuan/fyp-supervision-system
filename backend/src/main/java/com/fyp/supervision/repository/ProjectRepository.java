@@ -20,6 +20,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>,
         org.springframework.data.jpa.repository.JpaSpecificationExecutor<Project> {
     Optional<Project> findByStudent_UserId(Long studentUserId);
 
+    /** Fetch-joins the cycle so bulk callers don't lazy-load it per row. */
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.cycle WHERE p.student.userId IN :studentUserIds")
+    List<Project> findByStudent_UserIdIn(@Param("studentUserIds") java.util.Collection<Long> studentUserIds);
+
     /** Row-locked variant so two supervisors can't accept the same student at once. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Project p WHERE p.student.userId = :studentUserId")

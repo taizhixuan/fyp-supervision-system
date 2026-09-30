@@ -33,7 +33,7 @@ services:
       AI_RECOMMENDATION_URL: http://ai-recommendation:5001
       AI_ANALYZER_URL: http://ai-proposal-analyzer:5002
       AI_CHATBOT_URL: http://ai-chatbot:5003
-      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-dev-internal-token}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -59,6 +59,7 @@ services:
       - "5001:5001"
     environment:
       FLASK_PORT: "5001"
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-dev-internal-token}
       # Embedding model. Default is BAAI/bge-base-en-v1.5 (110 MB, 768-dim).
       # Override to all-MiniLM-L6-v2 for a smaller, faster fallback.
       REC_EMBED_MODEL: ${REC_EMBED_MODEL:-BAAI/bge-base-en-v1.5}
@@ -92,7 +93,7 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-}
-      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-dev-internal-token}
     volumes:
       - analyzer_models:/app/models
     networks:
@@ -118,7 +119,7 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_MODEL: ${LLM_MODEL:-}
-      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-dev-internal-token}
     volumes:
       - chatbot_vector_store:/app/vector_store
     networks:

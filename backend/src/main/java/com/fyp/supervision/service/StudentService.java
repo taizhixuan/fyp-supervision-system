@@ -1197,7 +1197,9 @@ public class StudentService {
         String versionGroup;
         int versionNo;
         if (replaceDocumentId != null) {
-            ProjectDocument target = projectDocumentRepository.findById(replaceDocumentId)
+            // Row lock: two "new version" uploads of the same document would otherwise both
+            // read the same max version_no and both insert an is_latest row.
+            ProjectDocument target = projectDocumentRepository.findByIdForUpdate(replaceDocumentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
             if (target.getProject() == null || target.getProject().getStudent() == null
                     || !userId.equals(target.getProject().getStudent().getUserId())) {

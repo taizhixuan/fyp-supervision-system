@@ -245,7 +245,7 @@ public class AdminRosterService {
             while ((line = reader.readLine()) != null) {
                 lineNo++;
                 // Excel's "CSV UTF-8" writes a byte-order mark before the first field.
-                if (lineNo == 1 && line.startsWith("﻿")) line = line.substring(1);
+                if (lineNo == 1 && line.startsWith("\uFEFF")) line = line.substring(1);
                 if (line.isBlank()) continue;
                 if (firstLine) {
                     firstLine = false;

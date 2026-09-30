@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -239,6 +240,8 @@ public class AnnouncementService {
         if (data.containsKey("priority")) a.setPriority(optString(data, "priority", "NORMAL"));
 
         String scope = optString(data, "scope");
+        // The supervisor form calls it "visibility" (same as create()).
+        if (scope == null || scope.isBlank()) scope = optString(data, "visibility");
         if (scope != null && !scope.isBlank() && !scope.equalsIgnoreCase(a.getScope())) {
             a.setScope(scope);
             FypCycle scopedCycle = null;
@@ -260,6 +263,32 @@ public class AnnouncementService {
         if (data.containsKey("publishAt") && a.getStatus() == AnnouncementStatus.DRAFT) {
             LocalDateTime publishAt = parseDateTime(data.get("publishAt"));
             if (publishAt != null) a.setPublishAt(publishAt);
+        }
+
+        // Links are edited as a whole list (orphanRemoval drops the old rows).
+        if (data.get("links") instanceof List<?> list) {
+            a.getLinks().clear();
+            for (Object item : list) {
+                if (!(item instanceof Map<?, ?> m) || m.get("label") == null || m.get("url") == null) continue;
+                String label = m.get("label").toString().trim();
+                String url = m.get("url").toString().trim();
+                if (label.isEmpty() || url.isEmpty()) continue;
+                a.getLinks().add(AnnouncementLink.builder()
+                        .announcement(a).label(label).url(SafeUrl.require(url, "Link")).build());
+            }
+        }
+
+        // Recipients of a SPECIFIC_STUDENTS announcement can be changed too.
+        if ("SPECIFIC_STUDENTS".equalsIgnoreCase(a.getScope()) && data.get("targetStudentIds") instanceof List<?> ids) {
+            a.getAudiences().clear();
+            for (Object id : ids) {
+                Long studentId = parseLong(id);
+                if (studentId == null) continue;
+                userAccountRepository.findById(studentId).ifPresent(target -> a.getAudiences().add(
+                        AnnouncementAudience.builder().announcement(a).targetStudent(target).build()));
+            }
+        } else if (!"SPECIFIC_STUDENTS".equalsIgnoreCase(a.getScope())) {
+            a.getAudiences().clear();
         }
         announcementRepository.save(a);
         return buildDto(a);
@@ -435,7 +464,7 @@ public class AnnouncementService {
                 AnnouncementLink link = AnnouncementLink.builder()
                         .announcement(announcement)
                         .label(label.toString().trim())
-                        .url(url.toString().trim())
+                        .url(SafeUrl.require(url.toString(), "Link"))
                         .build();
                 announcement.getLinks().add(link);
             }
@@ -518,9 +547,12 @@ public class AnnouncementService {
         String message = a.getContent() != null && a.getContent().length() > 140
                 ? a.getContent().substring(0, 140) + "…"
                 : (a.getContent() != null ? a.getContent() : "");
+        // Build every student's audience context from two bulk reads instead of a project
+        // and a profile query per student.
+        Map<Long, StudentContext> contexts = loadStudentContexts(students.stream().map(UserAccount::getUserId).toList());
         for (UserAccount student : students) {
             try {
-                StudentContext ctx = loadStudentContext(student.getUserId());
+                StudentContext ctx = contexts.get(student.getUserId());
                 if (!matchesAudience(a, ctx)) continue;
                 notificationService.createNotification(
                         student.getUserId(), "ANNOUNCEMENT",
@@ -716,11 +748,26 @@ public class AnnouncementService {
     // ---------- Student context ----------
 
     private StudentContext loadStudentContext(Long userId) {
+        return buildStudentContext(userId, projectRepository.findByStudent_UserId(userId).orElse(null),
+                studentProfileRepository.findById(userId).orElse(null));
+    }
+
+    /** Bulk variant of {@link #loadStudentContext} for fan-out over many students. */
+    private Map<Long, StudentContext> loadStudentContexts(List<Long> userIds) {
+        Map<Long, Project> projects = new HashMap<>();
+        projectRepository.findByStudent_UserIdIn(userIds)
+                .forEach(p -> projects.put(p.getStudent().getUserId(), p));
+        Map<Long, StudentProfile> profiles = new HashMap<>();
+        studentProfileRepository.findAllById(userIds).forEach(sp -> profiles.put(sp.getUserId(), sp));
+        Map<Long, StudentContext> out = new HashMap<>();
+        for (Long id : userIds) out.put(id, buildStudentContext(id, projects.get(id), profiles.get(id)));
+        return out;
+    }
+
+    private static StudentContext buildStudentContext(Long userId, Project p, StudentProfile profile) {
         StudentContext ctx = new StudentContext();
         ctx.userId = userId;
-        Optional<Project> projectOpt = projectRepository.findByStudent_UserId(userId);
-        if (projectOpt.isPresent()) {
-            Project p = projectOpt.get();
+        if (p != null) {
             FypCycle cycle = p.getCycle();
             if (cycle != null) {
                 ctx.cycleId = cycle.getCycleId();
@@ -731,7 +778,6 @@ public class AnnouncementService {
                 ctx.supervisorUserId = p.getSupervisor().getUserId();
             }
         }
-        StudentProfile profile = studentProfileRepository.findById(userId).orElse(null);
         if (profile != null) {
             ctx.programme = profile.getProgramme();
             ctx.specialisation = profile.getSpecialisation();
