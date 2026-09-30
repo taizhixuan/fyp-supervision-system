@@ -117,15 +117,48 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> data) {
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> data,
+                                        @AuthenticationPrincipal UserDetails admin,
+                                        HttpServletRequest httpRequest) {
         UserAccount user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (data.containsKey("fullName")) user.setFullName((String) data.get("fullName"));
-        if (data.containsKey("email")) user.setEmail((String) data.get("email"));
-        if (data.containsKey("phone")) user.setPhone((String) data.get("phone"));
-        if (data.containsKey("status")) user.setStatus(UserStatus.valueOf((String) data.get("status")));
-        if (data.containsKey("role")) user.setRole(UserRole.valueOf((String) data.get("role")));
-        userRepository.save(user);
+        List<String> changed = new java.util.ArrayList<>();
+        if (data.containsKey("fullName")) { user.setFullName((String) data.get("fullName")); changed.add("fullName"); }
+        if (data.get("email") instanceof String rawEmail && !rawEmail.isBlank()) {
+            String email = rawEmail.trim().toLowerCase();
+            if (!email.equalsIgnoreCase(user.getEmail())) {
+                if (userRepository.existsByEmail(email)) throw new BadRequestException("Email already exists");
+                user.setEmail(email);
+                changed.add("email");
+            }
+        }
+        if (data.containsKey("phone")) { user.setPhone((String) data.get("phone")); changed.add("phone"); }
+        if (data.containsKey("status")) {
+            user.setStatus(parseEnum(UserStatus.class, data.get("status"), "status"));
+            changed.add("status");
+        }
+        UserRole previousRole = user.getRole();
+        if (data.containsKey("role")) {
+            user.setRole(parseEnum(UserRole.class, data.get("role"), "role"));
+            if (user.getRole() != previousRole) changed.add("role " + previousRole + "->" + user.getRole());
+        }
+        UserAccount saved = userRepository.save(user);
+        // A new role needs its profile row, or the user hits "profile not found" on login.
+        if (saved.getRole() != previousRole) {
+            authService.provisionRoleProfile(saved, null, null);
+        }
+        if (!changed.isEmpty()) {
+            auditService.record(adminFromPrincipal(admin), "USER_UPDATED", "USER_ACCOUNT",
+                    String.valueOf(id), String.join(", ", changed), httpRequest);
+        }
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, Object raw, String field) {
+        try {
+            return Enum.valueOf(type, String.valueOf(raw).trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid " + field + ": " + raw);
+        }
     }
 
     @DeleteMapping("/{id}")

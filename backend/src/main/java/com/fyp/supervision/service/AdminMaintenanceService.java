@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fyp.supervision.config.FileStorageConfig;
 import com.fyp.supervision.entity.MaintenanceJob;
+import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.exception.ResourceNotFoundException;
 import com.fyp.supervision.repository.AuditLogRepository;
 import com.fyp.supervision.repository.MaintenanceJobRepository;
@@ -43,6 +44,7 @@ public class AdminMaintenanceService {
     private final PendingRegistrationRepository pendingRegistrationRepository;
     private final FileStorageConfig fileStorageConfig;
     private final DataSource dataSource;
+    private final jakarta.persistence.EntityManagerFactory entityManagerFactory;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PersistenceContext
@@ -206,6 +208,7 @@ public class AdminMaintenanceService {
             out.write("-- FYP Supervision System backup\n");
             out.write("-- Type: " + type + "\n");
             out.write("-- Schema: " + schema + "\n");
+            out.write(SCHEMA_VERSION_HEADER + currentSchemaVersion(conn) + "\n");
             out.write("-- Created: " + LocalDateTime.now() + "\n");
             out.write("-- Engine: MySQL JDBC dump\n\n");
             out.write("SET FOREIGN_KEY_CHECKS=0;\n");
@@ -218,7 +221,10 @@ public class AdminMaintenanceService {
                     String tn = rs.getString("TABLE_NAME");
                     // Flyway's own bookkeeping table doesn't roundtrip cleanly — skip it; a
                     // restore on a fresh DB applies migrations first, then the data dump.
-                    if (!"flyway_schema_history".equalsIgnoreCase(tn)) tables.add(tn);
+                    // maintenance_job is left out too: restoring it would wipe the job
+                    // history, including the RESTORE job row that is tracking the restore.
+                    if (!"flyway_schema_history".equalsIgnoreCase(tn)
+                            && !"maintenance_job".equalsIgnoreCase(tn)) tables.add(tn);
                 }
             }
 
@@ -294,6 +300,34 @@ public class AdminMaintenanceService {
         }
     }
 
+    private static final String SCHEMA_VERSION_HEADER = "-- Schema version: ";
+
+    /**
+     * The dump recreates every table from its own CREATE TABLE and Flyway history isn't in
+     * it, so a backup from another schema version would leave tables that don't match the
+     * entities and the next boot would fail validation.
+     */
+    private static void requireMatchingSchemaVersion(List<String> lines, Connection conn) throws java.sql.SQLException {
+        String backupVersion = lines.stream().filter(l -> l.startsWith(SCHEMA_VERSION_HEADER))
+                .map(l -> l.substring(SCHEMA_VERSION_HEADER.length()).trim()).findFirst().orElse(null);
+        String currentVersion = currentSchemaVersion(conn);
+        if (backupVersion == null || !backupVersion.equals(currentVersion)) {
+            throw new BadRequestException("This backup was taken at schema version "
+                    + (backupVersion == null ? "unknown (made before version stamping)" : "V" + backupVersion)
+                    + " but the database is at V" + currentVersion
+                    + ". Restore it with the mysql client onto a matching schema instead.");
+        }
+    }
+
+    /** Latest successfully applied Flyway version, e.g. "55". */
+    private static String currentSchemaVersion(Connection conn) throws java.sql.SQLException {
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT version FROM flyway_schema_history "
+                     + "WHERE success = 1 AND version IS NOT NULL ORDER BY installed_rank DESC LIMIT 1")) {
+            return rs.next() ? rs.getString(1) : "unknown";
+        }
+    }
+
     public Map<String, Object> restoreBackup(Long userId, String backupRef) {
         MaintenanceJob job = MaintenanceJob.builder()
                 .jobType("RESTORE")
@@ -306,13 +340,27 @@ public class AdminMaintenanceService {
 
         try {
             Path file = resolveBackupRef(backupRef);
+            try (Connection conn = dataSource.getConnection()) {
+                // Refuse before taking the safety snapshot below.
+                requireMatchingSchemaVersion(Files.readAllLines(file, StandardCharsets.UTF_8), conn);
+            }
+            // DROP/CREATE TABLE commit implicitly in MySQL, so the rollback in
+            // restoreFromFile can't undo a restore that fails halfway. Snapshot the current
+            // data first so there is something to go back to if that happens.
+            String safetyName = "pre-restore-" + LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".sql";
+            Path safetyDir = fileStorageConfig.getUploadPath().resolve("backups");
+            Files.createDirectories(safetyDir);
+            dumpDatabase(safetyDir.resolve(safetyName), "PRE_RESTORE");
             long stmtCount = restoreFromFile(file);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("success", true);
             result.put("fileName", file.getFileName().toString());
             result.put("statementsExecuted", stmtCount);
-            result.put("message", "Restore completed: " + stmtCount + " statements applied.");
+            result.put("safetyBackup", safetyName);
+            result.put("message", "Restore completed: " + stmtCount + " statements applied. "
+                    + "Previous data saved as " + safetyName + ".");
 
             job.setStatus("COMPLETED");
             job.setCompletedAt(LocalDateTime.now());
@@ -380,8 +428,10 @@ public class AdminMaintenanceService {
      */
     private long restoreFromFile(Path file) throws Exception {
         if (!Files.exists(file)) throw new ResourceNotFoundException("Backup file not found: " + file.getFileName());
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         long count = 0;
         try (Connection conn = dataSource.getConnection()) {
+            requireMatchingSchemaVersion(lines, conn);
             boolean prevAuto = conn.getAutoCommit();
             conn.setAutoCommit(false);
             try (Statement stmt = conn.createStatement()) {
@@ -389,14 +439,15 @@ public class AdminMaintenanceService {
                 stmt.execute("SET UNIQUE_CHECKS=0");
 
                 StringBuilder buf = new StringBuilder();
-                for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                for (String line : lines) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty() || trimmed.startsWith("--")) continue;
                     buf.append(line).append('\n');
                     if (trimmed.endsWith(";")) {
                         String sql = buf.toString().trim();
                         sql = sql.substring(0, sql.length() - 1); // strip trailing ;
-                        if (!sql.isEmpty()) {
+                        // Older dumps include maintenance_job; skip it (see dumpDatabase).
+                        if (!sql.isEmpty() && !sql.contains("`maintenance_job`")) {
                             stmt.execute(sql);
                             count++;
                         }
@@ -589,8 +640,15 @@ public class AdminMaintenanceService {
         return def;
     }
 
+    /**
+     * Evicts the JPA shared cache, the only application-level cache this backend has
+     * (settings and parameters are read from the database on each use). Used to return
+     * success without doing anything.
+     */
     public Map<String, Object> clearCache() {
-        return Map.of("success", true, "message", "Cache cleared successfully");
+        entityManagerFactory.getCache().evictAll();
+        return Map.of("success", true,
+                "message", "Entity cache cleared. Settings are read from the database on each request, so no restart is needed.");
     }
 
     private Map<String, Object> toJobDto(MaintenanceJob j) {

@@ -34,6 +34,7 @@ public class CommitteeService {
     private final MeetingRepository meetingRepository;
     private final SystemParameterService systemParameterService;
     private final com.fyp.supervision.repository.DeadlineRepository deadlineRepository;
+    private final CycleLifecycleService cycleLifecycleService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -139,18 +140,9 @@ public class CommitteeService {
         }
 
         // 2. Recent ACCEPTED supervisor requests (student paired)
-        List<SupervisorRequest> accepted = supervisorRequestRepository.findAll().stream()
-                .filter(r -> r.getStatus() == RequestStatus.ACCEPTED)
-                .sorted((a, b) -> {
-                    java.time.LocalDateTime ta = a.getRespondedAt() != null ? a.getRespondedAt() : a.getSubmittedAt();
-                    java.time.LocalDateTime tb = b.getRespondedAt() != null ? b.getRespondedAt() : b.getSubmittedAt();
-                    if (ta == null && tb == null) return 0;
-                    if (ta == null) return 1;
-                    if (tb == null) return -1;
-                    return tb.compareTo(ta);
-                })
-                .limit(5)
-                .collect(Collectors.toList());
+        // Top 5 in the database instead of loading every request on each dashboard view.
+        List<SupervisorRequest> accepted = supervisorRequestRepository
+                .findTop5ByStatusOrderByRespondedAtDesc(RequestStatus.ACCEPTED);
         for (SupervisorRequest r : accepted) {
             java.time.LocalDateTime ts = r.getRespondedAt() != null ? r.getRespondedAt() : r.getSubmittedAt();
             if (ts == null) continue;
@@ -218,7 +210,11 @@ public class CommitteeService {
 
     /** Returns list of proposal DTOs matching ProposalForCommitteeReview */
     public List<Map<String, Object>> getProposalDtos(String status, Pageable pageable) {
-        Page<Proposal> page;
+        return getProposalPage(status, pageable).getContent();
+    }
+
+    public Page<Map<String, Object>> getProposalPage(String status, Pageable pageable) {
+        ProposalStatus parsed = null;
         if (status != null && !status.isBlank()) {
             // Frontend uses PENDING_REVIEW / REVISION_REQUESTED. In the two-stage flow a
             // proposal only reaches the committee once the supervisor approves it, so the
@@ -227,20 +223,16 @@ public class CommitteeService {
             String mapped = status;
             if ("PENDING_REVIEW".equals(mapped)) mapped = "UNDER_REVIEW";
             else if ("REVISION_REQUESTED".equals(mapped)) mapped = "REVISION_REQUIRED";
-            ProposalStatus parsed;
             try {
                 parsed = ProposalStatus.valueOf(mapped);
             } catch (IllegalArgumentException e) {
                 throw new BadRequestException("Unknown proposal status: " + status);
             }
-            page = proposalRepository.findByStatus(parsed, pageable);
-        } else {
-            page = proposalRepository.findAll(pageable);
         }
-        // Committee only sees proposals that have actually reached the committee stage.
-        return page.getContent().stream()
-                .filter(this::isCommitteeVisible)
-                .map(this::buildProposalForCommitteeDto).collect(Collectors.toList());
+        // Visibility is applied in the query (same rule as isCommitteeVisible), so a page
+        // of 20 is 20 visible proposals and the total is the real count.
+        return proposalRepository.findCommitteeVisible(parsed, pageable)
+                .map(this::buildProposalForCommitteeDto);
     }
 
     /**
@@ -531,8 +523,12 @@ public class CommitteeService {
         if (alreadyFyp2) {
             return Map.of("projectId", projectId, "stage", "FYP2", "changed", false);
         }
-        project.setStage("FYP2");
-        projectRepository.save(project);
+        // Move the project into the active FYP2 cycle as well as flipping the stage.
+        // Flipping only the stage left it in the FYP1 cycle, so completing FYP1 later made
+        // an FYP2 student read-only (the write gate checks the project's cycle).
+        if (!cycleLifecycleService.advanceProjectToActiveFyp2(project)) {
+            throw new BadRequestException("There is no active FYP2 cycle to move this project into.");
+        }
         return Map.of("projectId", projectId, "stage", "FYP2", "changed", true);
     }
 
@@ -563,6 +559,10 @@ public class CommitteeService {
         dto.put("studentName", student != null ? student.getFullName() : "");
         dto.put("studentId", student != null ? student.getMmuId() : "");
         dto.put("_studentUserId", student != null ? student.getUserId() : null);
+        // Internal (underscore) key for reports: the project's own phase, which is what the
+        // meeting-log compliance count is keyed on.
+        String stage = project.getStage();
+        dto.put("_phase", stage != null && stage.replace(" ", "").equalsIgnoreCase("FYP2") ? "FYP2" : "FYP1");
         dto.put("studentEmail", student != null ? student.getEmail() : "");
         dto.put("programme", sp != null && sp.getProgramme() != null ? sp.getProgramme() : "");
         // Legacy field kept for one release; structured fields below replace it.

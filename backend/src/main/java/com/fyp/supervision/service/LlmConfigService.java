@@ -97,6 +97,19 @@ public class LlmConfigService {
         if (model.length() > 200) {
             throw new BadRequestException("Model name is too long.");
         }
+        // The AI services send GROQ_API_KEY / OPENAI_API_KEY to whatever base URL the
+        // provider is configured with, so those two must keep their fixed endpoints;
+        // otherwise a typed-in URL would receive the platform's cloud key.
+        String officialUrl = switch (provider) {
+            case "groq" -> "https://api.groq.com/openai/v1";
+            case "openai" -> "https://api.openai.com/v1";
+            default -> null;
+        };
+        if (officialUrl != null && !baseUrl.isEmpty()
+                && !baseUrl.replaceAll("/+$", "").equalsIgnoreCase(officialUrl)) {
+            throw new BadRequestException("A custom base URL isn't allowed for " + provider
+                    + ". Use the custom provider to point at another endpoint.");
+        }
         if (!baseUrl.isEmpty()) {
             validateBaseUrl(baseUrl);
         }

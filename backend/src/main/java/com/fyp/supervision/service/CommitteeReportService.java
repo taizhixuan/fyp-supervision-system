@@ -228,7 +228,9 @@ public class CommitteeReportService {
         List<Map<String, Object>> rows = (List<Map<String, Object>>) page.getOrDefault("content", List.of());
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map<String, Object> r : rows) {
-            String phase = String.valueOf(r.getOrDefault("cycleType", "FYP1"));
+            // Phase comes from project.stage; cycleType can be null (which used to become
+            // the string "null") and lags behind a project advanced to FYP2.
+            String phase = r.get("_phase") != null ? r.get("_phase").toString() : "FYP1";
             Object stuId = r.get("_studentUserId");
             Long studentUserId = stuId instanceof Number n ? n.longValue() : null;
             int completed = studentUserId != null

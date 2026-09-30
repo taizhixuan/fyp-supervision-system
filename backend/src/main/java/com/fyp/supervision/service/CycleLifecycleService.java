@@ -160,8 +160,9 @@ public class CycleLifecycleService {
      * Best-effort — a notification failure must not roll back the status change.
      */
     private void notifyEnrolledStudents(Long cycleId, CycleStatus newStatus) {
+        // Every enrolled student, not just the first page (a cohort can exceed 500).
         List<Project> enrolled = projectRepository.findAllByCycleId(cycleId,
-                org.springframework.data.domain.PageRequest.of(0, 500)).getContent();
+                org.springframework.data.domain.Pageable.unpaged()).getContent();
         String title = newStatus == CycleStatus.COMPLETED
                 ? "Your FYP cycle is now complete"
                 : "Your FYP cycle has been archived";

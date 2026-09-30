@@ -195,8 +195,10 @@ public class AdminCycleController {
         return ResponseEntity.ok(Map.of("cycleId", saved.getCycleId()));
     }
 
+    // Deliberately not @Transactional: activation backfills placeholders in REQUIRES_NEW
+    // transactions whose FK checks on fyp_cycle would wait on this method's row lock until
+    // they time out. Each repository/service call below commits on its own, as /activate does.
     @PutMapping("/{id}")
-    @Transactional
     public ResponseEntity<?> updateCycle(@PathVariable Long id, @RequestBody Map<String, Object> data) {
         FypCycle cycle = cycleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cycle not found"));
@@ -210,7 +212,15 @@ public class AdminCycleController {
                 cycle.setCycleCode(code);
             }
         }
-        if (data.containsKey("cycleType")) cycle.setCycleType(normaliseCycleType(stringField(data, "cycleType")));
+        if (data.containsKey("cycleType")) {
+            String type = normaliseCycleType(stringField(data, "cycleType"));
+            // Retyping a live cycle could leave two ACTIVE cycles of one type and move its
+            // students between phases; only PLANNING cycles can change type.
+            if (type != null && !type.equals(cycle.getCycleType()) && cycle.getStatus() != CycleStatus.PLANNING) {
+                throw new BadRequestException("Only a cycle in PLANNING can change its type.");
+            }
+            cycle.setCycleType(type);
+        }
         if (data.containsKey("academicYear")) cycle.setAcademicYear(stringField(data, "academicYear"));
         if (data.containsKey("semester")) cycle.setSemester(intField(data, "semester"));
         if (data.containsKey("startDate")) {

@@ -33,6 +33,8 @@ public class AdminExportService {
 
     private final ExportConfigRepository exportConfigRepository;
     private final UserAccountRepository userAccountRepository;
+    private final com.fyp.supervision.repository.StudentProfileRepository studentProfileRepository;
+    private final com.fyp.supervision.repository.SupervisorProfileRepository supervisorProfileRepository;
     private final ProjectRepository projectRepository;
     private final ProposalRepository proposalRepository;
     private final MeetingRepository meetingRepository;
@@ -247,6 +249,15 @@ public class AdminExportService {
     private List<Map<String, Object>> userRows(Map<String, Object> filters) {
         String role = stringFilter(filters, "role");
         String status = stringFilter(filters, "status");
+        // One query per profile table instead of per-user lookups.
+        Map<Long, String> studentFaculty = new java.util.HashMap<>();
+        studentProfileRepository.findAll().forEach(sp -> {
+            if (sp.getFaculty() != null) studentFaculty.put(sp.getUserId(), sp.getFaculty());
+        });
+        Map<Long, String> supervisorDept = new java.util.HashMap<>();
+        supervisorProfileRepository.findAll().forEach(sp -> {
+            if (sp.getDepartment() != null) supervisorDept.put(sp.getUserId(), sp.getDepartment());
+        });
         return userAccountRepository.findAll(PageRequest.of(0, 100000)).getContent().stream()
                 .filter(u -> role == null || role.equalsIgnoreCase(u.getRole() != null ? u.getRole().name() : ""))
                 .filter(u -> status == null || status.equalsIgnoreCase(u.getStatus() != null ? u.getStatus().name() : ""))
@@ -259,12 +270,8 @@ public class AdminExportService {
                     r.put("status", u.getStatus() != null ? u.getStatus().name() : "");
                     r.put("mmuId", u.getMmuId());
                     r.put("phone", u.getPhone());
-                    String department = "";
-                    if (u.getStudentProfile() != null && u.getStudentProfile().getFaculty() != null) {
-                        department = u.getStudentProfile().getFaculty();
-                    } else if (u.getSupervisorProfile() != null && u.getSupervisorProfile().getDepartment() != null) {
-                        department = u.getSupervisorProfile().getDepartment();
-                    }
+                    String department = studentFaculty.getOrDefault(u.getUserId(),
+                            supervisorDept.getOrDefault(u.getUserId(), ""));
                     r.put("department", department);
                     r.put("lastLoginAt", u.getLastLoginAt() != null ? u.getLastLoginAt().toString() : "");
                     r.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
@@ -557,11 +564,7 @@ public class AdminExportService {
     }
 
     private String escapeCsv(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        }
-        return value;
+        return com.fyp.supervision.service.report.CsvCell.of(value);
     }
 
     private int toInt(Object v, int fallback) {

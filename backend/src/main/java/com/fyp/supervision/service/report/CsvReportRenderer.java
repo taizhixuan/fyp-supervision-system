@@ -22,11 +22,6 @@ public class CsvReportRenderer {
     }
 
     private static String escape(Object value) {
-        if (value == null) return "";
-        String s = value.toString();
-        if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
-            return "\"" + s.replace("\"", "\"\"") + "\"";
-        }
-        return s;
+        return CsvCell.of(value);
     }
 }

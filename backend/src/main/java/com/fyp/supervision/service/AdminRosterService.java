@@ -90,6 +90,13 @@ public class AdminRosterService {
                     ? faculty
                     : AuthService.facultyForSpecialisation(specialisation);
 
+            // roster email is UNIQUE: report a clash on this line instead of letting the
+            // constraint abort the whole import with a 500.
+            if (studentRosterRepository.findByEmail(email)
+                    .filter(other -> !mmuId.equals(other.getMmuId())).isPresent()) {
+                summary.errors.add("Line " + lineNo + ": email " + email + " is already on the roster under another MMU ID");
+                return;
+            }
             ApprovedStudentRoster row = studentRosterRepository.findByMmuId(mmuId)
                     .orElseGet(ApprovedStudentRoster::new);
             boolean isNew = row.getRosterId() == null;
@@ -168,6 +175,11 @@ public class AdminRosterService {
             String faculty = column(columns, 4);
             String position = column(columns, 5);
 
+            if (supervisorRosterRepository.findByEmail(email)
+                    .filter(other -> !mmuId.equals(other.getMmuId())).isPresent()) {
+                summary.errors.add("Line " + lineNo + ": email " + email + " is already on the roster under another MMU ID");
+                return;
+            }
             ApprovedSupervisorRoster row = supervisorRosterRepository.findByMmuId(mmuId)
                     .orElseGet(ApprovedSupervisorRoster::new);
             boolean isNew = row.getRosterId() == null;
@@ -232,6 +244,8 @@ public class AdminRosterService {
             boolean firstLine = true;
             while ((line = reader.readLine()) != null) {
                 lineNo++;
+                // Excel's "CSV UTF-8" writes a byte-order mark before the first field.
+                if (lineNo == 1 && line.startsWith("﻿")) line = line.substring(1);
                 if (line.isBlank()) continue;
                 if (firstLine) {
                     firstLine = false;
@@ -240,7 +254,7 @@ public class AdminRosterService {
                         continue; // header row
                     }
                 }
-                handler.accept(lineNo, line.split(","));
+                handler.accept(lineNo, splitCsvLine(line));
             }
         } catch (IOException e) {
             throw new BadRequestException("Failed to read CSV: " + e.getMessage());
@@ -249,7 +263,42 @@ public class AdminRosterService {
 
     private static String column(String[] cols, int idx) {
         if (cols == null || idx >= cols.length || cols[idx] == null) return "";
-        return cols[idx].trim().replaceAll("^\"|\"$", "");
+        return cols[idx].trim();
+    }
+
+    /**
+     * Splits one CSV line per RFC 4180: commas inside double quotes stay in the field and
+     * "" inside a quoted field is a literal quote. Excel quotes names like "Tan, Ah Kow",
+     * which a plain split(",") would shift into the next column.
+     */
+    static String[] splitCsvLine(String line) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        cur.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    cur.append(c);
+                }
+            } else if (c == '"') {
+                inQuotes = true;
+            } else if (c == ',') {
+                out.add(cur.toString());
+                cur.setLength(0);
+            } else {
+                cur.append(c);
+            }
+        }
+        out.add(cur.toString());
+        return out.toArray(new String[0]);
     }
 
     private static Integer parseInt(String value) {

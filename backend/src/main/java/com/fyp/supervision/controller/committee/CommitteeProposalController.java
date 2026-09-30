@@ -17,6 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,9 +44,11 @@ public class CommitteeProposalController {
     private final FileStorageService fileStorageService;
 
     @GetMapping
-    public ResponseEntity<?> getProposals(@RequestParam(required = false) String status, Pageable pageable) {
-        List<Map<String, Object>> proposals = committeeService.getProposalDtos(status, pageable);
-        return ResponseEntity.ok(Map.of("proposals", proposals, "total", proposals.size()));
+    public ResponseEntity<?> getProposals(
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 100, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<Map<String, Object>> page = committeeService.getProposalPage(status, pageable);
+        return ResponseEntity.ok(Map.of("proposals", page.getContent(), "total", page.getTotalElements()));
     }
 
     @GetMapping("/{id}")

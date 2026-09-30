@@ -23,6 +23,7 @@ public class AiServiceClient {
     private static final String CHATBOT_INTEGRATION = "FYP Chatbot";
 
     private final RestTemplate restTemplate;
+    private final RestTemplate quickRestTemplate;
     private final MeterRegistry meterRegistry;
     private final IntegrationConfigService integrationConfig;
     private final SystemParameterService systemParameters;
@@ -48,6 +49,13 @@ public class AiServiceClient {
         factory.setConnectTimeout(10_000);
         factory.setReadTimeout(120_000);
         this.restTemplate = new RestTemplate(factory);
+        // Health probes and LLM config reads/writes should answer in milliseconds. Giving
+        // them the 120 s generation timeout let one hung Flask worker stall the scheduled
+        // LLM config sync (and the other @Scheduled jobs queued behind it) for minutes.
+        SimpleClientHttpRequestFactory quick = new SimpleClientHttpRequestFactory();
+        quick.setConnectTimeout(3_000);
+        quick.setReadTimeout(10_000);
+        this.quickRestTemplate = new RestTemplate(quick);
         this.meterRegistry = meterRegistry;
         this.integrationConfig = integrationConfig;
         this.systemParameters = systemParameters;
@@ -226,28 +234,29 @@ public class AiServiceClient {
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> getLlmConfig(String baseUrl) {
-        return exchange(baseUrl + "/ai/llm-config", HttpMethod.GET, null);
+        return exchange(quickRestTemplate, baseUrl + "/ai/llm-config", HttpMethod.GET, null);
     }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> putLlmConfig(String baseUrl, Map<String, Object> body) {
-        return exchange(baseUrl + "/ai/llm-config", HttpMethod.PUT, body);
+        return exchange(quickRestTemplate, baseUrl + "/ai/llm-config", HttpMethod.PUT, body);
     }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> testLlm(String baseUrl) {
-        return exchange(baseUrl + "/ai/llm-test", HttpMethod.POST, Map.of());
+        // Runs a real generation, so it keeps the long timeout.
+        return exchange(restTemplate, baseUrl + "/ai/llm-test", HttpMethod.POST, Map.of());
     }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> listLlmModels(String baseUrl) {
-        return exchange(baseUrl + "/ai/llm-models", HttpMethod.GET, null);
+        return exchange(quickRestTemplate, baseUrl + "/ai/llm-models", HttpMethod.GET, null);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Map<String, Object> exchange(String url, HttpMethod method, Map<String, Object> body) {
+    private Map<String, Object> exchange(RestTemplate client, String url, HttpMethod method, Map<String, Object> body) {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, jsonHeaders());
-        ResponseEntity<Map> response = restTemplate.exchange(url, method, request, Map.class);
+        ResponseEntity<Map> response = client.exchange(url, method, request, Map.class);
         return response.getBody() == null ? Map.of() : response.getBody();
     }
 
@@ -268,7 +277,7 @@ public class AiServiceClient {
 
     private boolean checkHealth(String baseUrl) {
         try {
-            ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/ai/health", String.class);
+            ResponseEntity<String> response = quickRestTemplate.getForEntity(baseUrl + "/ai/health", String.class);
             return response.getStatusCode().is2xxSuccessful();
         } catch (RestClientException e) {
             return false;
