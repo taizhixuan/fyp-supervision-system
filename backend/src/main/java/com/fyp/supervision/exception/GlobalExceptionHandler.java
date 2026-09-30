@@ -96,14 +96,49 @@ public class GlobalExceptionHandler {
                 "This action conflicts with existing related records and cannot be completed.");
     }
 
+    @ExceptionHandler({
+            org.springframework.http.converter.HttpMessageNotReadableException.class,
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class,
+            org.springframework.web.multipart.support.MissingServletRequestPartException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleBadInput(Exception ex) {
+        String message = "The request body is missing or malformed.";
+        if (ex instanceof org.springframework.web.method.annotation.MethodArgumentTypeMismatchException m) {
+            message = "Invalid value for '" + m.getName() + "'.";
+        } else if (ex instanceof org.springframework.web.bind.MissingServletRequestParameterException m) {
+            message = "Missing required parameter '" + m.getParameterName() + "'.";
+        } else if (ex instanceof org.springframework.web.multipart.support.MissingServletRequestPartException m) {
+            message = "Missing required part '" + m.getRequestPartName() + "'.";
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    /**
+     * Validation code (integration endpoints, export config, enum parsing) throws this for
+     * bad client input, so it's a 400. Enum.valueOf messages name internal classes, so
+     * those are reduced to a generic line.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        String msg = ex.getMessage();
+        if (msg == null || msg.startsWith("No enum constant")) msg = "Invalid value in request.";
+        return buildResponse(HttpStatus.BAD_REQUEST, msg);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotAllowed(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "Method " + ex.getMethod() + " is not supported here.");
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        // Full detail (class, message, stack) goes to the server log only; the client gets
+        // a generic message so SQL, Jackson or file-path details don't leak.
         log.error("Unhandled exception", ex);
-        // Surface the exception class + message so the frontend toast can show something
-        // useful. Stack traces are still in the server log.
-        String detail = ex.getClass().getSimpleName()
-                + (ex.getMessage() != null ? ": " + ex.getMessage() : "");
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, detail);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Something went wrong on our side. Please try again, and contact support if it keeps happening.");
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {

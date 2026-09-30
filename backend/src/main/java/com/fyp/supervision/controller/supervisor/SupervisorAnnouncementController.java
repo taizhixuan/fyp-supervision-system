@@ -64,11 +64,7 @@ public class SupervisorAnnouncementController {
             @RequestBody Map<String, Object> data) {
         Long userId = Long.parseLong(user.getUsername());
         Announcement announcement = requireOwnAnnouncement(userId, id);
-        if (data.containsKey("title")) announcement.setTitle((String) data.get("title"));
-        if (data.containsKey("content")) announcement.setContent((String) data.get("content"));
-        if (data.containsKey("priority")) announcement.setPriority((String) data.get("priority"));
-        announcementRepository.save(announcement);
-        return ResponseEntity.ok(announcementService.buildDto(announcement));
+        return ResponseEntity.ok(announcementService.update(announcement, data));
     }
 
     @DeleteMapping("/{id}")

@@ -45,7 +45,13 @@ public class SupervisorAvailabilityService {
     public List<Map<String, Object>> listForSupervisor(Long supervisorUserId) {
         return availabilityRepository
                 .findBySupervisor_UserIdOrderByDayOfWeekAscStartTimeAsc(supervisorUserId)
-                .stream().map(this::toDto).toList();
+                .stream()
+                // day_of_week is stored as text, so the DB orders it alphabetically
+                // (FRIDAY, MONDAY, ...). Re-sort into weekday order.
+                .sorted(java.util.Comparator
+                        .comparing((SupervisorAvailability a) -> a.getDayOfWeek().getValue())
+                        .thenComparing(SupervisorAvailability::getStartTime))
+                .map(this::toDto).toList();
     }
 
     /**

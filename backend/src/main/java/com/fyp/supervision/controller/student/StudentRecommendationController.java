@@ -76,7 +76,13 @@ public class StudentRecommendationController {
         }
 
         // Build supervisor profiles payload + index for post-processing
-        List<SupervisorProfile> supervisors = supervisorProfileRepository.findAll();
+        // Only active supervisor accounts: a suspended or inactive one would be recommended
+        // and then every request to them would fail with "Selected supervisor is not valid".
+        List<SupervisorProfile> supervisors = supervisorProfileRepository.findAll().stream()
+                .filter(sp -> sp.getUser() != null
+                        && sp.getUser().getRole() == com.fyp.supervision.enums.UserRole.SUPERVISOR
+                        && sp.getUser().getStatus() == com.fyp.supervision.enums.UserStatus.ACTIVE)
+                .toList();
         List<Map<String, Object>> supervisorPayloads = new ArrayList<>();
         Map<Long, SupervisorProfile> supervisorById = new HashMap<>();
         for (SupervisorProfile sp : supervisors) {
@@ -119,13 +125,20 @@ public class StudentRecommendationController {
     @SuppressWarnings("unchecked")
     private Map<String, Object> transformResponse(Map<String, Object> aiResponse,
                                                   Map<Long, SupervisorProfile> supervisorById) {
+        // Map.of rejects null values, so these used to NPE whenever the AI response was
+        // missing or had no generatedAt.
         if (aiResponse == null) {
-            return Map.of("recommendations", List.of(), "generatedAt", null);
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("recommendations", List.of());
+            empty.put("generatedAt", null);
+            return empty;
         }
         Object rawList = aiResponse.get("recommendations");
         if (!(rawList instanceof List<?> list)) {
-            return Map.of("recommendations", List.of(),
-                    "generatedAt", aiResponse.get("generatedAt"));
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("recommendations", List.of());
+            empty.put("generatedAt", aiResponse.get("generatedAt"));
+            return empty;
         }
 
         List<Map<String, Object>> out = new ArrayList<>();

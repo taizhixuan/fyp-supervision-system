@@ -149,8 +149,10 @@ public class SupervisorService {
             }
         }
 
-        long upcomingMeetings = meetingRepository.countBySupervisorUserIdAndStatusIn(userId,
-                List.of(MeetingStatus.PROPOSED, MeetingStatus.CONFIRMED));
+        // Only meetings still ahead; stale past PROPOSED/CONFIRMED rows used to inflate this.
+        long upcomingMeetings = meetingRepository.countUpcomingBySupervisor(userId,
+                List.of(MeetingStatus.PROPOSED, MeetingStatus.CONFIRMED, MeetingStatus.RESCHEDULED),
+                LocalDateTime.now());
         long pendingLogReviews = meetingLogRepository.countBySupervisor_UserIdAndStatus(userId, MeetingLogStatus.SUBMITTED);
 
         // Active projects = ones in PLANNING/ACTIVE cycles (the supervisor's current workload).
@@ -160,9 +162,8 @@ public class SupervisorService {
                         || p.getCycle().getStatus() == CycleStatus.PLANNING)
                 .collect(Collectors.toList());
 
-        long documentsToReview = activeProjects.stream()
-                .mapToLong(p -> projectDocumentRepository.countByProject_Student_UserIdAndIsLatestTrue(p.getStudent().getUserId()))
-                .sum();
+        // Documents awaiting the supervisor's feedback, not every current document.
+        long documentsToReview = projectDocumentRepository.countAwaitingFeedbackForSupervisor(userId);
 
         // Active announcements = ones authored by this supervisor and still PUBLISHED.
         long activeAnnouncements = announcementRepository
@@ -211,6 +212,13 @@ public class SupervisorService {
     private List<Map<String, Object>> buildRecentActivity(Long supervisorUserId, List<Project> activeProjects) {
         List<Map<String, Object>> items = new java.util.ArrayList<>();
         long idCounter = 1;
+        // Load the supervisor's logs once and group them per student; this used to re-query
+        // every log for every supervisee.
+        Map<Long, List<MeetingLog>> logsByStudent = meetingLogRepository
+                .findBySupervisor_UserIdOrderByCreatedAtDesc(supervisorUserId).stream()
+                .filter(l -> l.getStudent() != null)
+                .collect(Collectors.groupingBy(l -> l.getStudent().getUserId(),
+                        LinkedHashMap::new, Collectors.toList()));
 
         for (Project p : activeProjects) {
             UserAccount student = p.getStudent();
@@ -233,12 +241,10 @@ public class SupervisorService {
             }
 
             // Latest meeting log
-            List<MeetingLog> recentLogs = meetingLogRepository
-                    .findBySupervisor_UserIdOrderByCreatedAtDesc(supervisorUserId).stream()
-                    .filter(l -> l.getStudent() != null && student != null
-                            && student.getUserId().equals(l.getStudent().getUserId()))
-                    .limit(3)
-                    .collect(Collectors.toList());
+            List<MeetingLog> recentLogs = student == null ? List.of()
+                    : logsByStudent.getOrDefault(student.getUserId(), List.of()).stream()
+                            .limit(3)
+                            .collect(Collectors.toList());
             for (MeetingLog l : recentLogs) {
                 LocalDateTime ts = l.getSubmittedAt() != null ? l.getSubmittedAt() : l.getCreatedAt();
                 if (ts == null) continue;
@@ -820,7 +826,10 @@ public class SupervisorService {
         try {
             // Accept both `2026-05-30T14:00` and `2026-05-30T14:00:00.000Z` shapes.
             if (proposed.endsWith("Z")) {
-                proposedStart = java.time.OffsetDateTime.parse(proposed).toLocalDateTime();
+                // Convert the UTC instant to server-local (MYT) time; toLocalDateTime() alone
+                // would drop the offset and store 14:00 MYT as 06:00.
+                proposedStart = java.time.OffsetDateTime.parse(proposed)
+                        .atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
             } else {
                 proposedStart = LocalDateTime.parse(proposed);
             }

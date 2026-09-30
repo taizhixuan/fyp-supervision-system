@@ -37,8 +37,15 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<?> getNotifications(
             @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) Integer limit,
             Pageable pageable) {
         Long userId = Long.parseLong(user.getUsername());
+        // The frontend asks with ?limit= (drawer 10, notification centre 50); Pageable only
+        // understands ?size=, so honour limit when it's given.
+        if (limit != null) {
+            pageable = org.springframework.data.domain.PageRequest.of(
+                    pageable.getPageNumber(), Math.min(Math.max(1, limit), 200), pageable.getSort());
+        }
         Page<Notification> page = notificationService.getNotifications(userId, pageable);
         List<Map<String, Object>> dtos = page.getContent().stream()
                 .map(this::buildNotificationDto)

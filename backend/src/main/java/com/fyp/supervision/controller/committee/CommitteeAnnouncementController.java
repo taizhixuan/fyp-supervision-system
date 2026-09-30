@@ -54,11 +54,7 @@ public class CommitteeAnnouncementController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAnnouncement(@PathVariable Long id, @RequestBody Map<String, Object> data) {
         Announcement a = announcementRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Not found"));
-        if (data.containsKey("title")) a.setTitle((String) data.get("title"));
-        if (data.containsKey("content")) a.setContent((String) data.get("content"));
-        if (data.containsKey("priority")) a.setPriority((String) data.get("priority"));
-        announcementRepository.save(a);
-        return ResponseEntity.ok(announcementService.buildDto(a));
+        return ResponseEntity.ok(announcementService.update(a, data));
     }
 
     @PostMapping("/{id}/archive")

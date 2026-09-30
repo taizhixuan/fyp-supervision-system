@@ -48,6 +48,7 @@ public class NotificationService {
             emailService.sendNotificationEmail(
                     user.getEmail(),
                     user.getFullName(),
+                    user.getRole(),
                     type,
                     title,
                     message,

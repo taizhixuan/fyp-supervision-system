@@ -79,6 +79,7 @@ public class AnnouncementService {
         List<Announcement> visible = announcementRepository
                 .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, Pageable.unpaged())
                 .getContent().stream()
+                .filter(this::notExpired)
                 .filter(a -> matchesAudience(a, ctx))
                 .toList();
         Set<Long> readIds = announcementReadRepository.readIdsForUser(
@@ -100,6 +101,7 @@ public class AnnouncementService {
                 .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED,
                         org.springframework.data.domain.Pageable.unpaged())
                 .getContent().stream()
+                .filter(this::notExpired)
                 .filter(a -> matchesAudience(a, ctx))
                 .limit(limit)
                 .toList();
@@ -116,6 +118,7 @@ public class AnnouncementService {
         return announcementRepository
                 .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, Pageable.unpaged())
                 .getContent().stream()
+                .filter(this::notExpired)
                 .filter(a -> {
                     String scope = a.getScope() == null ? "ALL" : a.getScope().trim().toUpperCase(Locale.ROOT);
                     return "ALL".equals(scope) || "ALL_STUDENTS".equals(scope);
@@ -164,7 +167,8 @@ public class AnnouncementService {
                         return a.getCreatedBy() != null
                                 && Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId);
                     }
-                    return isVisibleToSupervisor(a, supervisorUserId);
+                    return isVisibleToSupervisor(a, supervisorUserId)
+                            && (notExpired(a) || Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId));
                 })
                 .map(a -> {
                     Map<String, Object> dto = buildDto(a);
@@ -200,8 +204,65 @@ public class AnnouncementService {
         UserRole role = user.getRole();
         if (role == UserRole.FYP_COMMITTEE || role == UserRole.SYSTEM_ADMIN) return true;
         if (a.getCreatedBy() != null && Objects.equals(a.getCreatedBy().getUserId(), userId)) return true;
+        // Everyone else only sees it while it's live: a scheduled (DRAFT) one isn't out yet
+        // and an expired one has been taken down, even when the id is guessed.
+        if (a.getStatus() != AnnouncementStatus.PUBLISHED || !notExpired(a)) return false;
         if (role == UserRole.SUPERVISOR) return isVisibleToSupervisor(a, userId);
         return matchesAudience(a, loadStudentContext(userId));
+    }
+
+    private boolean notExpired(Announcement a) {
+        return a.getExpiresAt() == null || a.getExpiresAt().isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * Edits an announcement with the same rules as {@link #create}. The edit screen sends
+     * scope, publishAt and expiresAt too; the old controller-level PUT silently dropped them.
+     * The publish time can only move while the announcement is still scheduled (DRAFT).
+     */
+    @Transactional
+    public Map<String, Object> update(Announcement a, Map<String, Object> data) {
+        String title = data.containsKey("title") ? requireString(data, "title").trim() : a.getTitle();
+        String content = data.containsKey("content") ? requireString(data, "content").trim() : a.getContent();
+        if (title.length() < MIN_TITLE_LENGTH) {
+            throw new BadRequestException("Title must be at least " + MIN_TITLE_LENGTH + " characters.");
+        }
+        if (content.length() < MIN_CONTENT_LENGTH) {
+            throw new BadRequestException("Content must be at least " + MIN_CONTENT_LENGTH + " characters.");
+        }
+        if (title.equalsIgnoreCase(content)) {
+            throw new BadRequestException(
+                    "Title and content must be different — write a brief summary in the title and the details in the content.");
+        }
+        a.setTitle(title);
+        a.setContent(content);
+        if (data.containsKey("priority")) a.setPriority(optString(data, "priority", "NORMAL"));
+
+        String scope = optString(data, "scope");
+        if (scope != null && !scope.isBlank() && !scope.equalsIgnoreCase(a.getScope())) {
+            a.setScope(scope);
+            FypCycle scopedCycle = null;
+            if ("FYP1".equalsIgnoreCase(scope) || "FYP2".equalsIgnoreCase(scope)) {
+                scopedCycle = fypCycleRepository
+                        .findFirstByCycleTypeAndStatusOrderByStartDateDesc(scope.toUpperCase(Locale.ROOT), CycleStatus.ACTIVE)
+                        .orElse(null);
+            }
+            a.setCycle(scopedCycle);
+        }
+
+        if (data.containsKey("expiresAt")) {
+            LocalDateTime expires = parseDateTime(data.get("expiresAt"));
+            if (expires != null && a.getPublishAt() != null && expires.isBefore(a.getPublishAt())) {
+                throw new BadRequestException("The expiry time must be after the publish time.");
+            }
+            a.setExpiresAt(expires);
+        }
+        if (data.containsKey("publishAt") && a.getStatus() == AnnouncementStatus.DRAFT) {
+            LocalDateTime publishAt = parseDateTime(data.get("publishAt"));
+            if (publishAt != null) a.setPublishAt(publishAt);
+        }
+        announcementRepository.save(a);
+        return buildDto(a);
     }
 
     private boolean isAuthorOrPrivileged(Announcement a, Long userId) {

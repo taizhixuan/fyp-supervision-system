@@ -4,6 +4,8 @@ import com.fyp.supervision.entity.ProjectDocument;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,6 +31,11 @@ public interface ProjectDocumentRepository extends JpaRepository<ProjectDocument
     List<ProjectDocument> findByProject_Student_UserIdAndDocTypeAndIsLatestTrueOrderByUploadedAtDesc(Long studentUserId, String docType);
     List<ProjectDocument> findByProject_Supervisor_UserIdAndIsLatestTrueOrderByUploadedAtDesc(Long supervisorUserId);
     long countByProject_Student_UserIdAndIsLatestTrue(Long studentUserId);
+
+    /** Current documents on this supervisor's projects that have no feedback yet. */
+    @Query("SELECT COUNT(d) FROM ProjectDocument d WHERE d.project.supervisor.userId = :supervisorUserId "
+            + "AND d.isLatest = true AND NOT EXISTS (SELECT f FROM DocumentFeedback f WHERE f.document = d)")
+    long countAwaitingFeedbackForSupervisor(@Param("supervisorUserId") Long supervisorUserId);
 
     // Full version chain for one logical document, newest revision first.
     List<ProjectDocument> findByVersionGroupOrderByVersionNoDesc(String versionGroup);

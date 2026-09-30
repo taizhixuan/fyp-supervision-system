@@ -961,37 +961,6 @@ export function useSubmitLog() {
   })
 }
 
-export function useSignLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (logId: string) => {
-      const { data } = await apiClient.post<SupervisionLog>(`/student/logs/${logId}/sign`)
-      return data
-    },
-    onSuccess: (_, logId) => {
-      queryClient.invalidateQueries({ queryKey: studentKeys.logDetail(logId) })
-      queryClient.invalidateQueries({ queryKey: studentKeys.logList() })
-    },
-  })
-}
-
-export function useUploadLogAttachment() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ logId, file }: { logId: string; file: File }) => {
-      const formData = new FormData()
-      formData.append('file', file)
-      const { data } = await apiClient.post<SupervisionLog>(`/student/logs/${logId}/attachment`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      return data
-    },
-    onSuccess: (_, { logId }) => {
-      queryClient.invalidateQueries({ queryKey: studentKeys.logDetail(logId) })
-    },
-  })
-}
-
 // ==================== Documents ====================
 interface DocumentListParams {
   type?: string

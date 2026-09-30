@@ -54,14 +54,10 @@ public class NotificationPreferenceService {
 
     public boolean shouldDeliverInApp(Long userId, NotificationCategory category) {
         Map<String, Object> prefs = loadPreferences(userId);
-        if (!channelEnabled(prefs, "inApp", category)) {
-            return false;
-        }
-        if (isInQuietHours(prefs)) {
-            log.debug("In-app notification skipped: quiet hours for user {}", userId);
-            return false;
-        }
-        return true;
+        // Quiet hours only mute the interrupting channels (email / push). The in-app row
+        // is still saved, so it's waiting in the bell when the user next opens the app;
+        // dropping it lost the notification for good.
+        return channelEnabled(prefs, "inApp", category);
     }
 
     public boolean shouldDeliverEmail(Long userId, NotificationCategory category) {

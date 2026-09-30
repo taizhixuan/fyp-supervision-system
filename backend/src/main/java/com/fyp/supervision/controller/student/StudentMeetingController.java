@@ -81,6 +81,9 @@ public class StudentMeetingController {
         studentAccessService.requireActiveCycle(userId);
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No active project found."));
+        if (project.getSupervisor() == null) {
+            throw new BadRequestException("You need an assigned supervisor before requesting a meeting.");
+        }
 
         int durationMinutes = 60;
         Object durationRaw = data.get("duration");
@@ -92,6 +95,11 @@ public class StudentMeetingController {
             } catch (NumberFormatException e) {
                 throw new BadRequestException("duration must be a number");
             }
+        }
+
+        // Same bounds as the supervisor's create path.
+        if (durationMinutes < 15 || durationMinutes > 480) {
+            throw new BadRequestException("duration must be between 15 and 480 minutes");
         }
 
         Meeting meeting = Meeting.builder()
@@ -106,14 +114,19 @@ public class StudentMeetingController {
                 .build();
 
         if (data.get("proposedStartAt") != null) {
-            try {
-                meeting.setProposedStartAt(LocalDateTime.parse(data.get("proposedStartAt").toString()));
-            } catch (java.time.format.DateTimeParseException e) {
-                throw new BadRequestException("proposedStartAt is not a valid date-time");
+            LocalDateTime start = MeetingTransitions.parseDateTime(data.get("proposedStartAt"), "proposedStartAt");
+            if (start.isBefore(LocalDateTime.now())) {
+                throw new BadRequestException("The proposed time is in the past.");
             }
+            meeting.setProposedStartAt(start);
+            meeting.setProposedEndAt(start.plusMinutes(durationMinutes));
         }
 
         Meeting saved = meetingRepository.save(meeting);
+        notificationService.createNotification(project.getSupervisor().getUserId(), "MEETING",
+                "New meeting request",
+                project.getStudent().getFullName() + " requested a meeting: " + saved.getTitle(),
+                "/supervisor/meetings/" + saved.getMeetingId());
         return ResponseEntity.ok(studentService.buildMeetingDto(saved));
     }
 
@@ -335,11 +348,6 @@ public class StudentMeetingController {
     }
 
     private static String csvField(String raw) {
-        if (raw == null) return "";
-        String escaped = raw.replace("\"", "\"\"");
-        if (escaped.contains(",") || escaped.contains("\n") || escaped.contains("\"")) {
-            return "\"" + escaped + "\"";
-        }
-        return escaped;
+        return com.fyp.supervision.service.report.CsvCell.of(raw);
     }
 }

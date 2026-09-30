@@ -78,13 +78,9 @@ public class UserAccount {
     @Column(name = "privacy_notice_version", length = 20)
     private String privacyNoticeVersion;
 
-    @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private StudentProfile studentProfile;
-
-    @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private SupervisorProfile supervisorProfile;
+    // No inverse @OneToOne to StudentProfile / SupervisorProfile: Hibernate can't make the
+    // non-owning side lazy without bytecode enhancement, so each UserAccount load cost two
+    // extra SELECTs. Look profiles up through their repositories instead.
 
     @PrePersist
     protected void onCreate() {

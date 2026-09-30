@@ -1,5 +1,13 @@
 package com.fyp.supervision.controller.student;
 
+import com.fyp.supervision.entity.DocumentFeedback;
+import com.fyp.supervision.repository.DocumentFeedbackRepository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.entity.ProjectDocument;
 import com.fyp.supervision.exception.BadRequestException;
@@ -40,6 +48,7 @@ public class StudentDocumentController {
     private final FileStorageService fileStorageService;
     private final StudentService studentService;
     private final StudentAccessService studentAccessService;
+    private final DocumentFeedbackRepository documentFeedbackRepository;
 
     @GetMapping
     public ResponseEntity<?> getDocuments(
@@ -135,15 +144,23 @@ public class StudentDocumentController {
         String storagePath = fileStorageService.storeFile(file, "documents", userId);
 
         String safeTitle = (title == null || title.isBlank()) ? file.getOriginalFilename() : title.trim();
-        ProjectDocument saved = studentService.saveUploadedDocument(
-                userId, project, replaceDocumentId, safeTitle,
-                description != null ? description.trim() : null,
-                validatedType, validatedPhase,
-                file.getOriginalFilename(), storagePath, file.getSize(), file.getContentType());
+        ProjectDocument saved;
+        try {
+            saved = studentService.saveUploadedDocument(
+                    userId, project, replaceDocumentId, safeTitle,
+                    description != null ? description.trim() : null,
+                    validatedType, validatedPhase,
+                    file.getOriginalFilename(), storagePath, file.getSize(), file.getContentType());
+        } catch (RuntimeException e) {
+            // e.g. a rejected replaceDocumentId: don't leave the stored file orphaned on disk.
+            fileStorageService.deleteFile(storagePath);
+            throw e;
+        }
         return ResponseEntity.ok(studentService.buildDocumentDto(saved));
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> deleteDocument(@AuthenticationPrincipal UserDetails user, @PathVariable Long id) {
         Long userId = Long.parseLong(user.getUsername());
         studentAccessService.requireActiveCycle(userId);
@@ -153,10 +170,25 @@ public class StudentDocumentController {
             throw new BadRequestException("You can only delete your own documents.");
         }
         String versionGroup = doc.getVersionGroup();
-        fileStorageService.deleteFile(doc.getStoragePath());
+        // Files to remove: the document itself plus any annotated feedback files (the DB
+        // cascade removes the feedback rows but not their files).
+        List<String> paths = new ArrayList<>();
+        paths.add(doc.getStoragePath());
+        documentFeedbackRepository.findByDocument_DocumentIdOrderByCreatedAtDesc(id).stream()
+                .map(DocumentFeedback::getAnnotatedFilePath)
+                .filter(Objects::nonNull)
+                .forEach(paths::add);
         documentRepository.delete(doc);
         // If the deleted revision was the current one, promote the newest remaining revision.
         studentService.promoteLatestInGroup(versionGroup);
+        // Delete from disk only once the rows are gone for good; deleting first left rows
+        // pointing at missing files whenever the DB delete failed.
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                paths.forEach(fileStorageService::deleteFile);
+            }
+        });
         return ResponseEntity.noContent().build();
     }
 

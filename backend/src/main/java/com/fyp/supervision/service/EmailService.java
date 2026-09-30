@@ -1,5 +1,6 @@
 package com.fyp.supervision.service;
 
+import com.fyp.supervision.enums.UserRole;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,12 @@ public class EmailService {
     @Async("emailExecutor")
     public void sendNotificationEmail(String recipientEmail, String recipientName,
                                       String type, String title, String message, String targetRoute) {
+        sendNotificationEmail(recipientEmail, recipientName, null, type, title, message, targetRoute);
+    }
+
+    @Async("emailExecutor")
+    public void sendNotificationEmail(String recipientEmail, String recipientName, UserRole recipientRole,
+                                      String type, String title, String message, String targetRoute) {
         if (!emailEnabled()) {
             log.debug("Email skipped (disabled): type={} to={}", type, recipientEmail);
             return;
@@ -66,7 +73,7 @@ public class EmailService {
             helper.setFrom(fromAddress);
             helper.setTo(recipientEmail);
             helper.setSubject(title);
-            helper.setText(buildHtml(recipientName, title, message, targetRoute), true);
+            helper.setText(buildHtml(recipientName, recipientRole, title, message, targetRoute), true);
             mailSender.send(mime);
             log.info("Sent notification email type={} to={}", type, recipientEmail);
         } catch (Exception ex) {
@@ -211,12 +218,15 @@ public class EmailService {
                 + "</td></tr></table></body></html>";
     }
 
-    private String buildHtml(String name, String title, String message, String targetRoute) {
+    private String buildHtml(String name, UserRole role, String title, String message, String targetRoute) {
         String safeName = escape(name == null ? "there" : name);
         String safeTitle = escape(title == null ? "" : title);
         String safeMessage = escape(message == null ? "" : message);
         String ctaUrl = appBaseUrl + (targetRoute == null || targetRoute.isBlank() ? "/" : targetRoute);
-        String prefsUrl = appBaseUrl + "/student/notifications/settings";
+        // Students have a dedicated notification settings page; other roles manage it
+        // from account settings (the student route is blocked for them).
+        String prefsUrl = appBaseUrl + (role == null || role == UserRole.STUDENT
+                ? "/student/notifications/settings" : "/settings");
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f5f5f5;padding:24px;\">"
                 + "<table cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">"
                 + "<tr><td style=\"background:#1f2937;color:#ffffff;padding:16px 24px;font-size:16px;font-weight:bold;\">" + brandName() + "</td></tr>"

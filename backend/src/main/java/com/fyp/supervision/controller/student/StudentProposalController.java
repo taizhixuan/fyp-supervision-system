@@ -214,6 +214,8 @@ public class StudentProposalController {
                                 .scopeScore(toInt(result.get("scopeScore")))
                                 .strengths(toJsonString(result.get("strengths")))
                                 .weaknesses(toJsonString(result.get("weaknesses")))
+                                // GET /analysis reads suggestions back from this column.
+                                .suggestedImprovements(toJsonString(result.get("suggestions")))
                                 .remarks(result.get("summary") != null ? result.get("summary").toString() : "")
                                 .build();
                         checkResultRepository.save(checkResult);
