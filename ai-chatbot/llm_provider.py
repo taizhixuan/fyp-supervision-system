@@ -218,6 +218,10 @@ class LLMProvider:
         if provider == "ollama":
             # Ollama ignores the key but the OpenAI client refuses an empty one.
             api_key = "ollama"
+        elif provider == "custom" and not api_key:
+            # Self-hosted OpenAI-compatible servers (vLLM, LM Studio, ...) often need no
+            # key; the client still wants a non-empty one.
+            api_key = "not-needed"
         timeout = float(_env("LLM_TIMEOUT", str(DEFAULT_TIMEOUT.get(provider, 60.0))))
 
         client = None

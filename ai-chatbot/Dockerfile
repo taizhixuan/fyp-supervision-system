@@ -31,4 +31,5 @@ EXPOSE 5003
 # workers, so the FAISS index and any optional Flan-T5 weights aren't
 # duplicated across processes. --workers 1 --threads 4 fits the I/O profile
 # (most time is spent waiting on the remote LLM, not on local CPU).
-CMD ["gunicorn", "--bind", "0.0.0.0:5003", "--preload", "--workers", "1", "--threads", "4", "--timeout", "180", "app:app"]
+# Rebuild the index first if knowledge_base/ changed since the volume's copy was built.
+CMD ["sh", "-c", "python ensure_knowledge_base.py && exec gunicorn --bind 0.0.0.0:5003 --preload --workers 1 --threads 4 --timeout 180 app:app"]

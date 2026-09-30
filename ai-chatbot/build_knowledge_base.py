@@ -152,7 +152,18 @@ def chunk_documents(documents, chunk_size=200, overlap=50):
 # Embedding and Index Building
 # ============================================================================
 
-def build_faiss_index(chunks, embed_model, output_dir="vector_store"):
+def knowledge_base_hash(kb_dir="knowledge_base"):
+    """Hash of every knowledge-base file's name and content. Stored in config.json so
+    ensure_knowledge_base.py can tell when the saved index no longer matches the files."""
+    import hashlib
+    h = hashlib.sha256()
+    for path in sorted(Path(kb_dir).glob("*.txt")):
+        h.update(path.name.encode("utf-8"))
+        h.update(path.read_bytes())
+    return h.hexdigest()
+
+
+def build_faiss_index(chunks, embed_model, output_dir="vector_store", kb_dir="knowledge_base"):
     """
     Compute embeddings for all chunks and build a FAISS index.
     """
@@ -201,6 +212,7 @@ def build_faiss_index(chunks, embed_model, output_dir="vector_store"):
         "chunk_size": 200,
         "chunk_overlap": 50,
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "kb_hash": knowledge_base_hash(kb_dir),
     }
     config_path = os.path.join(output_dir, "config.json")
     with open(config_path, "w") as f:
@@ -237,7 +249,7 @@ def main():
     embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     # Build FAISS index
-    index = build_faiss_index(chunks, embed_model, args.output)
+    index = build_faiss_index(chunks, embed_model, args.output, args.kb_dir)
 
     print(f"\nKnowledge base built successfully!")
     print(f"  Documents: {len(documents)}")
