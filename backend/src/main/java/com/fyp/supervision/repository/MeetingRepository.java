@@ -39,6 +39,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     long countByProject_ProjectIdAndStatus(Long projectId, com.fyp.supervision.enums.MeetingStatus status);
 
+    /** [projectId, count, max(confirmedStartAt)] of COMPLETED meetings, for batch scoring. */
+    @Query("SELECT m.project.projectId, COUNT(m), MAX(m.confirmedStartAt) FROM Meeting m "
+            + "WHERE m.status = com.fyp.supervision.enums.MeetingStatus.COMPLETED AND m.project.projectId IN :projectIds "
+            + "GROUP BY m.project.projectId")
+    List<Object[]> summariseCompletedByProject(@Param("projectIds") java.util.Collection<Long> projectIds);
+
     /** Scheduled meetings for a supervisor that haven't started yet. */
     @Query("SELECT COUNT(m) FROM Meeting m WHERE m.project.supervisor.userId = :userId AND m.status IN :statuses "
             + "AND coalesce(m.confirmedStartAt, m.proposedStartAt) >= :from")

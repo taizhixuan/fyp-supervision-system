@@ -28,13 +28,16 @@ class ProjectProgressServiceTest {
     private MeetingRepository meetingRepository;
     private MeetingLogComplianceService meetingLogComplianceService;
     private ProjectProgressService service;
+    private com.fyp.supervision.repository.MeetingLogRepository meetingLogRepository;
 
     @BeforeEach
     void setUp() {
         proposalRepository = Mockito.mock(ProposalRepository.class);
         meetingRepository = Mockito.mock(MeetingRepository.class);
         meetingLogComplianceService = Mockito.mock(MeetingLogComplianceService.class);
-        service = new ProjectProgressService(proposalRepository, meetingRepository, meetingLogComplianceService);
+        meetingLogRepository = Mockito.mock(com.fyp.supervision.repository.MeetingLogRepository.class);
+        service = new ProjectProgressService(proposalRepository, meetingRepository, meetingLogComplianceService,
+                meetingLogRepository);
     }
 
     private Project sampleProject(Long projectId, Long studentId, boolean paired, String stage,
@@ -108,5 +111,28 @@ class ProjectProgressServiceTest {
         ProjectProgressService.ProjectRisk r = service.riskFor(p);
         assertThat(r.level()).isEqualTo("MEDIUM");
         assertThat(r.factors()).anyMatch(f -> f.contains("No conducted meeting"));
+    }
+
+    @Test
+    void factsForAll_matchesPerProjectLoading() {
+        // The batch path (list views, reports) must score exactly like the single-project path.
+        Project a = sampleProject(20L, 30L, true, "FYP1", LocalDate.now().minusDays(40), LocalDate.now().plusDays(40), CycleStatus.ACTIVE);
+        Project b = sampleProject(21L, 31L, true, "FYP2", LocalDate.now().minusDays(40), LocalDate.now().plusDays(40), CycleStatus.ACTIVE);
+        com.fyp.supervision.entity.Proposal pa = new com.fyp.supervision.entity.Proposal();
+        pa.setStudent(a.getStudent());
+        pa.setStatus(ProposalStatus.APPROVED);
+        java.time.LocalDateTime last = java.time.LocalDateTime.now().minusDays(5);
+
+        Mockito.when(proposalRepository.findByStudent_UserIdIn(Mockito.anyCollection())).thenReturn(java.util.List.of(pa));
+        Mockito.when(meetingLogRepository.countLockedByStudentAndPhase(Mockito.anyCollection())).thenReturn(java.util.List.of(
+                new Object[]{30L, "FYP1", 4L}, new Object[]{31L, "FYP1", 6L}, new Object[]{31L, "FYP2", 2L}));
+        Mockito.when(meetingRepository.summariseCompletedByProject(Mockito.anyCollection())).thenReturn(java.util.List.<Object[]>of(
+                new Object[]{20L, 3L, last}));
+
+        var facts = service.factsForAll(java.util.List.of(a, b));
+
+        assertThat(facts.get(20L)).isEqualTo(new ProjectProgressService.ProjectFacts(ProposalStatus.APPROVED, 4, 3L, java.util.Optional.of(last)));
+        // b is in FYP2, so only its FYP2 logs count; no proposal and no completed meetings.
+        assertThat(facts.get(21L)).isEqualTo(new ProjectProgressService.ProjectFacts(null, 2, 0L, java.util.Optional.empty()));
     }
 }

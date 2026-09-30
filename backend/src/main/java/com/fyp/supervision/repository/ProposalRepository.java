@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface ProposalRepository extends JpaRepository<Proposal, Long> {
 
+    List<Proposal> findByStudent_UserIdIn(java.util.Collection<Long> studentUserIds);
+
     /**
      * The committee queue, filtered in the database so paging and the total are correct:
      * supervisor-approved proposals (UNDER_REVIEW / APPROVED), plus REJECTED /

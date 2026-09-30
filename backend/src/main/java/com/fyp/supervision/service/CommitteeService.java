@@ -469,8 +469,7 @@ public class CommitteeService {
             // compute risk per row, filter, then paginate in memory so totalElements
             // and content both reflect the actual filtered set.
             java.util.List<com.fyp.supervision.entity.Project> all = projectRepository.findAll(spec);
-            java.util.List<java.util.Map<String, Object>> allDtos = all.stream()
-                    .map(this::buildProjectOverviewDto)
+            java.util.List<java.util.Map<String, Object>> allDtos = buildProjectOverviewDtos(all).stream()
                     .filter(dto -> riskLevel.equalsIgnoreCase((String) dto.get("riskLevel")))
                     .collect(java.util.stream.Collectors.toList());
 
@@ -492,9 +491,7 @@ public class CommitteeService {
         org.springframework.data.domain.Page<com.fyp.supervision.entity.Project> page =
                 projectRepository.findAll(spec, pageable);
 
-        java.util.List<java.util.Map<String, Object>> dtos = page.getContent().stream()
-                .map(this::buildProjectOverviewDto)
-                .collect(java.util.stream.Collectors.toList());
+        java.util.List<java.util.Map<String, Object>> dtos = buildProjectOverviewDtos(page.getContent());
 
         return java.util.Map.of(
                 "content", dtos,
@@ -533,25 +530,48 @@ public class CommitteeService {
     }
 
     public Map<String, Object> buildProjectOverviewDto(com.fyp.supervision.entity.Project project) {
+        com.fyp.supervision.entity.StudentProfile sp = project.getStudent() != null
+                ? studentProfileRepository.findById(project.getStudent().getUserId()).orElse(null) : null;
+        return buildProjectOverviewDto(project, projectProgressService.factsFor(project), sp,
+                systemParameterService.getInt("meeting_gap_alert_days", 21));
+    }
+
+    /**
+     * List/report variant: loads profiles, proposals, log counts and meeting summaries for
+     * all rows in a handful of grouped queries instead of ~10 queries per project.
+     */
+    public java.util.List<Map<String, Object>> buildProjectOverviewDtos(
+            java.util.List<com.fyp.supervision.entity.Project> projects) {
+        if (projects.isEmpty()) return new java.util.ArrayList<>();
+        java.util.Map<Long, ProjectProgressService.ProjectFacts> facts = projectProgressService.factsForAll(projects);
+        java.util.List<Long> studentIds = projects.stream().filter(p -> p.getStudent() != null)
+                .map(p -> p.getStudent().getUserId()).distinct().toList();
+        java.util.Map<Long, com.fyp.supervision.entity.StudentProfile> profiles = new java.util.HashMap<>();
+        studentProfileRepository.findAllById(studentIds).forEach(sp -> profiles.put(sp.getUserId(), sp));
+        int gapThreshold = systemParameterService.getInt("meeting_gap_alert_days", 21);
+        return projects.stream()
+                .map(p -> buildProjectOverviewDto(p, facts.get(p.getProjectId()),
+                        p.getStudent() != null ? profiles.get(p.getStudent().getUserId()) : null, gapThreshold))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private Map<String, Object> buildProjectOverviewDto(com.fyp.supervision.entity.Project project,
+                                                        ProjectProgressService.ProjectFacts facts,
+                                                        com.fyp.supervision.entity.StudentProfile sp,
+                                                        int gapThreshold) {
         com.fyp.supervision.entity.UserAccount student = project.getStudent();
         com.fyp.supervision.entity.UserAccount supervisor = project.getSupervisor();
-        com.fyp.supervision.entity.StudentProfile sp = student != null
-                ? studentProfileRepository.findById(student.getUserId()).orElse(null) : null;
 
         String proposalStatus = "NOT_SUBMITTED";
-        if (student != null) {
-            com.fyp.supervision.entity.Proposal proposal =
-                    proposalRepository.findByStudent_UserId(student.getUserId()).orElse(null);
-            if (proposal != null) {
-                proposalStatus = proposal.getStatus().name();
-                if ("SUBMITTED".equals(proposalStatus)) proposalStatus = "PENDING_REVIEW";
-                if ("REVISION_REQUIRED".equals(proposalStatus)) proposalStatus = "REVISION_REQUESTED";
-            }
+        if (student != null && facts.proposalStatus() != null) {
+            proposalStatus = facts.proposalStatus().name();
+            if ("SUBMITTED".equals(proposalStatus)) proposalStatus = "PENDING_REVIEW";
+            if ("REVISION_REQUIRED".equals(proposalStatus)) proposalStatus = "REVISION_REQUESTED";
         }
 
         com.fyp.supervision.entity.FypCycle cycle = project.getCycle();
-        int progress = projectProgressService.progressFor(project);
-        ProjectProgressService.ProjectRisk risk = projectProgressService.riskFor(project);
+        int progress = projectProgressService.progressFor(project, facts);
+        ProjectProgressService.ProjectRisk risk = projectProgressService.riskFor(project, facts);
 
         java.util.Map<String, Object> dto = new java.util.LinkedHashMap<>();
         dto.put("projectId", project.getProjectId());
@@ -579,8 +599,8 @@ public class CommitteeService {
         // Only meaningful for paired projects in a running cycle.
         boolean running = cycle != null && cycle.getStatus() == com.fyp.supervision.enums.CycleStatus.ACTIVE;
         dto.put("daysSinceLastMeeting", supervisor != null && running
-                ? com.fyp.supervision.job.MeetingGapAlertJob.daysSinceLastMeeting(project, meetingRepository) : null);
-        dto.put("meetingGapThresholdDays", systemParameterService.getInt("meeting_gap_alert_days", 21));
+                ? com.fyp.supervision.job.MeetingGapAlertJob.daysSinceLastMeeting(project, facts.lastConducted()) : null);
+        dto.put("meetingGapThresholdDays", gapThreshold);
 
         if (cycle != null) {
             dto.put("cycleId", cycle.getCycleId());

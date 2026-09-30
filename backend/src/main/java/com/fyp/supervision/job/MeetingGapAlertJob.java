@@ -83,10 +83,13 @@ public class MeetingGapAlertJob {
      * cycle started) when no meeting has happened yet. Null when there is no baseline.
      */
     public static Long daysSinceLastMeeting(Project project, MeetingRepository meetingRepository) {
-        LocalDate baseline = meetingRepository
-                .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(), MeetingStatus.COMPLETED)
-                .map(LocalDateTime::toLocalDate)
-                .orElse(null);
+        return daysSinceLastMeeting(project, meetingRepository
+                .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(), MeetingStatus.COMPLETED));
+    }
+
+    /** Same, with the last completed meeting already loaded (batch list views). */
+    public static Long daysSinceLastMeeting(Project project, java.util.Optional<LocalDateTime> lastCompleted) {
+        LocalDate baseline = lastCompleted.map(LocalDateTime::toLocalDate).orElse(null);
         if (baseline == null && project.getRegisteredAt() != null) baseline = project.getRegisteredAt().toLocalDate();
         if (baseline == null && project.getCycle() != null) baseline = project.getCycle().getStartDate();
         if (baseline == null) return null;

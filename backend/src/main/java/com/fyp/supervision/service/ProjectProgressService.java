@@ -20,22 +20,82 @@ public class ProjectProgressService {
 
     public record ProjectRisk(String level, List<String> factors) {}
 
+    /**
+     * Everything progress and risk scoring reads from the database for one project.
+     * Loaded per project by {@link #factsFor}, or for a whole list in a few grouped
+     * queries by {@link #factsForAll} so list views and reports don't run ~10 queries per row.
+     */
+    public record ProjectFacts(ProposalStatus proposalStatus, int lockedLogsInPhase,
+                               long conductedCount, java.util.Optional<LocalDateTime> lastConducted) {}
+
     private static final int CONDUCTED_TARGET = 8;
     private static final int LOG_TARGET = 6;
 
     private final ProposalRepository proposalRepository;
     private final MeetingRepository meetingRepository;
     private final MeetingLogComplianceService meetingLogComplianceService;
+    private final com.fyp.supervision.repository.MeetingLogRepository meetingLogRepository;
+
+    public ProjectFacts factsFor(Project project) {
+        Long studentId = project.getStudent() != null ? project.getStudent().getUserId() : null;
+        ProposalStatus proposalStatus = studentId != null
+                ? proposalRepository.findByStudent_UserId(studentId).map(p -> p.getStatus()).orElse(null)
+                : null;
+        int logs = studentId != null ? meetingLogComplianceService.completedLogCount(studentId, phaseOf(project)) : 0;
+        long conducted = meetingRepository.countByProject_ProjectIdAndStatus(project.getProjectId(), MeetingStatus.COMPLETED);
+        java.util.Optional<LocalDateTime> last = meetingRepository
+                .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(), MeetingStatus.COMPLETED);
+        return new ProjectFacts(proposalStatus, logs, conducted, last);
+    }
+
+    /** Facts for many projects in three grouped queries, keyed by projectId. */
+    public java.util.Map<Long, ProjectFacts> factsForAll(java.util.Collection<Project> projects) {
+        java.util.Map<Long, ProjectFacts> out = new java.util.HashMap<>();
+        if (projects.isEmpty()) return out;
+        List<Long> studentIds = projects.stream().filter(p -> p.getStudent() != null)
+                .map(p -> p.getStudent().getUserId()).distinct().toList();
+        List<Long> projectIds = projects.stream().map(Project::getProjectId).toList();
+
+        java.util.Map<Long, ProposalStatus> proposals = new java.util.HashMap<>();
+        if (!studentIds.isEmpty()) {
+            proposalRepository.findByStudent_UserIdIn(studentIds)
+                    .forEach(p -> proposals.put(p.getStudent().getUserId(), p.getStatus()));
+        }
+        java.util.Map<String, Long> lockedLogs = new java.util.HashMap<>();
+        if (!studentIds.isEmpty()) {
+            for (Object[] row : meetingLogRepository.countLockedByStudentAndPhase(studentIds)) {
+                String phase = row[1] == null ? "" : row[1].toString().trim().toUpperCase();
+                lockedLogs.put(row[0] + ":" + phase, ((Number) row[2]).longValue());
+            }
+        }
+        java.util.Map<Long, Object[]> meetings = new java.util.HashMap<>();
+        for (Object[] row : meetingRepository.summariseCompletedByProject(projectIds)) {
+            meetings.put(((Number) row[0]).longValue(), row);
+        }
+
+        for (Project p : projects) {
+            Long studentId = p.getStudent() != null ? p.getStudent().getUserId() : null;
+            Object[] m = meetings.get(p.getProjectId());
+            out.put(p.getProjectId(), new ProjectFacts(
+                    studentId != null ? proposals.get(studentId) : null,
+                    studentId != null ? lockedLogs.getOrDefault(studentId + ":" + phaseOf(p), 0L).intValue() : 0,
+                    m != null ? ((Number) m[1]).longValue() : 0L,
+                    java.util.Optional.ofNullable(m != null ? (LocalDateTime) m[2] : null)));
+        }
+        return out;
+    }
 
     /** Composite 30/40/20/10 weighting documented in the spec. Returns 0..100. */
     public int progressFor(Project project) {
         if (project == null || project.getStudent() == null) return 0;
-        Long studentId = project.getStudent().getUserId();
-        String phase = phaseOf(project);
+        return progressFor(project, factsFor(project));
+    }
 
-        int proposalScore = scoreProposal(studentId);
-        int logScore = scoreMeetingLogs(studentId, phase);
-        int conductedScore = scoreConducted(project.getProjectId());
+    public int progressFor(Project project, ProjectFacts facts) {
+        if (project == null || project.getStudent() == null) return 0;
+        int proposalScore = scoreProposal(facts.proposalStatus());
+        int logScore = Math.min(100, (int) Math.round(((double) facts.lockedLogsInPhase() / LOG_TARGET) * 100));
+        int conductedScore = Math.min(100, (int) Math.round(((double) facts.conductedCount() / CONDUCTED_TARGET) * 100));
         int timeScore = scoreTime(project);
 
         double weighted = 0.30 * proposalScore
@@ -47,6 +107,18 @@ public class ProjectProgressService {
 
     /** Rule-based risk. Returns LOW with empty factors for past cycles. */
     public ProjectRisk riskFor(Project project) {
+        if (project == null) return new ProjectRisk("LOW", List.of());
+        if (isPastCycle(project)) return new ProjectRisk("LOW", List.of());
+        return riskFor(project, factsFor(project));
+    }
+
+    private static boolean isPastCycle(Project project) {
+        if (project.getCycle() == null || project.getCycle().getStatus() == null) return false;
+        String s = project.getCycle().getStatus().name();
+        return "COMPLETED".equals(s) || "ARCHIVED".equals(s);
+    }
+
+    public ProjectRisk riskFor(Project project, ProjectFacts facts) {
         if (project == null) return new ProjectRisk("LOW", List.of());
 
         if (project.getCycle() != null && project.getCycle().getStatus() != null) {
@@ -65,10 +137,7 @@ public class ProjectProgressService {
                 ? (int) Math.max(0, Math.round((double) LOG_TARGET * daysIn / cycleDuration))
                 : 0;
 
-        ProposalStatus proposalStatus = studentId != null
-                ? proposalRepository.findByStudent_UserId(studentId)
-                        .map(p -> p.getStatus()).orElse(null)
-                : null;
+        ProposalStatus proposalStatus = studentId != null ? facts.proposalStatus() : null;
 
         if (unpaired && daysIn > 30) {
             factors.add("Unpaired 30+ days into cycle");
@@ -80,17 +149,14 @@ public class ProjectProgressService {
             factors.add("Proposal not yet submitted");
         }
 
-        int lockedLogs = studentId != null
-                ? meetingLogComplianceService.completedLogCount(studentId, phaseOf(project))
-                : 0;
+        int lockedLogs = studentId != null ? facts.lockedLogsInPhase() : 0;
         boolean veryBehindLogs = false;
         if (daysIn > 30 && lockedLogs < (requiredByNow / 2)) {
             factors.add("Behind on meeting logs (" + lockedLogs + " of expected " + requiredByNow + ")");
             if (daysIn > 60) veryBehindLogs = true;
         }
 
-        java.util.Optional<LocalDateTime> lastConducted = meetingRepository
-                .findMaxConfirmedStartAtByProjectAndStatus(project.getProjectId(), MeetingStatus.COMPLETED);
+        java.util.Optional<LocalDateTime> lastConducted = facts.lastConducted();
         if (lastConducted.isEmpty() && daysIn > 21) {
             factors.add("No meetings conducted yet");
         } else if (lastConducted.isPresent()) {
@@ -117,28 +183,16 @@ public class ProjectProgressService {
         return "FYP1";
     }
 
-    private int scoreProposal(Long studentId) {
-        if (studentId == null) return 0;
-        return proposalRepository.findByStudent_UserId(studentId)
-                .map(p -> switch (p.getStatus()) {
-                    case DRAFT -> 0;
-                    case SUBMITTED -> 33;
-                    case UNDER_REVIEW -> 50;
-                    case REVISION_REQUIRED -> 50;
-                    case REJECTED -> 20;
-                    case APPROVED -> 100;
-                })
-                .orElse(0);
-    }
-
-    private int scoreMeetingLogs(Long studentId, String phase) {
-        int logs = meetingLogComplianceService.completedLogCount(studentId, phase);
-        return Math.min(100, (int) Math.round(((double) logs / LOG_TARGET) * 100));
-    }
-
-    private int scoreConducted(Long projectId) {
-        long count = meetingRepository.countByProject_ProjectIdAndStatus(projectId, MeetingStatus.COMPLETED);
-        return Math.min(100, (int) Math.round(((double) count / CONDUCTED_TARGET) * 100));
+    private int scoreProposal(ProposalStatus status) {
+        if (status == null) return 0;
+        return switch (status) {
+            case DRAFT -> 0;
+            case SUBMITTED -> 33;
+            case UNDER_REVIEW -> 50;
+            case REVISION_REQUIRED -> 50;
+            case REJECTED -> 20;
+            case APPROVED -> 100;
+        };
     }
 
     private int scoreTime(Project project) {
