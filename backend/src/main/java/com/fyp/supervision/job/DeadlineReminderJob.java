@@ -17,6 +17,7 @@ import com.fyp.supervision.service.SystemParameterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +43,7 @@ public class DeadlineReminderJob {
     private final ObjectMapper objectMapper;
 
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "DeadlineReminderJob.runDaily", lockAtMostFor = "PT30M")
     public void runDaily() {
         log.info("Starting scheduled deadline reminder job");
         int fired = run();

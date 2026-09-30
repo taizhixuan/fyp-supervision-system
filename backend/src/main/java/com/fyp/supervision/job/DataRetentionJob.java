@@ -6,6 +6,7 @@ import com.fyp.supervision.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,7 @@ public class DataRetentionJob {
     private int chatSessionDays;
 
     @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "DataRetentionJob.purgeOldData", lockAtMostFor = "PT1H")
     @Transactional
     public void purgeOldData() {
         purgeNotifications();

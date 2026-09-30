@@ -8,6 +8,7 @@ import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.SystemParameterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,7 @@ public class MeetingReminderJob {
 
     /** Runs at the top of every hour. */
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "MeetingReminderJob.runHourly", lockAtMostFor = "PT30M")
     public void runHourly() {
         int fired = run();
         if (fired > 0) {

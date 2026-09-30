@@ -3,6 +3,7 @@ package com.fyp.supervision.service;
 import com.fyp.supervision.entity.ExportConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class AdminExportScheduler {
     private final AdminExportService adminExportService;
 
     @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
+    @SchedulerLock(name = "AdminExportScheduler.processDueExports", lockAtMostFor = "PT30M")
     public void processDueExports() {
         LocalDateTime now = LocalDateTime.now();
         List<ExportConfig> due = adminExportService.findDueConfigs(now);

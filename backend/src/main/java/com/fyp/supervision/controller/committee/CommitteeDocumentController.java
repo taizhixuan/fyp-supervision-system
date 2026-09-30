@@ -36,10 +36,19 @@ public class CommitteeDocumentController {
     private final CommitteeService committeeService;
 
     @GetMapping
-    public ResponseEntity<?> getDocuments(@RequestParam(required = false) String category, Pageable pageable) {
+    public ResponseEntity<?> getDocuments(@RequestParam(required = false) String category,
+                                          @RequestParam(required = false) String visibility,
+                                          Pageable pageable) {
+        boolean byCategory = category != null && !category.isBlank();
+        boolean byVisibility = visibility != null && !visibility.isBlank();
         Page<ResourceDocument> page;
-        if (category != null && !category.isBlank()) {
+        if (byCategory && byVisibility) {
+            page = resourceDocRepo.findByCategoryAndVisibilityInAndIsActiveTrueOrderByPublishedAtDesc(
+                    category, List.of(visibility), pageable);
+        } else if (byCategory) {
             page = resourceDocRepo.findByCategoryAndIsActiveTrueOrderByPublishedAtDesc(category, pageable);
+        } else if (byVisibility) {
+            page = resourceDocRepo.findByVisibilityAndIsActiveTrueOrderByPublishedAtDesc(visibility, pageable);
         } else {
             page = resourceDocRepo.findByIsActiveTrueOrderByPublishedAtDesc(pageable);
         }
@@ -100,6 +109,42 @@ public class CommitteeDocumentController {
         return fypCycleRepository
                 .findFirstByCycleTypeAndStatusOrderByStartDateDesc(s, CycleStatus.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("No active " + s + " cycle to pin this resource to."));
+    }
+
+    /**
+     * Edit a document's details, optionally replacing the file. The edit screen has always
+     * called this, but the endpoint didn't exist, so every save failed with 405.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateDocument(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long id,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String visibility,
+            @RequestParam(required = false) String cycleScope) {
+        ResourceDocument doc = resourceDocRepo.findById(id)
+                .filter(d -> Boolean.TRUE.equals(d.getIsActive()))
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        if (title != null) {
+            if (title.isBlank()) throw new BadRequestException("Title is required.");
+            doc.setTitle(title.trim());
+        }
+        if (description != null) doc.setDescription(description);
+        if (category != null && !category.isBlank()) doc.setCategory(category);
+        if (visibility != null && !visibility.isBlank()) doc.setVisibility(visibility);
+        if (cycleScope != null) doc.setCycle(resolveCycleScope(cycleScope));
+        if (file != null && !file.isEmpty()) {
+            Long userId = Long.parseLong(user.getUsername());
+            String oldPath = doc.getStoragePath();
+            doc.setStoragePath(fileStorageService.storeFile(file, "resources", userId));
+            doc.setFileName(file.getOriginalFilename());
+            doc.setFileSize(file.getSize());
+            fileStorageService.deleteFile(oldPath);
+        }
+        return ResponseEntity.ok(committeeService.buildResourceDocumentDto(resourceDocRepo.save(doc)));
     }
 
     @DeleteMapping("/{id}")

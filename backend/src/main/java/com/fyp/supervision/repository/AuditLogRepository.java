@@ -19,6 +19,12 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Query("DELETE FROM AuditLog a WHERE a.createdAt < :before")
     int deleteByCreatedAtBefore(@Param("before") LocalDateTime before);
 
+    @Query("SELECT DISTINCT a.action FROM AuditLog a WHERE a.action IS NOT NULL ORDER BY a.action")
+    java.util.List<String> findDistinctActions();
+
+    @Query("SELECT DISTINCT a.entityName FROM AuditLog a WHERE a.entityName IS NOT NULL ORDER BY a.entityName")
+    java.util.List<String> findDistinctEntityNames();
+
     @Query("SELECT a FROM AuditLog a WHERE " +
            "(:action IS NULL OR a.action = :action) AND " +
            "(:entityType IS NULL OR a.entityName = :entityType) AND " +

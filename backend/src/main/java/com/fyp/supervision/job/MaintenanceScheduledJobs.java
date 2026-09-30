@@ -3,6 +3,7 @@ package com.fyp.supervision.job;
 import com.fyp.supervision.service.AdminMaintenanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class MaintenanceScheduledJobs {
     private final AdminMaintenanceService adminMaintenanceService;
 
     @Scheduled(cron = "0 0 3 * * *")
+    @SchedulerLock(name = "MaintenanceScheduledJobs.dailyDatabaseBackup", lockAtMostFor = "PT2H")
     public void dailyDatabaseBackup() {
         log.info("[maintenance] Scheduled DAILY database backup starting");
         Map<String, Object> result = adminMaintenanceService.createBackup(null, Map.of("type", "DATABASE"));
@@ -35,6 +37,7 @@ public class MaintenanceScheduledJobs {
     }
 
     @Scheduled(cron = "0 0 2 * * SUN")
+    @SchedulerLock(name = "MaintenanceScheduledJobs.weeklyCleanup", lockAtMostFor = "PT2H")
     public void weeklyCleanup() {
         log.info("[maintenance] Scheduled WEEKLY cleanup starting");
         Map<String, Object> options = new LinkedHashMap<>();
@@ -48,6 +51,7 @@ public class MaintenanceScheduledJobs {
     }
 
     @Scheduled(cron = "0 0 1 1 * *")
+    @SchedulerLock(name = "MaintenanceScheduledJobs.monthlyFullBackup", lockAtMostFor = "PT2H")
     public void monthlyFullBackup() {
         log.info("[maintenance] Scheduled MONTHLY full backup starting");
         Map<String, Object> result = adminMaintenanceService.createBackup(null, Map.of("type", "FULL"));

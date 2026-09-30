@@ -8,6 +8,7 @@ import com.fyp.supervision.service.NotificationService;
 import com.fyp.supervision.service.SystemParameterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,7 @@ public class MeetingGapAlertJob {
     private final SystemParameterService systemParameters;
 
     @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "MeetingGapAlertJob.runDaily", lockAtMostFor = "PT30M")
     public void runDaily() {
         int alerted = run();
         if (alerted > 0) {

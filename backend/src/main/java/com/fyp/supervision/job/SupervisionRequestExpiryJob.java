@@ -6,6 +6,7 @@ import com.fyp.supervision.repository.SupervisorRequestRepository;
 import com.fyp.supervision.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class SupervisionRequestExpiryJob {
     private final NotificationService notificationService;
 
     @Scheduled(cron = "0 30 7 * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "SupervisionRequestExpiryJob.runDaily", lockAtMostFor = "PT30M")
     public void runDaily() {
         int expired = run();
         if (expired > 0) {

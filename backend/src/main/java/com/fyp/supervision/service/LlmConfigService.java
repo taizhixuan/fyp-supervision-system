@@ -7,6 +7,7 @@ import com.fyp.supervision.exception.BadRequestException;
 import com.fyp.supervision.repository.IntegrationSettingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -203,6 +204,7 @@ public class LlmConfigService {
 
     /** Re-push after an AI container restart wiped its in-memory override. */
     @Scheduled(initialDelay = 30_000, fixedDelay = 120_000)
+    @SchedulerLock(name = "LlmConfigService.sync", lockAtMostFor = "PT5M")
     public void sync() {
         Map<String, Object> desired;
         try {

@@ -3,6 +3,7 @@ package com.fyp.supervision.job;
 import com.fyp.supervision.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class AnnouncementPublishJob {
 
     /** Runs at the top of every minute. */
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Kuala_Lumpur")
+    @SchedulerLock(name = "AnnouncementPublishJob.runEveryMinute", lockAtMostFor = "PT5M")
     public void runEveryMinute() {
         try {
             int published = announcementService.publishDueAnnouncements();

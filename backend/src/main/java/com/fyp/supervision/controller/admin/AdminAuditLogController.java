@@ -14,6 +14,18 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AdminAuditLogController {
     private final AdminService adminService;
+    private final com.fyp.supervision.repository.AuditLogRepository auditLogRepository;
+
+    /**
+     * The action / entity values actually recorded (USER_APPROVED, LOGIN_SUCCESS,
+     * USER_ACCOUNT, ...), so the filter dropdowns offer values that match rows.
+     */
+    @GetMapping("/filters")
+    public ResponseEntity<?> getFilterOptions() {
+        return ResponseEntity.ok(java.util.Map.of(
+                "actions", auditLogRepository.findDistinctActions(),
+                "entityTypes", auditLogRepository.findDistinctEntityNames()));
+    }
 
     @GetMapping
     public ResponseEntity<?> getAuditLogs(
