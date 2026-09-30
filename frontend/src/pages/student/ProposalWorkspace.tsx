@@ -581,7 +581,7 @@ export function ProposalWorkspace() {
   const proposalFileName = proposal?.fileName
   const canEdit =
     studentGate.cycleActive !== false
-    && ['DRAFT', 'REVISION_REQUIRED'].includes(proposalStatus)
+    && ['DRAFT', 'REVISION_REQUIRED', 'REJECTED'].includes(proposalStatus)
   const canSubmit = canEdit
   const isApproved = proposalStatus === 'APPROVED'
   const cycleEnded = studentGate.cycleActive === false

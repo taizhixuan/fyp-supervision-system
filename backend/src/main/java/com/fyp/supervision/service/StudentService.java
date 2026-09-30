@@ -261,6 +261,11 @@ public class StudentService {
             throw new BadRequestException("supervisorId must be numeric");
         }
 
+        // The frontend locks Find Supervisor once paired; enforce it here too so the API
+        // can't be used to keep sending requests after pairing.
+        if (projectRepository.findByStudent_UserId(userId).map(p -> p.getSupervisor() != null).orElse(false)) {
+            throw new BadRequestException("You already have an assigned supervisor.");
+        }
         if (supervisorRequestRepository.existsByStudent_UserIdAndSupervisorUser_UserIdAndStatus(userId, supervisorId, RequestStatus.PENDING)) {
             throw new BadRequestException("You already have a pending request to this supervisor.");
         }
@@ -328,6 +333,17 @@ public class StudentService {
                 .orElseGet(Map::of);
     }
 
+    /**
+     * Statuses in which the student may edit and (re)submit. REJECTED is included so a
+     * rejection isn't a dead end: there is one proposal row per student (V54), so the
+     * student revises it and submits a new version rather than creating another.
+     */
+    static boolean isEditable(ProposalStatus status) {
+        return status == ProposalStatus.DRAFT
+                || status == ProposalStatus.REVISION_REQUIRED
+                || status == ProposalStatus.REJECTED;
+    }
+
     @Transactional
     public Map<String, Object> createProposal(Long userId, Map<String, Object> data) {
         if (proposalRepository.findByStudent_UserId(userId).isPresent()) {
@@ -368,8 +384,7 @@ public class StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
         // Content is frozen once the proposal leaves an editable state, otherwise a
         // student could rewrite what a supervisor is reviewing / has already approved.
-        if (proposal.getStatus() != ProposalStatus.DRAFT
-                && proposal.getStatus() != ProposalStatus.REVISION_REQUIRED) {
+        if (!isEditable(proposal.getStatus())) {
             throw new BadRequestException("Proposal cannot be edited in its current status.");
         }
         validateProposalPayload(data);
@@ -409,8 +424,7 @@ public class StudentService {
         }
         Proposal proposal = proposalRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found. Create a proposal first."));
-        if (proposal.getStatus() != ProposalStatus.DRAFT
-                && proposal.getStatus() != ProposalStatus.REVISION_REQUIRED) {
+        if (!isEditable(proposal.getStatus())) {
             throw new BadRequestException("The supporting attachment cannot be changed in the proposal's current status.");
         }
 
@@ -524,8 +538,19 @@ public class StudentService {
     public Map<String, Object> submitProposal(Long userId) {
         Proposal proposal = proposalRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Proposal not found"));
-        if (proposal.getStatus() != ProposalStatus.DRAFT && proposal.getStatus() != ProposalStatus.REVISION_REQUIRED) {
+        if (!isEditable(proposal.getStatus())) {
             throw new BadRequestException("Proposal cannot be submitted in its current status.");
+        }
+        // A proposal drafted before pairing has no supervisor yet; pick it up from the
+        // project now, and refuse to submit into a queue nobody reviews.
+        if (proposal.getSupervisor() == null) {
+            projectRepository.findByStudent_UserId(userId).ifPresent(p -> {
+                if (proposal.getProject() == null) proposal.setProject(p);
+                proposal.setSupervisor(p.getSupervisor());
+            });
+        }
+        if (proposal.getSupervisor() == null) {
+            throw new BadRequestException("You need an assigned supervisor before submitting your proposal.");
         }
         proposal.setStatus(ProposalStatus.SUBMITTED);
         Proposal saved = proposalRepository.save(proposal);
@@ -1356,13 +1381,12 @@ public class StudentService {
             // Real supervision pair — status now driven by proposal lifecycle.
             String status;
             if (proposalStatus == null
-                    || proposalStatus == ProposalStatus.DRAFT
-                    || proposalStatus == ProposalStatus.REVISION_REQUIRED) {
+                    || isEditable(proposalStatus)) {
                 status = "PROPOSAL_PENDING";
             } else if (proposalStatus == ProposalStatus.APPROVED) {
                 status = "REGISTERED";
             } else {
-                // SUBMITTED, UNDER_REVIEW, REJECTED
+                // SUBMITTED, UNDER_REVIEW (REJECTED is editable again, see isEditable)
                 status = "UNDER_REVIEW";
             }
             reg.put("status", status);

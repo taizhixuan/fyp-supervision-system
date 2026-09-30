@@ -722,7 +722,11 @@ export function useMeetingList(params?: MeetingListParams) {
       const { data } = await apiClient.get<{
         meetings: Meeting[]
         total: number
-      }>('/student/meetings', { params })
+      }>('/student/meetings', {
+        // Pageable defaults to 20 rows; the list page and log pickers don't paginate,
+        // so ask for enough to cover a full FYP1 + FYP2 history.
+        params: { size: 200, ...params },
+      })
       return data
     },
   })

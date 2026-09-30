@@ -37,8 +37,7 @@ public class MeetingLogService {
                 .orElseThrow(() -> new BadRequestException("No active project found."));
 
         // Phase comes from project.stage (Model A: single project advances FYP1→FYP2).
-        String stage = project.getStage();
-        String fypPhase = (stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"))) ? "FYP2" : "FYP1";
+        String fypPhase = phaseFor(project);
 
         // Count logs scoped to current phase so meeting numbering resets at FYP2 boundary.
         long existingLogs = meetingLogRepository.countByStudent_UserIdAndFypPhase(userId, fypPhase);
@@ -97,6 +96,9 @@ public class MeetingLogService {
     public MeetingLog createLog(Long userId, Map<String, Object> data) {
         Project project = projectRepository.findByStudent_UserId(userId)
                 .orElseThrow(() -> new BadRequestException("No project found. You need an active project to create meeting logs."));
+        if (project.getSupervisor() == null) {
+            throw new BadRequestException("You need an assigned supervisor before creating meeting logs.");
+        }
 
         Meeting linkedMeeting = null;
         Object meetingIdRaw = data.get("meetingId");
@@ -115,15 +117,18 @@ public class MeetingLogService {
             }
         }
 
+        String fypPhase = phaseFor(project);
         MeetingLog log = MeetingLog.builder()
                 .project(project)
                 .student(project.getStudent())
                 .supervisor(project.getSupervisor())
                 .meeting(linkedMeeting)
-                .meetingDate(data.get("meetingDate") != null ? LocalDate.parse(data.get("meetingDate").toString()) : LocalDate.now())
-                .meetingNumber(data.get("meetingNumber") != null ? ((Number) data.get("meetingNumber")).intValue() : 1)
+                .meetingDate(data.get("meetingDate") != null ? parseDate(data.get("meetingDate")) : LocalDate.now())
+                // Number and phase feed the 6-logs-per-phase compliance count, so they're
+                // derived here (same rule as getPrefillData), never taken from the client.
+                .meetingNumber((int) meetingLogRepository.countByStudent_UserIdAndFypPhase(userId, fypPhase) + 1)
                 .meetingMode(data.get("meetingMode") != null ? data.get("meetingMode").toString() : "PHYSICAL")
-                .fypPhase(data.get("fypPhase") != null ? data.get("fypPhase").toString() : "FYP1")
+                .fypPhase(fypPhase)
                 .tasksJson(toJson(data.get("tasks")))
                 .workDoneDetails((String) data.get("workDoneDetails"))
                 .workToBeDone((String) data.get("workToBeDone"))
@@ -144,10 +149,9 @@ public class MeetingLogService {
             throw new BadRequestException("Log cannot be edited in its current status.");
         }
 
-        if (data.get("meetingDate") != null) log.setMeetingDate(LocalDate.parse(data.get("meetingDate").toString()));
-        if (data.get("meetingNumber") instanceof Number n) log.setMeetingNumber(n.intValue());
+        if (data.get("meetingDate") != null) log.setMeetingDate(parseDate(data.get("meetingDate")));
+        // meetingNumber / fypPhase are server-assigned at creation and not editable.
         if (data.get("meetingMode") != null) log.setMeetingMode(data.get("meetingMode").toString());
-        if (data.get("fypPhase") != null) log.setFypPhase(data.get("fypPhase").toString());
         if (data.containsKey("tasks")) log.setTasksJson(toJson(data.get("tasks")));
         if (data.containsKey("workDoneDetails")) log.setWorkDoneDetails((String) data.get("workDoneDetails"));
         if (data.containsKey("workToBeDone")) log.setWorkToBeDone((String) data.get("workToBeDone"));
@@ -171,6 +175,9 @@ public class MeetingLogService {
             throw new BadRequestException("Log cannot be submitted in its current status.");
         }
 
+        if (log.getSupervisor() == null) {
+            throw new BadRequestException("You need an assigned supervisor before submitting a meeting log.");
+        }
         log.setStatus(MeetingLogStatus.SUBMITTED);
         log.setSubmittedAt(LocalDateTime.now());
         MeetingLog saved = meetingLogRepository.save(log);
@@ -317,6 +324,20 @@ public class MeetingLogService {
     }
 
     private String nz(String s) { return s == null ? "" : s; }
+
+    /** Phase comes from project.stage (Model A: single project advances FYP1 -> FYP2). */
+    private static String phaseFor(Project project) {
+        String stage = project.getStage();
+        return (stage != null && (stage.equalsIgnoreCase("FYP2") || stage.equalsIgnoreCase("FYP 2"))) ? "FYP2" : "FYP1";
+    }
+
+    private static LocalDate parseDate(Object raw) {
+        try {
+            return LocalDate.parse(raw.toString());
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new BadRequestException("meetingDate must be a date (YYYY-MM-DD)");
+        }
+    }
 
     @Transactional
     public MeetingLog addSupervisorComments(Long logId, Long userId, String comments) {

@@ -21,54 +21,6 @@ import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
 import type { Meeting, MeetingStatus } from '@/types'
 
-// Sample data
-const SAMPLE_MEETINGS: Meeting[] = [
-  {
-    meetingId: '1',
-    studentId: '1',
-    supervisorId: '1',
-    supervisor: { supervisorId: '1', userId: '101', fullName: 'Dr. Sarah Lee Wei Lin', email: 'sarah.lee@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: [], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-    title: 'Weekly Progress Review',
-    agenda: 'Discuss proposal progress and next steps',
-    scheduledAt: '2025-01-25T10:00:00Z',
-    duration: 60,
-    platform: 'MICROSOFT_TEAMS',
-    meetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_123456789',
-    status: 'CONFIRMED',
-    createdAt: '2025-01-15',
-    updatedAt: '2025-01-15',
-  },
-  {
-    meetingId: '2',
-    studentId: '1',
-    supervisorId: '1',
-    supervisor: { supervisorId: '1', userId: '101', fullName: 'Dr. Sarah Lee Wei Lin', email: 'sarah.lee@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: [], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-    title: 'Proposal Review Meeting',
-    scheduledAt: '2025-02-01T14:00:00Z',
-    duration: 45,
-    platform: 'IN_PERSON',
-    location: 'Room 3.12, FCI Building',
-    status: 'PENDING',
-    createdAt: '2025-01-18',
-    updatedAt: '2025-01-18',
-  },
-  {
-    meetingId: '3',
-    studentId: '1',
-    supervisorId: '1',
-    supervisor: { supervisorId: '1', userId: '101', fullName: 'Dr. Sarah Lee Wei Lin', email: 'sarah.lee@mmu.edu.my', title: 'Associate Professor', department: 'Software Engineering', faculty: 'FCI', researchAreas: [], currentLoad: 5, maxCapacity: 8, isAcceptingStudents: true },
-    title: 'Initial Consultation',
-    scheduledAt: '2025-01-15T10:00:00Z',
-    duration: 30,
-    platform: 'MICROSOFT_TEAMS',
-    meetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_987654321',
-    status: 'COMPLETED',
-    notes: 'Discussed project scope and timeline',
-    createdAt: '2025-01-10',
-    updatedAt: '2025-01-15',
-  },
-]
-
 const statusConfig: Record<MeetingStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'error'; color: string; bgColor: string; icon: typeof Clock }> = {
   PROPOSED: { label: 'Awaiting Response', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Clock },
   PENDING: { label: 'Pending', variant: 'warning', color: 'text-warning-600', bgColor: 'bg-warning-100', icon: Clock },
@@ -93,11 +45,14 @@ export function MeetingList() {
 
   const { data, isLoading } = useMeetingList()
 
-  // Use sample data
-  const meetings = data?.meetings || SAMPLE_MEETINGS
+  const meetings = data?.meetings ?? []
 
+  // The backend never sends 'PENDING'; the Pending tab means "awaiting a response".
+  const isAwaitingResponse = (status: string) =>
+    status === 'PENDING' || status === 'PROPOSED' || status === 'RESCHEDULED'
   const filteredMeetings = meetings.filter(
-    (m) => statusFilter === 'all' || m.status === statusFilter
+    (m) => statusFilter === 'all'
+      || (statusFilter === 'PENDING' ? isAwaitingResponse(m.status as string) : m.status === statusFilter)
   )
 
   // Categorisation: upcoming = future scheduled time AND still active.

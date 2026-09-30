@@ -49,7 +49,11 @@ public class DeadlineReminderJob {
     }
 
     public int run() {
-        LocalDate today = LocalDate.now();
+        return run(LocalDate.now());
+    }
+
+    /** Test seam: runs the job as if it were {@code today}. */
+    int run(LocalDate today) {
         // Select on the effective due date and fetch the cycle eagerly so the scheduled
         // thread (no open session) can read cycle.cycleType without a LazyInitializationException.
         List<Deadline> upcoming = deadlineRepository.findUpcomingByEffectiveDate(today);
@@ -79,12 +83,27 @@ public class DeadlineReminderJob {
                 : deadline.getDueDate();
         if (effectiveDue == null) return 0;
 
+        if (today.isAfter(effectiveDue)) return 0;
+        long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(today, effectiveDue);
+
+        // Catch up on reminders whose trigger date has passed (e.g. the 08:00 run was
+        // missed during a redeploy) instead of requiring trigger == today. If several
+        // are overdue only the latest one is sent; the older ones are just recorded so
+        // the student doesn't get a burst of stale "due in 7 days" messages.
+        int latestDue = reminderDays.stream()
+                .filter(d -> d != null && d >= 0 && d >= daysLeft)
+                .min(Integer::compare).orElse(-1);
+
         int fired = 0;
         for (Integer days : reminderDays) {
             if (days == null || days < 0) continue;
             LocalDate trigger = effectiveDue.minusDays(days);
-            if (!trigger.equals(today)) continue;
+            if (trigger.isAfter(today)) continue;
             if (reminderLogRepository.existsByDeadlineIdAndDaysBefore(deadline.getDeadlineId(), days)) continue;
+            if (days != latestDue) {
+                recordFired(deadline.getDeadlineId(), days);
+                continue;
+            }
 
             List<UserAccount> recipients = resolveAudience(deadline);
             if (recipients.isEmpty()) {
@@ -93,7 +112,7 @@ public class DeadlineReminderJob {
             }
 
             String title = "Deadline reminder: " + deadline.getTitle();
-            String body = "Due in " + days + " day" + (days == 1 ? "" : "s")
+            String body = (daysLeft == 0 ? "Due today" : "Due in " + daysLeft + " day" + (daysLeft == 1 ? "" : "s"))
                     + ": " + (deadline.getDescription() == null ? deadline.getTitle() : deadline.getDescription());
 
             for (UserAccount user : recipients) {
@@ -135,7 +154,8 @@ public class DeadlineReminderJob {
 
         if (audience.equals("STUDENT") || audience.equals("ALL")) {
             String cycleType = deadline.getCycle() != null ? deadline.getCycle().getCycleType() : null;
-            for (Project project : projectRepository.findAll()) {
+            Long cycleId = deadline.getCycle() != null ? deadline.getCycle().getCycleId() : null;
+            for (Project project : projectRepository.findForDeadlineAudience(cycleId)) {
                 if (project.getStudent() == null) continue;
                 if (cycleType != null && project.getStage() != null
                         && !normalise(project.getStage()).equalsIgnoreCase(cycleType)) {

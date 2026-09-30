@@ -316,6 +316,11 @@ public class SupervisorService {
         }
 
         String action = (String) data.get("action");
+        if ("ACCEPT".equalsIgnoreCase(action)
+                && request.getExpiresAt() != null && request.getExpiresAt().isBefore(LocalDateTime.now())) {
+            // SupervisionRequestExpiryJob flips it to EXPIRED; here we only refuse the accept.
+            throw new BadRequestException("This request has expired. The student can send a new one.");
+        }
         request.setRespondedAt(LocalDateTime.now());
 
         if ("ACCEPT".equalsIgnoreCase(action)) {
@@ -379,6 +384,28 @@ public class SupervisorService {
             // Refresh the cached load from the live count (flush first so the new pairing counts).
             projectRepository.flush();
             supervisorProfileRepository.recountCurrentLoad(userId);
+
+            // A proposal drafted before pairing has no supervisor; link it so it shows up in
+            // this supervisor's queue.
+            Long studentId = request.getStudent().getUserId();
+            proposalRepository.findByStudent_UserId(studentId).ifPresent(pr -> {
+                if (pr.getSupervisor() == null) {
+                    pr.setSupervisor(request.getSupervisorUser());
+                    if (pr.getProject() == null) pr.setProject(project);
+                    proposalRepository.save(pr);
+                }
+            });
+
+            // The student is paired now: close their other pending requests so those
+            // supervisors aren't left holding requests they can no longer accept.
+            for (SupervisorRequest other : supervisorRequestRepository
+                    .findByStudent_UserIdAndStatus(studentId, RequestStatus.PENDING)) {
+                if (other.getRequestId().equals(request.getRequestId())) continue;
+                other.setStatus(RequestStatus.WITHDRAWN);
+                other.setRespondedAt(LocalDateTime.now());
+                other.setResponseMessage("Student was paired with another supervisor.");
+                supervisorRequestRepository.save(other);
+            }
 
             notificationService.createNotification(
                     request.getStudent().getUserId(), "REQUEST",
@@ -743,8 +770,19 @@ public class SupervisorService {
     /** Returns list of meeting DTOs matching frontend SupervisorMeeting */
     public List<Map<String, Object>> getMeetingDtos(Long userId, String status) {
         List<Meeting> meetings;
-        if (status != null && !status.isBlank()) {
-            meetings = meetingRepository.findBySupervisorUserIdAndStatus(userId, MeetingStatus.valueOf(status));
+        if (status != null && "PENDING".equalsIgnoreCase(status.trim())) {
+            // The UI's "Pending" tab means "awaiting a response"; there is no PENDING status.
+            meetings = meetingRepository.findBySupervisorUserId(userId).stream()
+                    .filter(m -> m.getStatus() == MeetingStatus.PROPOSED || m.getStatus() == MeetingStatus.RESCHEDULED)
+                    .toList();
+        } else if (status != null && !status.isBlank()) {
+            MeetingStatus parsed;
+            try {
+                parsed = MeetingStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Unknown meeting status: " + status);
+            }
+            meetings = meetingRepository.findBySupervisorUserIdAndStatus(userId, parsed);
         } else {
             meetings = meetingRepository.findBySupervisorUserId(userId);
         }

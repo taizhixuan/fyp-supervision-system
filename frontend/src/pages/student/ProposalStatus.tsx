@@ -22,7 +22,7 @@ const statusConfig: Record<ProposalStatusType, { label: string; color: string; i
   UNDER_REVIEW: { label: 'Under Review', color: 'bg-warning-100 text-warning-700', icon: Clock, description: 'Your proposal is being reviewed by your supervisor and the committee.' },
   REVISION_REQUIRED: { label: 'Revision Required', color: 'bg-error-100 text-error-700', icon: AlertCircle, description: 'Your proposal requires revisions based on feedback received.' },
   APPROVED: { label: 'Approved', color: 'bg-success-100 text-success-700', icon: CheckCircle, description: 'Congratulations! Your proposal has been approved.' },
-  REJECTED: { label: 'Rejected', color: 'bg-error-100 text-error-700', icon: XCircle, description: 'Your proposal has been rejected. Please consult with your supervisor.' },
+  REJECTED: { label: 'Rejected', color: 'bg-error-100 text-error-700', icon: XCircle, description: 'Your proposal has been rejected. Revise it using the feedback and submit it again.' },
 }
 
 const sectionStatusColors = {
@@ -108,7 +108,7 @@ export function ProposalStatus() {
               Version {currentProposal.version} • Last updated {new Date(currentProposal.updatedAt).toLocaleDateString('en-MY')}
             </p>
           </div>
-          {['DRAFT', 'REVISION_REQUIRED'].includes(currentProposal.status) && (
+          {['DRAFT', 'REVISION_REQUIRED', 'REJECTED'].includes(currentProposal.status) && (
             <Link to={ROUTES.STUDENT.PROPOSAL}>
               <Button variant="primary" leftIcon={<Edit className="h-4 w-4" />}>
                 Edit Proposal

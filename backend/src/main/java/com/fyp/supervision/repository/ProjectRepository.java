@@ -40,6 +40,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long>,
     @Query("SELECT p FROM Project p WHERE p.cycle.cycleId = :cycleId AND p.student IS NOT NULL AND p.supervisor IS NULL")
     List<Project> findUnpairedStudentsByCycle(@Param("cycleId") Long cycleId);
 
+    /**
+     * Deadline audience: students on projects in the deadline's own cycle, or in any
+     * ACTIVE cycle when the deadline isn't tied to one. Past cohorts are excluded.
+     */
+    @Query("SELECT p FROM Project p JOIN FETCH p.student JOIN p.cycle c WHERE "
+            + "(:cycleId IS NULL AND c.status = com.fyp.supervision.enums.CycleStatus.ACTIVE) "
+            + "OR c.cycleId = :cycleId")
+    List<Project> findForDeadlineAudience(@Param("cycleId") Long cycleId);
+
     @Query("SELECT p FROM Project p WHERE p.cycle.cycleId = :cycleId")
     Page<Project> findAllByCycleId(@Param("cycleId") Long cycleId, Pageable pageable);
 

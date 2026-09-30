@@ -16,6 +16,14 @@ public interface SupervisorRequestRepository extends JpaRepository<SupervisorReq
     boolean existsByStudent_UserIdAndSupervisorUser_UserIdAndStatus(Long studentUserId, Long supervisorUserId, RequestStatus status);
     boolean existsByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
     long countByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
+    List<SupervisorRequest> findByStudent_UserIdAndStatus(Long studentUserId, RequestStatus status);
+    /** Fetch-joins both users: the expiry job runs outside a transaction and reads their names. */
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT r FROM SupervisorRequest r JOIN FETCH r.student JOIN FETCH r.supervisorUser "
+            + "WHERE r.status = :status AND r.expiresAt < :cutoff")
+    List<SupervisorRequest> findByStatusAndExpiresAtBefore(
+            @org.springframework.data.repository.query.Param("status") RequestStatus status,
+            @org.springframework.data.repository.query.Param("cutoff") java.time.LocalDateTime cutoff);
 
     @org.springframework.data.jpa.repository.Query(
         "select max(r.submittedAt) from SupervisorRequest r where r.student.userId = :studentUserId")
