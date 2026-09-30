@@ -95,7 +95,7 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam("file") MultipartFile file) {
         Long userId = Long.parseLong(userDetails.getUsername());
-        String path = fileStorageService.storeFile(file, "profiles", userId);
+        String path = fileStorageService.storeImage(file, "profiles", userId);
         UserAccount account = userAccountRepository.findById(userId).orElseThrow();
         account.setProfileImagePath(path);
         userAccountRepository.save(account);

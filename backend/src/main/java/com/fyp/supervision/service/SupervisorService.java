@@ -902,6 +902,12 @@ public class SupervisorService {
             } else {
                 docs = projectDocumentRepository.findByProject_Student_UserIdAndIsLatestTrueOrderByUploadedAtDesc(studentId);
             }
+            // studentId comes from the query string: only keep documents on projects this
+            // supervisor actually supervises, or any supervisor could read any student's files.
+            docs = docs.stream()
+                    .filter(d -> d.getProject() != null && d.getProject().getSupervisor() != null
+                            && Objects.equals(d.getProject().getSupervisor().getUserId(), userId))
+                    .toList();
         } else {
             docs = projectDocumentRepository.findByProject_Supervisor_UserIdAndIsLatestTrueOrderByUploadedAtDesc(userId);
         }

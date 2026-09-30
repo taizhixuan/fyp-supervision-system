@@ -616,11 +616,15 @@ public class AdminMaintenanceService {
     }
 
     public Path getBackupFilePath(String fileName) {
-        if (fileName == null || fileName.contains("..")) {
+        // Plain file names only: resolve() returns an absolute argument unchanged, so
+        // "/run/secrets/..." would otherwise escape the backups dir.
+        if (fileName == null || fileName.isBlank() || fileName.contains("..")
+                || fileName.contains("/") || fileName.contains("\\") || fileName.contains(":")) {
             throw new ResourceNotFoundException("Invalid file");
         }
-        Path path = fileStorageConfig.getUploadPath().resolve("backups").resolve(fileName);
-        if (!Files.exists(path)) {
+        Path backupDir = fileStorageConfig.getUploadPath().resolve("backups").toAbsolutePath().normalize();
+        Path path = backupDir.resolve(fileName).normalize();
+        if (!path.startsWith(backupDir) || !Files.isRegularFile(path)) {
             throw new ResourceNotFoundException("Backup file not found");
         }
         return path;

@@ -108,6 +108,27 @@ public class AnnouncementService {
         return visible.stream().map(a -> buildDto(a, readIds)).toList();
     }
 
+    /**
+     * Landing-page feed for anonymous visitors: only broadcast announcements, never
+     * cohort/programme/specific-student ones, and without the recipient id list.
+     */
+    public List<Map<String, Object>> latestPublic(int limit) {
+        return announcementRepository
+                .findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, Pageable.unpaged())
+                .getContent().stream()
+                .filter(a -> {
+                    String scope = a.getScope() == null ? "ALL" : a.getScope().trim().toUpperCase(Locale.ROOT);
+                    return "ALL".equals(scope) || "ALL_STUDENTS".equals(scope);
+                })
+                .limit(limit)
+                .map(a -> {
+                    Map<String, Object> dto = buildDto(a);
+                    dto.remove("targetStudentIds");
+                    return dto;
+                })
+                .toList();
+    }
+
     public List<Map<String, Object>> listAllPublished(Pageable pageable) {
         return announcementRepository.findByStatusOrderByCreatedAtDesc(AnnouncementStatus.PUBLISHED, pageable)
                 .getContent().stream().map(this::buildDto).toList();
@@ -150,6 +171,8 @@ public class AnnouncementService {
                     boolean isOwn = a.getCreatedBy() != null
                             && Objects.equals(a.getCreatedBy().getUserId(), supervisorUserId);
                     dto.put("direction", isOwn ? "SENT" : "RECEIVED");
+                    // Recipient ids are only needed by the author (to edit the audience).
+                    if (!isOwn) dto.remove("targetStudentIds");
                     return dto;
                 })
                 .toList();

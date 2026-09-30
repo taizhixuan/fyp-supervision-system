@@ -33,11 +33,19 @@ public class AnnouncementController {
     public ResponseEntity<?> getLatestAnnouncements(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(defaultValue = "5") int limit) {
+        // permitAll endpoint: cap the limit so anonymous callers can't dump the table.
+        int safeLimit = Math.min(Math.max(1, limit), 20);
+        UserRole role = roleOf(user);
         List<Map<String, Object>> dtos;
-        if (isStudent(user)) {
-            dtos = announcementService.latestForStudent(Long.parseLong(user.getUsername()), limit);
+        if (role == UserRole.STUDENT) {
+            dtos = announcementService.latestForStudent(Long.parseLong(user.getUsername()), safeLimit);
+        } else if (role == UserRole.SUPERVISOR) {
+            dtos = announcementService.listForSupervisor(Long.parseLong(user.getUsername()),
+                    Pageable.ofSize(safeLimit));
+        } else if (role == UserRole.FYP_COMMITTEE || role == UserRole.SYSTEM_ADMIN) {
+            dtos = announcementService.listAllPublished(Pageable.ofSize(safeLimit));
         } else {
-            dtos = announcementService.listAllPublished(Pageable.ofSize(Math.max(1, limit)));
+            dtos = announcementService.latestPublic(safeLimit);
         }
         return ResponseEntity.ok(Map.of("announcements", dtos));
     }
@@ -56,14 +64,18 @@ public class AnnouncementController {
         int safePage = Math.max(1, page);
         int safeLimit = Math.min(Math.max(1, limit), 100);
         Pageable pageable = PageRequest.of(safePage - 1, safeLimit);
-        if (isStudent(user)) {
+        UserRole role = roleOf(user);
+        if (role == UserRole.STUDENT) {
             Page<Map<String, Object>> pg = announcementService.listForStudent(
                     Long.parseLong(user.getUsername()), pageable);
             return ResponseEntity.ok(Map.of(
                     "announcements", pg.getContent(),
                     "total", pg.getTotalElements()));
         }
-        List<Map<String, Object>> dtos = announcementService.listAllPublished(pageable);
+        // Supervisors get their inbox/outbox view, not every published row.
+        List<Map<String, Object>> dtos = role == UserRole.SUPERVISOR
+                ? announcementService.listForSupervisor(Long.parseLong(user.getUsername()), pageable)
+                : announcementService.listAllPublished(pageable);
         return ResponseEntity.ok(Map.of("announcements", dtos, "total", dtos.size()));
     }
 
@@ -121,15 +133,16 @@ public class AnnouncementController {
                 .body(resource);
     }
 
-    private boolean isStudent(UserDetails user) {
-        if (user == null) return false;
+    /** The caller's role, or null when anonymous (the /latest endpoint is permitAll). */
+    private UserRole roleOf(UserDetails user) {
+        if (user == null) return null;
         try {
             Long userId = Long.parseLong(user.getUsername());
             return userAccountRepository.findById(userId)
-                    .map(u -> u.getRole() == UserRole.STUDENT)
-                    .orElse(false);
+                    .map(u -> u.getRole())
+                    .orElse(null);
         } catch (NumberFormatException e) {
-            return false;
+            return null;
         }
     }
 

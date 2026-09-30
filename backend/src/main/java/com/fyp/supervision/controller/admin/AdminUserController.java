@@ -72,10 +72,21 @@ public class AdminUserController {
         if (userRepository.existsByEmail(email)) throw new BadRequestException("Email already exists");
         if (mmuId != null && userRepository.existsByMmuId(mmuId)) throw new BadRequestException("MMU ID already exists");
 
+        // Either the admin sets a password, or the user gets an invite link to set their own.
+        // Never fall back to a shared default password.
+        String password = data.get("password") instanceof String p && !p.isBlank() ? p : null;
+        boolean sendInvite = Boolean.TRUE.equals(data.get("sendInviteEmail"));
+        if (password == null && !sendInvite) {
+            throw new BadRequestException("Set a password or send an invite email.");
+        }
+        if (password != null && password.length() < 8) {
+            throw new BadRequestException("Password must be at least 8 characters.");
+        }
+
         UserAccount user = UserAccount.builder()
                 .mmuId(mmuId)
                 .email(email)
-                .passwordHash(passwordEncoder.encode((String) data.getOrDefault("password", "Temp@123")))
+                .passwordHash(password != null ? passwordEncoder.encode(password) : authService.randomUnusablePassword())
                 .fullName((String) data.get("fullName"))
                 .phone((String) data.get("phone"))
                 .role(UserRole.valueOf((String) data.get("role")))
@@ -88,6 +99,9 @@ public class AdminUserController {
                 saved,
                 (String) data.get("specialisation"),
                 intFromData(data.get("intakeYear")));
+        if (sendInvite) {
+            authService.sendAccountInvite(saved);
+        }
         return ResponseEntity.ok(Map.of("userId", saved.getUserId().toString()));
     }
 

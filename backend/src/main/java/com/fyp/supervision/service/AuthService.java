@@ -52,6 +52,7 @@ import java.util.Map;
 public class AuthService {
 
     private static final long RESET_TOKEN_TTL_MINUTES = 60;
+    private static final long INVITE_TOKEN_TTL_HOURS = 72;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /** Pending-registration OTP tuning. A 6-digit code has only 1M values, so the
@@ -142,7 +143,10 @@ public class AuthService {
      *
      * @return a map with {@code status} ("ACTIVE" | "PENDING") and a user-facing {@code message}.
      */
-    @Transactional
+    // noRollbackFor: the wrong-code path saves attempts+1 and the expired / too-many
+    // paths delete the pending row before throwing. Without this, the default rollback
+    // on RuntimeException discards those writes and the attempt cap never engages.
+    @Transactional(noRollbackFor = { BadRequestException.class, ConflictException.class })
     public Map<String, Object> verifyRegistration(VerifyRegistrationRequest request) {
         String email = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
         String code = request.getCode() == null ? "" : request.getCode().trim();
@@ -615,6 +619,34 @@ public class AuthService {
         });
 
         return genericResponse;
+    }
+
+    /**
+     * Issues a one-time set-password link for an admin-created account and emails it.
+     * Reuses the reset-token table so the existing /reset-password page handles it.
+     */
+    @Transactional
+    public void sendAccountInvite(UserAccount user) {
+        passwordResetTokenRepository.deleteAllByUserId(user.getUserId());
+
+        byte[] randomBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(randomBytes);
+        String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+        passwordResetTokenRepository.save(PasswordResetToken.builder()
+                .user(user)
+                .tokenHash(sha256Hex(rawToken))
+                .expiresAt(LocalDateTime.now().plusHours(INVITE_TOKEN_TTL_HOURS))
+                .build());
+
+        emailService.sendAccountInviteEmail(user.getEmail(), user.getFullName(), rawToken);
+    }
+
+    /** A random password nobody knows, for accounts whose owner sets one via the invite link. */
+    public String randomUnusablePassword() {
+        byte[] randomBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(randomBytes);
+        return passwordEncoder.encode(Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes));
     }
 
     public boolean verifyResetToken(String token) {

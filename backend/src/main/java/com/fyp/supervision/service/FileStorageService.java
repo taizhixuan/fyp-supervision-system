@@ -41,11 +41,24 @@ public class FileStorageService {
         if (file.getSize() > MAX_IMAGE_BYTES) {
             throw new BadRequestException("Image must be 5 MB or smaller.");
         }
-        return storeFile(file, entity, userId);
+        // The static handler picks the served Content-Type from the extension, so the
+        // extension must come from the validated type, never from the client's filename
+        // (otherwise "x.html" sent as image/png is served back as HTML).
+        String ext = switch (contentType.toLowerCase()) {
+            case "image/png" -> "png";
+            case "image/webp" -> "webp";
+            case "image/gif" -> "gif";
+            default -> "jpg";
+        };
+        return storeFile(file, entity, userId, "image." + ext);
     }
 
     public String storeFile(MultipartFile file, String entity, Long userId) {
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
+        return storeFile(file, entity, userId, file.getOriginalFilename());
+    }
+
+    private String storeFile(MultipartFile file, String entity, Long userId, String filename) {
+        String originalFilename = StringUtils.cleanPath(filename != null ? filename : "file");
 
         if (originalFilename.contains("..")) {
             throw new BadRequestException("Invalid file path.");
