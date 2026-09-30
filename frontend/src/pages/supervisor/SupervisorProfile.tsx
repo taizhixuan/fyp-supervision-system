@@ -308,16 +308,8 @@ export function SupervisorProfile() {
                     <div className="p-2 bg-sky-100 rounded-lg">
                       <Mail className="h-4 w-4 text-sky-600" />
                     </div>
-                    {isEditing ? (
-                      <Input
-                        {...register('email')}
-                        type="email"
-                        className="flex-1"
-                        error={errors.email?.message}
-                      />
-                    ) : (
-                      <span className="text-sm text-stone-600">{profile?.email}</span>
-                    )}
+                    {/* Email is the login identity; only an administrator can change it. */}
+                    <span className="text-sm text-stone-600">{profile?.email}</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
                     <div className="p-2 bg-emerald-100 rounded-lg">

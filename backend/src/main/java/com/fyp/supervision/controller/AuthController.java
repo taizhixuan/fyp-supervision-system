@@ -5,8 +5,11 @@ import com.fyp.supervision.dto.common.MessageResponse;
 import com.fyp.supervision.dto.common.UserDto;
 import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.UserAccountRepository;
+import com.fyp.supervision.service.AuditService;
 import com.fyp.supervision.service.AuthService;
+import com.fyp.supervision.service.RateLimitService;
 import com.fyp.supervision.service.FileStorageService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,21 +29,37 @@ public class AuthController {
     private final AuthService authService;
     private final FileStorageService fileStorageService;
     private final UserAccountRepository userAccountRepository;
+    private final RateLimitService rateLimitService;
+
+    /** Throttle unauthenticated endpoints that send email or check a code. */
+    private void throttle(HttpServletRequest http, String email) {
+        rateLimitService.requireKey("auth-ip", AuditService.clientIp(http));
+        if (email != null && !email.isBlank()) {
+            rateLimitService.requireKey("auth-email", email.trim().toLowerCase());
+        }
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request,
+                                                    HttpServletRequest http) {
+        throttle(http, request.getEmail());
         String message = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(message));
     }
 
     @PostMapping("/register/verify")
-    public ResponseEntity<Map<String, Object>> verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request) {
+    public ResponseEntity<Map<String, Object>> verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request,
+                                                                  HttpServletRequest http) {
+        // The per-code attempt cap already limits guesses; this stops cycling registrations.
+        rateLimitService.requireKey("otp-verify-ip", AuditService.clientIp(http));
         Map<String, Object> result = authService.verifyRegistration(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PostMapping("/register/resend")
-    public ResponseEntity<MessageResponse> resendRegistrationOtp(@Valid @RequestBody ResendRegistrationOtpRequest request) {
+    public ResponseEntity<MessageResponse> resendRegistrationOtp(@Valid @RequestBody ResendRegistrationOtpRequest request,
+                                                                 HttpServletRequest http) {
+        throttle(http, request.getEmail());
         String message = authService.resendRegistrationOtp(request);
         return ResponseEntity.ok(new MessageResponse(message));
     }
@@ -65,12 +84,13 @@ public class AuthController {
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<MessageResponse> changePassword(
+    public ResponseEntity<Map<String, Object>> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
         Long userId = Long.parseLong(userDetails.getUsername());
-        authService.changePassword(userId, request);
-        return ResponseEntity.ok(new MessageResponse("Password changed successfully."));
+        String token = authService.changePassword(userId, request);
+        // Other sessions are revoked; the caller swaps in this token to stay signed in.
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully.", "accessToken", token));
     }
 
     @PutMapping("/update-profile")
@@ -103,7 +123,9 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request,
+                                                          HttpServletRequest http) {
+        throttle(http, request.getEmail());
         String message = authService.forgotPassword(request);
         return ResponseEntity.ok(new MessageResponse(message));
     }

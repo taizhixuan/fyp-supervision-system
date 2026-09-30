@@ -55,6 +55,11 @@ public class UserAccount {
     @Builder.Default
     private Integer loginAttempts = 0;
 
+    /** Embedded in each JWT ("tv"); bumped on password change/reset to revoke older tokens. */
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Integer tokenVersion = 0;
+
     /** Set when the account is temporarily locked. NULL when not locked. */
     @Column(name = "lockout_until")
     private LocalDateTime lockoutUntil;

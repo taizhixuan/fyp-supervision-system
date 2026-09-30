@@ -63,7 +63,7 @@ public class AuditService {
         record(actor, action, entityName, entityId, details, request);
     }
 
-    private static String clientIp(HttpServletRequest req) {
+    public static String clientIp(HttpServletRequest req) {
         // Honour X-Forwarded-For when behind a proxy/load balancer; first hop only.
         String xff = req.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {

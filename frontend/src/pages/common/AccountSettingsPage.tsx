@@ -552,6 +552,8 @@ function ProfileTab() {
         <Input
           label="Email Address"
           type="email"
+          disabled
+          helperText="Contact an administrator to change your email"
           error={errors.email?.message}
           {...register('email')}
         />

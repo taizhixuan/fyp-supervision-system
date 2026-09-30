@@ -24,7 +24,7 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(Long userId, String email, String role) {
+    public String generateToken(Long userId, String email, String role, int tokenVersion) {
         Date now = new Date();
         // Session length is admin-tunable via the session_timeout_minutes parameter;
         // falls back to the configured JWT expiry (default 24h = 1440 min) if unset.
@@ -36,6 +36,7 @@ public class JwtTokenProvider {
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("role", role)
+                .claim("tv", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -49,6 +50,17 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
         return Long.parseLong(claims.getSubject());
+    }
+
+    /** The token's "tv" claim; tokens issued before V55 have none and count as version 0. */
+    public int getTokenVersionFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        Integer tv = claims.get("tv", Integer.class);
+        return tv == null ? 0 : tv;
     }
 
     public boolean validateToken(String token) {

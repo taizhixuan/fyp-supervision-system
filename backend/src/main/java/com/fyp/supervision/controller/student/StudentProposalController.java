@@ -180,6 +180,8 @@ public class StudentProposalController {
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeProposal(@AuthenticationPrincipal UserDetails user) {
         Long userId = Long.parseLong(user.getUsername());
+        // Persists an analysis result, so it's a write like the other proposal endpoints.
+        studentAccessService.requireActiveCycle(userId);
         // Rate limit — analyser can call an external LLM when LLM_API_KEY is set.
         rateLimitService.require("analyze", userId);
         return studentService.getProposal(userId)

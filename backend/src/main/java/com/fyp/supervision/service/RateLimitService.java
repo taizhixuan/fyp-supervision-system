@@ -42,7 +42,15 @@ public class RateLimitService {
     }
 
     public void require(String scope, Long userId) {
-        Bucket bucket = bucketFor(scope, userId);
+        requireKey(scope, String.valueOf(userId));
+    }
+
+    /**
+     * Same as {@link #require} but keyed by an arbitrary string, for endpoints with no
+     * signed-in user (register / OTP / forgot-password are keyed by email and by IP).
+     */
+    public void requireKey(String scope, String key) {
+        Bucket bucket = buckets.computeIfAbsent(scope + ":" + key, k -> newBucket(scope));
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             Duration retryAfter = Duration.ofNanos(probe.getNanosToWaitForRefill());
@@ -56,15 +64,15 @@ public class RateLimitService {
         }
     }
 
-    private Bucket bucketFor(String scope, Long userId) {
-        String key = scope + ":" + userId;
-        return buckets.computeIfAbsent(key, k -> newBucket(scope));
-    }
-
     private Bucket newBucket(String scope) {
         int perHour = switch (scope) {
             case "chat" -> chatPerHour;
             case "analyze" -> analyzePerHour;
+            // Unauthenticated auth endpoints. Per-email limits stop mail-bombing one inbox
+            // and OTP guessing; per-IP limits are looser because users can share a NAT.
+            case "auth-email" -> 6;
+            case "auth-ip" -> 60;
+            case "otp-verify-ip" -> 60;
             default -> 60; // safe generic default for any new scope added without config
         };
         // Token-bucket with refill over a rolling 1-hour window.

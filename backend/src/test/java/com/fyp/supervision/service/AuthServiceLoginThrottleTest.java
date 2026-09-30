@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,7 +78,7 @@ class AuthServiceLoginThrottleTest {
         when(userAccountRepository.findByEmailOrMmuId("test.user@mmu.edu.my"))
                 .thenReturn(Optional.of(user));
         when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(jwtTokenProvider.generateToken(any(), any(), any())).thenReturn("jwt-token");
+        when(jwtTokenProvider.generateToken(any(), any(), any(), anyInt())).thenReturn("jwt-token");
     }
 
     private LoginRequest req(String pwd) {

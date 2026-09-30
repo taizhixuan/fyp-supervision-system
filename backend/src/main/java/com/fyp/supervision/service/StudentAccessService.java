@@ -5,6 +5,7 @@ import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.exception.ForbiddenException;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.ProposalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class StudentAccessService {
             "Your FYP cycle has ended — your access is read-only.";
 
     private final ProjectRepository projectRepository;
+    private final ProposalRepository proposalRepository;
 
     public boolean isCycleActive(Long studentUserId) {
         Optional<Project> projectOpt = projectRepository.findByStudent_UserId(studentUserId);
@@ -31,9 +33,17 @@ public class StudentAccessService {
             // submitting a supervisor request before being attached to a placeholder).
             return true;
         }
-        FypCycle cycle = projectOpt.get().getCycle();
+        Project project = projectOpt.get();
+        FypCycle cycle = project.getCycle();
         if (cycle == null || cycle.getStatus() == null) return true;
-        return cycle.getStatus() == CycleStatus.PLANNING || cycle.getStatus() == CycleStatus.ACTIVE;
+        if (cycle.getStatus() == CycleStatus.PLANNING || cycle.getStatus() == CycleStatus.ACTIVE) return true;
+        // Same rule as StudentService.buildRegistrationStatus: a stale placeholder on a
+        // finished cycle (never paired, no proposal) is still "in discovery" and waiting
+        // for the next FYP1 backfill, so the dashboard shows it as active. Without this
+        // the UI unlocks Find Supervisor while every request 403s.
+        boolean hadEngagement = project.getSupervisor() != null
+                || proposalRepository.findByStudent_UserId(studentUserId).isPresent();
+        return !hadEngagement;
     }
 
     public CycleStatus currentCycleStatus(Long studentUserId) {

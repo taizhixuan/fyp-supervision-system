@@ -33,7 +33,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 Long userId = tokenProvider.getUserIdFromToken(jwt);
-                UserDetails userDetails = userDetailsService.loadUserById(userId);
+                int tokenVersion = tokenProvider.getTokenVersionFromToken(jwt);
+                // Throws (-> unauthenticated -> 401) when the password has changed since
+                // this token was issued.
+                UserDetails userDetails = userDetailsService.loadUserByIdForToken(userId, tokenVersion);
 
                 // Re-check live account status on every request. A token stays valid for
                 // its full TTL, so without this a BLOCKED/SUSPENDED/anonymised user keeps

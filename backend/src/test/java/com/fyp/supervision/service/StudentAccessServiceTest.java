@@ -4,7 +4,9 @@ import com.fyp.supervision.entity.FypCycle;
 import com.fyp.supervision.entity.Project;
 import com.fyp.supervision.enums.CycleStatus;
 import com.fyp.supervision.exception.ForbiddenException;
+import com.fyp.supervision.entity.UserAccount;
 import com.fyp.supervision.repository.ProjectRepository;
+import com.fyp.supervision.repository.ProposalRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,15 +26,31 @@ class StudentAccessServiceTest {
     @Mock
     ProjectRepository projectRepository;
 
+    @Mock
+    ProposalRepository proposalRepository;
+
     @InjectMocks
     StudentAccessService service;
 
+    /** A paired (engaged) student's project in a cycle with the given status. */
     private Project projectWithCycleStatus(CycleStatus status) {
         FypCycle cycle = new FypCycle();
         cycle.setStatus(status);
         Project p = new Project();
         p.setCycle(cycle);
+        p.setSupervisor(new UserAccount());
         return p;
+    }
+
+    @Test
+    void isCycleActive_trueForUnpairedPlaceholderOnFinishedCycle() {
+        // Never paired, no proposal: waiting for the next FYP1 backfill, so writes such as
+        // sending a supervision request must still work (matches the dashboard's cycleActive).
+        Project placeholder = projectWithCycleStatus(CycleStatus.COMPLETED);
+        placeholder.setSupervisor(null);
+        when(projectRepository.findByStudent_UserId(8L)).thenReturn(Optional.of(placeholder));
+        when(proposalRepository.findByStudent_UserId(8L)).thenReturn(Optional.empty());
+        assertThat(service.isCycleActive(8L)).isTrue();
     }
 
     @Test

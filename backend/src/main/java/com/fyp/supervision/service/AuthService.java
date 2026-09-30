@@ -516,7 +516,8 @@ public class AuthService {
         auditService.record(user, "LOGIN_SUCCESS", "USER_ACCOUNT",
                 String.valueOf(user.getUserId()), null, httpRequest);
 
-        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
+        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name(),
+                user.getTokenVersion() == null ? 0 : user.getTokenVersion());
 
         String currentPhase = null;
         Boolean fyp1Passed = null;
@@ -547,7 +548,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest request) {
+    public String changePassword(Long userId, ChangePasswordRequest request) {
         UserAccount user = userAccountRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
@@ -556,7 +557,11 @@ public class AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        // Revoke every other session; hand this one a fresh token so the user stays signed in.
+        user.setTokenVersion((user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1);
         userAccountRepository.save(user);
+        return jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name(),
+                user.getTokenVersion());
     }
 
     @Transactional
@@ -564,11 +569,11 @@ public class AuthService {
         UserAccount user = userAccountRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
-        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            if (userAccountRepository.existsByEmail(request.getEmail())) {
-                throw new ConflictException("Email is already in use.");
-            }
-            user.setEmail(request.getEmail());
+        // Email is the verified login identity (OTP-checked at registration and tied to the
+        // role's MMU domain), so it can't be self-changed without re-verification. Admins
+        // can still change it from user management.
+        if (request.getEmail() != null && !request.getEmail().trim().equalsIgnoreCase(user.getEmail())) {
+            throw new BadRequestException("Your email address can't be changed here. Please contact an administrator.");
         }
 
         if (request.getPhone() != null) {
@@ -678,6 +683,11 @@ public class AuthService {
 
         UserAccount user = record.getUser();
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        // A reset usually means the password was lost or stolen: revoke all existing
+        // sessions, and lift any lockout left over from failed guesses.
+        user.setTokenVersion((user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1);
+        user.setLoginAttempts(0);
+        user.setLockoutUntil(null);
         userAccountRepository.save(user);
 
         record.setUsedAt(LocalDateTime.now());

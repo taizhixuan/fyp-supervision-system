@@ -84,8 +84,13 @@ export const authApi = {
   /**
    * Change password for authenticated user
    */
-  changePassword: async (data: ChangePasswordRequest): Promise<{ message: string }> => {
+  changePassword: async (data: ChangePasswordRequest): Promise<{ message: string; accessToken?: string }> => {
     const response = await api.put('/auth/change-password', data)
+    // Changing the password revokes every existing token (including this one), so
+    // keep this session alive with the fresh token the backend returns.
+    if (response.data?.accessToken) {
+      localStorage.setItem('access_token', response.data.accessToken)
+    }
     return response.data
   },
 

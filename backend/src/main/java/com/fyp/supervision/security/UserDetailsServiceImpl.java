@@ -33,6 +33,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return buildUserDetails(user);
     }
 
+    /** Like {@link #loadUserById} but rejects tokens issued before the last password change. */
+    public UserDetails loadUserByIdForToken(Long userId, int tokenVersion) {
+        UserAccount user = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+        int current = user.getTokenVersion() == null ? 0 : user.getTokenVersion();
+        if (current != tokenVersion) {
+            throw new UsernameNotFoundException("Token revoked for user id: " + userId);
+        }
+        return buildUserDetails(user);
+    }
+
     private UserDetails buildUserDetails(UserAccount user) {
         return new User(
                 user.getUserId().toString(),
