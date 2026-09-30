@@ -24,10 +24,6 @@ import type {
   ProjectRegistration,
   Meeting,
   CreateMeetingData,
-  MeetingSlot,
-  SupervisionLog,
-  CreateLogData,
-  UpdateLogData,
   FYPDocument,
   UploadDocumentData,
   Deadline,
@@ -743,19 +739,6 @@ export function useMeetingDetail(meetingId: string) {
   })
 }
 
-export function useSupervisorAvailableSlots(supervisorId: string, date: string) {
-  return useQuery({
-    queryKey: studentKeys.meetingSlots(supervisorId, date),
-    queryFn: async () => {
-      const { data } = await apiClient.get<{
-        slots: MeetingSlot[]
-      }>(`/supervisors/${supervisorId}/availability`, { params: { date } })
-      return data
-    },
-    enabled: !!supervisorId && !!date,
-  })
-}
-
 export type AvailableSlot = {
   start: string
   end: string
@@ -883,80 +866,6 @@ export function useExportMeetings() {
       a.remove()
       window.URL.revokeObjectURL(url)
       return response.data
-    },
-  })
-}
-
-// ==================== Supervision Logs ====================
-interface LogListParams {
-  status?: string
-  page?: number
-  limit?: number
-}
-
-export function useLogList(params?: LogListParams) {
-  return useQuery({
-    queryKey: studentKeys.logList(params),
-    queryFn: async () => {
-      const { data } = await apiClient.get<{
-        logs: SupervisionLog[]
-        total: number
-      }>('/student/logs', { params })
-      return data
-    },
-  })
-}
-
-export function useLogDetail(logId: string) {
-  return useQuery({
-    queryKey: studentKeys.logDetail(logId),
-    queryFn: async () => {
-      const { data } = await apiClient.get<SupervisionLog>(`/student/logs/${logId}`)
-      return data
-    },
-    enabled: !!logId,
-  })
-}
-
-export function useCreateLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (logData: CreateLogData) => {
-      const { data } = await apiClient.post<SupervisionLog>('/student/logs', logData)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: studentKeys.logs() })
-      queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
-    },
-  })
-}
-
-export function useUpdateLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ logId, logData }: { logId: string; logData: UpdateLogData }) => {
-      const { data } = await apiClient.put<SupervisionLog>(`/student/logs/${logId}`, logData)
-      return data
-    },
-    onSuccess: (_, { logId }) => {
-      queryClient.invalidateQueries({ queryKey: studentKeys.logDetail(logId) })
-      queryClient.invalidateQueries({ queryKey: studentKeys.logList() })
-    },
-  })
-}
-
-export function useSubmitLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (logId: string) => {
-      const { data } = await apiClient.post<SupervisionLog>(`/student/logs/${logId}/submit`)
-      return data
-    },
-    onSuccess: (_, logId) => {
-      queryClient.invalidateQueries({ queryKey: studentKeys.logDetail(logId) })
-      queryClient.invalidateQueries({ queryKey: studentKeys.logList() })
-      queryClient.invalidateQueries({ queryKey: studentKeys.dashboard() })
     },
   })
 }

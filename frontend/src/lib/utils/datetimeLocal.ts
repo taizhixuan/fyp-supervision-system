@@ -24,6 +24,12 @@ export function localDatetimeToLocalDateTime(value: string): string {
  * shape a <input type="datetime-local"> expects ("YYYY-MM-DDTHH:mm"), with
  * no timezone shift.
  */
+/** A Date as a datetime-local value in the browser's local time (no UTC shift). */
+export function dateToInput(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export function localDateTimeToInput(value?: string | null): string {
   if (!value) return ''
   const m = value.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/)

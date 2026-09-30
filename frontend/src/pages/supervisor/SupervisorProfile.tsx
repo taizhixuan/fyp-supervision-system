@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { safeHref } from '@/lib/utils/safeHref'
 import { useForm } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -418,7 +419,7 @@ export function SupervisorProfile() {
                     />
                   ) : profile?.linkedInUrl ? (
                     <a
-                      href={profile.linkedInUrl}
+                      href={safeHref(profile.linkedInUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center gap-2"
@@ -440,7 +441,7 @@ export function SupervisorProfile() {
                     />
                   ) : profile?.googleScholarUrl ? (
                     <a
-                      href={profile.googleScholarUrl}
+                      href={safeHref(profile.googleScholarUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-sky-600 hover:text-sky-700 font-medium flex items-center gap-2"

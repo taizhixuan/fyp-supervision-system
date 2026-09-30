@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, Fragment, useMemo } from 'react'
+import { safeHref } from '@/lib/utils/safeHref'
 import { Link } from 'react-router-dom'
 import {
   Bot,
@@ -128,7 +129,7 @@ function ReferenceList({ references }: { references: ChatReference[] }) {
           </span>
         )
         return ref.url ? (
-          <a key={i} href={ref.url} target="_blank" rel="noreferrer" className="hover:opacity-90 transition-opacity">
+          <a key={i} href={safeHref(ref.url)} target="_blank" rel="noreferrer" className="hover:opacity-90 transition-opacity">
             {inner}
           </a>
         ) : (

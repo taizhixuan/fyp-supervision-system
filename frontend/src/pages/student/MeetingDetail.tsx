@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { safeHref } from '@/lib/utils/safeHref'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -437,7 +438,7 @@ export function MeetingDetail() {
                   >
                     {linkCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
                   </button>
-                  <a href={displayMeeting.meetingLink} target="_blank" rel="noopener noreferrer">
+                  <a href={safeHref(displayMeeting.meetingLink)} target="_blank" rel="noopener noreferrer">
                     <Button
                       variant="primary"
                       className="shadow-lg shadow-primary-500/25"
@@ -574,7 +575,7 @@ export function MeetingDetail() {
             <h3 className="text-sm font-medium text-neutral-500 mb-4">Quick Actions</h3>
             <div className="space-y-2">
               {canJoinOnline && (
-                <a href={displayMeeting.meetingLink} target="_blank" rel="noopener noreferrer" className="block">
+                <a href={safeHref(displayMeeting.meetingLink)} target="_blank" rel="noopener noreferrer" className="block">
                   <Button
                     variant="primary"
                     className="w-full bg-gradient-to-r from-primary-600 to-primary-700 shadow-md"

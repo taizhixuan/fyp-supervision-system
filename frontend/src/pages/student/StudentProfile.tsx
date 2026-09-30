@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { safeHref } from '@/lib/utils/safeHref'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -448,7 +449,7 @@ export function StudentProfile() {
           <div className="flex gap-2">
             {displayProfile.linkedinUrl && (
               <a
-                href={displayProfile.linkedinUrl}
+                href={safeHref(displayProfile.linkedinUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 hover:bg-primary-100 hover:text-primary-600 transition-colors"
@@ -458,7 +459,7 @@ export function StudentProfile() {
             )}
             {displayProfile.githubUrl && (
               <a
-                href={displayProfile.githubUrl}
+                href={safeHref(displayProfile.githubUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 hover:bg-neutral-900 hover:text-white transition-colors"
@@ -468,7 +469,7 @@ export function StudentProfile() {
             )}
             {displayProfile.portfolioUrl && (
               <a
-                href={displayProfile.portfolioUrl}
+                href={safeHref(displayProfile.portfolioUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 hover:bg-success-100 hover:text-success-600 transition-colors"
@@ -701,7 +702,7 @@ export function StudentProfile() {
               <Linkedin className="h-5 w-5 text-neutral-400" />
               {displayProfile.linkedinUrl ? (
                 <a
-                  href={displayProfile.linkedinUrl}
+                  href={safeHref(displayProfile.linkedinUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 hover:underline"
@@ -716,7 +717,7 @@ export function StudentProfile() {
               <Github className="h-5 w-5 text-neutral-400" />
               {displayProfile.githubUrl ? (
                 <a
-                  href={displayProfile.githubUrl}
+                  href={safeHref(displayProfile.githubUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 hover:underline"
@@ -731,7 +732,7 @@ export function StudentProfile() {
               <Globe className="h-5 w-5 text-neutral-400" />
               {displayProfile.portfolioUrl ? (
                 <a
-                  href={displayProfile.portfolioUrl}
+                  href={safeHref(displayProfile.portfolioUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 hover:underline"

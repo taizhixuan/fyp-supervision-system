@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants/routes'
 
 // Auth pages - Keep essential pages eager for fast initial load
@@ -43,10 +43,6 @@ const MeetingList = lazy(() => import('@/pages/student/MeetingList').then(m => (
 const MeetingRequest = lazy(() => import('@/pages/student/MeetingRequest').then(m => ({ default: m.MeetingRequest })))
 const MeetingDetail = lazy(() => import('@/pages/student/MeetingDetail').then(m => ({ default: m.MeetingDetail })))
 const MeetingExport = lazy(() => import('@/pages/student/MeetingExport').then(m => ({ default: m.MeetingExport })))
-const LogList = lazy(() => import('@/pages/student/LogList').then(m => ({ default: m.LogList })))
-const LogCreate = lazy(() => import('@/pages/student/LogCreate').then(m => ({ default: m.LogCreate })))
-const LogDetail = lazy(() => import('@/pages/student/LogDetail').then(m => ({ default: m.LogDetail })))
-const LogEdit = lazy(() => import('@/pages/student/LogEdit').then(m => ({ default: m.LogEdit })))
 const MeetingLogList = lazy(() => import('@/pages/student/MeetingLogList').then(m => ({ default: m.MeetingLogList })))
 const MeetingLogCreate = lazy(() => import('@/pages/student/MeetingLogCreate').then(m => ({ default: m.MeetingLogCreate })))
 const MeetingLogDetail = lazy(() => import('@/pages/student/MeetingLogDetail').then(m => ({ default: m.MeetingLogDetail })))
@@ -76,8 +72,19 @@ const MeetingManagement = lazy(() => import('@/pages/supervisor/MeetingManagemen
 const SupervisorMeetingDetail = lazy(() => import('@/pages/supervisor/MeetingDetail').then(m => ({ default: m.MeetingDetail })))
 const CreateMeeting = lazy(() => import('@/pages/supervisor/CreateMeeting').then(m => ({ default: m.CreateMeeting })))
 const MyAvailability = lazy(() => import('@/pages/supervisor/MyAvailability').then(m => ({ default: m.MyAvailability })))
-const LogsReview = lazy(() => import('@/pages/supervisor/LogsReview').then(m => ({ default: m.LogsReview })))
-const SupervisorLogDetail = lazy(() => import('@/pages/supervisor/LogDetail').then(m => ({ default: m.LogDetail })))
+// The legacy /supervisor/logs pages were replaced by /supervisor/meeting-logs (same log ids);
+// keep old links and bookmarks working.
+function LegacySupervisorLogRedirect() {
+  const { id } = useParams()
+  return <Navigate to={ROUTES.SUPERVISOR.MEETING_LOG_DETAIL.replace(':id', id ?? '')} replace />
+}
+
+// Same for the student side: /student/logs was superseded by /student/meeting-logs.
+function LegacyStudentLogRedirect({ edit = false }: { edit?: boolean }) {
+  const { id } = useParams()
+  const target = edit ? ROUTES.STUDENT.MEETING_LOG_EDIT : ROUTES.STUDENT.MEETING_LOG_DETAIL
+  return <Navigate to={target.replace(':id', id ?? '')} replace />
+}
 const MeetingLogReview = lazy(() => import('@/pages/supervisor/MeetingLogReview').then(m => ({ default: m.MeetingLogReview })))
 const MeetingLogReviewDetail = lazy(() => import('@/pages/supervisor/MeetingLogReviewDetail').then(m => ({ default: m.MeetingLogReviewDetail })))
 const DocumentsReview = lazy(() => import('@/pages/supervisor/DocumentsReview').then(m => ({ default: m.DocumentsReview })))
@@ -373,39 +380,11 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Supervision Logs
-      {
-        path: ROUTES.STUDENT.LOGS,
-        element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><LogList /></StudentFeatureGate>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.STUDENT.LOG_NEW,
-        element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><CycleActiveGate><LogCreate /></CycleActiveGate></StudentFeatureGate>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.STUDENT.LOG_DETAIL,
-        element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><LogDetail /></StudentFeatureGate>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: ROUTES.STUDENT.LOG_EDIT,
-        element: (
-          <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><LogEdit /></StudentFeatureGate>
-          </ProtectedRoute>
-        ),
-      },
+      // Legacy supervision-log URLs -> meeting logs
+      { path: ROUTES.STUDENT.LOGS, element: <Navigate to={ROUTES.STUDENT.MEETING_LOGS} replace /> },
+      { path: ROUTES.STUDENT.LOG_NEW, element: <Navigate to={ROUTES.STUDENT.MEETING_LOG_NEW} replace /> },
+      { path: ROUTES.STUDENT.LOG_DETAIL, element: <LegacyStudentLogRedirect /> },
+      { path: ROUTES.STUDENT.LOG_EDIT, element: <LegacyStudentLogRedirect edit /> },
 
       // Meeting Logs (MMU FCI Format)
       {
@@ -436,7 +415,7 @@ export const router = createBrowserRouter([
         path: ROUTES.STUDENT.MEETING_LOG_EDIT,
         element: (
           <ProtectedRoute allowedRoles={['STUDENT']}>
-            <StudentFeatureGate><MeetingLogEdit /></StudentFeatureGate>
+            <StudentFeatureGate><CycleActiveGate><MeetingLogEdit /></CycleActiveGate></StudentFeatureGate>
           </ProtectedRoute>
         ),
       },
@@ -652,19 +631,11 @@ export const router = createBrowserRouter([
       // Supervision Logs
       {
         path: ROUTES.SUPERVISOR.LOGS,
-        element: (
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <LogsReview />
-          </ProtectedRoute>
-        ),
+        element: <Navigate to={ROUTES.SUPERVISOR.MEETING_LOGS} replace />,
       },
       {
         path: ROUTES.SUPERVISOR.LOG_DETAIL,
-        element: (
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <SupervisorLogDetail />
-          </ProtectedRoute>
-        ),
+        element: <LegacySupervisorLogRedirect />,
       },
 
       // Meeting Logs (MMU FCI Format)

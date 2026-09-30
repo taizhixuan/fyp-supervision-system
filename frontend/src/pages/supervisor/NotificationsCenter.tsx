@@ -33,8 +33,8 @@ const getNotificationLink = (n: SupervisorNotificationLike): string => {
   if (t === 'MEETING' || t.startsWith('MEETING_')) {
     if (title.includes('log')) {
       return n.relatedEntityId
-        ? ROUTES.SUPERVISOR.LOG_DETAIL.replace(':id', String(n.relatedEntityId))
-        : ROUTES.SUPERVISOR.LOGS
+        ? ROUTES.SUPERVISOR.MEETING_LOG_DETAIL.replace(':id', String(n.relatedEntityId))
+        : ROUTES.SUPERVISOR.MEETING_LOGS
     }
     return n.relatedEntityId
       ? ROUTES.SUPERVISOR.MEETING_DETAIL.replace(':id', String(n.relatedEntityId))
@@ -42,8 +42,8 @@ const getNotificationLink = (n: SupervisorNotificationLike): string => {
   }
   if (t === 'LOG_SUBMITTED') {
     return n.relatedEntityId
-      ? ROUTES.SUPERVISOR.LOG_DETAIL.replace(':id', String(n.relatedEntityId))
-      : ROUTES.SUPERVISOR.LOGS
+      ? ROUTES.SUPERVISOR.MEETING_LOG_DETAIL.replace(':id', String(n.relatedEntityId))
+      : ROUTES.SUPERVISOR.MEETING_LOGS
   }
   if (t === 'DOCUMENT_UPLOADED') {
     return n.relatedEntityId

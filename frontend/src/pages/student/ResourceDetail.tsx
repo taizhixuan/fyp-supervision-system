@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import { safeHref } from '@/lib/utils/safeHref'
 import {
   ArrowLeft,
   Download,
@@ -159,7 +160,7 @@ export function ResourceDetail() {
                     <Play className="h-10 w-10 text-white ml-1" />
                   </div>
                   <a
-                    href={displayResource.externalUrl}
+                    href={safeHref(displayResource.externalUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-white hover:underline"
@@ -262,7 +263,7 @@ export function ResourceDetail() {
                 </Button>
               )}
               {displayResource.externalUrl && (
-                <a href={displayResource.externalUrl} target="_blank" rel="noopener noreferrer">
+                <a href={safeHref(displayResource.externalUrl)} target="_blank" rel="noopener noreferrer">
                   <Button variant="primary" className="w-full" leftIcon={<ExternalLink className="h-4 w-4" />}>
                     Open Link
                   </Button>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { safeHref } from '@/lib/utils/safeHref'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -396,7 +397,7 @@ export function MeetingDetail() {
 
               {/* Join Button */}
               <a
-                href={meeting.meetingUrl}
+                href={safeHref(meeting.meetingUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"

@@ -7,7 +7,6 @@ import type {
   Supervisee,
   ProposalForReview,
   SupervisorMeeting,
-  SupervisionLogForReview,
   SuperviseeDocument,
   SupervisorAnnouncement,
   CreateSupervisorAnnouncementData,
@@ -169,6 +168,8 @@ export function useRespondToRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supervisorKeys.requests() })
       queryClient.invalidateQueries({ queryKey: supervisorKeys.dashboard() })
+      // An accepted request adds a supervisee; don't wait out the 60 s staleTime.
+      queryClient.invalidateQueries({ queryKey: supervisorKeys.supervisees() })
     },
   })
 }
@@ -375,68 +376,6 @@ export function useCompleteMeeting() {
 }
 
 // Logs
-export function useLogsForReview() {
-  return useQuery({
-    queryKey: supervisorKeys.logs(),
-    queryFn: async () => {
-      const { data } = await apiClient.get<{ logs: SupervisionLogForReview[]; total: number }>(
-        '/supervisor/logs'
-      )
-      return data
-    },
-    staleTime: 30000,
-  })
-}
-
-export function useLogForReview(logId: number) {
-  return useQuery({
-    queryKey: supervisorKeys.log(logId),
-    queryFn: async () => {
-      const { data } = await apiClient.get<SupervisionLogForReview>(`/supervisor/logs/${logId}`)
-      return data
-    },
-    enabled: !!logId,
-  })
-}
-
-export function useReviewLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({
-      logId,
-      action,
-      comment,
-    }: {
-      logId: number
-      action: 'APPROVE' | 'REQUEST_REVISION'
-      comment?: string
-    }) => {
-      const { data } = await apiClient.post(`/supervisor/logs/${logId}/review`, {
-        action,
-        comment,
-      })
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: supervisorKeys.logs() })
-      queryClient.invalidateQueries({ queryKey: supervisorKeys.dashboard() })
-    },
-  })
-}
-
-export function useSignLog() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (logId: number) => {
-      const { data } = await apiClient.post(`/supervisor/logs/${logId}/sign`)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: supervisorKeys.logs() })
-    },
-  })
-}
-
 // Documents
 export function useSuperviseeDocuments(filters?: { studentId?: string; type?: string }) {
   return useQuery({
@@ -588,7 +527,11 @@ export function useUpdateAnnouncement() {
     mutationFn: async ({
       announcementId,
       ...announcementData
-    }: Partial<SupervisorAnnouncement> & { announcementId: number }) => {
+    }: Omit<Partial<SupervisorAnnouncement>, 'expiresAt' | 'links'> & {
+      announcementId: number
+      expiresAt?: string | null
+      links?: { label: string; url: string }[]
+    }) => {
       const { data } = await apiClient.put(
         `/supervisor/announcements/${announcementId}`,
         announcementData

@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { dateToInput, localDateTimeToInput } from '@/lib/utils/datetimeLocal'
+import { useErrorToast } from '@/components/ui/Toast'
+import { getApiErrorMessage } from '@/lib/api/client'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,6 +49,7 @@ export function CreateAnnouncement() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isEditing = !!id
+  const showError = useErrorToast()
 
   const { data: existingAnnouncement, isLoading: loadingAnnouncement } = useSupervisorAnnouncement(Number(id))
   const { data: superviseesData } = useSupervisees()
@@ -68,7 +72,7 @@ export function CreateAnnouncement() {
     defaultValues: {
       visibility: 'ALL_SUPERVISEES',
       priority: 'NORMAL',
-      publishAt: new Date().toISOString().slice(0, 16),
+      publishAt: dateToInput(),
       targetStudentIds: [],
     },
   })
@@ -83,12 +87,13 @@ export function CreateAnnouncement() {
         content: existingAnnouncement.content,
         visibility: existingAnnouncement.visibility,
         priority: existingAnnouncement.priority,
-        publishAt: new Date(existingAnnouncement.publishAt).toISOString().slice(0, 16),
+        publishAt: localDateTimeToInput(existingAnnouncement.publishAt),
         expiresAt: existingAnnouncement.expiresAt
-          ? new Date(existingAnnouncement.expiresAt).toISOString().slice(0, 16)
+          ? localDateTimeToInput(existingAnnouncement.expiresAt)
           : undefined,
         targetStudentIds: existingAnnouncement.targetStudentIds || [],
       })
+      setLinks((existingAnnouncement.links ?? []).map((l: { label: string; url: string }) => ({ label: l.label, url: l.url })))
     }
   }, [existingAnnouncement, reset])
 
@@ -109,7 +114,9 @@ export function CreateAnnouncement() {
           priority: data.priority,
           targetStudentIds: data.targetStudentIds,
           publishAt,
-          expiresAt,
+          // null clears it; undefined would be dropped from the JSON and left unchanged
+          expiresAt: expiresAt ?? null,
+          links: cleanedLinks,
           isActive: true,
         })
       } else {
@@ -128,7 +135,7 @@ export function CreateAnnouncement() {
       }
       navigate(ROUTES.SUPERVISOR.ANNOUNCEMENTS)
     } catch (error) {
-      console.error('Failed to save announcement:', error)
+      showError('Could not save announcement', getApiErrorMessage(error))
     }
   }
 
@@ -364,6 +371,8 @@ export function CreateAnnouncement() {
               <input
                 type="file"
                 multiple
+                disabled={isEditing}
+                title={isEditing ? 'Attachments can only be added when creating an announcement' : undefined}
                 onChange={handleFileSelect}
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*,.txt,.zip"
                 className="block w-full text-sm text-neutral-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"

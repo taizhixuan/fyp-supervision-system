@@ -20,8 +20,6 @@ export { MeetingDetail } from './MeetingDetail'
 export { CreateMeeting } from './CreateMeeting'
 
 // Supervision Logs
-export { LogsReview } from './LogsReview'
-export { LogDetail } from './LogDetail'
 
 // Documents
 export { DocumentsReview } from './DocumentsReview'

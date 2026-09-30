@@ -110,7 +110,11 @@ export function useCreateCommitteeAnnouncement() {
 export function useUpdateCommitteeAnnouncement() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: Partial<FYPAnnouncement> & { announcementId: number }) => {
+    mutationFn: async (data: Omit<Partial<FYPAnnouncement>, 'expiresAt' | 'links'> & {
+      announcementId: number
+      expiresAt?: string | null
+      links?: { label: string; url: string }[]
+    }) => {
       const { announcementId, ...body } = data
       const { data: responseData } = await apiClient.put(`/committee/announcements/${announcementId}`, body)
       return responseData

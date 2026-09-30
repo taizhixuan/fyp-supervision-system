@@ -106,7 +106,7 @@ export const authApi = {
    * Verify reset password token
    */
   verifyResetToken: async (token: string): Promise<{ valid: boolean }> => {
-    const response = await api.get(`/auth/verify-reset-token?token=${token}`)
+    const response = await api.get('/auth/verify-reset-token', { params: { token } })
     return response.data
   },
 

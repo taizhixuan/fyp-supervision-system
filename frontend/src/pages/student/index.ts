@@ -28,10 +28,6 @@ export { MeetingDetail } from './MeetingDetail'
 export { MeetingExport } from './MeetingExport'
 
 // Supervision Logs
-export { LogList } from './LogList'
-export { LogCreate } from './LogCreate'
-export { LogDetail } from './LogDetail'
-export { LogEdit } from './LogEdit'
 
 // Documents
 export { DocumentList } from './DocumentList'
