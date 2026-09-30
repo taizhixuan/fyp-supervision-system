@@ -30,13 +30,28 @@ import threading
 from datetime import datetime, timezone
 
 import numpy as np
+import hmac
+
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 from sentence_transformers import SentenceTransformer
 
 
+# Only the backend calls this service, so no CORS; bodies capped at 2 MB (a full
+# supervisor list with profiles is well under that).
 app = Flask(__name__)
-CORS(app)
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
+
+
+@app.before_request
+def _require_internal_token():
+    """Same rule as the other AI services: when AI_INTERNAL_TOKEN is set, every route
+    except health needs it in X-Internal-Token (the backend sends it)."""
+    token = os.environ.get("AI_INTERNAL_TOKEN", "").strip()
+    if not token or request.path == "/ai/health":
+        return None
+    if not hmac.compare_digest(request.headers.get("X-Internal-Token", ""), token):
+        return jsonify({"error": "unauthorized"}), 401
+    return None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -81,6 +96,13 @@ W_INTEREST = _env_float("REC_W_INTEREST", 0.18)
 W_SKILL = _env_float("REC_W_SKILL", 0.10)
 W_PROGRAMME = _env_float("REC_W_PROGRAMME", 0.07)
 W_AVAILABILITY = _env_float("REC_W_AVAILABILITY", 0.15)
+
+# Env overrides needn't sum to 1. Normalise, otherwise weights summing above 1 push
+# many scores into the [0, 1] clip below and flatten the top of the ranking.
+_W_TOTAL = W_SEMANTIC + W_INTEREST + W_SKILL + W_PROGRAMME + W_AVAILABILITY
+if _W_TOTAL > 0:
+    W_SEMANTIC, W_INTEREST, W_SKILL, W_PROGRAMME, W_AVAILABILITY = (
+        w / _W_TOTAL for w in (W_SEMANTIC, W_INTEREST, W_SKILL, W_PROGRAMME, W_AVAILABILITY))
 
 TOP_K = _env_int("REC_TOP_K", 10)
 EMBED_MODEL_NAME = _env_str("REC_EMBED_MODEL", "BAAI/bge-base-en-v1.5")
@@ -204,11 +226,20 @@ def _supervisor_text(profile: dict) -> str:
 # Per-component scoring
 # ============================================================================
 
+def _quota(supervisor: dict) -> int:
+    """Supervision quota, defaulting to 8 only when it's missing. A quota of 0 means
+    "not taking students"; `or 8` used to turn that into a full, recommendable 8."""
+    q = supervisor.get("supervisionQuota")
+    return 8 if q is None else int(q)
+
+
 def _availability_factor(supervisor: dict) -> float:
     """1.0 = empty, 0.0 = full. Used as a soft signal *after* the hard filter."""
     load = supervisor.get("currentLoad") or 0
-    quota = supervisor.get("supervisionQuota") or 8
-    quota = max(1, int(quota))
+    quota = _quota(supervisor)
+    if quota <= 0:
+        return 0.0
+    quota = max(1, quota)
     free = max(0, int(quota) - int(load))
     return free / quota
 
@@ -237,8 +268,7 @@ def _is_acceptable(supervisor: dict) -> bool:
     if status == "UNAVAILABLE":
         return False
     load = int(supervisor.get("currentLoad") or 0)
-    quota = int(supervisor.get("supervisionQuota") or 8)
-    return load < quota
+    return load < _quota(supervisor)
 
 
 # ============================================================================
@@ -276,7 +306,7 @@ def _build_explanation(student: dict, supervisor: dict, components: dict) -> tup
 
     free_slots = max(
         0,
-        int(supervisor.get("supervisionQuota") or 8) - int(supervisor.get("currentLoad") or 0),
+        _quota(supervisor) - int(supervisor.get("currentLoad") or 0),
     )
     if free_slots == 1:
         bits.append("1 supervision slot free")

@@ -17,13 +17,15 @@ import os
 import json
 import logging
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 
 from rag_engine import RAGEngine
-from llm_provider import LLMProvider, clean_reply, register_llm_routes
+from llm_provider import LLMProvider, clean_reply, register_llm_routes, protect_internal_routes
 
+# Only the backend calls this service (server to server), so no CORS: a browser page
+# must not be able to reach it. Cap request bodies at 1 MB.
 app = Flask(__name__)
-CORS(app)
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
+protect_internal_routes(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -75,7 +77,8 @@ register_llm_routes(app, llm, on_change=_sync_rag_model)
 @app.route("/ai/health", methods=["GET"])
 def health():
     return jsonify({
-        "status": "ok",
+        # Without the FAISS index every answer falls back to the LLM alone.
+        "status": "ok" if rag_engine.is_ready else "degraded",
         "service": "ai-chatbot",
         "rag_ready": rag_engine.is_ready,
         "local_gen_loaded": rag_engine.gen_model is not None,
@@ -152,8 +155,11 @@ def summarize():
         recent = messages[-30:]
         transcript_lines = []
         for m in recent:
+            if not isinstance(m, dict):
+                continue
             sender = str(m.get("sender", "")).lower()
-            content = str(m.get("content", "")).strip()
+            # Cap each message so one pasted essay can't blow the prompt size.
+            content = str(m.get("content", "")).strip()[:2000]
             if not content:
                 continue
             role = "Student" if sender == "user" else "Assistant"

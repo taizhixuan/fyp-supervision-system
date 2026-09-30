@@ -38,9 +38,16 @@ DEFAULTS = {
     "custom": {"base_url": None, "model": None},
 }
 
-# Local models on CPU are slow, cloud ones are fast. Both stay under the
-# backend's 120 s read timeout so the service can still fall back and answer.
+# Local models on CPU are slow, cloud ones are fast. timeout x (retries + 1) must
+# stay under the backend's 120 s read timeout, or the backend gives up while this
+# service keeps generating (and a retry piles more work onto a local Ollama).
 DEFAULT_TIMEOUT = {"ollama": 100.0, "groq": 45.0, "openai": 45.0, "custom": 100.0}
+MAX_RETRIES = {"ollama": 0, "custom": 0, "groq": 1, "openai": 1}
+
+# Providers whose API key comes from the environment and must only ever be sent to
+# their official endpoint. Accepting a caller-supplied base URL here would hand
+# GROQ_API_KEY / OPENAI_API_KEY to whatever host the URL points at.
+FIXED_ENDPOINT = {"groq", "openai"}
 
 
 _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
@@ -199,7 +206,13 @@ class LLMProvider:
             return
 
         defaults = DEFAULTS.get(provider, {})
-        base_url = (base_url or "").strip() or defaults.get("base_url")
+        requested_url = (base_url or "").strip()
+        if provider in FIXED_ENDPOINT and requested_url \
+                and requested_url.rstrip("/") != defaults.get("base_url"):
+            logger.warning("Ignoring custom base URL for %s; its key is only sent to %s",
+                           provider, defaults.get("base_url"))
+            requested_url = ""
+        base_url = requested_url or defaults.get("base_url")
         model = (model or "").strip() or defaults.get("model")
         api_key = (api_key or "").strip() or _env_key(provider)
         if provider == "ollama":
@@ -213,7 +226,8 @@ class LLMProvider:
         else:
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout, max_retries=1)
+                client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout,
+                                max_retries=MAX_RETRIES.get(provider, 0))
             except ImportError:
                 logger.warning("openai package not installed; LLM disabled")
 
@@ -259,6 +273,29 @@ class LLMProvider:
             return []
 
 
+def internal_token_ok(req) -> bool:
+    """True when AI_INTERNAL_TOKEN is unset (plain local runs) or the request carries it."""
+    import hmac
+    token = _env("AI_INTERNAL_TOKEN")
+    if not token:
+        return True
+    return hmac.compare_digest(req.headers.get("X-Internal-Token", ""), token)
+
+
+def protect_internal_routes(app, open_paths=("/ai/health",)):
+    """Require X-Internal-Token on every route except health. Only the backend calls
+    these services; without this, anyone who can reach the port gets a free LLM proxy."""
+    from flask import jsonify, request
+
+    @app.before_request
+    def _require_internal_token():
+        if request.path in open_paths:
+            return None
+        if not internal_token_ok(request):
+            return jsonify({"error": "unauthorized"}), 401
+        return None
+
+
 def register_llm_routes(app, llm: LLMProvider, on_change=None):
     """Admin-facing config endpoints. When AI_INTERNAL_TOKEN is set, callers
     must send it in X-Internal-Token (the backend does), so the published
@@ -266,8 +303,7 @@ def register_llm_routes(app, llm: LLMProvider, on_change=None):
     from flask import jsonify, request
 
     def _authorized() -> bool:
-        token = _env("AI_INTERNAL_TOKEN")
-        return not token or request.headers.get("X-Internal-Token") == token
+        return internal_token_ok(request)
 
     @app.route("/ai/llm-config", methods=["GET"])
     def llm_config_get():
